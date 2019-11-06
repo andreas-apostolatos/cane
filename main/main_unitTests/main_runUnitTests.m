@@ -27,13 +27,13 @@ addpath('../../transientAnalysis/');
 addpath('../../generalMath/');
 
 % Add general auxiliary functions
-addpath('../../cane/auxiliary/');
+addpath('../../auxiliary/');
 
 % Add all fast computation functions
 addpath('../../efficientComputation/');
 
 % Add the equation system solvers
-addpath('../../cane/equationSystemSolvers/');
+addpath('../../equationSystemSolvers/');
 
 % Add the classical finite element basis functions
 addpath('../../basisFunctions/');
