@@ -263,7 +263,6 @@ for j = q+1:meta-q-1
   
                     %% 3iv.6. Compute the element stiffness matrix at the Gauss point
                     KeOnGP = computeElStiffMtxKirchhoffLoveShellLinear(p,q,dR,[dG1(:,1) dG2(:,1)],[dG1(:,2) dG2(:,2) dG1(:,3)],G3Tilde,Dm,Db);
-%                     KeOnGP = computeElStiffMtxKirchhoffLoveShellAndreasLinear(p,q,dR,[dG1(:,1) dG2(:,1)],[dG1(:,2) dG2(:,2) dG1(:,3)],G3Tilde,Dm,Db);
                     
                     %% 3iv.7 Compute the element area on the Gauss Point and add the contribution
                     elementAreaOnGP = dA*detJxiu*xiGW(cXi)*etaGW(cEta);
