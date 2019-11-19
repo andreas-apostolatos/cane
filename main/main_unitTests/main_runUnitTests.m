@@ -118,6 +118,10 @@ import matlab.unittest.constraints.EndsWithSubstring;
 suiteQuadrature = TestSuite.fromClass(?testQuadrature);
 resultQuadrature = run(suiteQuadrature);
 
+%% Run the unit test cases for the utilities functions
+suiteClassUtilityFunctions = TestSuite.fromClass(?testUtilityFunctions);
+resultIGAUtilityFunctions = run(suiteClassUtilityFunctions);
+
 %% Run the unit test cases for the isogeometric beam analysis
 suiteClassIGABeam = TestSuite.fromClass(?testIGABeamAnalysis);
 resultIGABeam = run(suiteClassIGABeam);
