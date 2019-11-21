@@ -7,7 +7,8 @@
 %
 %% Script documentation
 %
-% Task : Solves the steady-state incompressible Navier-Stokes equations
+% Task : Solves the steady-state incompressible Navier-Stokes equations in 
+%        2D.
 %
 % Date : 03.06.2014
 %
