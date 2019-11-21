@@ -108,8 +108,6 @@ while counter <= propNewtonRaphson.maxIt
     % Compute the residual based on the orthogonality condition
     residualXi = - distance'*dG1(:,1);
     residualEta = - distance'*dG2(:,1);
-    fprintf("\nresidualXi: %.15d\n", residualXi);
-    fprintf("residualEta: %.15d\n\n", residualEta);
     
     % Compute the cosine with respect to the xi-parametric coordinate
     xiCos = abs(residualXi)/norm(dG1(:,1))/norm(distance);
