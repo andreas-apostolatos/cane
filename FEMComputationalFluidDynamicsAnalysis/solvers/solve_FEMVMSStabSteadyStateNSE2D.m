@@ -111,7 +111,7 @@ end
 %% 0. Read input
 
 % Output data to a VTK format
-pathToOutput = '../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
+pathToOutput = '../../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
 
 % Dummy variables
 uSaved = 'undefined';
@@ -166,7 +166,7 @@ if ~ischar(nodesALE)
     [fldMsh,uMeshALE,inhomDOFs,valuesInhomDOFs] = ...
         computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
-        propFldDynamics,t);
+        solve_LinearSystem,propFldDynamics,t);
 elseif strcmp(nodesALE,'undefined')
     uMeshALE = 'undefined';
 end
