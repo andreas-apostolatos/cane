@@ -1,0 +1,170 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _______________________________________________________               %
+%   _______________________________________________________               %
+%                                                                         %
+%   Technische Universität München                                        %
+%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
+%   _______________________________________________________               %
+%   _______________________________________________________               %
+%                                                                         %
+%                                                                         %
+%   Authors                                                               %
+%   _______________________________________________________________       %
+%                                                                         %
+%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
+%   MSc.-Ing. Aditya Ghantasala        (aditya.ghantasala@tum.de)         %
+%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
+%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
+%   _______________________________________________________________       %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Matlab Input File                                                     %
+%   _________________                                                     %
+%                                                                         %
+%   FiniteElementAnalysisProgramStructuralAnalysisInstituteTUM            %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Structural Boundary Value Problem                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+STRUCTURE_ANALYSIS
+ ANALYSIS_TYPE,PLANE_STRESS
+
+STRUCTURE_MATERIAL_PROPERTIES
+
+STRUCTURE_NLINEAR_SCHEME
+ NLINEAR_SCHEME,NEWTON_RAPSON
+ TOLERANCE,1e-6
+ MAX_ITERATIONS,100
+
+STRUCTURE_TRANSIENT_ANALYSIS
+ SOLVER STEADY_STATE
+ TIME_INTEGRATION EXPLICIT_EULER
+ START_TIME 0
+ END_TIME 10
+ NUMBER_OF_TIME_STEPS 0.01
+
+STRUCTURE_NODES
+STRUCTURE_ELEMENTS
+STRUCTURE_DIRICHLET_NODES
+STRUCTURE_FORCE_NODES
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Fluid Boundary Value Problem                                          %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+FLUID_ANALYSIS
+ ANALYSIS_TYPE,NAVIER_STOKES_2D
+
+FLUID_MATERIAL_PROPERTIES
+  DENSITY,1e3
+  DYNAMIC_VISCOSITY,1e-2
+  
+FLUID_NLINEAR_SCHEME
+ NLINEAR_SCHEME,newtonRapshon
+ NO_LOAD_STEPS,1
+ TOLERANCE,1e-9
+ MAX_ITERATIONS,100
+
+FLUID_TRANSIENT_ANALYSIS
+ SOLVER TRANSIENT
+ TIME_INTEGRATION bossak
+ ALPHA_BETA -.1
+ GAMMA .6
+ START_TIME 0
+ END_TIME 1
+ NUMBER_OF_TIME_STEPS 1e3
+ ADAPTIVE_TIME_STEPPING true
+ 
+FLUID_INTEGRATION
+ DOMAIN user
+ domainNoGP 2
+ boundaryNoGP 1
+        
+FLUID_ELEMENTS
+       1      1     2       3
+       2     16    20      19
+       3     19    20      24
+       4     16    19      13
+       5     13    19      17
+       6     16    13      11
+       7     17    19      21
+       8     13    17      14
+       9     21    19      24
+      10     17    21      22
+      11     22    21      25
+      12     14    17      18
+      13     18    17      22
+      14     13    14       9
+      15      9    14      10
+      16     13     9      11
+      17     10    14      15
+      18     15    14      18
+      19      9    10       4
+      20     11     9       5
+      21      4    10       6
+      22      9     4       5
+      23      6    10      12
+      24     12    10      15
+      25      5     4       2
+      26      6     3       4
+      27      4     3       2
+      28     12     8       6
+      29      6     8       7
+      30     20    23      24
+      31     21    24      25
+      32      7     3       6
+
+FLUID_DIRICHLET_NODES
+       1 0.0  0.0  0.0  NaN  
+       2 0.0  0.0  0.0  NaN  
+       3 10.0  0.0  0.0  NaN  
+       5 0.0  0.0  0.0  NaN  
+       7 0.0  0.0  0.0  NaN  
+       8 0.0  0.0  0.0  NaN  
+      11 0.0  0.0  0.0  NaN  
+      12 0.0  0.0  0.0  NaN  
+      15 0.0  0.0  0.0  NaN  
+      16 0.0  0.0  0.0  NaN  
+      18 0.0  0.0  0.0  NaN  
+      20 0.0  0.0  0.0  NaN  
+      22 0.0  0.0  0.0  NaN  
+      23 0.0  0.0  0.0  NaN  
+      25 0.0  0.0  0.0  NaN  
+FSI_INTERFACE_NODES
+FLUID_NODES
+
+       1    0.00000   -1.00000    0.00000 
+       2    0.83333   -1.00000    0.00000 
+       3    0.00000   -0.00000    0.00000 
+       4    1.34809   -0.27295    0.00000 
+       5    1.66667   -1.00000    0.00000 
+       6    0.95829    0.42566    0.00000 
+       7    0.00000    1.00000    0.00000 
+       8    0.83333    1.00000    0.00000 
+       9    2.14800   -0.28469    0.00000 
+      10    1.89131    0.37147    0.00000 
+      11    2.50000   -1.00000    0.00000 
+      12    1.66667    1.00000    0.00000 
+      13    2.94795   -0.29652    0.00000 
+      14    2.72683    0.36080    0.00000 
+      15    2.50000    1.00000    0.00000 
+      16    3.33333   -1.00000    0.00000 
+      17    3.54526    0.37341    0.00000 
+      18    3.33333    1.00000    0.00000 
+      19    3.82740   -0.25411    0.00000 
+      20    4.16667   -1.00000    0.00000 
+      21    4.29854    0.42360    0.00000 
+      22    4.16667    1.00000    0.00000 
+      23    5.00000   -1.00000    0.00000 
+      24    5.00000    0.00000    0.00000 
+      25    5.00000    1.00000    0.00000 
