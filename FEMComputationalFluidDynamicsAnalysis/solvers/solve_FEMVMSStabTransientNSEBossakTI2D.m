@@ -124,7 +124,7 @@ else
     error('Error in the dimensionality of the analysis');
 end
 % Output data to a VTK format
-pathToOutput = '../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
+pathToOutput = '../../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
 
 % Dummy variables
 computeConstantMatrices = 'undefined';
