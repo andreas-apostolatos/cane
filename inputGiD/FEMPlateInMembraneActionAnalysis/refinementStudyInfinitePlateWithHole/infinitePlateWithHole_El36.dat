@@ -1,0 +1,132 @@
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Matlab Input File                                                     %
+%   _________________                                                     %
+%                                                                         %
+%   cane Multiphysics                                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Structural Boundary Value Problem                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+STRUCTURE_ANALYSIS
+ ANALYSIS_TYPE,planeStress
+
+STRUCTURE_MATERIAL_PROPERTIES
+  DENSITY,1.0
+  YOUNGS_MODULUS,1e5
+  POISSON_RATIO,0.0
+
+STRUCTURE_NLINEAR_SCHEME
+ NLINEAR_SCHEME,NEWTON_RAPHSON
+ TOLERANCE,1e-9
+ MAX_ITERATIONS,100
+
+STRUCTURE_TRANSIENT_ANALYSIS
+ SOLVER STEADY-STATE
+ TIME_INTEGRATION EXPLICIT_EULER
+ START_TIME 0
+ END_TIME 10
+ NUMBER_OF_TIME_STEPS 0.01
+ 
+STRUCTURE_INTEGRATION
+ DOMAIN user
+ domainNoGP 1
+ boundaryNoGP 1
+
+STRUCTURE_NODES
+       1   -4.00000    0.00000    0.00000 
+       2   -4.00000    1.00000    0.00000 
+       3   -2.90365    0.00000    0.00000 
+       4   -2.50672    0.83055    0.00000 
+       5   -2.95728    1.70149    0.00000 
+       6   -4.00000    2.00000    0.00000 
+       7   -1.87698    0.00000    0.00000 
+       8   -1.86392    1.53834    0.00000 
+       9   -1.43849    0.74347    0.00000 
+      10   -3.09789    2.73272    0.00000 
+      11   -2.38362    2.38130    0.00000 
+      12   -1.00000    0.00000    0.00000 
+      13   -4.00000    3.00000    0.00000 
+      14   -0.70711    0.70711    0.00000 
+      15   -0.78219    1.43849    0.00000 
+      16   -2.39286    3.17411    0.00000 
+      17   -1.60616    2.75984    0.00000 
+      18   -0.78112    2.35347    0.00000 
+      19   -4.00000    4.00000    0.00000 
+      20    0.00000    1.00000    0.00000 
+      21   -3.00000    4.00000    0.00000 
+      22    0.00000    1.87698    0.00000 
+      23   -2.00000    4.00000    0.00000 
+      24   -0.82557    3.24617    0.00000 
+      25    0.00000    2.90365    0.00000 
+      26   -1.00000    4.00000    0.00000 
+      27    0.00000    4.00000    0.00000 
+STRUCTURE_ELEMENTS
+       1     20    22      15
+       2      7    12       9
+       3     12    14       9
+       4     14    20      15
+       5      7     9       4
+       6      9    14      15
+       7     15    22      18
+       8      4     9       8
+       9      8     9      15
+      10      4     8       5
+      11     18    22      25
+      12     15    18       8
+      13      7     4       3
+      14      5     8      11
+      15      4     5       2
+      16     11     8      17
+      17      5    11      10
+      18     18    25      24
+      19     24    25      27
+      20     18    24      17
+      21     17    24      23
+      22     18    17       8
+      23     11    17      16
+      24      3     4       2
+      25     16    17      23
+      26     16    23      21
+      27     16    21      10
+      28     11    16      10
+      29     27    26      24
+      30     24    26      23
+      31     19    13      21
+      32      6     2       5
+      33     13     6      10
+      34     13    10      21
+      35     10     6       5
+      36      2     1       3
+STRUCTURE_DIRICHLET_NODES
+       1 NaN  0.0  NaN  
+       3 NaN  0.0  NaN  
+       7 NaN  0.0  NaN  
+      12 NaN  0.0  NaN  
+      20 0.0  NaN  NaN  
+      22 0.0  NaN  NaN  
+      25 0.0  NaN  NaN  
+      27 0.0  NaN  NaN  
+STRUCTURE_FORCE_NODES
+       1 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+       2 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+       6 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+      13 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+      19 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      19 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+      21 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      23 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      26 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      27 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole

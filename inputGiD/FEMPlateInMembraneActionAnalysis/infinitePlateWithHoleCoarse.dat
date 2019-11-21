@@ -1,0 +1,163 @@
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Matlab Input File                                                     %
+%   _________________                                                     %
+%                                                                         %
+%   cane Multiphysics                                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Structural Boundary Value Problem                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+STRUCTURE_ANALYSIS
+ ANALYSIS_TYPE,planeStress
+
+STRUCTURE_MATERIAL_PROPERTIES
+  DENSITY,1.0
+  YOUNGS_MODULUS,1e5
+  POISSON_RATIO,0.0
+
+STRUCTURE_NLINEAR_SCHEME
+ NLINEAR_SCHEME,NEWTON_RAPHSON
+ TOLERANCE,1e-9
+ MAX_ITERATIONS,100
+
+STRUCTURE_TRANSIENT_ANALYSIS
+ SOLVER STEADY-STATE
+ TIME_INTEGRATION EXPLICIT_EULER
+ START_TIME 0
+ END_TIME 10
+ NUMBER_OF_TIME_STEPS 0.01
+ 
+STRUCTURE_INTEGRATION
+ DOMAIN user
+ domainNoGP 1
+ boundaryNoGP 1
+
+STRUCTURE_NODES
+       1   -4.00000    0.00000    0.00000 
+       2   -3.25000    0.00000    0.00000 
+       3   -4.00000    0.80000    0.00000 
+       4   -2.95507    0.73478    0.00000 
+       5   -3.34399    1.31955    0.00000 
+       6   -2.50000    0.00000    0.00000 
+       7   -4.00000    1.60000    0.00000 
+       8   -2.08833    0.73587    0.00000 
+       9   -3.30718    2.00000    0.00000 
+      10   -2.54812    1.55326    0.00000 
+      11   -1.75000    0.00000    0.00000 
+      12   -4.00000    2.40000    0.00000 
+      13   -1.35658    0.66218    0.00000 
+      14   -2.69544    2.61608    0.00000 
+      15   -1.51062    1.55528    0.00000 
+      16   -2.02674    2.24767    0.00000 
+      17   -1.00000    0.00000    0.00000 
+      18   -3.29795    2.93591    0.00000 
+      19   -4.00000    3.20000    0.00000 
+      20   -0.70711    0.70711    0.00000 
+      21   -0.66894    1.37500    0.00000 
+      22   -1.91429    3.01183    0.00000 
+      23   -2.58506    3.39937    0.00000 
+      24   -1.28001    2.51134    0.00000 
+      25   -0.65757    2.11159    0.00000 
+      26   -4.00000    4.00000    0.00000 
+      27   -3.20000    4.00000    0.00000 
+      28    0.00000    1.00000    0.00000 
+      29   -1.29851    3.29650    0.00000 
+      30   -2.40000    4.00000    0.00000 
+      31    0.00000    1.75000    0.00000 
+      32   -0.67268    2.94491    0.00000 
+      33   -1.60000    4.00000    0.00000 
+      34    0.00000    2.50000    0.00000 
+      35   -0.80000    4.00000    0.00000 
+      36    0.00000    3.25000    0.00000 
+      37    0.00000    4.00000    0.00000 
+STRUCTURE_ELEMENTS
+       1     28    31      21
+       2     34    36      32
+       3     32    36      35
+       4     34    32      25
+       5      1     2       3
+       6      6    11       8
+       7      8    11      13
+       8      6     8       4
+       9      4     8      10
+      10      6     4       2
+      11     31    34      25
+      12     36    37      35
+      13     11    17      13
+      14      2     4       3
+      15     31    25      21
+      16     21    25      15
+      17     13    17      20
+      18     13    20      21
+      19     21    20      28
+      20     25    32      24
+      21     24    32      29
+      22     25    24      15
+      23      8    13      15
+      24     15    24      16
+      25     29    32      35
+      26     24    29      22
+      27     16    24      22
+      28     16    22      14
+      29     14    22      23
+      30     16    14      10
+      31     15    16      10
+      32     23    22      33
+      33     14    23      18
+      34     22    29      33
+      35     33    29      35
+      36     18    23      27
+      37     14    18       9
+      38     27    19      18
+      39      7     3       5
+      40      5     3       4
+      41      5     4      10
+      42      7     5       9
+      43      9     5      10
+      44      7     9      12
+      45     12     9      18
+      46     33    30      23
+      47     23    30      27
+      48     19    12      18
+      49     19    27      26
+      50     10     8      15
+      51     21    15      13
+      52     14     9      10
+STRUCTURE_DIRICHLET_NODES
+       1 NaN  0.0  NaN  
+       2 NaN  0.0  NaN  
+       6 NaN  0.0  NaN  
+      11 NaN  0.0  NaN  
+      17 NaN  0.0  NaN  
+      28 0.0  NaN  NaN  
+      31 0.0  NaN  NaN  
+      34 0.0  NaN  NaN  
+      36 0.0  NaN  NaN  
+      37 0.0  NaN  NaN  
+STRUCTURE_FORCE_NODES
+       1 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+       3 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+       7 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+      12 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+      19 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+      26 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      26 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+      27 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      30 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      33 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      35 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+      37 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+

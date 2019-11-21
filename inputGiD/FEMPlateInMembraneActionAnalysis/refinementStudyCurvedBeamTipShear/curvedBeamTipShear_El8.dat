@@ -1,0 +1,103 @@
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Matlab Input File                                                     %
+%   _________________                                                     %
+%                                                                         %
+%   cane Multiphysics                                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Structural Boundary Value Problem                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+STRUCTURE_ANALYSIS
+ ANALYSIS_TYPE,planeStress
+
+STRUCTURE_MATERIAL_PROPERTIES
+  DENSITY,7810
+  YOUNGS_MODULUS,1e5
+  POISSON_RATIO,0.0
+
+STRUCTURE_NLINEAR_SCHEME
+  NLINEAR_SCHEME,UNDEFINED
+
+STRUCTURE_TRANSIENT_ANALYSIS
+ SOLVER STEADY-STATE
+ TIME_INTEGRATION EXPLICIT_EULER
+ START_TIME 0
+ END_TIME 10
+ NUMBER_OF_TIME_STEPS 0.01
+ 
+STRUCTURE_INTEGRATION
+ DOMAIN user
+ domainNoGP 1
+ boundaryNoGP 1
+
+STRUCTURE_NODES
+       1    0.00000    5.00000    0.00000 
+       2    0.00000    4.00000    0.00000 
+       3    1.91342    4.61940    0.00000 
+       4    1.53073    3.69552    0.00000 
+       5    2.82843    2.82843    0.00000 
+       6    3.53553    3.53553    0.00000 
+       7    3.69552    1.53073    0.00000 
+       8    4.61940    1.91342    0.00000 
+       9    4.00000    0.00000    0.00000 
+      10    5.00000    0.00000    0.00000 
+STRUCTURE_ELEMENTS
+       1      9    10       7
+       2      1     2       3
+       3     10     8       7
+       4      2     4       3
+       5      7     8       6
+       6      3     4       6
+       7      4     5       6
+       8      6     5       7
+STRUCTURE_DIRICHLET_NODES
+       1 0.0  0.0  NaN  
+       2 0.0  0.0  NaN  
+STRUCTURE_FORCE_NODES
+       9 boundaryLoad computeConstantHorizontalLoad
+      10 boundaryLoad computeConstantHorizontalLoad
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Fluid Boundary Value Problem                                          %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+FLUID_ANALYSIS
+ ANALYSIS_TYPE,PLANE_STRESS
+
+FLUID_MATERIAL_PROPERTIES
+
+FLUID_NLINEAR_SCHEME
+ NLINEAR_SCHEME,NEWTON_RAPSON
+ TOLERANCE,1e-9
+ MAX_ITERATIONS,100
+
+FLUID_TRANSIENT_ANALYSIS
+ SOLVER STEADY_STATE
+ TIME_INTEGRATION BOSSAK
+ START_TIME 0
+ END_TIME 10
+ NUMBER_OF_TIME_STEPS 0.01
+        
+FLUID_ELEMENTS
+
+
+FLUID_DIRICHLET_NODES
+
+FLUID_DIRICHLET_ALE_NODES
+FLUID_NODES
+

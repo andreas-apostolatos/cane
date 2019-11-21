@@ -1,0 +1,80 @@
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Matlab Input File                                                     %
+%   _________________                                                     %
+%                                                                         %
+%   cane Multiphysics                                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Structural Boundary Value Problem                                     %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+STRUCTURE_ANALYSIS
+ ANALYSIS_TYPE,planeStress
+
+STRUCTURE_MATERIAL_PROPERTIES
+  DENSITY,1.0
+  YOUNGS_MODULUS,1e5
+  POISSON_RATIO,0.0
+
+STRUCTURE_NLINEAR_SCHEME
+ NLINEAR_SCHEME,NEWTON_RAPHSON
+ TOLERANCE,1e-9
+ MAX_ITERATIONS,100
+
+STRUCTURE_TRANSIENT_ANALYSIS
+ SOLVER STEADY-STATE
+ TIME_INTEGRATION EXPLICIT_EULER
+ START_TIME 0
+ END_TIME 10
+ NUMBER_OF_TIME_STEPS 0.01
+ 
+STRUCTURE_INTEGRATION
+ DOMAIN user
+ domainNoGP 1
+ boundaryNoGP 1
+
+STRUCTURE_NODES
+       1   -4.00000    		4.00000    		0.00000 
+       2   -2.00000    		4.00000    		0.00000 
+       3   0.00000     		4.00000    		0.00000 
+       4   -4.00000    		2.00000    		0.00000 
+       5   -2.00000    		2.00000    		0.00000 
+       6   0.00000     		2.00000    		0.00000 
+       7   0.00000     		1.00000    		0.00000 
+       8   -0.707106781     0.707106781    	0.00000 
+       9   -1.00000     	0.00000    		0.00000 
+       10   -2.00000     	0.00000    		0.00000 
+       11   -4.00000     	0.00000    		0.00000 
+STRUCTURE_ELEMENTS
+       1    2   1     4     5
+       2    3   2     5     6
+       3    5   4     11    10
+       4    8   9     10    5
+       5    6   5     8     7
+       
+STRUCTURE_DIRICHLET_NODES
+     3 0.0  NaN  NaN  
+     6 0.0  NaN  NaN  
+     7 0.0  NaN  NaN  
+     9 NaN  0.0  NaN  
+     10 NaN  0.0  NaN  
+     11 NaN  0.0  NaN  
+STRUCTURE_FORCE_NODES
+       1 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+       2 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+       3 boundaryLoad computeSigmaVerticalEdgeForInfinitePlateWithHole
+       1 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+       4 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
+       11 boundaryLoad computeSigmaHoriztalEdgeForInfinitePlateWithHole
