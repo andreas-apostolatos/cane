@@ -14,5 +14,6 @@ classdef testFEMComputationalFluidDynamicsAnalysis < matlab.unittest.TestCase
     %% Method definitions
     methods (Test)
         testFEM4NavierStokesSteadyState2D(testCase)
+        testFEM4NavierStokesTransientBossak3D(testCase)
     end
 end
