@@ -103,6 +103,12 @@ addpath('../../parsers/');
 % Add all unit test functions and classes
 addpath('../../unitTest/');
 
+% Add all functions for Monte Carlo-related functionality
+addpath('../../monteCarloAnalysisForCFD/',...
+        '../../monteCarloAnalysisForCFD/inputFunctions/',...
+        '../../monteCarloAnalysisForCFD/meshManipulation/',...
+        '../../monteCarloAnalysisForCFD/postprocessing/');
+    
 %% Global variables for the unit tests
 isLight = true;
 
@@ -162,7 +168,8 @@ suiteClassFEM4CFD = TestSuite.fromClass(?testFEMComputationalFluidDynamicsAnalys
 if isLight
     suiteClassFEM4CFD = suiteClassFEM4CFD.selectIf...
         (HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesSteadyState2D') | ...
-        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesTransientBossak3D'));
+        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesTransientBossak3D') | ...
+        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesSteadyState2DReferencePaper'));
 end
 resultFEM4CFD = run(suiteClassFEM4CFD);
 
