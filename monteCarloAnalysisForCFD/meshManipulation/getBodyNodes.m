@@ -1,15 +1,15 @@
-function [nodes, coordinates] = getBodyNodes (mesh, BCNodes)
+function [homDOFs, nodalCoordinates] = getBodyNodes (mesh, homDBC)
     % [nodes, coordinates] = getBodyNodes (mesh, BCNodes)
     % Returns all non-boundary nodes that have boundary conditions set on
     % them
     % Works on for 2D rectangular meshes
 
     % Init
-    tolerance  = 1e-10;
+    eps  = 1e-10;
     
     % Prealloc
-    nodes           = BCNodes;
-    coordinates     = zeros(length(nodes), 2);
+    homDOFs           = homDBC;
+    nodalCoordinates     = zeros(length(homDOFs), 2);
     bodyNodeCounter = 0;
     
     % Get mesh boundaries
@@ -19,36 +19,36 @@ function [nodes, coordinates] = getBodyNodes (mesh, BCNodes)
     ymax = max(mesh.nodes(:,2));
     
     % Find body nodes
-    for k=1:length(BCNodes)
-        index = ceil(BCNodes(k)/3);
-        if index == int64(index)
+    for k=1:length(homDBC)
+        idNode = ceil(homDBC(k)/3);
+        if idNode == int64(idNode)
             
-            index = int64(index);
+            idNode = int64(idNode);
            
             % Check if point is on the boundary
-            bodyNode = true;
-            if abs(xmin - mesh.nodes(index, 1)) < tolerance
-                bodyNode = false;
-            elseif abs(xmax - mesh.nodes(index, 1)) < tolerance
-                bodyNode = false;
-            elseif abs(ymin - mesh.nodes(index, 2)) < tolerance
-                bodyNode = false;
-            elseif abs(ymax - mesh.nodes(index, 2)) < tolerance
-                bodyNode = false;
+            isBodyNode = true;
+            if abs(xmin - mesh.nodes(idNode, 1)) < eps
+                isBodyNode = false;
+            elseif abs(xmax - mesh.nodes(idNode, 1)) < eps
+                isBodyNode = false;
+            elseif abs(ymin - mesh.nodes(idNode, 2)) < eps
+                isBodyNode = false;
+            elseif abs(ymax - mesh.nodes(idNode, 2)) < eps
+                isBodyNode = false;
             end
             
             % Update outputs
-            if bodyNode
+            if isBodyNode
                 bodyNodeCounter = bodyNodeCounter + 1;
-                nodes(bodyNodeCounter) = index;
-                coordinates(bodyNodeCounter,:) = mesh.nodes(index, 1:2);
+                homDOFs(bodyNodeCounter) = idNode;
+                nodalCoordinates(bodyNodeCounter,:) = mesh.nodes(idNode, 1:2);
             end
        
         end
     end
     
     % Chop unnecessary/redundant entries
-    [nodes,uniqueIndices]   = unique(nodes(1:bodyNodeCounter));
-    coordinates             = coordinates(uniqueIndices,:);
+    [homDOFs,uniqueIndices]   = unique(homDOFs(1:bodyNodeCounter));
+    nodalCoordinates             = nodalCoordinates(uniqueIndices,:);
 
 end

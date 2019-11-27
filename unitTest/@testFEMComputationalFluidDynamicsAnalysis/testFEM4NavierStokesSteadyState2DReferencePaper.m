@@ -124,7 +124,7 @@ fieldSelect = @fieldSelector;
 
 %% 6. Calculate drag and lift force from the nodal forces
 
-Fx = drag (paramStruct, up, FComplete);
+Fx = drag (paramStruct, FComplete);
 Fy = lift (paramStruct, up, FComplete);
 
 
