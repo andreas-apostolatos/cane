@@ -4,7 +4,7 @@ function testFEM4NavierStokesSteadyState2DReferencePaper(testCase)
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
-% Main authors:    Andreas Apostolatos
+% Main authors:    Marko Leskovar
 %
 %% Function documentation
 %
@@ -25,148 +25,117 @@ function testFEM4NavierStokesSteadyState2DReferencePaper(testCase)
 %
 % 4. Define the name of the vtk file from where to resume the simulation
 %
-% 5. Solve the CFD problem
+% 5. Change the input velocity to match the reference paper - parabolic input
 %
-% 6. Calculate drag and lift force from the nodal forces
+% 6. Solve the CFD problem
 %
-% 7. Calculate drag and lift coefficiend based on drag and lift force
+% 7. Calculate drag and lift force from the nodal forces
 %
-% 8. Define the expected solutions
+% 8. Calculate drag and lift coefficient based on drag and lift force
 %
-% 9. Verify the results
+% 9. Define the expected solutions
+%
+% 10. Verify the results
 %
 %% Function main body
 
 %% 0. Read input
-
-% Define relative tolerance
-relTol = 0.01;
+% Define absolute tolerance
+absTol = 0.00001;
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = 'unitTest_flowAroundCylinder2DReferencePaper';
 
-%% 1. Parse the data from the GiD input file
-problemStruct = init(caseName, pathToCase);
-paramStruct = ParameterStructure(problemStruct);
 
-% [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,~,analysis,parameters,...
-%     propNLinearAnalysis,propFldDynamics,gaussInt] = ...
-%     parse_FluidModelFromGid...
-%     (pathToCase,caseName,'');
+%% 1. Parse the data from the GiD input file
+[fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,~,analysis,parameters,...
+    propNLinearAnalysis,propFldDynamics,gaussInt] = ...
+    parse_FluidModelFromGid...
+    (pathToCase,caseName,'');
+
 
 %% 2. GUI
-
 % On the body forces
-%computeBodyForces = @computeConstantVerticalBodyForceVct;
+computeBodyForces = @computeConstantVerticalBodyForceVct;
 
 % On the initial conditions
 % computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE2D;
-%computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
+computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
 
+% On the transient analysis properties
+if strcmp(propFldDynamics.method,'bossak')
+    propFldDynamics.computeProblemMtrcsTransient = ...
+        @computeProblemMtrcsBossakFEM4NSE;
+    propFldDynamics.computeUpdatedVct = ...
+        @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
+end
 
-% % On the transient analysis properties
-% if strcmp(propFldDynamics.method,'bossak')
-%     propFldDynamics.computeProblemMtrcsTransient = ...
-%         @computeProblemMtrcsBossakFEM4NSE;
-%     propFldDynamics.computeUpdatedVct = ...
-%         @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
-% end
 
 %% 3. Choose the equation system solver
-% if strcmp(analysis.type,'NAVIER_STOKES_2D')
-%     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
-% elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
-%     solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
-% else
-%     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
-% end
+if strcmp(analysis.type,'NAVIER_STOKES_2D')
+    solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
+elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+    solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
+else
+    error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
+end
+
 
 %% 4. Define the name of the vtk file from where to resume the simulation
-% VTKResultFile = 'undefined';
+VTKResultFile = 'undefined';
 
 
-%% 4. Change the input velocity to match the paper - parabolic input
+%% 5. Change the input velocity to match the reference paper - parabolic input
 
 % max input velocity defined in the reference paper
 Umax = 0.3;
 % change the input velocity to have the parabolic distribution
-input_inletVelocityParabolic(paramStruct, Umax);
+valuesInhomDBCModified = inputInletVelocityParabolic(fldMsh, inhomDBC, valuesInhomDBC, Umax);
+
+%% 6. Solve the CFD problem
+[~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
+    (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
+    computeBodyForces,analysis,computeInitialConditions,...
+    VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
+    gaussInt,caseName,'');
 
 
-%% 5. Solve the CFD problem
-% [up,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-%     (fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,parameters,...
-%     computeBodyForces,analysis,computeInitialConditions,...
-%     VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-%     gaussInt,caseName,'');
-
-fieldSelect = @fieldSelector;
-[up,FComplete,hasConverged, ~] = ...
-            solve_FEMVMSStabSteadyStateNSE2D(                                          ...
-            feval(fieldSelect,paramStruct,problemStruct,'fldMsh'),                   ...
-            feval(fieldSelect,paramStruct,problemStruct,'homDBC'),                   ...
-            feval(fieldSelect,paramStruct,problemStruct,'inhomDBC'),                 ...
-            feval(fieldSelect,paramStruct,problemStruct,'valuesInhomDBC'),           ...
-            feval(fieldSelect,paramStruct,problemStruct,'nodesALE'),                 ...
-            feval(fieldSelect,paramStruct,problemStruct,'parameters'),               ...
-            feval(fieldSelect,paramStruct,problemStruct,'computeBodyForces'),        ...
-            feval(fieldSelect,paramStruct,problemStruct,'analysis'),                 ...
-            feval(fieldSelect,paramStruct,problemStruct,'computeInitialConditions'), ...
-            feval(fieldSelect,paramStruct,problemStruct,'VTKResultFile'),            ...
-            feval(fieldSelect,paramStruct,problemStruct,'solve_LinearSystem'),       ...
-            feval(fieldSelect,paramStruct,problemStruct,'propFldDynamics'),          ...
-            feval(fieldSelect,paramStruct,problemStruct,'propNLinearAnalysis'),      ...
-            feval(fieldSelect,paramStruct,problemStruct,'gaussInt'),                 ...
-            feval(fieldSelect,paramStruct,problemStruct,'caseName'),                 ...
-            'outputDisabled'                                                            ...
-        );
-
-%% 6. Calculate drag and lift force from the nodal forces
-
-Fx = drag (paramStruct, FComplete);
-Fy = lift (paramStruct, up, FComplete);
+%% 7. Calculate drag and lift force from the nodal forces
+Fx = calculateDrag (FComplete, fldMsh, homDBC, parameters);
+Fy = calculateLift (FComplete, fldMsh, homDBC, parameters);
 
 
-%% 7. Calculate drag and lift coefficient based on drag and lift force
+%% 8. Calculate drag and lift coefficient based on drag and lift force
 
 % define parameters used in reference paper and simualiton
-ro = 1;
-Ubar = 0.2;
-D = 0.1;
+rho = 1;        % density
+Ubar = 0.2;     % mid velocity 
+D = 0.1;        % diameter of the body
+
 % calculate drag and lift coefficiet
-dragCoefficient = (2 * Fx )/(ro * Ubar * Ubar * D);
-liftCoefficient = (2 * Fy )/(ro * Ubar * Ubar * D);
+dragCoefficient = (2 * Fx )/(rho * Ubar * Ubar * D);
+liftCoefficient = (2 * Fy )/(rho * Ubar * Ubar * D);
+% find absolute value so we don't get negative coefficients
+liftCoefficient = abs(liftCoefficient);
 
-%% 8. Define the expected solutions
 
-% Define the expected solution in terms of calculated drag coefficient
+%% 9. Define the expected solutions
 % 5.5700 - 5.5900 (upper and lower bound in the paper, 2D case)
 expSolDragCoefficient = 5.58;
- 
-% Define the expected solution in terms of calculated lift coefficient
+
 % 0.0104 - 0.0110 (upper and lower bound in the paper, 2D case)
+% in reality it should be 0, since it's a symmetric case
 expSolLiftCoefficient = 0.0107;
    
 % Define the expected solution in terms of the convergence flag
 expSolHasConverged = true;
 
-%% 9. Verify the results
-testCase.verifyEqual(dragCoefficient,expSolDragCoefficient,'RelTol',relTol);
-testCase.verifyEqual(liftCoefficient,expSolLiftCoefficient,'RelTol',relTol);
-testCase.verifyEqual(hasConverged,expSolHasConverged,'RelTol',relTol);
 
-%% FUNCTION DEFINITIONS
-    function paramField = fieldSelector(parameterStructure,problemStructure,fieldName)
-        % If parameterStructure contains 'fieldName', return it. Otherwise,
-        % return 'fieldName' from the problemStructure
-        % This function ensures that you don't have to modify the arguments
-        % passed to the FE solver when you add/remove fields to/from the 
-        % ParameterStructure class
-        if isprop(parameterStructure,fieldName)
-            paramField = parameterStructure.(fieldName);
-        else
-            paramField = problemStructure.(fieldName);
-        end
-    end
+%% 10. Verify the results
+testCase.verifyEqual(dragCoefficient,expSolDragCoefficient,'AbsTol',absTol);
+testCase.verifyEqual(liftCoefficient,expSolLiftCoefficient,'AbsTol',absTol);
+testCase.verifyEqual(hasConverged,expSolHasConverged,'AbsTol',absTol);
+
+    
 end

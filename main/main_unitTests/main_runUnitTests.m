@@ -104,10 +104,7 @@ addpath('../../parsers/');
 addpath('../../unitTest/');
 
 % Add all functions for Monte Carlo-related functionality
-addpath('../../monteCarloAnalysisForCFD/',...
-        '../../monteCarloAnalysisForCFD/inputFunctions/',...
-        '../../monteCarloAnalysisForCFD/meshManipulation/',...
-        '../../monteCarloAnalysisForCFD/postprocessing/');
+addpath('../../unitTestSupportFunctions/');
     
 %% Global variables for the unit tests
 isLight = true;
