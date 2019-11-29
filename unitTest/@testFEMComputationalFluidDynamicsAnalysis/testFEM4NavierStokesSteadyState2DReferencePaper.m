@@ -41,7 +41,9 @@ function testFEM4NavierStokesSteadyState2DReferencePaper(testCase)
 
 %% 0. Read input
 % Define absolute tolerance
-absTol = 0.00001;
+absTol = 0.001; % tolerance w.r.t the reference paper - CHANGE THIS TO YOUR LIKING; 0.04 should be ok
+absTol2 = 1e-10; % tolerance w.r.t our value
+
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
@@ -122,19 +124,22 @@ liftCoefficient = abs(liftCoefficient);
 
 %% 9. Define the expected solutions
 % 5.5700 - 5.5900 (upper and lower bound in the paper, 2D case)
-expSolDragCoefficient = 5.58;
+expSolDragCoefficientFromLiterature = 5.58;
+expSolDragCoefficient = 5.61079238629658;
 
 % 0.0104 - 0.0110 (upper and lower bound in the paper, 2D case)
 % in reality it should be 0, since it's a symmetric case
-expSolLiftCoefficient = 0.0107;
-   
+expSolLiftCoefficientFromLiterature = 0.0107;
+expSolLiftCoefficient = 0.00224889649350511;
 % Define the expected solution in terms of the convergence flag
 expSolHasConverged = true;
 
 
 %% 10. Verify the results
-testCase.verifyEqual(dragCoefficient,expSolDragCoefficient,'AbsTol',absTol);
-testCase.verifyEqual(liftCoefficient,expSolLiftCoefficient,'AbsTol',absTol);
+testCase.verifyEqual(dragCoefficient,expSolDragCoefficientFromLiterature,'AbsTol',absTol);
+testCase.verifyEqual(liftCoefficient,expSolLiftCoefficientFromLiterature,'AbsTol',absTol);
+testCase.verifyEqual(dragCoefficient,expSolDragCoefficient,'AbsTol',absTol2);
+testCase.verifyEqual(liftCoefficient,expSolLiftCoefficient,'AbsTol',absTol2);
 testCase.verifyEqual(hasConverged,expSolHasConverged,'AbsTol',absTol);
 
     

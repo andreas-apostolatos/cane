@@ -8,20 +8,21 @@
 %              homDBC : The global numbering of the DOFs where homogeneous
 %                       Dirichlet boundary conditions are applied
 %
-%
 %              Output :
-%             homDOFs : Force (drag) on the body in x-direction
-%    nodalCoordinates : fill this
+%    nodalCoordinates : Nodes and elements from the fluid mesh that lie on
+%                       a body 
+%             homDOFs : The global numbering of the DOFs that lie on a body
+%                       where homogeneous Dirichlet boundary conditions are
+%                       applied
 %
 %% Function main body
-function [homDOFs, nodalCoordinates] = getBodyNodes (fldMsh, homDBC)
+function homDOFs = getBodyNodes (fldMsh, homDBC)
 
-    % Initialize tolerance
+    % Initialize tolerance for node finding
     eps  = 1e-10;
     
-    % Preallocate
+    % Preallocate variables
     homDOFs              = homDBC;
-    nodalCoordinates     = zeros(length(homDOFs), 2);
     bodyNodeCounter      = 0;
     
     % Get mesh boundaries (edges or the rectangular domain)
@@ -32,35 +33,30 @@ function [homDOFs, nodalCoordinates] = getBodyNodes (fldMsh, homDBC)
     
     % Find body nodes
     for k=1:length(homDBC)
-        idNode = ceil(homDBC(k)/3);
-        if idNode == int64(idNode)
-            
-            idNode = int64(idNode);
-           
-            % Check if point is on the boundary
-            isBodyNode = true;
-            
-            if abs(xmin - fldMsh.nodes(idNode, 1)) < eps
-                isBodyNode = false;
-            elseif abs(xmax - fldMsh.nodes(idNode, 1)) < eps
-                isBodyNode = false;
-            elseif abs(ymin - fldMsh.nodes(idNode, 2)) < eps
-                isBodyNode = false;
-            elseif abs(ymax - fldMsh.nodes(idNode, 2)) < eps
-                isBodyNode = false;
-            end
-            
-            % Update outputs
-            if isBodyNode
-                bodyNodeCounter = bodyNodeCounter + 1;
-                homDOFs(bodyNodeCounter) = idNode;
-                nodalCoordinates(bodyNodeCounter,:) = fldMsh.nodes(idNode, 1:2);
-            end
+        
+        idNode = ceil(homDBC(k)/3);   
+
+        % Check if point is on the boundary
+        isBodyNode = true;
+        if abs(xmin - fldMsh.nodes(idNode, 1)) < eps
+            isBodyNode = false;
+        elseif abs(xmax - fldMsh.nodes(idNode, 1)) < eps
+            isBodyNode = false;
+        elseif abs(ymin - fldMsh.nodes(idNode, 2)) < eps
+            isBodyNode = false;
+        elseif abs(ymax - fldMsh.nodes(idNode, 2)) < eps
+            isBodyNode = false;
         end
+
+        % Update outputs
+        if isBodyNode
+            bodyNodeCounter = bodyNodeCounter + 1;
+            homDOFs(bodyNodeCounter) = idNode;
+        end
+        
     end
     
     % Chop unnecessary/redundant entries
-    [homDOFs,uniqueIndices]  = unique(homDOFs(1:bodyNodeCounter));
-    nodalCoordinates         = nodalCoordinates(uniqueIndices,:);
+    homDOFs  = unique(homDOFs(1:bodyNodeCounter));
 
 end

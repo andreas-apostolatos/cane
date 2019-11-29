@@ -103,7 +103,7 @@ addpath('../../parsers/');
 % Add all unit test functions and classes
 addpath('../../unitTest/');
 
-% Add all functions for Monte Carlo-related functionality
+% Add all functions related to CFD fuild tests
 addpath('../../unitTestSupportFunctions/');
     
 %% Global variables for the unit tests
