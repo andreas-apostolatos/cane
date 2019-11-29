@@ -1,6 +1,15 @@
+function Fx = calculateDragForce (FComplete, fldMsh, homDBC, parameters)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%
 %% Function documentation
 %
-% Calculate lift force on a single body with no-slip boundary conditions in a rectangular domain
+% Calculate lift force on a single body with no-slip boundary conditions 
+% inside a rectangular domain
 %
 %               Input :
 %           FComplete : The complete force vector
@@ -9,15 +18,13 @@
 %                       Dirichlet boundary conditions are applied
 %          parameters : Flow parameters
 %
-%
 %              Output :
-%                  Fy : Force (lift) on the body in y-direction
+%                  Fx : Force (drag) on the body in x-direction
 %
 %% Function main body
-function Fy = calculateLift (FComplete, fldMsh, homDBC, parameters)
 
     % Get node indices on the body
-    indices = getBodyNodes(fldMsh, homDBC);
+    indices = getBodyNodesInsideRectangularDomain(fldMsh, homDBC);
     
     % Reshape the input forces to [Fx, Fy, Fz]
     FComplete = -reshape(FComplete, [3, length(FComplete)/3])';
@@ -25,6 +32,6 @@ function Fy = calculateLift (FComplete, fldMsh, homDBC, parameters)
     % Select forces on body nodes
     F = FComplete(indices, 1:2) * parameters.rho;
 
-    Fy = sum(F(:,2));
+    Fx = sum(F(:,1));
     
 end

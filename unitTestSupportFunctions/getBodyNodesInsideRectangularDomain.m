@@ -1,7 +1,17 @@
+function homDOFs = getBodyNodesInsideRectangularDomain (fldMsh, homDBC)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%
 %% Function documentation
 %
-% Returns all non-boundary nodes that have boundary conditions set on them
-% Works only for 2D rectangular meshes 
+% Returns all nodes that do not lie on the rectangular boundary and have 
+% no-slip boundary conditions set on them, works only for 2D rectangular  
+% meshes
+% Example:  
 %
 %               Input :
 %              fldMsh : Nodes and elements for the fluid mesh
@@ -9,21 +19,18 @@
 %                       Dirichlet boundary conditions are applied
 %
 %              Output :
-%    nodalCoordinates : Nodes and elements from the fluid mesh that lie on
-%                       a body 
 %             homDOFs : The global numbering of the DOFs that lie on a body
 %                       where homogeneous Dirichlet boundary conditions are
 %                       applied
 %
 %% Function main body
-function homDOFs = getBodyNodes (fldMsh, homDBC)
 
     % Initialize tolerance for node finding
     eps  = 1e-10;
     
     % Preallocate variables
-    homDOFs              = homDBC;
-    bodyNodeCounter      = 0;
+    homDOFs           = homDBC;
+    bodyNodeCounter   = 0;
     
     % Get mesh boundaries (edges or the rectangular domain)
     xmin = min(fldMsh.nodes(:,1));
@@ -53,7 +60,7 @@ function homDOFs = getBodyNodes (fldMsh, homDBC)
             bodyNodeCounter = bodyNodeCounter + 1;
             homDOFs(bodyNodeCounter) = idNode;
         end
-        
+   
     end
     
     % Chop unnecessary/redundant entries
