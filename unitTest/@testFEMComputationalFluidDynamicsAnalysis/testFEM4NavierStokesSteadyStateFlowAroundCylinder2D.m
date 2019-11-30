@@ -5,6 +5,7 @@ function testFEM4NavierStokesSteadyStateFlowAroundCylinder2D(testCase)
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Marko Leskovar
+% Andreas Apostolatos
 %
 %% Function documentation
 %
@@ -41,12 +42,12 @@ function testFEM4NavierStokesSteadyStateFlowAroundCylinder2D(testCase)
 
 %% 0. Read input
 % Define absolute tolerance
-absTol = 0.00000000001; % tolerance w.r.t the reference paper - CHANGE THIS TO YOUR LIKING; 0.04 should be ok
+absTol = 1e-5; % tolerance w.r.t the reference paper - CHANGE THIS TO YOUR LIKING; 0.04 should be ok
 absTol2 = 1e-10; % tolerance w.r.t our value
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
-caseName = 'unitTest_flowAroundCylinder2DReferencePaper';
+caseName = 'unitTest_testFEM4NavierStokesSteadyStateFlowAroundCylinder2D';
 
 %% 1. Parse the data from the GiD input file
 [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,~,analysis,parameters,...
@@ -98,19 +99,18 @@ valuesInhomDBCModified = inputInletVelocityParabolic(fldMsh, inhomDBC, valuesInh
     gaussInt,caseName,'');
 
 %% 7. Calculate drag and lift force from the nodal forces
-Fx = calculateDragForce (FComplete, fldMsh, homDBC, parameters);
-Fy = calculateLiftForce (FComplete, fldMsh, homDBC, parameters);
+[Fx, Fy, ~] = calculateForce(FComplete, fldMsh, homDBC, parameters, 2);
 
 %% 8. Calculate drag and lift coefficient based on drag and lift force
 
 % define parameters used in reference paper and simualiton
-rho = 1;        % density
-Ubar = 0.2;     % mid velocity 
-D = 0.1;        % diameter of the body
+Ubar = 0.2; % mid velocity 
+D = 0.1;    % diameter of the body
 
 % calculate drag and lift coefficiet
-dragCoefficient = (2 * Fx )/(rho * Ubar * Ubar * D);
-liftCoefficient = (2 * Fy )/(rho * Ubar * Ubar * D);
+dragCoefficient = (2 * Fx )/(parameters.rho * Ubar * Ubar * D);
+liftCoefficient = (2 * Fy )/(parameters.rho * Ubar * Ubar * D);
+
 % find absolute value so we don't get negative coefficients
 liftCoefficient = abs(liftCoefficient);
 
@@ -124,6 +124,7 @@ expSolDragCoefficient = 5.61079238629658;
 % in reality it should be 0, since it's a symmetric case
 expSolLiftCoefficientFromLiterature = 0.0107;
 expSolLiftCoefficient = 0.00224889649350511;
+
 % Define the expected solution in terms of the convergence flag
 expSolHasConverged = true;
 

@@ -6,12 +6,13 @@ function valuesInhomDBCModified = ...
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Marko Leskovar
+% Andreas Apostolatos
 %
 %% Function documentation
 %
-% Returns modified inhomogenious boundary conditions, works only for 2D rectangular meshes 
-% Example: we prescbribe input velocity on left boundary, function changes that
-% velocity to have parabolic distribution with new Umid
+% Returns modified inhomogeneous boundary conditions, works only for 2D rectangular meshes 
+% Example: we prescbribe input velocity on left boundary, function changes 
+% that velocity to have parabolic distribution with new Umid
 %
 %                  Input :
 %                 fldMsh : Nodes and elements for the fluid mesh
