@@ -23,6 +23,9 @@ clc;
 % Add general math functions
 addpath('../../generalMath/');
 
+% Add system solvers
+addpath('../../equationSystemSolvers/');
+
 % Add all functions related to the Computer-Aided Geometric Design (GACD) kernel
 addpath('../../CAGDKernel/CAGDKernel_basisFunctions',...
         '../../CAGDKernel/CAGDKernel_geometryResolutionRefinement/',...
