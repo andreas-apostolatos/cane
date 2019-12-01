@@ -42,7 +42,7 @@ function testFEM4NavierStokesSteadyStateFlowAroundCylinder2D(testCase)
 
 %% 0. Read input
 % Define absolute tolerance
-absTol = 1e-5; % tolerance w.r.t the reference paper - CHANGE THIS TO YOUR LIKING; 0.04 should be ok
+absTol = 0.04; % tolerance w.r.t the reference paper
 absTol2 = 1e-10; % tolerance w.r.t our value
 
 % Define the path to the case
