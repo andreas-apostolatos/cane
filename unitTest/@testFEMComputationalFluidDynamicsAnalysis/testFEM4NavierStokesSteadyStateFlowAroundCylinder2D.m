@@ -5,7 +5,7 @@ function testFEM4NavierStokesSteadyStateFlowAroundCylinder2D(testCase)
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Marko Leskovar
-% Andreas Apostolatos
+%                  Andreas Apostolatos
 %
 %% Function documentation
 %
@@ -51,7 +51,7 @@ caseName = 'unitTest_testFEM4NavierStokesSteadyStateFlowAroundCylinder2D';
 
 %% 1. Parse the data from the GiD input file
 [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,~,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,gaussInt,~] = ...
+    propNLinearAnalysis,propFldDynamics,gaussInt,postProc] = ...
     parse_FluidModelFromGid...
     (pathToCase,caseName,'');
 
@@ -89,7 +89,7 @@ VTKResultFile = 'undefined';
 Umax = 0.3;
 
 % change the input velocity to have the parabolic distribution
-valuesInhomDBCModified = inputInletVelocityParabolic(fldMsh, inhomDBC, valuesInhomDBC, Umax);
+valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC, valuesInhomDBC, Umax);
 
 %% 6. Solve the CFD problem
 [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
@@ -99,7 +99,7 @@ valuesInhomDBCModified = inputInletVelocityParabolic(fldMsh, inhomDBC, valuesInh
     gaussInt,caseName,'');
 
 %% 7. Calculate drag and lift force from the nodal forces
-[Fx, Fy, ~] = calculateForce(FComplete, fldMsh, homDBC, parameters, 2);
+outputPostProc = computePostProc(FComplete, parameters, postProc, 'body1', 2);
 
 %% 8. Calculate drag and lift coefficient based on drag and lift force
 
@@ -108,8 +108,8 @@ Ubar = 0.2; % mid velocity
 D = 0.1;    % diameter of the body
 
 % calculate drag and lift coefficiet
-dragCoefficient = (2 * Fx )/(parameters.rho * Ubar * Ubar * D);
-liftCoefficient = (2 * Fy )/(parameters.rho * Ubar * Ubar * D);
+dragCoefficient = (2 * outputPostProc(1) )/(parameters.rho * Ubar * Ubar * D);
+liftCoefficient = (2 * outputPostProc(2) )/(parameters.rho * Ubar * Ubar * D);
 
 % find absolute value so we don't get negative coefficients
 liftCoefficient = abs(liftCoefficient);

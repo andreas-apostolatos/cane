@@ -1,12 +1,12 @@
 function valuesInhomDBCModified = ...
-    inputInletVelocityParabolic(fldMsh, inhomDBC, valuesInhomDBC, Umid)
+    computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC, valuesInhomDBC, Umid)
 %% Licensing
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Marko Leskovar
-% Andreas Apostolatos
+%                  Andreas Apostolatos
 %
 %% Function documentation
 %

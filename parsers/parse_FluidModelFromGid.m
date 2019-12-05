@@ -322,18 +322,18 @@ if ~isempty(out)
     out = out{1};
     outNodes = out(:,1);
     nodes = outNodes{1};
-    outBodies = out(:,2);
-    bodies = string(outBodies{1}); 
+    outDomains = out(:,2);
+    domains = string(outDomains{1}); 
     outFctHandle = out(:,3);
     fctHandles = string(outFctHandle{1});
     
     % get only the unique body names
-    postProc.nameDomain = unique(bodies)';
+    postProc.nameDomain = unique(domains)';
     
     % loop over the number of unique body names
-    for k=1:length(postProc.nameDomain)
+    for k = 1:length(postProc.nameDomain)
         % find inxed of nodes
-        indexArray = (bodies == postProc.nameDomain(k));
+        indexArray = (domains == postProc.nameDomain(k));
         postProc.nodesDomain{k} = nodes(indexArray);
         % find corresponding function handle
         firstIndex = find(indexArray,1);

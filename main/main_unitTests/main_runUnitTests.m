@@ -95,16 +95,14 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/
         '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
         '../../FEMComputationalFluidDynamicsAnalysis/output/',...
         '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/transientAnalysis/');
+        '../../FEMComputationalFluidDynamicsAnalysis/transientAnalysis/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
 
 % Add all functions related to parsing
 addpath('../../parsers/');
 
 % Add all unit test functions and classes
 addpath('../../unitTest/');
-
-% Add all functions related to CFD fuild tests
-addpath('../../unitTestSupportFunctions/');
     
 %% Global variables for the unit tests
 isLight = true;
