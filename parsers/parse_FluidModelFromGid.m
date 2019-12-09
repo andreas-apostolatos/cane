@@ -7,6 +7,7 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
 %
 %% Function documentation
 %
@@ -20,7 +21,7 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %
 %              Output :
 %              fldMsh :     .nodes : The nodes in the FE mesh
-%                         .elements : The elements in the FE mesh
+%                        .elements : The elements in the FE mesh
 %              homDBC : The global numbering of the nodes where homogeneous
 %                       Dirichlet boundary conditions are applied
 %            inhomDBC : The global numbering of the nodes where 
@@ -42,6 +43,7 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %                                    vector (these functions are unde the 
 %                                    folder load)
 %            analysis : .type : The analysis type
+%                       .noDimensions : number of dimensions
 %          parameters : Problem specific technical parameters
 % propNLinearAnalysis :     .method : The employed nonlinear method
 %                      .noLoadSteps : Number of load steps (typically used 
@@ -124,6 +126,16 @@ block = regexp(fstring,'FLUID_ANALYSIS','split');
 block(1) = [];
 out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
 analysis.type = out{1}{2};
+
+% save the number of dimensions of the problem
+if strcmp(analysis.type,'NAVIER_STOKES_2D')
+        analysis.noDimensions = 2;
+elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+        analysis.noDimensions = 3;
+else
+        error('Wrong analysis type selected');
+end
+
 if strcmp(outMsg,'outputEnabled')
     fprintf('>> Analysis type: %s \n',analysis.type);
 end

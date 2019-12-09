@@ -99,17 +99,23 @@ valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC
     gaussInt,caseName,'');
 
 %% 7. Calculate drag and lift force from the nodal forces
-outputPostProc = computePostProc(FComplete, parameters, postProc, 'body1', 2);
+postProc = computePostProc(FComplete, analysis, parameters, postProc);
 
 %% 8. Calculate drag and lift coefficient based on drag and lift force
 
 % define parameters used in reference paper and simualiton
 Ubar = 0.2; % mid velocity 
 D = 0.1;    % diameter of the body
+rho = parameters.rho; % density
+
+% get Fx and Fy from post processing
+forcesOnDomain = postProc.valuePostProc{1};
+Fx = forcesOnDomain(1);
+Fy = forcesOnDomain(2);
 
 % calculate drag and lift coefficiet
-dragCoefficient = (2 * outputPostProc(1) )/(parameters.rho * Ubar * Ubar * D);
-liftCoefficient = (2 * outputPostProc(2) )/(parameters.rho * Ubar * Ubar * D);
+dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
+liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
 
 % find absolute value so we don't get negative coefficients
 liftCoefficient = abs(liftCoefficient);

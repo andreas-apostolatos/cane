@@ -1,4 +1,4 @@
-function Force = computeForces (FComplete, parameters, nodesDomain, noDimensions)
+function Force = computeForces (FComplete, analysis, parameters, nodesDomain)
 %% Licensing
 %
 % License:         BSD License
@@ -13,12 +13,9 @@ function Force = computeForces (FComplete, parameters, nodesDomain, noDimensions
 %
 %               Input :
 %           FComplete : The complete force vector
-%              fldMsh : Nodes and elements for the fluid mesh
-%              homDBC : The global numbering of the DOFs where homogeneous
-%                       Dirichlet boundary conditions are applied
+%            analysis : Analysis type and number of dimensions
 %          parameters : Flow parameters
-%        noDimensions : dimensionality of the problem 
-%                       2 for 2D problems, 3 for 3D problems
+%         nodesDomain : Global numbering of nodes of interest
 %   
 %              Output :
 %            Force(1) : Force on the body in x-direction
@@ -27,12 +24,13 @@ function Force = computeForces (FComplete, parameters, nodesDomain, noDimensions
 %
 %% Function main body
     
+    
     % Reshape the input forces to [Fx, Fy, Fz]
-    FComplete = -reshape(FComplete, [(noDimensions +1),                 ...
-                   length(FComplete)/(noDimensions +1)])';
+    FComplete = -reshape(FComplete, [(analysis.noDimensions +1),        ...
+                  length(FComplete) /(analysis.noDimensions +1)])';
     
     % Select forces on body nodes
-    F = FComplete(nodesDomain, 1:noDimensions) * parameters.rho;
+    F = FComplete(nodesDomain, 1:analysis.noDimensions) * parameters.rho;
     
     % Sum the individual components
     Force(1) = sum(F(:,1));
@@ -40,7 +38,7 @@ function Force = computeForces (FComplete, parameters, nodesDomain, noDimensions
     Force(3) = 0;
     
     % Sum Fz if we have a 3D problem
-    if noDimensions == 3
+    if analysis.noDimensions == 3
         Force(3) = sum(F(:,3));
     end
     
