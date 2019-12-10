@@ -33,11 +33,8 @@ for k = 1:length(postProc.nameDomain)
     
     % get the name of the function and compute output
     outputFunction = str2func(functionHandle);
-    postProc.valuePostProc{k} = outputFunction(FComplete, analysis,     ...
-                                               parameters, nodesDomain);
-                                    
+    postProc.valuePostProc{k} = outputFunction(analysis, nodesDomain,   ...
+                                               FComplete, parameters);                                
 end
 
-
-
-
+end

@@ -10,7 +10,8 @@ function valuesInhomDBCModified = ...
 %
 %% Function documentation
 %
-% Returns modified inhomogeneous boundary conditions, works only for 2D rectangular meshes 
+% Returns modified inhomogeneous boundary conditions, works only for 2D 
+% rectangular meshes 
 % Example: we prescbribe input velocity on left boundary, function changes 
 % that velocity to have parabolic distribution with new Umid
 %
@@ -30,25 +31,20 @@ function valuesInhomDBCModified = ...
 %
 %% Function main body
 
-    % find indices of nodes on the inlet
-    rows = floor(inhomDBC/3) + mod(inhomDBC,3 );
-    rowIndices = abs(fldMsh.nodes(rows,1) - min(fldMsh.nodes(:,1)))     ...
-                    < 1e-10;
-    
-    rowIndices = inhomDBC(rowIndices);
-    rowIndices = floor(rowIndices/3) + mod(rowIndices,3);
-    
-    % Sort 
-    [sortedCoordinates, rowIndices] = sort(                             ...
-        fldMsh.nodes(rowIndices,2),'ascend');
-    
-    % calculate input velocities based on parabolic distribution
-    H = sortedCoordinates(end)-sortedCoordinates(1);
-    y = sortedCoordinates-sortedCoordinates(1); 
-    values = 4*Umid*y.*(H-y)/(H*H);
-    
-    % Insert
-    valuesInhomDBCModified = valuesInhomDBC;
-    valuesInhomDBCModified(rowIndices) = values;
+inletNodes = floor(inhomDBC/3) + mod(inhomDBC,3 );
+
+% Sort according to y-coordinate
+[sortedCoordinates, rowIndices] = sort(fldMsh.nodes(inletNodes,2),'ascend');
+
+% Find the inlet height and relative y-coordinate of each node
+H = sortedCoordinates(end) - sortedCoordinates(1);
+y = sortedCoordinates - sortedCoordinates(1); 
+
+% Calculate input velocities based on parabolic distribution formula
+values = 4*Umid*y.*(H-y)/(H*H);
+
+% Insert values
+valuesInhomDBCModified = valuesInhomDBC;
+valuesInhomDBCModified(rowIndices) = values;
     
 end

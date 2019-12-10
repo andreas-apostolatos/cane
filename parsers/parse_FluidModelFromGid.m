@@ -42,8 +42,9 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %                                    node for the computation of the load 
 %                                    vector (these functions are unde the 
 %                                    folder load)
-%            analysis : .type : The analysis type
-%                       .noDimensions : number of dimensions
+%            analysis : .type      : The analysis type
+%             .noSpatialDimensions : Number of spatial dimensions
+%                       .noFields  : Number of DOFs per node
 %          parameters : Problem specific technical parameters
 % propNLinearAnalysis :     .method : The employed nonlinear method
 %                      .noLoadSteps : Number of load steps (typically used 
@@ -129,9 +130,11 @@ analysis.type = out{1}{2};
 
 % save the number of dimensions of the problem
 if strcmp(analysis.type,'NAVIER_STOKES_2D')
-        analysis.noDimensions = 2;
+        analysis.noSpatialDimensions = 2;
+        analysis.noFields = 3;
 elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
-        analysis.noDimensions = 3;
+        analysis.noSpatialDimensions = 3;
+        analysis.noFields = 4;
 else
         error('Wrong analysis type selected');
 end

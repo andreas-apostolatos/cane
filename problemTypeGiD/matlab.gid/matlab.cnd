@@ -57,7 +57,7 @@ CONDMESHTYPE: over nodes
 QUESTION: BodyNumber
 VALUE: body1
 QUESTION: FunctionHandleToPostProcessing 
-VALUE: computeForces
+VALUE: computeResultingTotalForceOnSelectedDomain
 END CONDITION
 
 NUMBER: 5 CONDITION: Fluid-PostProcessing-Over-Surfaces
@@ -66,7 +66,7 @@ CONDMESHTYPE: over nodes
 QUESTION: BodyNumber
 VALUE: body1
 QUESTION: FunctionHandleToPostProcessing 
-VALUE: computeForces
+VALUE: computeResultingTotalForceOnSelectedDomain
 END CONDITION
 
 NUMBER: 6 CONDITION: Structure-Dirichlet
