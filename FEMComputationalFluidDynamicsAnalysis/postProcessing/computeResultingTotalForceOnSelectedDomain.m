@@ -24,16 +24,11 @@ function F = computeResultingTotalForceOnSelectedDomain(analysis, nodesDomain, F
 %
 %% Function main body
     
-% Reshape the vector to [Vx, Vy, p]
-FComplete = -reshape(FComplete, [analysis.noFields,                     ...
-             length(FComplete) / analysis.noFields])';
-
-% Select only the forces on the domain
-Force = FComplete(nodesDomain, 1:analysis.noSpatialDimensions);
-
 F = zeros(analysis.noSpatialDimensions,1);
+DOFsDomain = analysis.noFields * nodesDomain - analysis.noSpatialDimensions;
 for k = 1:analysis.noSpatialDimensions
-    F(k,1) = sum(Force(:,k)) * parameters.rho;
+    activeDOFsDomain = DOFsDomain + (k-1);
+    F(k,1) = -parameters.rho * sum(FComplete(activeDOFsDomain(1:end)));
 end
-    
+
 end

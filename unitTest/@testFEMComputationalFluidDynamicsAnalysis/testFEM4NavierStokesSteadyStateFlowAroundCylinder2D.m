@@ -110,8 +110,8 @@ rho = parameters.rho; % density
 
 % get Fx and Fy from post processing
 forcesOnDomain = postProc.valuePostProc{1};
-Fx = forcesOnDomain(1);
-Fy = forcesOnDomain(2);
+Fx = forcesOnDomain(1,1);
+Fy = forcesOnDomain(2,1);
 
 % calculate drag and lift coefficiet
 dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
