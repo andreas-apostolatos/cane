@@ -95,14 +95,15 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/
         '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
         '../../FEMComputationalFluidDynamicsAnalysis/output/',...
         '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/transientAnalysis/');
+        '../../FEMComputationalFluidDynamicsAnalysis/transientAnalysis/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
 
 % Add all functions related to parsing
 addpath('../../parsers/');
 
 % Add all unit test functions and classes
 addpath('../../unitTest/');
-
+    
 %% Global variables for the unit tests
 isLight = true;
 
@@ -162,7 +163,8 @@ suiteClassFEM4CFD = TestSuite.fromClass(?testFEMComputationalFluidDynamicsAnalys
 if isLight
     suiteClassFEM4CFD = suiteClassFEM4CFD.selectIf...
         (HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesSteadyState2D') | ...
-        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesTransientBossak3D'));
+        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesTransientBossak3D') | ...
+        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesSteadyStateFlowAroundCylinder2D'));
 end
 resultFEM4CFD = run(suiteClassFEM4CFD);
 

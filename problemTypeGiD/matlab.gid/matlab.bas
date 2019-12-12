@@ -115,7 +115,7 @@ STRUCTURE_FORCE_NODES*\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 FLUID_ANALYSIS
- ANALYSIS_TYPE,*GenData(STR_ANA-TYPE)
+ ANALYSIS_TYPE,*GenData(CFD_ANA-TYPE)
 
 FLUID_MATERIAL_PROPERTIES
 *Loop materials
@@ -127,15 +127,24 @@ FLUID_MATERIAL_PROPERTIES
 
 FLUID_NLINEAR_SCHEME
  NLINEAR_SCHEME,*GenData(CFD_NL_SOLVER-TYPE)
+ NO_LOAD_STEPS,*GenData(CFD_N_STEPS)
  TOLERANCE,*GenData(CFD_TOL)
  MAX_ITERATIONS,*GenData(CFD_MAX_IT)
 
 FLUID_TRANSIENT_ANALYSIS
  SOLVER *GenData(CFD_TIME_ANA-TYPE)
  TIME_INTEGRATION *GenData(CFD_TIME_INTEGRATION-SCHEME)
+ ALPHA_BETA *GenData(CFD_ALPHA/BETA)
+ GAMMA *GenData(CFD_GAMMA)
  START_TIME *GenData(CFD_START_TIME)
  END_TIME *GenData(CFD_END_TIME)
  NUMBER_OF_TIME_STEPS *GenData(CFD_NUMBER_OF_TIME_STEPS)
+ ADAPTIVE_TIME_STEPPING *GenData(CFD_ADAPTIVE_TIME_STEPPING)
+ 
+FLUID_INTEGRATION
+ DOMAIN *GenData(CFD_DOMAIN_TYPE-TYPE)
+ domainNoGP *GenData(CFD_DOMAIN_NO_GP)
+ boundaryNoGP *GenData(CFD_BOUNDARY_NO_GP)
 	
 FLUID_ELEMENTS
 *set Cond Fluid-Elements-Over-Surfaces *elems
@@ -211,6 +220,21 @@ FLUID_DIRICHLET_ALE_NODES*\
 *format "%8i"
 
 *NodesNum *cond(FunctionHandleToALEMotion)*\
+*end loop
+
+FLUID_POST_PROC_NODES*\
+*set Cond Fluid-PostProcessing-Over-Lines *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*NodesNum *cond(BodyNumber) *cond(FunctionHandleToPostProcessing)*\
+*end loop
+
+*set Cond Fluid-PostProcessing-Over-Surfaces *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*NodesNum *cond(BodyNumber) *cond(FunctionHandleToPostProcessing)*\
 *end loop
 
 FLUID_NODES

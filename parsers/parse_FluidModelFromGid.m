@@ -1,5 +1,5 @@
 function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
-    parameters,propNLinearAnalysis,propFldDynamics,gaussInt] = ...
+    parameters,propNLinearAnalysis,propFldDynamics,gaussInt,postProc] = ...
     parse_FluidModelFromGid(pathToCase,caseName,outMsg)
 %% Licensing
 %
@@ -7,6 +7,7 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
 %
 %% Function documentation
 %
@@ -20,7 +21,7 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %
 %              Output :
 %              fldMsh :     .nodes : The nodes in the FE mesh
-%                         .elements : The elements in the FE mesh
+%                        .elements : The elements in the FE mesh
 %              homDBC : The global numbering of the nodes where homogeneous
 %                       Dirichlet boundary conditions are applied
 %            inhomDBC : The global numbering of the nodes where 
@@ -41,7 +42,9 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %                                    node for the computation of the load 
 %                                    vector (these functions are unde the 
 %                                    folder load)
-%            analysis : .type : The analysis type
+%            analysis : .type      : The analysis type
+%             .noSpatialDimensions : Number of spatial dimensions
+%                       .noFields  : Number of DOFs per node
 %          parameters : Problem specific technical parameters
 % propNLinearAnalysis :     .method : The employed nonlinear method
 %                      .noLoadSteps : Number of load steps (typically used 
@@ -61,6 +64,11 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %                                         domain integration
 %                         .boundaryNoGP : Number of Gauss Points for the
 %                                         boundary integration
+%            postProc : Post-processing properties
+%                           .nameDomain : names of all the domains for post
+%                          .nodesDomain : The global numbering of nodes
+%                                         that are part of the domains above
+%                      .computePostProc : function handles for calculation
 %
 % Function layout :
 %
@@ -84,11 +92,13 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %
 % 10. Load the nodes on which ALE conditions are applied
 %
-% 11. Load the nodes on the Neumann boundary together with the load application information
-% 
-% 12. Get edge connectivity arrays for the Neumann edges
+% 11. Load the nodes, body names and function handles for post processing
 %
-% 13. Appendix
+% 12. Load the nodes on the Neumann boundary together with the load application information
+% 
+% 13. Get edge connectivity arrays for the Neumann edges
+%
+% 14. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
@@ -117,6 +127,18 @@ block = regexp(fstring,'FLUID_ANALYSIS','split');
 block(1) = [];
 out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
 analysis.type = out{1}{2};
+
+% save the number of dimensions of the problem
+if strcmp(analysis.type,'NAVIER_STOKES_2D')
+        analysis.noSpatialDimensions = 2;
+        analysis.noFields = 3;
+elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+        analysis.noSpatialDimensions = 3;
+        analysis.noFields = 4;
+else
+        error('Wrong analysis type selected');
+end
+
 if strcmp(outMsg,'outputEnabled')
     fprintf('>> Analysis type: %s \n',analysis.type);
 end
@@ -303,7 +325,41 @@ if strcmp(outMsg,'outputEnabled') && ~isempty(out)
     fprintf('>> Arbitrary Lagrangian-Eulerian method selected');
 end
 
-%% 11. Load the nodes on the Neumann boundary together with the load application information
+%% 11. Load the nodes, body names and function handles for post processing
+block = regexp(fstring,'FLUID_POST_PROC_NODES','split'); 
+block(1) = [];
+out = cell(size(block));
+for k = 1:numel(block)
+    out{k} = textscan(block{k},'%f %s %s','delimiter',' ','MultipleDelimsAsOne', 1);
+end
+
+if ~isempty(out)
+    out = out{1};
+    outNodes = out(:,1);
+    nodes = outNodes{1};
+    outDomains = out(:,2);
+    domains = string(outDomains{1}); 
+    outFctHandle = out(:,3);
+    fctHandles = string(outFctHandle{1});
+    
+    % get only the unique body names
+    postProc.nameDomain = unique(domains)';
+    
+    % loop over the number of unique body names
+    for k = 1:length(postProc.nameDomain)
+        % find inxed of nodes
+        indexArray = (domains == postProc.nameDomain(k));
+        postProc.nodesDomain{k} = nodes(indexArray);
+        % find corresponding function handle
+        firstIndex = find(indexArray,1);
+        postProc.computePostProc(k) = fctHandles(firstIndex);
+    end
+    
+else
+    postProc = [];
+end
+
+%% 12. Load the nodes on the Neumann boundary together with the load application information
 block = regexp(fstring,'FLUID_FORCE_NODES','split'); 
 block(1) = [];
 out = cell(size(block));
@@ -320,7 +376,7 @@ if ~isempty(out)
     NBC.fctHandle = cell2mat(outFctHandle{1});
 end
 
-%% 12. Get edge connectivity arrays for the Neumann edges
+%% 13. Get edge connectivity arrays for the Neumann edges
 if ~isempty(out)
     if strcmp(outMsg,'outputEnabled')
         fprintf('>> Neumann boundary edges: %d \n',length(NBC.nodes)-1);
@@ -372,7 +428,7 @@ else
     NBC = 'undefined';
 end
 
-%% 13. Appendix
+%% 14. Appendix
 if strcmp(outMsg,'outputEnabled')
     % Save computational time
     computationalTime = toc;

@@ -8,7 +8,7 @@ DEPENDENCIES:(whatever,HIDE,Density,#CURRENT#,HIDE,Dynamic_Viscosity,#CURRENT#)
 QUESTION: Density
 VALUE: 1.0
 QUESTION: Dynamic_Viscosity
-VALUE: 0.0
+VALUE: 1e-3
 END MATERIAL
 
 MATERIAL: Structure
