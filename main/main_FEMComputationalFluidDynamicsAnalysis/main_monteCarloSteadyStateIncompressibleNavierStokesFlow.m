@@ -11,8 +11,44 @@
 %        in 2D (to be implemented)
 %
 % Date : 16.12.2019
-%
-%% Function main body
+%% Preamble
+clear;
+clc;
+close all;
+
+%% Includes
+
+% Add functions related to equation system solvers
+addpath('../../equationSystemSolvers/');
+
+% Add general math functions
+addpath('../../generalMath/');
+
+% Add the classical finite element basis functions
+addpath('../../basisFunctions/');
+
+% Add all functions related to plate in membrane action analysis
+addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
+        '../../FEMPlateInMembraneActionAnalysis/solutionMatricesAndVectors/',...
+        '../../FEMPlateInMembraneActionAnalysis/loads/',...
+        '../../FEMPlateInMembraneActionAnalysis/graphics/',...
+        '../../FEMPlateInMembraneActionAnalysis/output/',...
+        '../../FEMPlateInMembraneActionAnalysis/postprocessing/');
+
+% Add all functions related to the Finite Element Methods for Computational
+% Fluid Dynamics problems
+addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/initialConditions',...
+        '../../FEMComputationalFluidDynamicsAnalysis/solvers/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/output/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/');
+
+% Add all functions related to parsing
+addpath('../../parsers/');
+
+% Add all functions related to the efficient computation functions
+addpath('../../efficientComputation/');
 
 %% Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
