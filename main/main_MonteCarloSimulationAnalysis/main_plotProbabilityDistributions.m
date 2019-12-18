@@ -26,7 +26,8 @@ addpath('../../MonteCarloSimulationAnalysis/probabilityDistributions');
 
 
 
-
+%% Compute the normal distribution function in different parametric locations
+computeNormalDistribution()
 
 
 
