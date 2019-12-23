@@ -42,7 +42,8 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/
         '../../FEMComputationalFluidDynamicsAnalysis/solvers/',...
         '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
         '../../FEMComputationalFluidDynamicsAnalysis/output/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/');
+        '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
 
 % Add all functions related to parsing
 addpath('../../parsers/');
@@ -76,6 +77,14 @@ if strcmp(propFldDynamics.method,'bossak')
         @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
 end
 
+% Initialize graph index
+graph.index = 1;
+
+% define parameters used in reference paper and simualiton
+Ubar = 0.2; % mid velocity 
+D = 0.1;    % diameter of the body
+rho = parameters.rho; % density
+
 %% Choose the equation system solver
 if strcmp(analysis.type,'NAVIER_STOKES_2D')
     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
@@ -87,6 +96,65 @@ end
 
 %% Define the name of the vtk file from where to resume the simulation
 VTKResultFile = 'undefined';
+
+
+%% Normal distribution function
+
+no_samples = 1000;
+
+standard_deviation = 0.015;
+
+mean = 0.3;
+
+% distributionFunction = @(varargin) 2*standard_deviation*rand(noSample,1) + mean - standard_deviation;
+
+distributionFunction = @(varargin) normrnd(mean, standard_deviation, no_samples, 1);
+
+Umax_random = distributionFunction();
+
+drag_coefficient_random = zeros(no_samples,1);
+
+% histogram(input,100)
+figure(graph.index)
+histfit(Umax_random)
+title('Input histogram')
+graph.index = graph.index + 1;
+
+%% Set up progress bar
+fprintf(['\n' repmat('.',1,no_samples) '\n\n']);
+tic
+
+%% Parloop over all samples
+parfor i = 1:no_samples
+    %% Change the input velocity to match the reference paper - parabolic input
+    Umax = Umax_random(i,1);
+    valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC, valuesInhomDBC, Umax);
+    
+    %% Solve the CFD problem
+    [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
+        (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
+        computeBodyForces,analysis,computeInitialConditions,...
+        VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
+        gaussInt,caseName,'');
+    
+    %% Compute postprocessing
+    postProc_random = computePostProc(FComplete, analysis, parameters, postProc);
+    forcesOnDomain = postProc_random.valuePostProc{1};
+    Fx = forcesOnDomain(1,1);
+    Fy = forcesOnDomain(2,1);
+    drag_coefficient_random(i,1) = (2 * Fx)/(rho * Ubar * Ubar * D);
+    
+    %% Update progress bar
+    fprintf('\b|\n');
+end
+disp(['Elapsed time: ', num2str(toc)])
+
+figure(graph.index)
+histfit(drag_coefficient_random)
+title('Output histogram')
+graph.index = graph.index + 1;
+
+return;
 
 %% Change the input velocity to match the reference paper - parabolic input
 
@@ -108,15 +176,8 @@ postProc = computePostProc(FComplete, analysis, parameters, postProc);
 
 %% Calculate drag and lift coefficient based on drag and lift force
 
-% define parameters used in reference paper and simualiton
-Ubar = 0.2; % mid velocity 
-D = 0.1;    % diameter of the body
-rho = parameters.rho; % density
-
 % get Fx and Fy from post processing
-forcesOnDomain = postProc.valuePostProc{1};
-Fx = forcesOnDomain(1,1);
-Fy = forcesOnDomain(2,1);
+
 
 % calculate drag and lift coefficiet
 dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
