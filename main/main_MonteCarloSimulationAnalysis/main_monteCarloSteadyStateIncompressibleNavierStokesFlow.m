@@ -7,10 +7,11 @@
 %
 %% Script documentation
 %
-% Task : Performs Multilevel Monte-Carlo for the 2D Navier-Stokes equations
-%        in 2D (to be implemented)
+% Task : Performs Multilevel Monte-Carlo for the 2D incompressible steady-
+%        state Navier-Stokes equations
 %
 % Date : 16.12.2019
+%
 %% Preamble
 clear;
 clc;
@@ -97,34 +98,63 @@ end
 %% Define the name of the vtk file from where to resume the simulation
 VTKResultFile = 'undefined';
 
+%% Input statistics
 
-%% Normal distribution function
+% Number of samples
+no_samples = 100;
 
-no_samples = 1000;
-
-standard_deviation = 0.015;
-
+% Mean value of the samples
 mean = 0.3;
 
-% distributionFunction = @(varargin) 2*standard_deviation*rand(noSample,1) + mean - standard_deviation;
+% Standard deviation of the samples
+standard_deviation = 0.015;
 
-distributionFunction = @(varargin) normrnd(mean, standard_deviation, no_samples, 1);
+% Sampling function selection
+sampling_method_list = {'randomUniform','randomNormal','latinHyperCube', 'quasiMonteCarloHalton'};
+sampling_method = sampling_method_list{2};
+switch sampling_method
+    case 'randomUniform'
+        % Uniform distribution with bounds
+        distributionFunction = @(varargin) 2*standard_deviation*rand(no_samples,1) + mean - standard_deviation;
+    case 'randomNormal'
+        % Random normal distribution sampling
+        distributionFunction = @(varargin) normrnd(mean, standard_deviation, no_samples, 1);
+    case 'latinHyperCube'
+        % Latin hypercube sampling
+        distributionFunction =  @(varargin) lhsnorm(mean, (standard_deviation*standard_deviation), no_samples);
+    case 'quasiMonteCarloHalton'
+        % Quasi Monte Carlo Halton Sequence sampling
+        p = haltonset(1,'Skip',1e3,'Leap',1e2);
+        p = scramble(p,'RR2');
+        haltonvector = net(p,no_samples); % Halton Sequence sampling
+        distributionFunction = @(varargin) norminv(haltonvector, mean, standard_deviation); % Invert uniform Halton sequence to normal distribution
+    otherwise
+        % Error
+        error('Invalid input sampling method')
+end
 
+%% Generate input samples
+
+% Uncertainty in the inlet amplitude
 Umax_random = distributionFunction();
-
-drag_coefficient_random = zeros(no_samples,1);
 
 % histogram(input,100)
 figure(graph.index)
 histfit(Umax_random)
+yt = get(gca, 'YTick');
+set(gca, 'YTick', yt, 'YTickLabel', yt/numel(Umax_random))
 title('Input histogram')
 graph.index = graph.index + 1;
+
+%% Initialize output statistics
+drag_coefficient_random = zeros(no_samples,1);
+lift_coefficient_random = zeros(no_samples,1);
 
 %% Set up progress bar
 fprintf(['\n' repmat('.',1,no_samples) '\n\n']);
 tic
 
-%% Parloop over all samples
+%% Perform a Monte-Carlo Simulation for all samples
 parfor i = 1:no_samples
     %% Change the input velocity to match the reference paper - parabolic input
     Umax = Umax_random(i,1);
@@ -143,47 +173,29 @@ parfor i = 1:no_samples
     Fx = forcesOnDomain(1,1);
     Fy = forcesOnDomain(2,1);
     drag_coefficient_random(i,1) = (2 * Fx)/(rho * Ubar * Ubar * D);
+    liftCoefficient_random(i,1) = abs((2 * Fy)/(rho * Ubar * Ubar * D));
     
     %% Update progress bar
     fprintf('\b|\n');
 end
 disp(['Elapsed time: ', num2str(toc)])
 
+%% Perform statistics to the output variables
+
+% Drag coefficient
 figure(graph.index)
 histfit(drag_coefficient_random)
-title('Output histogram')
+yt = get(gca, 'YTick');
+set(gca, 'YTick', yt, 'YTickLabel', yt/numel(drag_coefficient_random))
+title('Output histogram for the drag coefficient')
 graph.index = graph.index + 1;
 
-return;
-
-%% Change the input velocity to match the reference paper - parabolic input
-
-% max input velocity defined in the reference paper
-Umax = 0.3;
-
-% change the input velocity to have the parabolic distribution
-valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC, valuesInhomDBC, Umax);
-
-%% Solve the CFD problem
-[~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-    (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
-    computeBodyForces,analysis,computeInitialConditions,...
-    VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-    gaussInt,caseName,'');
-
-%% Calculate drag and lift force from the nodal forces
-postProc = computePostProc(FComplete, analysis, parameters, postProc);
-
-%% Calculate drag and lift coefficient based on drag and lift force
-
-% get Fx and Fy from post processing
-
-
-% calculate drag and lift coefficiet
-dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
-liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
-
-% find absolute value so we don't get negative coefficients
-liftCoefficient = abs(liftCoefficient);
+% Lift coefficient
+figure(graph.index)
+histfit(lift_coefficient_random)
+yt = get(gca, 'YTick');
+set(gca, 'YTick', yt, 'YTickLabel', yt/numel(lift_coefficient_random))
+title('Output histogram for the lift coefficient')
+graph.index = graph.index + 1;
 
 %% END OF THE SCRIPT

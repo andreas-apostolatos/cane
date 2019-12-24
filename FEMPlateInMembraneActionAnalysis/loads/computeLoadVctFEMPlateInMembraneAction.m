@@ -108,14 +108,14 @@ end
 [GP,GW] = getGaussPointsAndWeightsOverUnitDomain(noGP);
 
 %% 2. Loop over all elements on the Neumann boundary
-for counterEl = 1:length(NBC.lines(:,1))
+for iElmnt = 1:length(NBC.lines(:,1))
     %% 2i. Get the nodes which are on the Neumann boundary
-    nodeIDs = NBC.lines(counterEl,1:2);
+    nodeIDs = NBC.lines(iElmnt,1:2);
     x1 = strMsh.nodes(nodeIDs(1),:);
     x2 = strMsh.nodes(nodeIDs(2),:);
     
     %% 2ii. Get the nodes of the element on the Neumann boundary
-    elementID = NBC.lines(counterEl,3);
+    elementID = NBC.lines(iElmnt,3);
     element = strMsh.elements(elementID,:);
     index = isnan(element);
     element(index) = [];
@@ -131,7 +131,13 @@ for counterEl = 1:length(NBC.lines(:,1))
     nodes = strMsh.nodes(element,:);
     
     %% 2iii. Get the function handle for this type of loading
-    loadFctHandle = str2func(NBC.fctHandle(counterEl,:));
+    if ischar(NBC.fctHandle(iElmnt,:))
+        loadFctHandle = str2func(NBC.fctHandle(iElmnt,:));
+    elseif isa(NBC.fctHandle{iElmnt},'function_handle')
+        loadFctHandle = NBC.fctHandle{iElmnt};
+    else
+        error('Variable stored in NBC.fctHandle(%d,:) is neither a string nor it defines a function handle',iElmnt);
+    end
     
     %% 2iv. Assemble the Element Freedome Table (EFT)
     EFT = zeros(noDOFsEl,1);
