@@ -44,12 +44,19 @@ addpath('../../efficientComputation/');
 
 %% Define the path to the case
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
-caseName = 'cantileverBeamPlaneStress';
+% caseName = 'cantileverBeamPlaneStress';
+caseName = 'PlateWithMultipleHolesPlaneStress';
 
 %% Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
     propNLinearAnalysis,~] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
+
+% Enforce geometrically linear analysis
+propNLinearAnalysis.method = 'UNDEFINED';
+propNLinearAnalysis.noLoadSteps = NaN;
+propNLinearAnalysis.eps = NaN;
+propNLinearAnalysis.maxIter = NaN;
 
 %% GUI
 
@@ -63,6 +70,12 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % Choose computation of the stiffness matrix
 % computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
 computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
+
+% Sampling function selection
+% 'generateRandomUniformDistribution', 'generateRandomNormalDistribution', 
+% 'generateRandomLatinHypercubeDistribution',
+% 'generateRandomQuasiMonteCarloDistribution'
+computeRandomDistribution = @generateRandomNormalDistribution;
 
 % Quadrature for the stiffness matrix and the load vector of the problem
 % 'default', 'user'
@@ -79,7 +92,7 @@ intError.noGP = 4;
 propStrDynamics = 'undefined';
 
 % On whether the case is a unit test
-isUnitTest = true;
+isUnitTest = false;
 
 % Initialize graphics index
 graph.index = 1;
@@ -89,34 +102,25 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
 %% Input statistics
 
-% Number of samples
-no_samples = 1000;
-
-% Mean value of the samples
-mean = -1e3;
-
-% Standard deviation of the samples
-standard_deviation = 1e1;
-
 % Sampling function selection
 sampling_method_list = {'randomUniform','randomNormal','latinHyperCube', 'quasiMonteCarloHalton'};
 sampling_method = sampling_method_list{2};
 switch sampling_method
     case 'randomUniform'
         % Uniform distribution with bounds
-        distributionFunction = @(varargin) 2*standard_deviation*rand(no_samples,1) + mean - standard_deviation;
+        distributionFunction = @(varargin) 2*standard_deviation*rand(no_samples,1) + mean_value - standard_deviation;
     case 'randomNormal'
         % Random normal distribution sampling
-        distributionFunction = @(varargin) normrnd(mean, standard_deviation, no_samples, 1);
+        distributionFunction = @(varargin) normrnd(mean_value, standard_deviation, no_samples, 1);
     case 'latinHyperCube'
         % Latin hypercube sampling
-        distributionFunction =  @(varargin) lhsnorm(mean, (standard_deviation*standard_deviation), no_samples);
+        distributionFunction =  @(varargin) lhsnorm(mean_value, (standard_deviation*standard_deviation), no_samples);
     case 'quasiMonteCarloHalton'
         % Quasi Monte Carlo Halton Sequence sampling
         p = haltonset(1,'Skip',1e3,'Leap',1e2);
         p = scramble(p,'RR2');
         haltonvector = net(p,no_samples); % Halton Sequence sampling
-        distributionFunction = @(varargin) norminv(haltonvector, mean, standard_deviation); % Invert uniform Halton sequence to normal distribution
+        distributionFunction = @(varargin) norminv(haltonvector, mean_value, standard_deviation); % Invert uniform Halton sequence to normal distribution
     otherwise
         % Error
         error('Invalid input sampling method')
@@ -124,8 +128,19 @@ end
 
 %% Generate input samples
 
+% Number of samples
+no_samples = 1000;
+
+% Mean value of the samples
+% mean_value = -1e3;
+mean_value = -1e2;
+
+% Standard deviation of the samples
+% standard_deviation = 1e1;
+standard_deviation = 1e0;
+
 % Uncertainty in the load amplitude
-amplitude = distributionFunction();
+amplitude = computeRandomDistribution(mean_value, standard_deviation, no_samples);
 
 % Re-initialize the function handle array in the NBC struct
 NBC = rmfield(NBC,'fctHandle');
@@ -144,6 +159,11 @@ set(gca, 'YTick', yt, 'YTickLabel', yt/numel(amplitude))
 title('Input histogram')
 graph.index = graph.index + 1;
 
+% Compute mean value and variance of the input data
+mean_value_amplitude = mean(amplitude);
+standard_deviation_amplitude = std(amplitude);
+fprintf('Input data possess mean value %d and standard deviation %d\n\n',mean_value_amplitude, standard_deviation_amplitude);
+
 %% Initialize output statistics
 
 % Support forces in the x-direction
@@ -160,7 +180,8 @@ tic
 parfor i = 1:no_samples
     %% Compute the force vector subject to a load with random amplitude
     for j = 1:no_NBC
-        NBC_random(i).fctHandle{j} = @(x,y,z,t) [0; amplitude(i,1); 0];
+%         NBC_random(i).fctHandle{j} = @(x,y,z,t) [0; amplitude(i,1); 0];
+        NBC_random(i).fctHandle{j} = @(x,y,z,t) [amplitude(i,1); 0; 0];
     end
     F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC_random(i),0,intLoad,'');
     
@@ -183,12 +204,12 @@ disp(['Elapsed time: ', num2str(toc)])
 %% Perform statistics to the output variables
 
 % Drag coefficient
-figure(graph.index)
-histfit(support_forces_x)
-yt = get(gca, 'YTick');
-set(gca, 'YTick', yt, 'YTickLabel', yt/numel(support_forces_x))
-title('Output histogram for the support forces in x-direction')
-graph.index = graph.index + 1;
+% figure(graph.index)
+% histfit(support_forces_x)
+% yt = get(gca, 'YTick');
+% set(gca, 'YTick', yt, 'YTickLabel', yt/numel(support_forces_x))
+% title('Output histogram for the support forces in x-direction')
+% graph.index = graph.index + 1;
 
 % Lift coefficient
 figure(graph.index)
@@ -197,5 +218,10 @@ yt = get(gca, 'YTick');
 set(gca, 'YTick', yt, 'YTickLabel', yt/numel(support_forces_y))
 title('Output histogram for the support forces in y-direction')
 graph.index = graph.index + 1;
+
+% Compute mean value and variance of the input data
+mean_value_support_forces_y = mean(support_forces_y);
+standard_deviation_support_forces_y = std(support_forces_y);
+fprintf('\n\nOutput data possess mean value %d and standard deviation %d\n\n',mean_value_support_forces_y, standard_deviation_support_forces_y);
 
 %% END OF THE SCRIPT

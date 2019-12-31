@@ -78,6 +78,12 @@ if strcmp(propFldDynamics.method,'bossak')
         @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
 end
 
+% Sampling function selection
+% 'generateRandomUniformDistribution', 'generateRandomNormalDistribution', 
+% 'generateRandomLatinHypercubeDistribution',
+% 'generateRandomQuasiMonteCarloDistribution'
+computeRandomDistribution = @generateRandomNormalDistribution;
+
 % Initialize graph index
 graph.index = 1;
 
@@ -98,45 +104,19 @@ end
 %% Define the name of the vtk file from where to resume the simulation
 VTKResultFile = 'undefined';
 
-%% Input statistics
+%% Generate input samples
 
 % Number of samples
 no_samples = 100;
 
 % Mean value of the samples
-mean = 0.3;
+mean_value = 0.3;
 
 % Standard deviation of the samples
 standard_deviation = 0.015;
 
-% Sampling function selection
-sampling_method_list = {'randomUniform','randomNormal','latinHyperCube', 'quasiMonteCarloHalton'};
-sampling_method = sampling_method_list{2};
-switch sampling_method
-    case 'randomUniform'
-        % Uniform distribution with bounds
-        distributionFunction = @(varargin) 2*standard_deviation*rand(no_samples,1) + mean - standard_deviation;
-    case 'randomNormal'
-        % Random normal distribution sampling
-        distributionFunction = @(varargin) normrnd(mean, standard_deviation, no_samples, 1);
-    case 'latinHyperCube'
-        % Latin hypercube sampling
-        distributionFunction =  @(varargin) lhsnorm(mean, (standard_deviation*standard_deviation), no_samples);
-    case 'quasiMonteCarloHalton'
-        % Quasi Monte Carlo Halton Sequence sampling
-        p = haltonset(1,'Skip',1e3,'Leap',1e2);
-        p = scramble(p,'RR2');
-        haltonvector = net(p,no_samples); % Halton Sequence sampling
-        distributionFunction = @(varargin) norminv(haltonvector, mean, standard_deviation); % Invert uniform Halton sequence to normal distribution
-    otherwise
-        % Error
-        error('Invalid input sampling method')
-end
-
-%% Generate input samples
-
 % Uncertainty in the inlet amplitude
-Umax_random = distributionFunction();
+Umax_random = computeRandomDistribution(mean_value, standard_deviation, no_samples);
 
 % histogram(input,100)
 figure(graph.index)
