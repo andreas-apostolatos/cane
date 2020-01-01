@@ -35,6 +35,10 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
         '../../FEMPlateInMembraneActionAnalysis/graphics/',...
         '../../FEMPlateInMembraneActionAnalysis/output/',...
         '../../FEMPlateInMembraneActionAnalysis/postprocessing/');
+    
+% Add all functions related to the Monte Carlo Simulation
+addpath('../../MonteCarloSimulationAnalysis/probabilityDistributionFunctions/',...
+        '../../MonteCarloSimulationAnalysis/solvers/');
 
 % Add all functions related to parsing
 addpath('../../parsers/');
@@ -44,8 +48,8 @@ addpath('../../efficientComputation/');
 
 %% Define the path to the case
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
-% caseName = 'cantileverBeamPlaneStress';
-caseName = 'PlateWithMultipleHolesPlaneStress';
+caseName = 'cantileverBeamPlaneStress';
+% caseName = 'PlateWithMultipleHolesPlaneStress';
 
 %% Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
@@ -79,10 +83,10 @@ computeRandomDistribution = @generateRandomNormalDistribution;
 
 % Quadrature for the stiffness matrix and the load vector of the problem
 % 'default', 'user'
-intLoad.type = 'default';
-intDomain.type = 'default';
-intLoad.noGP = 1;
-intDomain.noGP = 1;
+propIntLoad.type = 'default';
+propIntDomain.type = 'default';
+propIntLoad.noGP = 1;
+propIntDomain.noGP = 1;
 
 % Quadrature for the L2-norm of the error
 intError.type = 'user';
@@ -100,40 +104,14 @@ graph.index = 1;
 %% Define the name of the vtk file from where to resume the simulation
 pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
-%% Input statistics
-
-% Sampling function selection
-sampling_method_list = {'randomUniform','randomNormal','latinHyperCube', 'quasiMonteCarloHalton'};
-sampling_method = sampling_method_list{2};
-switch sampling_method
-    case 'randomUniform'
-        % Uniform distribution with bounds
-        distributionFunction = @(varargin) 2*standard_deviation*rand(no_samples,1) + mean_value - standard_deviation;
-    case 'randomNormal'
-        % Random normal distribution sampling
-        distributionFunction = @(varargin) normrnd(mean_value, standard_deviation, no_samples, 1);
-    case 'latinHyperCube'
-        % Latin hypercube sampling
-        distributionFunction =  @(varargin) lhsnorm(mean_value, (standard_deviation*standard_deviation), no_samples);
-    case 'quasiMonteCarloHalton'
-        % Quasi Monte Carlo Halton Sequence sampling
-        p = haltonset(1,'Skip',1e3,'Leap',1e2);
-        p = scramble(p,'RR2');
-        haltonvector = net(p,no_samples); % Halton Sequence sampling
-        distributionFunction = @(varargin) norminv(haltonvector, mean_value, standard_deviation); % Invert uniform Halton sequence to normal distribution
-    otherwise
-        % Error
-        error('Invalid input sampling method')
-end
-
 %% Generate input samples
 
 % Number of samples
 no_samples = 1000;
 
 % Mean value of the samples
-% mean_value = -1e3;
-mean_value = -1e2;
+mean_value = -1e3;
+% mean_value = -1e2;
 
 % Standard deviation of the samples
 % standard_deviation = 1e1;
@@ -183,13 +161,13 @@ parfor i = 1:no_samples
 %         NBC_random(i).fctHandle{j} = @(x,y,z,t) [0; amplitude(i,1); 0];
         NBC_random(i).fctHandle{j} = @(x,y,z,t) [amplitude(i,1); 0; 0];
     end
-    F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC_random(i),0,intLoad,'');
-    
+    F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC_random(i),0,propIntLoad,'');
+
     %% Solve the CFD problem
     [~,FComplete,minElSize] = solve_FEMPlateInMembraneAction...
         (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC_random(i),bodyForces,...
         parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-        propNLinearAnalysis,propStrDynamics,intDomain,caseName,pathToOutput,...
+        propNLinearAnalysis,propStrDynamics,propIntDomain,caseName,pathToOutput,...
         isUnitTest,'');
     
     %% Compute the support reaction forces
