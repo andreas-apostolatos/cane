@@ -58,7 +58,7 @@ poolobj.addAttachedFiles(fullfile(pwd, '../../FEMComputationalFluidDynamicsAnaly
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
-caseName = 'unitTest_testFEM4NavierStokesSteadyStateFlowAroundCylinder2D';
+caseName = 'unitTest_2D_building';
 
 %% Parse the data from the GiD input file
 [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,~,analysis,parameters,...
@@ -176,8 +176,8 @@ end
 Umax = 0.3;
 
 % define parameters used in reference paper and simualiton
-D_0 = 0.1;    % diameter of the body
-Ubar_0 = 0.2; % mid velocity 
+D = 0.1;    % diameter of the body
+Ubar = 0.2; % mid velocity 
 
 % Initialize graph index
 graph.index = 1;
@@ -190,7 +190,7 @@ valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC
 
 %% Variable initialization
 i = 1; % Counter initialization for iteration tree search
-iterationLimit = 20; % Search depth limit of monte carlo tree search
+iterationLimit = 5; % Search depth limit of monte carlo tree search
 
 % Initialize accuracy parameters
 djd1 = 1;
@@ -200,9 +200,12 @@ djd2 = 1;
 p1_bestCase = mean_value_p1;
 p2_bestCase = mean_value_p2;
 
-%Initialize initial values of p1 and p2
-D = D_0; % D = p1
-Ubar = Ubar_0; % Ubar = p2
+%Initialize initial state values
+p1_0 = 10; % Initial height of 2d building from GID input file
+p2_0 = 2.5; % Initial width of 2d building from GID input file
+
+p1 = p1_0; % Initialize initial states
+p2 = p2_0;
 
 % Set up progress bar
 fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
@@ -213,8 +216,8 @@ tic
 %% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
 while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)    
     %% Initialize temp variables with updated values from previous iteration
-    temp_p1 = D;
-    temp_p2 = Ubar;
+    temp_p1 = p1;
+    temp_p2 = p2;
     
     %% Solve the CFD problem in nominal state    
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
@@ -246,11 +249,11 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     referenceDrag_Nom = dragCoefficient;
 
     %% Solve the CFD problem with MC sampling on p1
-    Ubar = temp_p2; % Reset p2 to non-MC value
+    p2 = temp_p2; % Ensure parameter 2 is nominal
     
     parfor k=1:nSample
         %Define p1 as given distribution of inputs
-        D = input_p1(k);
+        p1 = input_p1(k);
         
         [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
             (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
@@ -290,11 +293,11 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     end
   
     %% Solve the CFD problem with MC sampling on p2 
-    D = temp_p1; % Reset p1 to non-MC value
+    p1 = temp_p1; % Reset p1 to non-MC value
     
     parfor k=1:nSample
         %Define p2 as given distribution of inputs
-        Ubar = input_p2(k);
+        p2 = input_p2(k);
         
         [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
             (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
@@ -334,8 +337,8 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     end
         
     %% Check the CFD problem in combined best case state
-    D = p1_bestCase;
-    Ubar = p2_bestCase;
+    p1 = p1_bestCase;
+    p2 = p2_bestCase;
     
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
         (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
@@ -371,8 +374,8 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         mean_value_p2 = p2_bestCase;
             
         %Update both parameters
-        D = p1_bestCase;
-        Ubar = p2_bestCase; 
+        p1 = p1_bestCase;
+        p2 = p2_bestCase; 
             
     elseif (dragCoefficient < referenceDrag_Nom && dragCoefficient > referenceDrag_p1 &&  dragCoefficient < referenceDrag_p2)
         %Refine distribution region for parameter 1   
@@ -380,8 +383,8 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         mean_value_p1 = p1_bestCase;
         
         %Update parameter 1
-        D = p1_bestCase;
-        Ubar = temp_p2; % Reset to nominal value
+        p1 = p1_bestCase;
+        p2 = temp_p2; % Reset to nominal value
         
     elseif (dragCoefficient < referenceDrag_Nom && dragCoefficient < referenceDrag_p1 &&  dragCoefficient > referenceDrag_p2)
         %Refine distribution region for parameter 2   
@@ -389,8 +392,8 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         mean_value_p2 = p2_bestCase;
         
         %Update parameter 2
-        D = temp_p1; % Reset to nominal value
-        Ubar = p2_bestCase;      
+        p1 = temp_p1; % Reset to nominal value
+        p2 = p2_bestCase;      
     end
 
     % Generate updated input distributions
