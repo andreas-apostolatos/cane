@@ -1,22 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   MSc.-Ing. Aditya Ghantasala        (aditya.ghantasala@tum.de)         %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
+%																		  %
+% License:         BSD License											  %
+%                  cane Multiphysics default license: cane/license.txt	  %
+%																		  %
+% Main authors:    Andreas Apostolatos									  %
+%				   Marko Leskovar										  %
+%																		  %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,7 +13,7 @@
 %   Matlab Input File                                                     %
 %   _________________                                                     %
 %                                                                         %
-%   FiniteElementAnalysisProgramStructuralAnalysisInstituteTUM            %
+%   cane Multiphysics                                                     %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -35,37 +24,33 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 STRUCTURE_ANALYSIS
- ANALYSIS_TYPE,*GenData(STR_ANA-TYPE)
+ ANALYSIS_TYPE,*GenData(STR_Analysis_Type)
 
 STRUCTURE_MATERIAL_PROPERTIES
-*Loop materials
-*if(strcmp(MatProp(0),"Structure")==0)
-  DENSITY,*MatProp(Density)
-  YOUNGS_MODULUS,*MatProp(Young_Modulus)
-  POISSON_RATIO,*MatProp(Poisson_Ratio)
-*endif
-*end loop
+ DENSITY,*MatProp(Density)
+ YOUNGS_MODULUS,*MatProp(Young_Modulus)
+ POISSON_RATIO,*MatProp(Poisson_Ratio)
 
 STRUCTURE_NLINEAR_SCHEME
- NLINEAR_SCHEME,*GenData(STR_NL_SOLVER-TYPE)
- NO_LOAD_STEPS,*GenData(STR_N_STEPS)
- TOLERANCE,*GenData(STR_TOL)
- MAX_ITERATIONS,*GenData(STR_MAX_IT)
+ NLINEAR_SCHEME,*GenData(STR_Non-Linear_Solver_Type)
+ NO_LOAD_STEPS,*GenData(STR_Number_of_Steps)
+ TOLERANCE,*GenData(STR_Tolerance)
+ MAX_ITERATIONS,*GenData(STR_Max_Iterations)
 
 STRUCTURE_TRANSIENT_ANALYSIS
- SOLVER *GenData(STR_TIME_ANA-TYPE)
- TIME_INTEGRATION *GenData(STR_TIME_INTEGRATION-SCHEME)
- ALPHA_BETA *GenData(STR_ALPHA/BETA)
- GAMMA *GenData(STR_GAMMA)
- START_TIME *GenData(STR_START_TIME)
- END_TIME *GenData(STR_END_TIME)
- NUMBER_OF_TIME_STEPS *GenData(STR_NUMBER_OF_TIME_STEPS)
- ADAPTIVE_TIME_STEPPING *GenData(STR_ADAPTIVE_TIME_STEPPING)
+ SOLVER *GenData(STR_Time_Analysis_Type-TYPE)
+ TIME_INTEGRATION *GenData(STR_Time_Integration_Scheme)
+ ALPHA_BETA *GenData(STR_Alpha/Beta)
+ GAMMA *GenData(STR_Gamma)
+ START_TIME *GenData(STR_Start_Time)
+ END_TIME *GenData(STR_End_Time)
+ NUMBER_OF_TIME_STEPS *GenData(STR_Number_of_Time_Steps)
+ ADAPTIVE_TIME_STEPPING *GenData(STR_Adaptive_Time_Stepping)
  
 STRUCTURE_INTEGRATION
- DOMAIN *GenData(STR_DOMAIN_TYPE-TYPE)
- domainNoGP *GenData(STR_DOMAIN_NO_GP)
- boundaryNoGP *GenData(STR_BOUNDARY_NO_GP)
+ DOMAIN *GenData(STR_Domain)
+ domainNoGP *GenData(STR_Domain_NO_GP)
+ boundaryNoGP *GenData(STR_Boundary_NO_GP)
 
 STRUCTURE_NODES*\
 *set Cond Structure-Nodes *nodes
@@ -124,36 +109,32 @@ STRUCTURE_FORCE_NODES*\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 FLUID_ANALYSIS
- ANALYSIS_TYPE,*GenData(CFD_ANA-TYPE)
+ ANALYSIS_TYPE,*GenData(CFD_Analysis_Type)
 
 FLUID_MATERIAL_PROPERTIES
-*Loop materials
-*if(strcmp(MatProp(0),"Fluid")==0)
-  DENSITY,*MatProp(Density)
-  DYNAMIC_VISCOSITY,*MatProp(Dynamic_Viscosity)
-*endif
-*end loop
+ DENSITY,*MatProp(Density)
+ DYNAMIC_VISCOSITY,*MatProp(Dynamic_Viscosity)
 
 FLUID_NLINEAR_SCHEME
- NLINEAR_SCHEME,*GenData(CFD_NL_SOLVER-TYPE)
- NO_LOAD_STEPS,*GenData(CFD_N_STEPS)
- TOLERANCE,*GenData(CFD_TOL)
- MAX_ITERATIONS,*GenData(CFD_MAX_IT)
+ NLINEAR_SCHEME,*GenData(CFD_Non-Linear_Solver_Type)
+ NO_LOAD_STEPS,*GenData(CFD_Number_of_Steps)
+ TOLERANCE,*GenData(CFD_Tolerance)
+ MAX_ITERATIONS,*GenData(CFD_Max_Iterations)
 
 FLUID_TRANSIENT_ANALYSIS
- SOLVER *GenData(CFD_TIME_ANA-TYPE)
- TIME_INTEGRATION *GenData(CFD_TIME_INTEGRATION-SCHEME)
- ALPHA_BETA *GenData(CFD_ALPHA/BETA)
- GAMMA *GenData(CFD_GAMMA)
- START_TIME *GenData(CFD_START_TIME)
- END_TIME *GenData(CFD_END_TIME)
- NUMBER_OF_TIME_STEPS *GenData(CFD_NUMBER_OF_TIME_STEPS)
- ADAPTIVE_TIME_STEPPING *GenData(CFD_ADAPTIVE_TIME_STEPPING)
+ SOLVER *GenData(CFD_Time_Analysis_Type)
+ TIME_INTEGRATION *GenData(CFD_Time_Integration_Scheme)
+ ALPHA_BETA *GenData(CFD_Alpha/Beta)
+ GAMMA *GenData(CFD_Gamma)
+ START_TIME *GenData(CFD_Start_Time)
+ END_TIME *GenData(CFD_End_Time)
+ NUMBER_OF_TIME_STEPS *GenData(CFD_Number_of_Time_Steps)
+ ADAPTIVE_TIME_STEPPING *GenData(CFD_Adaptive_Time_Stepping)
  
 FLUID_INTEGRATION
- DOMAIN *GenData(CFD_DOMAIN_TYPE-TYPE)
- domainNoGP *GenData(CFD_DOMAIN_NO_GP)
- boundaryNoGP *GenData(CFD_BOUNDARY_NO_GP)
+ DOMAIN *GenData(CFD_Domain)
+ domainNoGP *GenData(CFD_Domain_NO_GP)
+ boundaryNoGP *GenData(CFD_Boundary_NO_GP)
 	
 FLUID_ELEMENTS
 *set Cond Fluid-Elements-Over-Surfaces *elems

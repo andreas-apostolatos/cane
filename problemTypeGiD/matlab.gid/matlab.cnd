@@ -27,7 +27,6 @@ CONDTYPE: over surfaces
 CONDMESHTYPE: over nodes
 QUESTION: X-Constraint#CB#(0,1)
 VALUE: 0
-HELP:not yet included
 QUESTION: X-Value
 VALUE: 0.0
 QUESTION: Y-Constraint#CB#(0,1)
@@ -132,23 +131,23 @@ CONDMESHTYPE: over nodes
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 11 CONDITION: Structure-Nodes
+NUMBER: 11 CONDITION: Fluid-Elements-Over-Surfaces
+CONDTYPE: over surfaces
+CONDMESHTYPE: over elements
+TITLE: Fluid
+END CONDITION
+
+NUMBER: 12 CONDITION: Fluid-Elements-Over-Volumes
+CONDTYPE: over volumes
+CONDMESHTYPE: over elements
+TITLE: Fluid
+END CONDITION
+
+NUMBER: 13 CONDITION: Structure-Nodes
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 CONDMESHTYPE: over nodes
 TITLE: Solid
-END CONDITION
-
-NUMBER: 12 CONDITION: Fluid-Elements-Over-Surfaces
-CONDTYPE: over surfaces
-CONDMESHTYPE: over elements
-TITLE: Fluid
-END CONDITION
-
-NUMBER: 13 CONDITION: Fluid-Elements-Over-Volumes
-CONDTYPE: over volumes
-CONDMESHTYPE: over elements
-TITLE: Fluid
 END CONDITION
 
 NUMBER: 14 CONDITION: Structure-Elements
