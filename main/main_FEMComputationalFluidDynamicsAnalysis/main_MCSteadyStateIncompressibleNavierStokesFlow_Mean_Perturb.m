@@ -57,7 +57,7 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = 'unitTest_2D_building';
 
 %% Parse the data from the GiD input file
-[fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,~,analysis,parameters,...
+[fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,~,analysis,parameters,...
     propNLinearAnalysis,propFldDynamics,gaussInt,postProc] = ...
     parse_FluidModelFromGid...
     (pathToCase,caseName,'');
@@ -99,7 +99,7 @@ D = 0.1;    % diameter of the body
 Ubar = 0.2; % mid velocity 
 
 %% Change input velocity to have the parabolic distribution for each randomized input
-valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC, valuesInhomDBC, Umax);
+valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
 
 %% Variable initialization
 i = 1; % Counter initialization for iteration tree search
@@ -153,7 +153,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     
     %% Solve the CFD problem in nominal state   
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,nodesALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         gaussInt,caseName,'');
@@ -177,7 +177,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     liftCoefficient = abs(liftCoefficient);
 
     %% Write nominal output vector
-    output_Nom(i,:) = [i, liftCoefficient, dragCoefficient];       
+    output_Nom(i,:) = [i, liftCoefficient, dragCoefficient];  
     referenceDrag_Nom = dragCoefficient;
  
     %% Solve the CFD problem with perturbed p1
@@ -185,7 +185,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     p1 = p1 + delta_p1; % Adjust parameter 1
         
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,nodesALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         gaussInt,caseName,'');
@@ -267,7 +267,17 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     %% Update parameter values for next iteration
     p1 = temp_p1 - sign(dJdp1(i+1))*min(abs(gamma*dJdp1(i+1)), 0.1); 
 %     p2 = temp_p2 - sign(dJdp2(i+1))*min(abs(gamma*dJdp2(i+1)), 0.1);
-    
+
+    %% Update the mesh
+    %
+    % Comments: The function below returns the updated mesh given the
+    %           boundary conditions defined in nodesALE via the function
+    %           handles for each of the nodes.
+    % 
+    [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
+        solve_LinearSystem,propFldDynamics,0);
+        
     %% Increment iteration counter
     i = i+1;
         

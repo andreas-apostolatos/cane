@@ -95,7 +95,7 @@ function [msh,uMeshALE,inhomDOFs,valuesInhomDOFs] = computeUpdatedMeshAndVelocit
 
 %% 0. Read input
 
-% Initialize dummy arrays
+% Initialize dummy arrayst
 uSavedALE = 'undefined'; 
 uDotSavedALE = 'undefined'; 
 uDDotSavedALE = 'undefined'; 
