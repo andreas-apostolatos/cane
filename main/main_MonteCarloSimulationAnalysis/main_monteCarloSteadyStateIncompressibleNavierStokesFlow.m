@@ -47,8 +47,7 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/
         '../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
 
 % Add all functions related to the Monte Carlo Simulation
-addpath('../../MonteCarloSimulationAnalysis/probabilityDistributionFunctions/',...
-        '../../MonteCarloSimulationAnalysis/solvers/');
+addpath('../../MonteCarloSimulationAnalysis/probabilityDistributionFunctions/');
     
 % Add all functions related to parsing
 addpath('../../parsers/');

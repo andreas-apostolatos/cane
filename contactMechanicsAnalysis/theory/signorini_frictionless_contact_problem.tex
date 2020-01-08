@@ -1,0 +1,59 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{import}
+\usepackage{graphicx}
+\usepackage{color}
+
+\setlength{\parindent}{0cm}
+
+% Define own macros
+\newcommand{\myfrac}[2]{%
+    \ifinner#1/#2%
+    \else\frac{#1}{#2}%
+    \fi%
+}
+
+\title{Signorini frictionless contact problem}
+
+\author{Dr.-Ing. Andreas Apostolatos}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Theory}\label{sec:variational_formulation}
+
+\begin{figure}[!h]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.5\textwidth}\import{./figures/}{problem_placement.pdf_tex}
+	\caption{Theory: Signorini frictionless contact problem with boundary conditions.}
+	\label{im:signorini_contact_problem}
+\end{figure}
+
+Given is a deformable body which is geometrically described by $\Omega \subset \mathbb{R}^d$ where $d = 2,3$ stands for the problem's dimensions. Its deformation due to the applied boundary conditions can be uniquely defined by a displacement field $\mathbf{u} = u_i \, \mathbf{e}_i$, $\mathbf{e}_i$ being the Cartesian basis, which maps each each material point of the reference configuration $\mathbf{X} \in \Omega$ to a material point in the current configuration $\mathbf{x} \in \Omega_t$, that is, $\mathbf{x} = \mathbf{X} + \mathbf{u}$.\\
+
+The strain is described by means of the \textit{Green-Lagrange} (GL) strain second order tensor $\mathbf{E} \in \mathfrak{S}^2$ given by,
+
+\begin{equation}
+	\mathbf{E} = \frac{1}{2} \left( \boldsymbol{\nabla} \mathbf{u} + \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} +  \boldsymbol{\nabla} \mathbf{u} \, \vdots \, \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} \right) \;, \label{eq:GL_strain}
+\end{equation}
+
+where the underlying symbols are understood as follows,
+
+\begin{subequations}
+	\begin{alignat}{1}
+		\boldsymbol{\nabla} \mathbf{u} &= \sum_{i = 1}^d \sum_{j = 1}^d \frac{\partial u_i}{\partial X_j} \, \mathbf{e}_i \otimes \mathbf{e}_j \;, \label{eq:nabla_u} \\
+		\left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} &= \sum_{i = 1}^d \sum_{j = 1}^d \frac{\partial u_j}{\partial X_i} \, \mathbf{e}_i \otimes \mathbf{e}_j \;, \label{eq:nabla_u_t} \\
+		\boldsymbol{\nabla} \mathbf{u} \, \vdots \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} &= \sum_{i = 1}^d \sum_{j = 1}^d \frac{\partial u_i}{\partial X_j} \frac{\partial u_j}{\partial X_i} \;. \label{eq:nabla_u_times_u_t}
+	\end{alignat}
+\end{subequations}
+
+The stress state of the problem is described by means of the 2nd \textit{Piola-Kirchhoff} (PK2) stress second order ternsor $\mathbf{S} \in \mathfrak{S}^2$ which is defined,
+
+\end{document}
