@@ -26,22 +26,12 @@
 
 \maketitle
 
-\section{Theory}\label{sec:variational_formulation}
-
-\begin{figure}[!h]
-	\centering
-	\footnotesize
-    \def\svgwidth{0.5\textwidth}\import{./figures/}{problem_placement.pdf_tex}
-	\caption{Theory: Signorini frictionless contact problem with boundary conditions.}
-	\label{im:signorini_contact_problem}
-\end{figure}
-
 Given is a deformable body which is geometrically described by $\Omega \subset \mathbb{R}^d$ where $d = 2,3$ stands for the problem's dimensions. Its deformation due to the applied boundary conditions can be uniquely defined by a displacement field $\mathbf{u} = u_i \, \mathbf{e}_i$, $\mathbf{e}_i$ being the Cartesian basis, which maps each each material point of the reference configuration $\mathbf{X} \in \Omega$ to a material point in the current configuration $\mathbf{x} \in \Omega_t$, that is, $\mathbf{x} = \mathbf{X} + \mathbf{u}$.\\
 
-The strain is described by means of the \textit{Green-Lagrange} (GL) strain second order tensor $\mathbf{E} \in \mathfrak{S}^2$ given by,
+The strain is described by means of the \textit{Green-Lagrange} (GL) strain second order tensor $\boldsymbol{\mathcal{E}} \in \mathfrak{S}^2$ given by,
 
 \begin{equation}
-	\mathbf{E} = \frac{1}{2} \left( \boldsymbol{\nabla} \mathbf{u} + \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} +  \boldsymbol{\nabla} \mathbf{u} \, \vdots \, \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} \right) \;, \label{eq:GL_strain}
+	\boldsymbol{\mathcal{E}} = \frac{1}{2} \left( \boldsymbol{\nabla} \mathbf{u} + \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} +  \boldsymbol{\nabla} \mathbf{u} \, \cdot \, \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} \right) \;, \label{eq:GL_strain}
 \end{equation}
 
 where the underlying symbols are understood as follows,
@@ -49,11 +39,33 @@ where the underlying symbols are understood as follows,
 \begin{subequations}
 	\begin{alignat}{1}
 		\boldsymbol{\nabla} \mathbf{u} &= \sum_{i = 1}^d \sum_{j = 1}^d \frac{\partial u_i}{\partial X_j} \, \mathbf{e}_i \otimes \mathbf{e}_j \;, \label{eq:nabla_u} \\
-		\left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} &= \sum_{i = 1}^d \sum_{j = 1}^d \frac{\partial u_j}{\partial X_i} \, \mathbf{e}_i \otimes \mathbf{e}_j \;, \label{eq:nabla_u_t} \\
-		\boldsymbol{\nabla} \mathbf{u} \, \vdots \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} &= \sum_{i = 1}^d \sum_{j = 1}^d \frac{\partial u_i}{\partial X_j} \frac{\partial u_j}{\partial X_i} \;. \label{eq:nabla_u_times_u_t}
+		\left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} &= \sum_{k = 1}^d \sum_{l = 1}^d \frac{\partial u_l}{\partial X_k} \, \mathbf{e}_k \otimes \mathbf{e}_l \;, \label{eq:nabla_u_t} \\
+		\boldsymbol{\nabla} \mathbf{u} \, \cdot \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} &= \sum_{i = 1}^d \sum_{j = 1}^d \sum_{k = 1}^d \frac{\partial u_i}{\partial X_j} \frac{\partial u_j}{\partial X_k} \, \mathbf{e}_i \otimes \mathbf{e}_k \;. \label{eq:nabla_u_times_u_t}
 	\end{alignat}
 \end{subequations}
 
-The stress state of the problem is described by means of the 2nd \textit{Piola-Kirchhoff} (PK2) stress second order ternsor $\mathbf{S} \in \mathfrak{S}^2$ which is defined,
+Assumed is also a Saint-Venant material model which is governed by the material fourth order tensor $\mathcal{C} \in \mathfrak{S}^2$
+
+
+
+\begin{equation}
+	\boldsymbol{\mathcal{C}} = \frac{E}{2 (1 + \nu)} \left( \delta_{ik} \delta_{jl} + \delta_{il} \delta_{jk} + \frac{2 \nu}{1 - 2 \nu} \delta_{ij} \delta_{kl} \right) \, \mathbf{e}_i \otimes \mathbf{e}_j \otimes \mathbf{e}_k \otimes \mathbf{e}_l \;, \label{eq:material_tensor}
+\end{equation}
+
+where $E$ and $\nu$ stand for the Young's modulus and Poisson ratio of the material, respectively. The stress state of the problem is described by means of the 2nd \textit{Piola-Kirchhoff} (PK2) stress second order ternsor $\boldsymbol{\mathcal{S}} \in \mathfrak{S}^2$ which is defined as and given by the linear elastic isotropic law as,
+
+\begin{equation}
+	\boldsymbol{\mathcal{S}} = \boldsymbol{\mathcal{C}} \, : \, \boldsymbol{\mathcal{E}} \:.
+\end{equation}
+
+\section{Theory}\label{sec:variational_formulation}
+
+\begin{figure}[!t]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.5\textwidth}\import{./figures/}{problem_placement.pdf_tex}
+	\caption{Theory: Signorini frictionless contact problem with boundary conditions.}
+	\label{im:signorini_contact_problem}
+\end{figure}
 
 \end{document}
