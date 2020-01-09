@@ -1,11 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%																		  %
-% License:         BSD License											  %
-%                  cane Multiphysics default license: cane/license.txt	  %
-%																		  %
-% Main authors:    Andreas Apostolatos									  %
-%				   Marko Leskovar										  %
-%																		  %
+%                                                                         %
+%   License:        BSD License                                           %
+%                   cane Multiphysics default license: cane/license.txt   %
+%                                                                         %
+%   Main authors:   Andreas Apostolatos                                   %
+%                   Marko Leskovar                                        %
+%                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -27,9 +27,13 @@ STRUCTURE_ANALYSIS
  ANALYSIS_TYPE,*GenData(STR_Analysis_Type)
 
 STRUCTURE_MATERIAL_PROPERTIES
+*Loop materials
+*if(strcmp(MatProp(0),"Steel")==0 || strcmp(MatProp(0),"Aluminium")==0)
  DENSITY,*MatProp(Density)
  YOUNGS_MODULUS,*MatProp(Young_Modulus)
  POISSON_RATIO,*MatProp(Poisson_Ratio)
+*endif
+*end loop
 
 STRUCTURE_NLINEAR_SCHEME
  NLINEAR_SCHEME,*GenData(STR_Non-Linear_Solver_Type)
@@ -38,7 +42,7 @@ STRUCTURE_NLINEAR_SCHEME
  MAX_ITERATIONS,*GenData(STR_Max_Iterations)
 
 STRUCTURE_TRANSIENT_ANALYSIS
- SOLVER *GenData(STR_Time_Analysis_Type-TYPE)
+ SOLVER *GenData(STR_Time_Analysis_Type)
  TIME_INTEGRATION *GenData(STR_Time_Integration_Scheme)
  ALPHA_BETA *GenData(STR_Alpha/Beta)
  GAMMA *GenData(STR_Gamma)
@@ -112,8 +116,12 @@ FLUID_ANALYSIS
  ANALYSIS_TYPE,*GenData(CFD_Analysis_Type)
 
 FLUID_MATERIAL_PROPERTIES
+*Loop materials
+*if(strcmp(MatProp(0),"Water")==0)
  DENSITY,*MatProp(Density)
  DYNAMIC_VISCOSITY,*MatProp(Dynamic_Viscosity)
+*endif
+*end loop
 
 FLUID_NLINEAR_SCHEME
  NLINEAR_SCHEME,*GenData(CFD_Non-Linear_Solver_Type)

@@ -3,12 +3,10 @@ BOOK: Solids
 MATERIAL: Steel
 QUESTION: Type#CB#(Lin-Elast-Isotropic,whatever)
 VALUE:Lin-Elast-Isotropic
-DEPENDENCIES:(Lin-Elast-Isotropic,RESTORE,Young_Modulus,#CURRENT#,RESTORE,Alpha_T,#CURRENT#,RESTORE,Density,#CURRENT#,RESTORE,Poisson_Ratio,#CURRENT#)
-DEPENDENCIES:(whatever,HIDE,Young_Modulus,#CURRENT#,HIDE,Alpha_T,#CURRENT#,HIDE,Density,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#)
+DEPENDENCIES:(Lin-Elast-Isotropic,RESTORE,Young_Modulus,#CURRENT#,RESTORE,Density,#CURRENT#,RESTORE,Poisson_Ratio,#CURRENT#)
+DEPENDENCIES:(whatever,HIDE,Young_Modulus,#CURRENT#,HIDE,Density,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#)
 QUESTION: Young_Modulus
 VALUE: 210000
-QUESTION: Alpha_T
-VALUE: 0.0
 QUESTION: Density
 VALUE: 1.0
 QUESTION: Poisson_Ratio
@@ -18,12 +16,10 @@ END MATERIAL
 MATERIAL: Aluminium
 QUESTION: Type#CB#(Lin-Elast-Isotropic,whatever)
 VALUE:Lin-Elast-Isotropic
-DEPENDENCIES:(Lin-Elast-Isotropic,RESTORE,Young_Modulus,#CURRENT#,RESTORE,Alpha_T,#CURRENT#,RESTORE,Density,#CURRENT#,RESTORE,Poisson_Ratio,#CURRENT#)
-DEPENDENCIES:(whatever,HIDE,Young_Modulus,#CURRENT#,HIDE,Alpha_T,#CURRENT#,HIDE,Density,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#)
+DEPENDENCIES:(Lin-Elast-Isotropic,RESTORE,Young_Modulus,#CURRENT#,RESTORE,Density,#CURRENT#,RESTORE,Poisson_Ratio,#CURRENT#)
+DEPENDENCIES:(whatever,HIDE,Young_Modulus,#CURRENT#,HIDE,Density,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#)
 QUESTION: Young_Modulus
 VALUE: 70000
-QUESTION: Alpha_T
-VALUE: 0.0
 QUESTION: Density
 VALUE: 1.0
 QUESTION: Poisson_Ratio
