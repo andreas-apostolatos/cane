@@ -26,6 +26,8 @@
 
 \maketitle
 
+\section{Theory}\label{sec:variational_formulation}
+
 Given is a deformable body which is geometrically described by $\Omega \subset \mathbb{R}^d$ where $d = 2,3$ stands for the problem's dimensions. Its deformation due to the applied boundary conditions can be uniquely defined by a displacement field $\mathbf{u} = u_i \, \mathbf{e}_i$, $\mathbf{e}_i$ being the Cartesian basis, which maps each each material point of the reference configuration $\mathbf{X} \in \Omega$ to a material point in the current configuration $\mathbf{x} \in \Omega_t$, that is, $\mathbf{x} = \mathbf{X} + \mathbf{u}$.\\
 
 The strain is described by means of the \textit{Green-Lagrange} (GL) strain second order tensor $\boldsymbol{\mathcal{E}} \in \mathfrak{S}^2$ given by,
@@ -46,8 +48,6 @@ where the underlying symbols are understood as follows,
 
 Assumed is also a Saint-Venant material model which is governed by the material fourth order tensor $\mathcal{C} \in \mathfrak{S}^2$
 
-
-
 \begin{equation}
 	\boldsymbol{\mathcal{C}} = \frac{E}{2 (1 + \nu)} \left( \delta_{ik} \delta_{jl} + \delta_{il} \delta_{jk} + \frac{2 \nu}{1 - 2 \nu} \delta_{ij} \delta_{kl} \right) \, \mathbf{e}_i \otimes \mathbf{e}_j \otimes \mathbf{e}_k \otimes \mathbf{e}_l \;, \label{eq:material_tensor}
 \end{equation}
@@ -58,8 +58,6 @@ where $E$ and $\nu$ stand for the Young's modulus and Poisson ratio of the mater
 	\boldsymbol{\mathcal{S}} = \boldsymbol{\mathcal{C}} \, : \, \boldsymbol{\mathcal{E}} \:.
 \end{equation}
 
-\section{Theory}\label{sec:variational_formulation}
-
 \begin{figure}[!t]
 	\centering
 	\footnotesize
@@ -67,5 +65,28 @@ where $E$ and $\nu$ stand for the Young's modulus and Poisson ratio of the mater
 	\caption{Theory: Signorini frictionless contact problem with boundary conditions.}
 	\label{im:signorini_contact_problem}
 \end{figure}
+
+Given the Dirichlet boundary conditions along $\Gamma_{\text{d}}$ where the displacement is prescribed to a value $\mathbf{g}$, the Neumann boundary conditions along $\Gamma_{\text{n}}$ where external traction $\bar{\mathbf{t}}$ is applied and applied body forces $\mathbf{b}$, see Fig.~\ref{im:signorini_contact_problem}, the strong form of the elasticity problem writes,
+
+\begin{subequations}
+	\begin{alignat}{2}
+		\boldsymbol{\nabla} \cdot \boldsymbol{\mathcal{S}} + \mathbf{b} &= \mathbf{0} \quad &&\text{in } \Omega \;, \label{eq:strong_equilibrium} \\
+		\mathbf{u} &= \mathbf{g} &&\text{on } \Gamma_{\text{d}} \;, \label{eq:prescribed_displacement} \\
+		\boldsymbol{\mathcal{S}} \, \cdot \, \mathbf{n} &= \bar{\mathbf{t}} &&\text{on } \Gamma_{\text{n}} \;,
+	\end{alignat}
+\end{subequations}
+
+where $\mathbf{n}$ stands for the unit outward normal vector to Neumann boundary $\Gamma_{\text{n}}$.\\
+
+Assumed is also that there is a boundary $\Gamma_{\text{c}} = \Gamma_{\text{c}} (\mathbf{u})$ along which body $\Omega$ is expected to come into contact with a rigid body $\mathfrak{F}$. The so-called gap function is then defined along $\Gamma_{\text{c}}$, namely $\mathbf{g}:\Gamma_{\text{c}} \rightarrow \mathbb{R}$ and measures the normal distance between the deformable and the rigid body $\Omega$ along $\Gamma_{\text{c}}$ and $\mathfrak{F}$, respectively. In this way, the so-called complementarity conditions can be stated as follows,
+
+\begin{subequations}
+	\begin{alignat}{1}
+		u_n - g_n &\le 0 \;, \label{eq:complementarity_cnd_gap} \\
+		\boldsymbol{\mathcal{S}} \cdot \mathbf{n} &\ge 0 \;, \label{eq:complementarity_cnd_traction}
+	\end{alignat}
+\end{subequations}
+
+where $u_n = \mathbf{u} \cdot \mathbf{n}$ and $g_n = \mathbf{g} \cdot \mathbf{n}$ stand for the normal component of the displacement field and the gap function with respect to the outward unit normal vector $\mathbf{n}$. Condition in Eq.~\eqref{eq:complementarity_cnd_gap} stands for the non-penetration condition whereas condition in Eq.~\eqref{eq:complementarity_cnd_traction} states that the stresses along the contact boundary need to be compressive.
 
 \end{document}
