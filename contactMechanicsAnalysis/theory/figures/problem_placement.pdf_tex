@@ -38,7 +38,7 @@
   \newcommand*\fsize{\dimexpr\f@size pt\relax}%
   \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
   \ifx\svgwidth\undefined%
-    \setlength{\unitlength}{331.19317751bp}%
+    \setlength{\unitlength}{332.06971737bp}%
     \ifx\svgscale\undefined%
       \relax%
     \else%
@@ -50,15 +50,19 @@
   \global\let\svgwidth\undefined%
   \global\let\svgscale\undefined%
   \makeatother%
-  \begin{picture}(1,0.85161145)%
+  \begin{picture}(1,0.84936351)%
     \lineheight{1}%
     \setlength\tabcolsep{0pt}%
     \put(0,0){\includegraphics[width=\unitlength,page=1]{problem_placement.pdf}}%
-    \put(0.03327607,0.81982169){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Gamma_{\text{d}}$\end{tabular}}}}%
-    \put(0.86115095,0.54878294){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Gamma_{\text{c}}$\end{tabular}}}}%
-    \put(0.19083848,0.25552707){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Gamma_{\text{n}}$\end{tabular}}}}%
+    \put(0.03582786,0.81765766){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Gamma_{\text{d}}$\end{tabular}}}}%
+    \put(0.86151746,0.54733435){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Gamma_{\text{c}}$\end{tabular}}}}%
+    \put(0.19297436,0.25485257){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Gamma_{\text{n}}$\end{tabular}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=2]{problem_placement.pdf}}%
-    \put(0.50057843,0.35905964){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Omega$\end{tabular}}}}%
-    \put(0.37820496,0.00911306){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bar{\mathbf{t}}$\end{tabular}}}}%
+    \put(0.50189672,0.35811186){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Omega$\end{tabular}}}}%
+    \put(0.37984627,0.00908901){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bar{\mathbf{t}}$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{problem_placement.pdf}}%
+    \put(0.10512436,0.01902641){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$X_1$\end{tabular}}}}%
+    \put(-0.00282461,0.12207131){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$X_2$\end{tabular}}}}%
+    \put(0.15522303,0.77494884){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\mathbf{u} = \bar{\mathbf{u}}$\end{tabular}}}}%
   \end{picture}%
 \endgroup%

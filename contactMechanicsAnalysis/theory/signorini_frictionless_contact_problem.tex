@@ -66,12 +66,12 @@ where $E$ and $\nu$ stand for the Young's modulus and Poisson ratio of the mater
 	\label{im:signorini_contact_problem}
 \end{figure}
 
-Given the Dirichlet boundary conditions along $\Gamma_{\text{d}}$ where the displacement is prescribed to a value $\mathbf{g}$, the Neumann boundary conditions along $\Gamma_{\text{n}}$ where external traction $\bar{\mathbf{t}}$ is applied and applied body forces $\mathbf{b}$, see Fig.~\ref{im:signorini_contact_problem}, the strong form of the elasticity problem writes,
+Given the Dirichlet boundary conditions along $\Gamma_{\text{d}}$ where the displacement is prescribed to a value $\bar{\mathbf{u}}$ which is assumed to be zero without loss of generality, the Neumann boundary conditions along $\Gamma_{\text{n}}$ where external traction $\bar{\mathbf{t}}$ is applied and applied body forces $\mathbf{b}$, see Fig.~\ref{im:signorini_contact_problem}, the strong form of the elasticity problem writes,
 
 \begin{subequations}
 	\begin{alignat}{2}
 		\boldsymbol{\nabla} \cdot \boldsymbol{\mathcal{S}} + \mathbf{b} &= \mathbf{0} \quad &&\text{in } \Omega \;, \label{eq:strong_equilibrium} \\
-		\mathbf{u} &= \mathbf{g} &&\text{on } \Gamma_{\text{d}} \;, \label{eq:prescribed_displacement} \\
+		\mathbf{u} &= \bar{\mathbf{u}} &&\text{on } \Gamma_{\text{d}} \;, \label{eq:prescribed_displacement} \\
 		\boldsymbol{\mathcal{S}} \cdot \mathbf{n} &= \bar{\mathbf{t}} &&\text{on } \Gamma_{\text{n}} \;,
 	\end{alignat}
 	\label{eq:strong_formulation}
@@ -97,11 +97,18 @@ The weak formulation of the problem in Eq.~\eqref{eq:strong_formulation} subject
 \begin{subequations}
 	\begin{alignat}{1}
 		\int_{\Omega} \delta \boldsymbol{\mathcal{E}} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega + \int_{\Gamma_{\text{c}}} \delta u_n \, \lambda \: \text{d} \Gamma &= \int_{\Omega} \delta \mathbf{u} \cdot \mathbf{b} \: \text{d} \Omega + \int_{\Gamma_{\text{n}}} \bar{\mathbf{t}} \cdot \mathbf{u} \: \text{d} \Gamma \label{eq:variational_formulation_delta_u} \\
-		\int_{\Gamma_{\text{c}}} \delta \lambda \, u_n \: \text{d} \Gamma &\le \int_{\Gamma_{\text{c}}} \delta \lambda \, g_n \: \text{d} \Gamma \;, \label{eq:variational_formulation_delta_lambda}
+		\int_{\Gamma_{\text{c}}} \delta \lambda \, u_n \: \text{d} \Gamma &= \int_{\Gamma_{\text{c}}} \delta \lambda \, g_n \: \text{d} \Gamma \;, \label{eq:variational_formulation_delta_lambda}
 	\end{alignat}
+	\label{eq:variational_problem_signorini}
 \end{subequations}
 
-for all $\delta \mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega)$ and for all $\delta \lambda \in \mathcal{L}^2(\Gamma_{\text{c}})$ with $\delta \lambda \ge 0$. In fact, $\lambda$ in this case represents the normal traction along the contact boundary $\Gamma_{\text{c}}$ and therefore it must be positive, see Eq.~\eqref{eq:complementarity_cnd_traction}. Eq.~\eqref{eq:variational_formulation_delta_u} is nothing else but the internal virtual work in $\Omega$, whereas Eq.~\eqref{eq:variational_formulation_delta_lambda} accounts for the variation of complementarity condition in Eq.~\eqref{eq:complementarity_cnd_mixed} and renders the problem symmetric as it is also demonstrated in its discrete form.
+for all $\delta \mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega)$ and for all $\delta \lambda \in \mathcal{L}^2(\Gamma_{\text{c}})$ with $\delta \lambda \ge 0$. In fact, $\lambda$ in this case represents the normal traction along the contact boundary $\Gamma_{\text{c}}$ and therefore it must be positive, see Eq.~\eqref{eq:complementarity_cnd_traction}. Eq.~\eqref{eq:variational_formulation_delta_u} is nothing else but the internal virtual work in $\Omega$, whereas Eq.~\eqref{eq:variational_formulation_delta_lambda} accounts for the variation of complementarity condition in Eq.~\eqref{eq:complementarity_cnd_mixed} and renders the problem symmetric as it is also demonstrated in its discrete form.\\
+
+Important is to note that the variational problem in Eq.~\eqref{eq:variational_problem_signorini} only when $\Gamma_{\text{c}} \neq \emptyset$. The latter means that there has to be a non-empty set $\Gamma_{\text{c}}$ along which the complementarity conditions in Eq.~\eqref{eq:complementarity_cnds} are valid. Otherwise, in case that $\Gamma_{\text{c}} = \emptyset$ variational problem in Eq.~\eqref{eq:variational_problem_signorini} reduces to: Find $\mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega)$ with $\mathbf{u} = \mathbf{g}$ on $\Gamma_{\text{d}}$ such that,
+
+\begin{equation}
+	\int_{\Omega} \delta \boldsymbol{\mathcal{E}} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega = \int_{\Omega} \delta \mathbf{u} \cdot \mathbf{b} \: \text{d} \Omega + \int_{\Gamma_{\text{n}}} \bar{\mathbf{t}} \cdot \mathbf{u} \: \text{d} \Gamma \quad \text{for all } \delta \mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega) \;. \label{eq:variational_formulation_structural_mechanics} \\
+\end{equation} 
 
 \section{Discretization}
 
@@ -109,21 +116,23 @@ Assumed is that the displacement field is discretized with the standard linear \
 
 \begin{subequations}
 	\begin{alignat}{1}
-		\mathbf{u}_h &= \sum_{i = 1}^n \boldsymbol{\varphi}_i \hat{u}_i \;, \label{eq:discretization_u} \\
+		\mathbf{u}_h &= \sum_{i = 1}^{n} \boldsymbol{\varphi}_i \hat{u}_i \;, \label{eq:discretization_u} \\
 		\delta \mathbf{u}_h &= \sum_{i = 1}^n \boldsymbol{\varphi}_i \delta\hat{u}_i \;, \label{eq:discretization_delta_u}
 	\end{alignat}
 \end{subequations}
 
-where the basis linear/bilinear functions $\boldsymbol{\varphi}_i$ are constructed as a dual product of the linear/bilinear shape functions $N_i$ at the element's parametric space and the Cartesian basis $\mathbf{e}_i$. The subscript $h$ indicates then the smallest element length size within the employed mesh.\\
+where the basis linear/bilinear functions $\boldsymbol{\varphi}_i$ are constructed as a dual product of the linear/bilinear shape functions $N_i$ at the element's parametric space and the Cartesian basis $\mathbf{e}_i$. Accordingly, $\hat{u}_i$ and $\delta\hat{u}_i$ stand for the \textit{Degrees of Freedom} (DOFs) of the unknown and the test fields, respectively, and $n \in \mathbb{N}$ is the number of nodes in the mesh. Subscript $h$ indicates then the smallest element length size within the employed mesh.\\
 
 Within the node-based contact method, the shape functions for the discretization of the Lagrange Multipliers fields $\lambda$ and $\delta \lambda$ are chosen the diract delta distributions supported on the finite element nodes $\mathbf{X}_i$, that is,
 
 \begin{subequations}
 	\begin{alignat}{1}
-		\lambda &= \sum_{i = 1}^n \delta(\mathbf{X}_i) \boldsymbol{\varphi}_i \hat{u}_i \;, \label{eq:discretization_u} \\
-		\delta \lambda_h &= \sum_{i = 1}^n \boldsymbol{\varphi}_i \delta\hat{u}_i \;, \label{eq:discretization_delta_u}
+		\lambda_h &= \sum_{i = 1}^{n_{\text{c}}} \delta(\mathbf{X}_i) \hat{\lambda}_i \;, \label{eq:discretization_lambda} \\
+		\delta \lambda_h &= \sum_{i = 1}^{n_{\text{c}}} \delta(\mathbf{X}_i) \delta\hat{\lambda}_i \;, \label{eq:discretization_lambda_u}
 	\end{alignat}
 \end{subequations}
+
+where as before $\hat{\lambda}_i$ and $\delta\hat{\lambda}_i$ stand for the Lagrange Multipliers DOFs of the unknown and test fields, respectively. Note that altough there are two DOFs per node for the displacement field, there is only one DOF per node for the Lagrange Multipliers field. This is because the displacement field is a vector field in the $\mathbb{R}^2$ space in two-dimensional elasticity whereas the Lagrange Multipliers field is a scalar field due to the complementarity constraint in Eq.~\eqref{eq:complementarity_cnd_mixed} which is a scalar-valued constraint. In case of a vector-valued constraint, then the Lagrange Multipliers field would also be a vector field.\\
 
 \begin{figure}[!t]
 	\centering
@@ -132,5 +141,67 @@ Within the node-based contact method, the shape functions for the discretization
 	\caption{Discretization: Finite element mesh and degrees of freedom.}
 	\label{im:finite_element_mesh}
 \end{figure}
+
+Substituting the latter expressions in Eq.~\eqref{eq:variational_problem_signorini} the following discrete system of equations is obtained in terms of a Newton-Raphson formulation,
+
+\begin{equation}
+	\left[ \begin{array}{cc}
+		\mathbf{K} ( \hat{\mathbf{u}}_{\hat{i}} , \hat{\boldsymbol{\lambda}}_{\hat{i}} ) & \mathbf{C}^{\text{t}} \\
+		\mathbf{C} & \mathbf{0}
+\end{array}	 \right] \, \Delta_{\hat{i}} \, \left[ \begin{array}{c}
+	\hat{\mathbf{u}} \\
+	\hat{\boldsymbol{\lambda}}
+\end{array} \right] = - \left[ \begin{array}{c}
+	\mathbf{R} ( \hat{\mathbf{u}}_{\hat{i}} , \hat{\boldsymbol{\lambda}}_{\hat{i}} ) \\
+	\boldsymbol{\mathcal{R}} ( \hat{\mathbf{u}}_{\hat{i}} )
+\end{array} \right] \;, \label{eq:system_discrete_form_lagrange_multipliers}
+\end{equation}
+
+over the so-called active set of Lagrange Multipliers DOFs. The $i$-th component of the residual vector $\mathbf{R}$ derived from Eq.~\eqref{eq:variational_formulation_delta_u} is defined as follows,
+
+\begin{equation}
+	R_i ( \hat{\mathbf{u}}_{\hat{i}} , \hat{\boldsymbol{\lambda}}_{\hat{i}} ) = \int_{\Omega} \frac{\partial \boldsymbol{\mathcal{E}}}{\partial \hat{u}_i} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega + \sum_{j = 1}^{n_{\text{c}}} \bar{n} (\mathbf{X}_j) \, \hat{\lambda}_j - \int_{\Omega} \boldsymbol{\varphi}_i \cdot \mathbf{b} \: \text{d} \Omega - \int_{\Omega} \boldsymbol{\varphi}_i \cdot \bar{\mathbf{t}} \: \text{d} \Gamma \;. \label{eq:residual_form_domain}
+\end{equation}
+
+The second term in Eq.~\eqref{eq:residual_form_domain} is derived by inserting Eq.~\eqref{eq:discretization_lambda} in Eq.~\eqref{eq:variational_formulation_delta_u} and by using the well-known identity of the Dirac delta distribution, that is,
+
+\begin{align}
+	\int_{\Gamma_{\text{c}}} \delta u_n \, \lambda \: \text{d} \Gamma \approx \int_{\Gamma_{\text{c}}} \delta \mathbf{u}_h \cdot \mathbf{n} \, \lambda_h \: \text{d} \Gamma \nonumber = \sum_{i = 1}^{n} \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_i \int_{\Gamma_{\text{c}}} \boldsymbol{\varphi}_i \cdot \mathbf{n} \; \delta (\mathbf{X}_j) \hat{\lambda}_j  \, \text{d} \Gamma = \nonumber \\
+	\sum_{i = 1}^n \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_i \, \boldsymbol{\varphi}_i (\mathbf{X}_j) \cdot \mathbf{n} \, \hat{\lambda}_j = \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_j \, \mathbf{e}_{\text{mod} \left( \frac{j - 1}{2} \right) + 1} \cdot \mathbf{n}  \, \hat{\lambda}_j = \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_j \, \bar{n} (\mathbf{X}_j) \, \hat{\lambda}_j \nonumber \;,
+\end{align}
+
+where $\bar{n} (\mathbf{X}_j) = n_1 (\mathbf{X}_j) + n_2 (\mathbf{X}_j)$ is nothing else but the sum of the components of the outward normal vector $\mathbf{n}$ to the boundary $\Gamma_{\text{c}}$ at node $\mathbf{X}_j \in \Gamma_{\text{c}}$.\\
+
+It is worth noting that within linear FEM, the boundary $\Gamma_{\text{c}}$ is only piecewise continuous which means that the the outward normal vector $\mathbf{n}$ to $\Gamma_{\text{c}}$ is not uniquely defined at the finite element nodes $\mathbf{X}_i$. Therefore, $\mathbf{n}(\mathbf{X}_i)$ is constructed by averaging the outward normal vectors from the neighbouring elements along $\Gamma_{\text{c}}$.\\
+
+The $i$-th component of the residual vector $\boldsymbol{\mathcal{R}}$ derived from Eq.~\eqref{eq:variational_formulation_delta_lambda} is defined as follows,
+
+\begin{equation}
+	\mathcal{R}_i ( \hat{u}_i ) = \bar{n} (\mathbf{X}_i) \, \hat{u}_i \;.
+\end{equation}
+
+Then, the tangent stiffness matrix $\mathbf{K}$ has components,
+
+\begin{equation}
+	K_{ij} ( \hat{\mathbf{u}}_{\hat{i}} ) = \frac{\partial R_i}{\partial \hat{u}_j} = \int_{\Omega} \frac{\partial \boldsymbol{\mathcal{E}}}{\partial \hat{u}_i} : \frac{\partial \boldsymbol{\mathcal{S}}}{\partial \hat{u}_j} + \frac{\partial^2 \boldsymbol{\mathcal{E}}}{\partial \hat{u}_i \partial \hat{u}_j} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega \:. \label{eq:tangent_stiffness_matrix}
+\end{equation}
+
+The Lagrange Multipliers matrix $\mathbf{C}$ is then a diagonal matrix due to the choice of the discretization for the Lagrange Multipliers field and has entries,
+
+\begin{equation}
+	C_{ii} = \bar{n} (\mathbf{X}_i) \:,	\label{eq:lagrange_multipliers_matrix}
+\end{equation}
+
+at each active node $\mathbf{X}_i \in \Gamma_{\text{c}}$. Vectors $\hat{\mathbf{u}}$ and $\hat{\boldsymbol{\lambda}}$ stand for the collection of all the displacement and Lagrange Multipliers DOFs as follows,
+
+\begin{subequations}
+	\begin{alignat}{1}
+		\hat{\mathbf{u}} &= \left[ \begin{array}{ccc} \hat{u}_1 & \cdots & \hat{u}_n \end{array} \right] \;, \label{eq:vector_of_displacement_dofs} \\
+		\hat{\mathbf{u}} &= \left[ \begin{array}{ccc} \hat{\lambda}_1 & \cdots & \hat{\lambda}_{n_{\text{c}}} \end{array} \right] \;. \label{eq:vector_of_lagrange_multipliers_dofs}
+	\end{alignat}
+	\label{eq:vectors_of_dofs}
+\end{subequations}
+
+The index $\hat{i}$ on $\hat{\mathbf{u}}$ and $\hat{\boldsymbol{\lambda}}$ indicates the Newton-Raphson iteration and $\Delta_{\hat{i}} (\bullet) = (\bullet)_{\hat{i} + 1} - (\bullet)_{\hat{i}}$.
 
 \end{document}
