@@ -52,7 +52,7 @@ STRUCTURE_TRANSIENT_ANALYSIS
  ADAPTIVE_TIME_STEPPING *GenData(STR_Adaptive_Time_Stepping)
  
 STRUCTURE_INTEGRATION
- DOMAIN *GenData(STR_Domain)
+ DOMAIN *GenData(STR_Gauss_Integration_Type)
  domainNoGP *GenData(STR_Domain_NO_GP)
  boundaryNoGP *GenData(STR_Boundary_NO_GP)
 
@@ -140,7 +140,7 @@ FLUID_TRANSIENT_ANALYSIS
  ADAPTIVE_TIME_STEPPING *GenData(CFD_Adaptive_Time_Stepping)
  
 FLUID_INTEGRATION
- DOMAIN *GenData(CFD_Domain)
+ DOMAIN *GenData(CFD_Gauss_Integration_Type)
  domainNoGP *GenData(CFD_Domain_NO_GP)
  boundaryNoGP *GenData(CFD_Boundary_NO_GP)
 	
