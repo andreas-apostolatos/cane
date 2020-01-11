@@ -36,9 +36,8 @@ function K = computeStiffnessMatrixPlateInMembraneActionLinear...
 no_nodes_global = length(mesh.nodes);
 
 % Number of degrees of freedom for the global system
-if strcmp(analysis.dimension,'2d')&&strcmp(analysis.dofs,'displacements')
-    no_dofs_global = 2*no_nodes_global;
-end
+% for 2D displacement based analysis
+no_dofs_global = 2*no_nodes_global;
 
 % Number of DoFs at the element level (depends on the element type)
 no_nodes_element = 3;
@@ -57,10 +56,10 @@ for i=1:length(mesh.elements)
     nodes = mesh.nodes(element,:);
     
     % Compute element stiffness matrix for the CST
-    K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST(nodes,materialProperties,analysis);
+    K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST...
+                                       (nodes,materialProperties,analysis);
     
     % Assemble to the global stiffness matrix via element freedom tables
-    
     % Element freedom table
     EFT = zeros(1,no_dofs_element);
     

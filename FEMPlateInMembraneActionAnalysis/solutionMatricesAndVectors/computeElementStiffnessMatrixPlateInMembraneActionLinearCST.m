@@ -83,16 +83,16 @@ Boperator = preFactor_B*[yjk 0 yik 0 yij 0
                          xkj yjk xki yik xji yij];
                      
 % Compute the material matrix                        
-if strcmp(analysis.physics,'plainStress')
-    preFactor_material = materialProperties.E/(1-materialProperties.nu^2);
-    Dm = preFactor_material*[1 materialProperties.nu 0;
-                             materialProperties.nu 1 0
-                             0 0 (1-materialProperties.nu)/2];
-elseif strcmp(analysis.physics,'plainStrain')
-    preFactor_material = materialProperties.E*(1-materialProperties.nu)/(1+materialProperties.nu)/(1-2*materialProperties.nu);
-    Dm = preFactor_material*[1 materialProperties.nu/(1-materialProperties.nu) 0;
-                             materialProperties.nu/(1-materialProperties.nu) 1 0
-                             0 0 (1-2*materialProperties.nu)/2/(1-materialProperties.nu)];
+if strcmp(analysis.type,'plainStress')
+    preFactor_material = materialProperties.E/(1-materialProperties.nue^2);
+    Dm = preFactor_material*[1 materialProperties.nue 0;
+                             materialProperties.nue 1 0
+                             0 0 (1-materialProperties.nue)/2];
+elseif strcmp(analysis.type,'plainStrain')
+    preFactor_material = materialProperties.E*(1-materialProperties.nue)/(1+materialProperties.nue)/(1-2*materialProperties.nue);
+    Dm = preFactor_material*[1 materialProperties.nue/(1-materialProperties.nue) 0;
+                             materialProperties.nue/(1-materialProperties.nue) 1 0
+                             0 0 (1-2*materialProperties.nue)/2/(1-materialProperties.nue)];
 end
 
 % Compute the element stiffness matrix as a tensor product (B'*D*B*t*Delta see page 46 of the book)
