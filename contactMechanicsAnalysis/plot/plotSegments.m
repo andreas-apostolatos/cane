@@ -1,13 +1,9 @@
-function []= plotSegments(mesh,segments)
+function []= plotSegments(segments)
 %PLOTSEGMENTS Plot segments on current graph
 %   Plot segments on current graph
  
 %% 1. Add the segments
-%     hold on;
-%     for i=1:size(segments,1)
-%         plot(squeeze(segments(1,:,1)),squeeze(segments(1,:,2)),'Linewidth',2,'Color','black');
-%     end
-%     hold off;
+
 % create marks coordinates
 if(ndims(segments)>2) % ie more than one segments possible
     for i=1:size(segments,1)

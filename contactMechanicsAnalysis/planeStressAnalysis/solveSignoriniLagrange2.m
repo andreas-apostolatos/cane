@@ -8,13 +8,14 @@
 %                                                                         %
 %   Fabien Pean, Andreas Hauso, Georgios Koroniotis                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [displacement,lagrange] = solveSignoriniLagrange2(mesh,rb,cn,F,segmentsPoints,materialProperties,analysis,maxIter)
+function [displacement,lagrange] = solveSignoriniLagrange2...
+    (mesh,homDBC,contactNodes,F,segmentsPoints,materialProperties,analysis,maxIteration)
 %% Function documentation
 % 
 % Returns the displacement field and the Lagrange multipliers corresponding 
 % to a plain stress/strain analysis for the given mesh of the geometry 
 % together with its Dirichlet and Neumann boundary conditions and the 
-% contact constraints for a single rigid wall by applying the Lagrange multiplier method
+% contact constraints for a SINGLE rigid wall by applying the Lagrange multiplier method
 %
 %              Input :
 %               mesh : Elements and nodes of the mesh
@@ -57,26 +58,26 @@ function [displacement,lagrange] = solveSignoriniLagrange2(mesh,rb,cn,F,segments
 % 5. compute the complete load vector and verify the results
 %
 %% Function main body
-if strcmp(analysis.physics,'plain_stress')
-    fprintf('Plain stress analysis has been initiated \n');
-elseif strcmp(analysis.physics,'plain_strain')
-    fprintf('Plain strain analysis has been initiated \n');
+if strcmp(analysis.physics,'planeStress')
+    fprintf('Plane stress analysis has been initiated \n');
+elseif strcmp(analysis.physics,'planeStrain')
+    fprintf('Plane strain analysis has been initiated \n');
 end
 fprintf('\n');
 
 
 %%  0. Remove fully constrained nodes
-nodes.index=cn;
-nodes.positions=mesh.nodes(cn,:);
+nodes.index=contactNodes;
+nodes.positions=mesh.nodes(contactNodes,:);
 %Remove fully constrained nodes from the tests
 for i=length(nodes.index):-1:1
     idx=nodes.index(i);
-    if(ismember(2*idx-1:2*idx,rb))
+    if(ismember(2*idx-1:2*idx,homDBC))
         nodes.index(i)=[];
         nodes.positions(i,:)=[];
     end
 end
-cn=nodes.index;
+contactNodes=nodes.index;
 
 %% 1. Compute the gap function
 
@@ -98,10 +99,10 @@ fprintf('\t Reducing the system according to the constraints... \n');
 Kred = K;
 Fred = F;
 
-for i = length(rb):-1:1
-    Kred(:,rb(i)) = [];
-    Kred(rb(i),:) = [];
-    Fred(rb(i)) = [];
+for i = length(homDBC):-1:1
+    Kred(:,homDBC(i)) = [];
+    Kred(homDBC(i),:) = [];
+    Fred(homDBC(i)) = [];
 end
 %% 4. Solve the system according to Lagrange multipliers
 
@@ -116,10 +117,10 @@ end
     equations_counter=0;
     
 % Iterate until no more invalid Lagrange multipliers AND no new active node added in the pool
-while( flag_active && it<maxIter )    
+while( flag_active && it<maxIteration )    
 %% 4.1 Assemble to the complete displacement vector
 
-    displacement = buildFullDisplacement(length(F), rb, dred);
+    displacement = buildFullDisplacement(length(F), homDBC, dred);
     
 %% 4.2 Detect active nodes
     active_node_tmp=detectActiveNodes(nodes,displacement,segments,gap,0);
@@ -137,20 +138,20 @@ while( flag_active && it<maxIter )
         active_node=active_node_tmp;
         N_active=length(active_node);
         %% 4.3.2 Build constraint matrix C and rhs F
-        C=buildConstraintMatrix(length(F),cn(active_node),segments);
+        C=buildConstraintMatrix(length(F),contactNodes(active_node),segments);
         Fred=buildRHS(F,active_node,gap);
         %% 4.3.3 Build master system matrix
         Kred=[K C ; C' zeros(N_active)];
         %% 4.3.4 Reduce the system according to the BCs
-        for i = length(rb):-1:1
-            Kred(:,rb(i)) = [];
-            Kred(rb(i),:) = [];
-            Fred(rb(i)) = [];
+        for i = length(homDBC):-1:1
+            Kred(:,homDBC(i)) = [];
+            Kred(homDBC(i),:) = [];
+            Fred(homDBC(i)) = [];
         end
     end
 %% 4.4 Relax the system until ONLY valid Lagrange multipliers are computed
     flag_lagrange=1;
-    while(flag_lagrange && it<maxIter )
+    while(flag_lagrange && it<maxIteration )
         it=it+1;
         flag_lagrange=0;
         %% 4.4.1 Compute the displacement & Lagrange multipliers
@@ -172,7 +173,7 @@ while( flag_active && it<maxIter )
     end
     
 end
-displacement = buildFullDisplacement(length(F), rb, dred);
+displacement = buildFullDisplacement(length(F), homDBC, dred);
 lagrange.multipliers=dred(length(dred)-N_active+1:length(dred));
 fprintf('\n');
 fprintf('Output informations...\n');
@@ -185,12 +186,12 @@ fprintf('\t #DOF: %d .Energy norm of the structure : %4.2f\n',length(F),energy);
 %% Build back the active nodes indexes into mesh.boundaryNodes compatible
 offset = 0;
 j=1;
-for i=1:length((cn))
+for i=1:length((contactNodes))
     if(j>length(active_node))
         break;
     end
-    idx=cn(i);
-    if(ismember(2*idx-1:2*idx,rb))
+    idx=contactNodes(i);
+    if(ismember(2*idx-1:2*idx,homDBC))
         offset=offset+1;
     end
     if(idx==nodes.index(active_node(j)))
@@ -199,7 +200,7 @@ for i=1:length((cn))
     end
 end
 
-lagrange.active_nodes=cn(active_node);
+lagrange.active_nodes=contactNodes(active_node);
 
 
 

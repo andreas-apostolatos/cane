@@ -32,6 +32,7 @@ STRUCTURE_MATERIAL_PROPERTIES
  DENSITY,*MatProp(Density)
  YOUNGS_MODULUS,*MatProp(Young_Modulus)
  POISSON_RATIO,*MatProp(Poisson_Ratio)
+ THICKNESS,*MatProp(Thickness)
 *endif
 *end loop
 
@@ -105,6 +106,13 @@ STRUCTURE_FORCE_NODES*\
 *endif
 *end loop
 
+STRUCTURE_CONTACT_NODES*\
+*set Cond Structure-Contact *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*NodesNum *\
+*end loop
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %

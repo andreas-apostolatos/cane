@@ -63,17 +63,17 @@ addpath('../../efficientComputation/');
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 % caseName = 'infinitePlateWithHoleQuadrilaterals';
-caseName = 'cantileverBeamPlaneStress';
+%caseName = 'cantileverBeamPlaneStress';
 % caseName = 'PlateWithAHolePlaneStress';
 % caseName = 'PlateWithMultipleHolesPlaneStress';
 % caseName = 'InfinitePlateWithAHolePlaneStress';
 % caseName = 'unitTest_curvedPlateTipShearPlaneStress';
-% caseName = 'gammaStructureMixedElementsPlaneStress';
+caseName = 'gammaStructureMixedElementsPlaneStress';
 % caseName = 'NACA2412_AoA5_CSD';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics] = ...
+    propNLinearAnalysis] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 %% GUI

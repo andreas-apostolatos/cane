@@ -83,12 +83,12 @@ Boperator = preFactor_B*[yjk 0 yik 0 yij 0
                          xkj yjk xki yik xji yij];
                      
 % Compute the material matrix                        
-if strcmp(analysis.type,'plainStress')
+if strcmp(analysis.type,'planeStress')
     preFactor_material = materialProperties.E/(1-materialProperties.nue^2);
     Dm = preFactor_material*[1 materialProperties.nue 0;
                              materialProperties.nue 1 0
                              0 0 (1-materialProperties.nue)/2];
-elseif strcmp(analysis.type,'plainStrain')
+elseif strcmp(analysis.type,'planeStrain')
     preFactor_material = materialProperties.E*(1-materialProperties.nue)/(1+materialProperties.nue)/(1-2*materialProperties.nue);
     Dm = preFactor_material*[1 materialProperties.nue/(1-materialProperties.nue) 0;
                              materialProperties.nue/(1-materialProperties.nue) 1 0

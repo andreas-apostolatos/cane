@@ -9,7 +9,7 @@
 %   Fabien Pean, Andreas Hauso, Georgios Koroniotis                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [displacement,lagrange] = solveSignoriniLagrange1...
-    (mesh,homDBC,cn,F,segmentsPoints,materialProperties,analysis,maxIteration)
+    (mesh,homDBC,contactNodes,F,segmentsPoints,materialProperties,analysis,maxIteration)
 %% Function documentation
 %
 % Returns the displacement field and the Lagrange multipliers corresponding 
@@ -56,17 +56,17 @@ function [displacement,lagrange] = solveSignoriniLagrange1...
 % 6.  Print info
 %
 %% Function main body
-if strcmp(analysis.type,'plainStress')
-    fprintf('Plain stress analysis has been initiated \n');
-elseif strcmp(analysis.type,'plainStrain')
-    fprintf('Plain strain analysis has been initiated \n');
+if strcmp(analysis.type,'planeStress')
+    fprintf('Plane stress analysis has been initiated \n');
+elseif strcmp(analysis.type,'planeStrain')
+    fprintf('Plane strain analysis has been initiated \n');
 end
 fprintf('\n');
 
 
 %% 0. Remove fully constrained nodes
-nodes.index=cn;
-nodes.positions=mesh.nodes(cn,:);
+nodes.index=contactNodes;
+nodes.positions=mesh.nodes(contactNodes,:);
 % Remove fully constrained nodes from the tests
 for i=length(nodes.index):-1:1
     idx=nodes.index(i);
@@ -75,7 +75,7 @@ for i=length(nodes.index):-1:1
         nodes.positions(i,:)=[];
     end
 end
-cn=nodes.index;
+contactNodes=nodes.index;
 
 %% 1. Compute the gap function
 
@@ -96,10 +96,10 @@ K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,an
 fprintf('\t Creating the expanded system of equations... \n');
 
 % Assemble the values of the normal vector of segments to the constraint matrix:
-C=buildConstraintMatrix(length(F),cn,segments);
+C=buildConstraintMatrix(length(F),contactNodes,segments);
 
 % Create a zero matrix for the bellow right side of the equation system:
-zero_matrix=zeros(length(cn),length(cn));
+zero_matrix=zeros(length(contactNodes),length(contactNodes));
 
 % Expand the C matrix with the zero matrix:
 Ctmp=[C;zero_matrix];
@@ -143,7 +143,7 @@ it=it+1;
  %% 4.1 Determine the inactive_nodes nodes
  
 % Detect non-penetrating nodes and nodes with non-compressive Lagr. multipliers
-inactive_nodes= detectInactiveNodes( length(F),cn, dexp, segments, gap );
+inactive_nodes= detectInactiveNodes( length(F),contactNodes, dexp, segments, gap );
 
  
 %% 4.2 Reduce the system of equations according to the constraints
@@ -184,7 +184,7 @@ end
 %% 5. Get the values for the displacement and the Lagrange multipliers
 
 % Select and save node numbers of active nodes :
-lagrange.active_nodes=setdiff(cn,cn(inactive_nodes-length(F)));
+lagrange.active_nodes=setdiff(contactNodes,contactNodes(inactive_nodes-length(F)));
 
 % The first entries of dexp correspond to the displacement
 displacement=dexp(1:length(F));

@@ -1,5 +1,5 @@
 function [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,gaussInt] = ...
+    propNLinearAnalysis,propStrDynamics,gaussInt,contactNodes] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,outMsg)
 %% Licensing
 %
@@ -78,9 +78,11 @@ function [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
 %
 % 10. Load the nodes on the Neumann boundary together with the load application information
 %
-% 11. Get edge connectivity arrays for the Neumann edges
+% 11. Load the nodes that are candidates for contact
 %
-% 12. Appendix
+% 12. Get edge connectivity arrays for the Neumann edges
+%
+% 13. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
@@ -120,6 +122,7 @@ out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
 parameters.rho = str2double(out{1}{2});
 parameters.E = str2double(out{1}{4});
 parameters.nue = str2double(out{1}{6});
+parameters.t = str2double(out{1}{8});
 
 %% 4. Load the nonlinear method
 block = regexp(fstring,'STRUCTURE_NLINEAR_SCHEME','split');
@@ -274,7 +277,21 @@ NBC.loadType = cell2mat(outLoadType{1});
 outFctHandle = out(:,3);
 NBC.fctHandle = cell2mat(outFctHandle{1});
 
-%% 11. Get edge connectivity arrays for the Neumann edges
+%% 11. Load the nodes that are candidates for contact
+block = regexp(fstring,'STRUCTURE_CONTACT_NODES','split'); 
+block(1) = [];
+out = cell(size(block));
+for k = 1:numel(block)
+    out{k} = textscan(block{k},'%f');
+end
+if ~isempty(out)
+    out = out{1};
+    contactNodes = cell2mat(out(:,1));
+else
+    contactNodes = [];
+end
+
+%% 12. Get edge connectivity arrays for the Neumann edges
 if strcmp(outMsg,'outputEnabled')
     fprintf('>> Neumann boundary edges: %d \n',length(NBC.nodes) - 1);
 end
@@ -326,7 +343,7 @@ for i = 1:length(NBC.nodes)
 end
 NBC.fctHandle = fctHandle;
 
-%% 12. Appendix
+%% 13. Appendix
 if strcmp(outMsg,'outputEnabled')
     % Save computational time
     computationalTime = toc;

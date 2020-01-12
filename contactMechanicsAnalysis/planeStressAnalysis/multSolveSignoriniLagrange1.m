@@ -8,7 +8,8 @@
 %                                                                         %
 %   Fabien Pean, Andreas Hauso, Georgios Koroniotis                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [displacement,lagrange] = multSolveSignoriniLagrange1(mesh,rb,cn,F,segmentsPoints,materialProperties,analysis,maxIter)
+function [displacement,lagrange] = multSolveSignoriniLagrange1...
+    (mesh,homDBC,contactNodes,F,segmentsPoints,materialProperties,analysis,maxIteration)
 %% Function documentation
 %
 % Returns the displacement field and the Lagrange multipliers corresponding 
@@ -62,30 +63,30 @@ function [displacement,lagrange] = multSolveSignoriniLagrange1(mesh,rb,cn,F,segm
 % 6.  Print info
 %
 %% Function main body
-if strcmp(analysis.physics,'plain_stress')
-    fprintf('Plain stress analysis has been initiated \n');
-elseif strcmp(analysis.physics,'plain_strain')
-    fprintf('Plain strain analysis has been initiated \n');
+if strcmp(analysis.type,'planeStress')
+    fprintf('Plane stress analysis has been initiated \n');
+elseif strcmp(analysis.type,'planeStrain')
+    fprintf('Plane strain analysis has been initiated \n');
 end
 fprintf('\n');
 
 
 %% 0. Remove fully constrained nodes
 
-for j=1:size(cn,2)
+for j=1:size(contactNodes,2)
 
-%Remove fully constrained nodes from the tests
-for i=size(cn(j).indices,2):-1:1
+% Remove fully constrained nodes from the tests
+for i=size(contactNodes(j).indices,2):-1:1
     % Determine how many Dirichlet conditions correspond to the node:  
-    nodeHasDirichlet=ismember(floor((rb+1)/2),cn(j).indices(i));
+    nodeHasDirichlet=ismember(floor((homDBC+1)/2),contactNodes(j).indices(i));
     numberOfDirichlet=length(nodeHasDirichlet(nodeHasDirichlet==1));
     % If the 2D node has at least two Dirichlet conditions exclude it from the contact canditates :  
     if (numberOfDirichlet>=2)
-       cn(j).indices(i)=[];
+       contactNodes(j).indices(i)=[];
     end
 
 end
-cn(j).positions=mesh.nodes(cn(j).indices,:);
+contactNodes(j).positions=mesh.nodes(contactNodes(j).indices,:);
 end
 
 %% 1. Compute the gap function
@@ -94,7 +95,7 @@ end
 segments=buildSegmentsData(segmentsPoints);
 
 % Compute for all nodes the specific gap and save it in the field 'cn.gap':
-cn=multComputeGapFunc(cn, segments, segmentsPoints);
+contactNodes=multComputeGapFunc(contactNodes, segments, segmentsPoints);
 
 %% 2. Compute the master stiffness matrix of the structure
 
@@ -108,12 +109,12 @@ K = computeStiffnessMatrixPlateMembraneActionLinear(mesh,materialProperties,anal
 fprintf('\t Creating the expanded system of equations... \n');
 
 % Assemble the values of the normal vector of segments to the constraint matrix:
-C=multBuildConstraintMatrix(length(F),cn,[],segments);
+C=multBuildConstraintMatrix(length(F),contactNodes,[],segments);
 
 % Create a zero matrix for the bellow right side of the equation system:
 N_active_node=0;
-for j=1:size(cn,2)
-    N_active_node=N_active_node+size(cn(j).indices,2);       
+for j=1:size(contactNodes,2)
+    N_active_node=N_active_node+size(contactNodes(j).indices,2);       
 end
 zero_matrix=zeros(N_active_node,N_active_node);
 
@@ -128,8 +129,8 @@ Kexp=[Kexp,Ctmp];
 
 % Expand the F vector with the gap constants for every node:
 Fexp=F;
-for j=1:size(cn,2)
-    Fexp=[Fexp;squeeze(-cn(j).gap(:,2))];
+for j=1:size(contactNodes,2)
+    Fexp=[Fexp;squeeze(-contactNodes(j).gap(:,2))];
 end
 
 clear C;
@@ -153,21 +154,21 @@ equations_counter=0;
 % If the Lagrange multiplier of the current node are valid and we had 
 % no change in the set of inactive_nodes during the last iteration 
 % the solution has been found and the loop is terminated
-while (it==0 || (it<maxIter && ~(isequal(inactive_old,inactive_nodes) && max(dexp(length(F)+1:length(Fexp)))<=0)))
+while (it==0 || (it<maxIteration && ~(isequal(inactive_old,inactive_nodes) && max(dexp(length(F)+1:length(Fexp)))<=0)))
  
 inactive_old=inactive_nodes;
 % update iteration counter
 it=it+1;
     
  %% 4.1 Determine the inactive_nodes nodes
-inactive_nodes= multDetectInactiveNodes( length(F),cn, dexp, segments );
+inactive_nodes= multDetectInactiveNodes( length(F),contactNodes, dexp, segments );
 
  
 %% 4.2 Reduce the system of equations according to the constraints
 
 % Merge the vectors with equation numbers which will be deleted due to a
 % Dirichlet boundary condition or a contact constraint:
-rb_cb=[rb,inactive_nodes];
+rb_cb=[homDBC,inactive_nodes];
 rb_cb=unique(rb_cb);
 rb_cb=sort(rb_cb);
 
@@ -201,8 +202,8 @@ end
 
 % Select and save node numbers of active nodes :
 allnodes=[];
-for j=1:size(cn,2)
-    allnodes=[allnodes,cn(j).indices];
+for j=1:size(contactNodes,2)
+    allnodes=[allnodes,contactNodes(j).indices];
 end
 lagrange.active_nodes=setdiff(allnodes,allnodes(inactive_nodes-length(F)));
 

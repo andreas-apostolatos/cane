@@ -10,7 +10,7 @@ function K = computeStiffnessMatrixPlateInMembraneActionLinear...
 %% Function documentation
 %
 % Computes the stiffness matrix needed for linear analysis of a plate in
-% membrane action
+% membrane action for constant strain triangle (CST)
 %
 %              Input :
 %               mesh : The mesh of the structure
@@ -50,7 +50,7 @@ K = zeros(no_dofs_global,no_dofs_global);
 for i=1:length(mesh.elements)
     
     % Get the current element in the mesh
-    element = mesh.elements(i,:);
+    element = mesh.elements(i,1:no_nodes_element);
     
     % Get the nodes of the triangle in a counterclockwise fashion
     nodes = mesh.nodes(element,:);
