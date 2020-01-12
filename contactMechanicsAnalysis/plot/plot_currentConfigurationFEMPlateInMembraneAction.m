@@ -9,21 +9,21 @@
 %            Andreas Apostolatos, Research Associate TUM                %
 %                 (andreas.apostolatos@tum.de)                          %
 %                                                                       %
-%           ===============================================             %
-%           || plot_current_configuration_and_resultants ||             %
-%           ===============================================             %
+%                  ================================                     %
+%                  || plot_current_configuration ||                     %
+%                  ================================                     %
 %                                                                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function index = plot_current_configuration_and_resultants(mesh,rb,displacement,graph)
+function index = plot_currentConfigurationFEMPlateInMembraneAction...
+    (mesh,homDBC,displacement,graph)
 %% Function documentation
 %
 % Plots the current configuration of a plate in membrane action given the
-% displacement field and visualizes the displacement/strain or stress field
-% over the initial configuration of the plate
+% displacement field 
 %
 %        input :
 %         mesh : Elements and nodes of the mesh
-%           rb : Vector of the Dirichlet boundary conditions with their
+%       homDBC : Vector of the Dirichlet boundary conditions with their
 %                global numbering
 % displacement : The displacement field sorted in a vector according to its
 %                global numbering
@@ -52,18 +52,20 @@ for i=1:length(mesh.nodes)
 end
 
 %% 2. Visualize the displaced elements on the mesh
-
 figure(graph.index)
 
 % Reference configuration
-if strcmp(graph.visualization.geometry,'reference_and_current')||strcmp(graph.visualization.geometry,'current');
+if strcmp(graph.visualization.geometry,'reference_and_current')||...
+   strcmp(graph.visualization.geometry,'current')
     patch('faces',mesh.elements,'vertices',nodes_displaced(:,1:2),'facecolor','g','edgecolor','black');
     hold on;
 end
 % Current configuration
-if strcmp(graph.visualization.geometry,'reference_and_current')||strcmp(graph.visualization.geometry,'reference');
+if strcmp(graph.visualization.geometry,'reference_and_current')||...
+   strcmp(graph.visualization.geometry,'reference')
     patch('faces',mesh.elements,'vertices',mesh.nodes(:,1:2),'facecolor','none','edgecolor','black');
 end
+
 axis equal off;
 axis on;
 title('The current configuration of the mesh');
@@ -71,9 +73,9 @@ title('The current configuration of the mesh');
 %% 3. Visualize the Dirichlet boundary conditions on the mesh
 
 % Create the supports
-[xs,ys,zs] = createSupports(nodes_displaced,rb);
+[xs,ys,zs] = createSupports(nodes_displaced,homDBC);
 
-%supports
+% Supports
 hold on;
 for k =1:length(xs(:,1))
     plot3(xs(k,:),ys(k,:),zs(k,:),'Linewidth',2,'Color','black');
@@ -84,4 +86,3 @@ hold off;
 index = graph.index + 1;
 
 end
-

@@ -19,8 +19,8 @@ function [displacement,lagrange] = solveSignoriniLagrange1...
 % 
 %              Input :
 %               mesh : Elements and nodes of the mesh
-%                 rb : Vector of the prescribed DoFs (by global numbering)
-%                 cn : VECTOR containing the global numbering of the canditate-nodes for contact 
+%             homDBC : Vector of the prescribed DoFs (by global numbering)
+%       contactNodes : VECTOR containing the global numbering of the canditate-nodes for contact 
 %                  F : Global load vector
 %     segmentsPoints : Matrix with the coordinates of two wall determining points
 % materialProperties : The material properties of the structure
@@ -80,9 +80,9 @@ contactNodes=nodes.index;
 %% 1. Compute the gap function
 
 % Compute normal, parallel and position vectors of the segments:
-segments=buildSegmentsData(segmentsPoints);
+segments = buildSegmentsData(segmentsPoints);
 % Compute for all nodes the specific gap:
-gap=computeGapFunc(nodes, segments, segmentsPoints);
+gapFunction = computeGapFunction(nodes, segments, segmentsPoints);
 
 %% 2. Compute the master stiffness matrix of the structure
 
@@ -111,13 +111,13 @@ Kexp=[K;C'];
 Kexp=[Kexp,Ctmp];
 
 % Expand the F vector with the gap constants for every node:
-Fexp=[F;-gap(:,2)];
+Fexp=[F;-gapFunction(:,2)];
 
 clear C;
 clear Ctmp;
 clear zero_matrix;
 
-% Initial values for the itaration:
+% Initial values for the iteration:
 it=0;
 dexp=zeros(length(Fexp));
 inactive_nodes=[];
@@ -143,40 +143,39 @@ it=it+1;
  %% 4.1 Determine the inactive_nodes nodes
  
 % Detect non-penetrating nodes and nodes with non-compressive Lagr. multipliers
-inactive_nodes= detectInactiveNodes( length(F),contactNodes, dexp, segments, gap );
+inactive_nodes=detectInactiveNodes( length(F),contactNodes, dexp, segments, gapFunction );
 
- 
 %% 4.2 Reduce the system of equations according to the constraints
 
 % Merge the vectors with equation numbers which will be deleted due to a
 % Dirichlet boundary condition or a contact constraint:
-rb_cb=[homDBC,inactive_nodes];
-rb_cb=unique(rb_cb);
-rb_cb=sort(rb_cb);
+homDBC_cb=[homDBC,inactive_nodes];
+homDBC_cb=unique(homDBC_cb);
+homDBC_cb=sort(homDBC_cb);
 
 
-Kred = Kexp;
-Fred = Fexp;
+K_reduced = Kexp;
+F_reduced = Fexp;
 
 % Remove constrained DOFs and inactive_nodes equations:
-for i = length(rb_cb):-1:1
-    Kred(:,rb_cb(i)) = [];
-    Kred(rb_cb(i),:) = [];
-    Fred(rb_cb(i)) = [];
+for i = length(homDBC_cb):-1:1
+    K_reduced(:,homDBC_cb(i)) = [];
+    K_reduced(homDBC_cb(i),:) = [];
+    F_reduced(homDBC_cb(i)) = [];
 end
  
 %% 4.3 Solve the reduced system of equations
 
-equations_counter=equations_counter+length(Kred);
-fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(Kred), cond(Kred));
+equations_counter=equations_counter+length(K_reduced);
+fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_reduced), cond(K_reduced));
 
-dred=Kred\Fred;
+dred=K_reduced\F_reduced;
 
 
 %% 4.3 Assemble to the expanded displacement/Lagrange multiplier vector
 
 % Build dexp out of dred:
-dexp = buildFullDisplacement( length(Fexp) ,rb_cb, dred );
+dexp = buildFullDisplacement( length(Fexp) ,homDBC_cb, dred );
 
  
 end
@@ -194,7 +193,6 @@ lagrange.multipliers=dexp(length(F)+1:length(Fexp));
 
 %Keep only Lagr. multipliers of the active nodes:
 lagrange.multipliers=lagrange.multipliers(lagrange.multipliers<0);
-
 
 %% 6. Print info
 

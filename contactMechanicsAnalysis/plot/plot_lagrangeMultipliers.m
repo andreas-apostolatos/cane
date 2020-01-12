@@ -1,8 +1,9 @@
-function [] = plotLagrangeMultipliers( mesh, displacement,active_nodes, lagrange_multipliers,direction )
+function [] = plot_lagrangeMultipliers...
+    (mesh,displacement,lagrange,direction)
 %% Function documentation
 %
-% PLOTLAGRANGEMULTIPLIERS: Plots a red dot vor every node and if a
-% direction is specified bars for the values of the Lagrange multipliers
+% Task: Plots a red dot for every node and if a direction is specified bars
+%       for the values of the Lagrange multipliers
 % 
 %                Input :
 %                 mesh : Elements and nodes of the mesh
@@ -15,11 +16,20 @@ function [] = plotLagrangeMultipliers( mesh, displacement,active_nodes, lagrange
 %             Output :
 %                  []
 %
+%% Check if active nodes exist
+
+% assign variables
+active_nodes = lagrange.active_nodes;
+lagrange_multipliers = lagrange.multipliers;
+
+% Check if active nodes exist
 if(isempty(active_nodes))
     fprintf('No contact nodes !\n');
     return; 
 end
+
 %% Plot active nodes
+
 % Add the x and y components of the displacement field
 nodes_displacedX = mesh.nodes(active_nodes,1) + displacement(2*active_nodes-1);
 nodes_displacedY = mesh.nodes(active_nodes,2) + displacement(2*active_nodes);

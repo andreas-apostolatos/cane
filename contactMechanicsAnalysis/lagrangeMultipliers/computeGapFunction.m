@@ -1,4 +1,4 @@
-function [ gap ] = computeGapFunc( nodes , segments, points )
+function [ gap ] = computeGapFunction( nodes , segments, points )
 %COMPUTEGAPFUNC Computes gap function
 % Returns the gap function which is the distance between nodes of the
 % structure and the segments points.

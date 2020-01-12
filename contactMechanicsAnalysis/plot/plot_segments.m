@@ -1,4 +1,4 @@
-function []= plotSegments(segments)
+function [] = plot_segments(segments)
 %PLOTSEGMENTS Plot segments on current graph
 %   Plot segments on current graph
  

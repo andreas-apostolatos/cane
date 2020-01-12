@@ -90,11 +90,12 @@ F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,time,gaussInt,'ou
 % not implemented yet
 
 %% Visualization of the configuration
+% NOTE - combine this function 
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,analysis,F,homDBC,graph,'outputEnabled');
+    (strMsh,F,homDBC,graph,'outputEnabled');
 
 % plot the wall segment
-plotSegments(wall); 
+plot_segments(segmentsPoints); 
 
 %% Solve the system and get the displacement field
 ts = cputime;
@@ -109,8 +110,9 @@ maxIteration = 100;
 
 fprintf('\t Time :   %4.2f \n',cputime-ts);
 %% Postprocessing
-graph.index = plotCurrentConfigurationAndResultants(strMsh,homDBC,displacement,graph);
-plotSegments(segmentsPoints);
-plotLagrangeMultipliers(strMsh, displacement,lagrange.active_nodes,lagrange.multipliers,''); % To show vertical bars for the Lagrange multiplier values insert 'v' as last parameter
+graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,displacement,graph);
+plot_segments(segmentsPoints);
+% To show vertical bars for the Lagrange multiplier values insert 'v' as last parameter
+plot_lagrangeMultipliers(strMsh,displacement,lagrange,''); 
 
 %% End of the script

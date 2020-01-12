@@ -63,12 +63,12 @@ addpath('../../efficientComputation/');
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 % caseName = 'infinitePlateWithHoleQuadrilaterals';
-%caseName = 'cantileverBeamPlaneStress';
+caseName = 'cantileverBeamPlaneStress';
 % caseName = 'PlateWithAHolePlaneStress';
 % caseName = 'PlateWithMultipleHolesPlaneStress';
 % caseName = 'InfinitePlateWithAHolePlaneStress';
 % caseName = 'unitTest_curvedPlateTipShearPlaneStress';
-caseName = 'gammaStructureMixedElementsPlaneStress';
+%caseName = 'gammaStructureMixedElementsPlaneStress';
 % caseName = 'NACA2412_AoA5_CSD';
 
 % Parse the data from the GiD input file
@@ -118,7 +118,7 @@ F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,intLoad,'output
 
 %% Visualization of the configuration
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,analysis,F,homDBC,graph,'outputEnabled');
+    (strMsh,F,homDBC,graph,'outputEnabled');
 
 %% Solve the plate in membrane action problem
 [dHat,FComplete,minElSize] = solve_FEMPlateInMembraneAction...

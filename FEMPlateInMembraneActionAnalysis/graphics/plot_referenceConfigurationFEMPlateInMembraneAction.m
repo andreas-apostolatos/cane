@@ -1,5 +1,5 @@
 function index = plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,analysis,F,homDBC,graph,outMsg)
+    (strMsh,F,homDBC,graph,outMsg)
 %% Licensing
 %
 % License:         BSD License

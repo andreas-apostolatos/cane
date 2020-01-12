@@ -68,8 +68,6 @@ for j=1:number_marking_lines
 end
 end
 %% 3.Output results
-
 sol=struct('xw',xw,'yw',yw);
-
 
 end
