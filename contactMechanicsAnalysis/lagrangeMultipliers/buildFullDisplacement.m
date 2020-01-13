@@ -1,4 +1,4 @@
-function [ displacement ] = buildFullDisplacement( N_unknown , bc, dred )
+function [displacement] = buildFullDisplacement(N_unknown,bc,d_reduced)
 %% Function documentation
 %
 % BUILDFULLDISPLACEMENT: All prescribed DoFs are set to be zero. The other
@@ -21,17 +21,17 @@ displacement = zeros(N_unknown,1);
 i=1;
 k=1;
 for l = 1:N_unknown
-        % if we are in a Dirichlet boundary condition location add 0
-        if (i<=length(bc) && l==bc(i))
-            displacement(l,1) = 0;
-            % update counter
-            i=i+1;
-        % if not add the Control Point displacement 
-        else
-            displacement(l,1) = dred(k);
-            % update counter
-            k=k+1;
-        end
+    % if we are in a Dirichlet boundary condition location add 0
+    if (i<=length(bc) && l==bc(i))
+        displacement(l,1) = 0;
+        % update counter
+        i=i+1;
+    % if not add the Control Point displacement 
+    else
+        displacement(l,1) = d_reduced(k);
+        % update counter
+        k=k+1;
+    end
 end
 
 end

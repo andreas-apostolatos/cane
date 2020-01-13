@@ -1,4 +1,4 @@
-function [ segments ] = buildSegmentsData( points )
+function [segments] = buildSegmentsData(segmentPoints)
 %% Function documentation
 %
 %BUILDSEGMENTSDATA Build a data structure segments
@@ -15,18 +15,18 @@ function [ segments ] = buildSegmentsData( points )
 %                      position)
 %
 %%
-tmp=zeros(size(points,1),2);
+tmp=zeros(size(segmentPoints,3),2);
 segments=struct('normals',tmp,'directors',tmp,'constants',tmp(:,1),'number',0);
-for i=1:size(points,1)
-    DX = points(i,2,1)- points(i,1,1) ;
-    DY = points(i,2,2)- points(i,1,2) ;
+for i=1:size(segmentPoints,3)
+    DX = segmentPoints(2,1,i)- segmentPoints(1,1,i);
+    DY = segmentPoints(2,2,i)- segmentPoints(1,2,i);
     director = [DX DY];
     director = director/norm(director);
     normal = [-DY DX];
     normal = normal/norm(normal);
     segments.normals(i,:)=normal;
     segments.directors(i,:)=director;
-    segments.constants(i)=-dot(normal,squeeze(points(i,1,:)));
+    segments.constants(i)=-dot(normal,squeeze(segmentPoints(1,:,i)));
 end
 segments.number=length(segments.constants);
 end

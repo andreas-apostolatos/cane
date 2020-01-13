@@ -9,22 +9,22 @@
 %   Fabien Pean, Andreas Hauso, Georgios Koroniotis                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [displacement,lagrange] = solveSignoriniLagrange1...
-    (mesh,homDBC,contactNodes,F,segmentsPoints,materialProperties,analysis,maxIteration)
+    (mesh,homDBC,contactNodes,F,segmentPoints,materialProperties,analysis,maxIteration)
 %% Function documentation
 %
 % Returns the displacement field and the Lagrange multipliers corresponding 
 % to a plain stress/strain analysis for the given mesh of the geometry 
 % together with its Dirichlet and Neumann boundary conditions and the 
-% contact constraints for a SINGLE rigid wall by applying the Lagrange multiplier method
+% contact constraints for a SINGLE rigid wall by applying the Lagrange 
+% multiplier method
 % 
 %              Input :
 %               mesh : Elements and nodes of the mesh
 %             homDBC : Vector of the prescribed DoFs (by global numbering)
 %       contactNodes : VECTOR containing the global numbering of the canditate-nodes for contact 
 %                  F : Global load vector
-%     segmentsPoints : Matrix with the coordinates of two wall determining points
+%      segmentPoints : Matrix with the coordinates of two wall determining points
 % materialProperties : The material properties of the structure
-%              graph : Structure containing information on the graphics
 %
 %             Output :
 %       displacement : The resulting displacement field
@@ -63,7 +63,6 @@ elseif strcmp(analysis.type,'planeStrain')
 end
 fprintf('\n');
 
-
 %% 0. Remove fully constrained nodes
 nodes.index=contactNodes;
 nodes.positions=mesh.nodes(contactNodes,:);
@@ -80,23 +79,22 @@ contactNodes=nodes.index;
 %% 1. Compute the gap function
 
 % Compute normal, parallel and position vectors of the segments:
-segments = buildSegmentsData(segmentsPoints);
+segments = buildSegmentsData(segmentPoints);
+
 % Compute for all nodes the specific gap:
-gapFunction = computeGapFunction(nodes, segments, segmentsPoints);
+gapFunction = computeGapFunction(nodes,segments,segmentPoints);
 
 %% 2. Compute the master stiffness matrix of the structure
-
 fprintf('\t Computing master stiffness matrix... \n');
 
 % Master stiffness matrix
 K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,analysis);
 
 %% 3. Create the expanded system of equations
-
 fprintf('\t Creating the expanded system of equations... \n');
 
 % Assemble the values of the normal vector of segments to the constraint matrix:
-C=buildConstraintMatrix(length(F),contactNodes,segments);
+C = buildConstraintMatrix(length(F),contactNodes,segments);
 
 % Create a zero matrix for the bellow right side of the equation system:
 zero_matrix=zeros(length(contactNodes),length(contactNodes));
@@ -105,13 +103,13 @@ zero_matrix=zeros(length(contactNodes),length(contactNodes));
 Ctmp=[C;zero_matrix];
 
 % Expand the K matrix with the C matrix below:
-Kexp=[K;C'];
+K_expanded=[K;C'];
 
 % Expand the K matrix with the Ctmp matrix on the right side:
-Kexp=[Kexp,Ctmp];
+K_expanded=[K_expanded,Ctmp];
 
 % Expand the F vector with the gap constants for every node:
-Fexp=[F;-gapFunction(:,2)];
+F_expanded=[F;-gapFunction(:,2)];
 
 clear C;
 clear Ctmp;
@@ -119,7 +117,7 @@ clear zero_matrix;
 
 % Initial values for the iteration:
 it=0;
-dexp=zeros(length(Fexp));
+d_expanded=zeros(length(F_expanded));
 inactive_nodes=[];
 inactive_old=[];
 
@@ -134,16 +132,16 @@ equations_counter=0;
 % If the Lagrange multiplier of the current node are valid and we had 
 % no change in the set of inactive_nodes during the last iteration 
 % the solution has been found and the loop is terminated
-while (it==0 || (it<maxIteration && ~(isequal(inactive_old,inactive_nodes) && max(dexp(length(F)+1:length(Fexp)))<=0)))
+while (it==0 || (it<maxIteration && ~(isequal(inactive_old,inactive_nodes) && max(d_expanded(length(F)+1:length(F_expanded)))<=0)))
  
 inactive_old=inactive_nodes;
 % update iteration counter
 it=it+1;
     
- %% 4.1 Determine the inactive_nodes nodes
+%% 4.1 Determine the inactive_nodes nodes
  
 % Detect non-penetrating nodes and nodes with non-compressive Lagr. multipliers
-inactive_nodes=detectInactiveNodes( length(F),contactNodes, dexp, segments, gapFunction );
+inactive_nodes = detectInactiveNodes( length(F),contactNodes, d_expanded, segments, gapFunction );
 
 %% 4.2 Reduce the system of equations according to the constraints
 
@@ -154,10 +152,10 @@ homDBC_cb=unique(homDBC_cb);
 homDBC_cb=sort(homDBC_cb);
 
 
-K_reduced = Kexp;
-F_reduced = Fexp;
+K_reduced = K_expanded;
+F_reduced = F_expanded;
 
-% Remove constrained DOFs and inactive_nodes equations:
+% Remove constrained DOFs and inactive_nodes equations
 for i = length(homDBC_cb):-1:1
     K_reduced(:,homDBC_cb(i)) = [];
     K_reduced(homDBC_cb(i),:) = [];
@@ -169,29 +167,28 @@ end
 equations_counter=equations_counter+length(K_reduced);
 fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_reduced), cond(K_reduced));
 
-dred=K_reduced\F_reduced;
+d_reduced = K_reduced\F_reduced;
 
 
 %% 4.3 Assemble to the expanded displacement/Lagrange multiplier vector
 
 % Build dexp out of dred:
-dexp = buildFullDisplacement( length(Fexp) ,homDBC_cb, dred );
+d_expanded = buildFullDisplacement(length(F_expanded),homDBC_cb,d_reduced);
 
- 
-end
+end %end while loop
 
 %% 5. Get the values for the displacement and the Lagrange multipliers
 
-% Select and save node numbers of active nodes :
+% Select and save node numbers of active nodes
 lagrange.active_nodes=setdiff(contactNodes,contactNodes(inactive_nodes-length(F)));
 
 % The first entries of dexp correspond to the displacement
-displacement=dexp(1:length(F));
+displacement=d_expanded(1:length(F));
 
-% The last entries of dexp correspond to the Lagrange multipliers:
-lagrange.multipliers=dexp(length(F)+1:length(Fexp));
+% The last entries of dexp correspond to the Lagrange multipliers
+lagrange.multipliers=d_expanded(length(F)+1:length(F_expanded));
 
-%Keep only Lagr. multipliers of the active nodes:
+% Keep only lagrange multipliers of the active nodes
 lagrange.multipliers=lagrange.multipliers(lagrange.multipliers<0);
 
 %% 6. Print info

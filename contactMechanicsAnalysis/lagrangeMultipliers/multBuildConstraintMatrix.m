@@ -31,13 +31,13 @@ k=1;
 l=1;
 for j=1:size(cn,2)
     N_node=size(cn(j).indices,2);
-for i=1:N_node
-    if isempty(active_nodes) || max(ismember(active_nodes,l))
-    C(2*cn(j).indices(i)-1:2*cn(j).indices(i),k)=segments.normals(j,:);
-    k=k+1;
-    end
-    l=l+1;
+    for i=1:N_node
+        if isempty(active_nodes) || max(ismember(active_nodes,l))
+            C(2*cn(j).indices(i)-1:2*cn(j).indices(i),k)=segments.normals(j,:);
+            k=k+1;
+        end
+        l=l+1;
+    end 
 end
-       
-end
+
 end 

@@ -45,9 +45,7 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 
 % NOTE - check what is not neaded and rearange it
 % Add all functions related to signorini frictionless contact problem
-addpath('../../contactMechanicsAnalysis/algebra',...
-        '../../contactMechanicsAnalysis/plot',...
-        '../../contactMechanicsAnalysis/load',...
+addpath('../../contactMechanicsAnalysis/plot',...
         '../../contactMechanicsAnalysis/planeStressAnalysis',...
         '../../contactMechanicsAnalysis/lagrangeMultipliers');
 
@@ -75,15 +73,20 @@ graph.visualization.geometry = 'current';
 
 %% rigid wall- line  [(x0,y0) ; (x1,y1)]
 % define bottom contact line segment
-%wall = [-5, 0; 5 ,0];
-wall = [-5, -0.1; 5 ,-0.1];
+%wall_1 = [-5, 0; 5,0];
+wall_2 = [-5, -0.1; 5,-0.1];
 
 % add a wall to the segments of points
-segmentsPoints(1,:,:) = wall;
+segmentPoints(:,:,1) = wall_2;
+%segmentPoints(:,:,2) = wall_1;
+
+% Define the structrure array
+% candidateNodes(1)=struct('indices',cn1);
+% candidateNodes(2)=struct('indices',cn2);
 
 %% Compute the load vector
 time = 0;
-F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,time,gaussInt,'outputEnabled');
+F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'outputEnabled');
 
 %% Output data to a VTK format
 % pathToOutput = '../../outputVTK/FEMContactLinearPlateInMembraneAction/';
@@ -95,23 +98,23 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
     (strMsh,F,homDBC,graph,'outputEnabled');
 
 % plot the wall segment
-plot_segments(segmentsPoints); 
+plot_segments(segmentPoints); 
 
 %% Solve the system and get the displacement field
 ts = cputime;
 
 maxIteration = 100;
 
-[displacement, lagrange] = solveSignoriniLagrange1(strMsh,homDBC,contactNodes,F,segmentsPoints,parameters,analysis,maxIteration); % Use Algorithm 1 
+[displacement, lagrange] = solveSignoriniLagrange1(strMsh,homDBC,contactNodes,F,segmentPoints,parameters,analysis,maxIteration); % Use Algorithm 1 
 %[displacement,lagrange] = solveSignoriniLagrange2(strMsh,homDBC,contactNodes,F,segmentsPoints,parameters,analysis,maxIteration); % or use Algorithm 2
 
 % fix this so it will also work with only one line
-%[displacement, lagrange] = multSolveSignoriniLagrange1(strMsh,homDBC,contactNodes,F,segmentsPoints,parameters,analysis,maxIteration); % Use Algorithm 1 
+%[displacement, lagrange] = multSolveSignoriniLagrange1(strMsh,homDBC,contactNodes,F,segmentPoints,parameters,analysis,maxIteration); % Use Algorithm 1 
 
 fprintf('\t Time :   %4.2f \n',cputime-ts);
 %% Postprocessing
 graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,displacement,graph);
-plot_segments(segmentsPoints);
+plot_segments(segmentPoints);
 % To show vertical bars for the Lagrange multiplier values insert 'v' as last parameter
 plot_lagrangeMultipliers(strMsh,displacement,lagrange,''); 
 
