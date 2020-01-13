@@ -24,9 +24,12 @@ function [dx,dy,dz] = ...
 %                       dz : movement in z coordinate of the current node
 
 %% Function main body
-
+if ~ischar(t)
+  dy = t;
+else
+  dy = 0;
+end
 dx = 0;
-dy = 0;
 dz = 0;
 
 end

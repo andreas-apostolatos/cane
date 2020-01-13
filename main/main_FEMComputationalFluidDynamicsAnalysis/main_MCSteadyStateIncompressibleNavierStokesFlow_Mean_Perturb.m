@@ -54,7 +54,7 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
-caseName = 'unitTest_2D_building';
+caseName = '2D_Building_validation_test';
 
 %% Parse the data from the GiD input file
 [fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,~,analysis,parameters,...
@@ -96,14 +96,15 @@ Umax = 0.3;
 
 % define parameters used in reference paper and simualiton
 D = 0.1;    % diameter of the body
-Ubar = 0.2; % mid velocity 
+Ubar = 0.2; % mid velocity
+rho = parameters.rho; % density
 
 %% Change input velocity to have the parabolic distribution for each randomized input
 valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
 
 %% Variable initialization
 i = 1; % Counter initialization for iteration tree search
-iterationLimit = 10; % Limit search iterations
+iterationLimit = 4; % Limit search iterations
 design_penalization = 1e4; % Design penalty used in J calculations
 
 % Initialize abstract function containers
@@ -121,12 +122,12 @@ p2_hist(1) = 0;
 % Initialize accuracy parameters
 djd1 = 1; % Initial accuracy of parameter 1
 djd2 = 1; % Initial accuracy of parameter 2
-delta_p1 = 0.01; % Perturbation of parameter 1
+delta_p1 = 0.05; % Perturbation of parameter 1
 delta_p2 = 0; % Perturbation of parameter 2 = 0 to analyze p1 only
 
 %Initialize initial state values
-p1_0 = 10; % Initial height of 2d building from GID input file
-p2_0 = 2.5; % Initial width of 2d building from GID input file
+p1_0 = 0.1; % Initial height of 2d building from GID input file
+p2_0 = 0.03; % Initial width of 2d building from GID input file
 
 p1 = p1_0; % Initialize initial states
 p2 = p2_0;
@@ -151,18 +152,21 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     temp_p1 = p1;
     temp_p2 = p2;
     
+    if (i == 1)
+        t_tag = 'undefined';
+    end
+    
     %% Solve the CFD problem in nominal state   
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,nodesALE,parameters,...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,'undefined',parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         gaussInt,caseName,'');
-
+    
     %% Calculate drag and lift force from the nodal forces
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
 
     %% Calculate drag and lift coefficient based on drag and lift force
-    rho = parameters.rho; % density
 
     % get Fx and Fy from post processing
     forcesOnDomain = postProc_update.valuePostProc{1};
@@ -183,21 +187,32 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     %% Solve the CFD problem with perturbed p1
     p2 = temp_p2; % Ensure parameter 2 is nominal
     p1 = p1 + delta_p1; % Adjust parameter 1
-        
+    t_tag = delta_p1;
+    
+    %% Update the mesh
+    %
+    % Comments: The function below returns the updated mesh given the
+    %           boundary conditions defined in nodesALE via the function
+    %           handles for each of the nodes.
+    % 
+    [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
+        solve_LinearSystem,propFldDynamics, (i*t_tag));
+
+    %% Calculate drag and lift force from the nodal forces
+
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,nodesALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         gaussInt,caseName,'');
 
-    %% Calculate drag and lift force from the nodal forces
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
 
     %% Calculate drag and lift coefficient based on drag and lift force
-    rho = parameters.rho; % density
 
     % get Fx and Fy from post processing
-    forcesOnDomain = postProc_update.valuePostProc{1};
+    forcesOnDomain_update = postProc_update.valuePostProc{1};
     Fx = forcesOnDomain(1,1);
     Fy = forcesOnDomain(2,1);
 
@@ -213,7 +228,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
 
     % Compute sensitivities via finite differences
     drag_dp1 = (dragCoefficient - referenceDrag_Nom) / delta_p1;
-        
+          
 %     %% Solve the CFD problem with perturbed p2  
 %     p1 = temp_p1; % Ensure parameter 1 is nominal
 %     p2 = p2 + delta_p2; % Adjust parameter 2
@@ -265,7 +280,8 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     gamma = ((p1_hist(i+1) - p1_hist(i)) * (dJdp1(i+1) - dJdp1(i)) + (p2_hist(i+1) - p2_hist(i)) * (dJdp2(i+1) - dJdp2(i)))/denom;
     
     %% Update parameter values for next iteration
-    p1 = temp_p1 - sign(dJdp1(i+1))*min(abs(gamma*dJdp1(i+1)), 0.1); 
+    iterate_p1 = sign(dJdp1(i+1))*min(abs(gamma*dJdp1(i+1)), 0.1);
+    p1 = temp_p1 - iterate_p1; 
 %     p2 = temp_p2 - sign(dJdp2(i+1))*min(abs(gamma*dJdp2(i+1)), 0.1);
 
     %% Update the mesh
@@ -274,12 +290,13 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     %           boundary conditions defined in nodesALE via the function
     %           handles for each of the nodes.
     % 
-    [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
-        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
-        solve_LinearSystem,propFldDynamics,0);
+%     [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
+%         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
+%         solve_LinearSystem,propFldDynamics, -iterate_p1);
         
     %% Increment iteration counter
     i = i+1;
+    t_tag = -iterate_p1;
         
     %% Update progress bar
     fprintf('\b|\n');
