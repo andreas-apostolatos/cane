@@ -19,9 +19,7 @@ function bF = computeConstantVerticalBodyForceVct(x,y,z,t)
 %          bF : The body force vector bF = [0; 0; 0]
 %
 %% Function main body
-
-bF = zeros(length(x),1,3);
-% bF = zeros(3,1);
+bF = zeros(3,length(x));
 
 end
 

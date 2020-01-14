@@ -149,9 +149,9 @@ end
 [GP,GW] = getGaussRuleOnCanonicalTriangle(noGP);
 
 %% 2. Loop over all the elements in the mesh
-for counterEl = 1:length(mesh.elements(:,1))
+for iEl = 1:length(mesh.elements(:,1))
     %% 2i. Get the element in the mesh
-    element = mesh.elements(counterEl,:);
+    element = mesh.elements(iEl,:);
     
     %% 2ii. Get the nodes in the element
     Node1 = mesh.nodes(element(1,1),:);
@@ -173,10 +173,10 @@ for counterEl = 1:length(mesh.elements(:,1))
     end
     
     %% 2v. Loop over the quadrature points
-    for counterGP = 1:noGP
+    for iGP = 1:noGP
         %% 2v.1. Transform the Gauss Point location from the parameter to the physical space
-        XGP = GP(counterGP,1)*Node1(1,:) + GP(counterGP,2)*Node2(1,:) + ...
-            (1-GP(counterGP,1)-GP(counterGP,2))*Node3(1,:);
+        XGP = GP(iGP,1)*Node1(1,:) + GP(iGP,2)*Node2(1,:) + ...
+            (1-GP(iGP,1)-GP(iGP,2))*Node3(1,:);
         
         %% 2v.2. Compute the basis functions and their derivatives at the Gauss Point
         [dN,Area,isInside] = computeCST2DBasisFunctionsAndFirstDerivatives...
