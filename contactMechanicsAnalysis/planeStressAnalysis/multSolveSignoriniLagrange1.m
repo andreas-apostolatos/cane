@@ -73,7 +73,7 @@ fprintf('\n');
 
 for j=1:size(contactNodes,2)
     % Remove fully constrained nodes from the tests
-    for i=size(contactNodes(j).indices,2):-1:1
+    for i=size(contactNodes(j).indices,1):-1:1
         % Determine how many Dirichlet conditions correspond to the node:  
         nodeHasDirichlet=ismember(floor((homDBC+1)/2),contactNodes(j).indices(i));
         numberOfDirichlet=length(nodeHasDirichlet(nodeHasDirichlet==1));
@@ -97,7 +97,7 @@ contactNodes = multComputeGapFunc(contactNodes, segments, segmentPoints);
 fprintf('\t Computing master stiffness matrix... \n');
 
 % Master stiffness matrix
-K = computeStiffnessMatrixPlateMembraneActionLinear(mesh,materialProperties,analysis);
+K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,analysis);
 
 %% 3. Create the expanded system of equations
 fprintf('\t Creating the expanded system of equations... \n');
@@ -108,7 +108,7 @@ C = multBuildConstraintMatrix(length(F),contactNodes,[],segments);
 % Create a zero matrix for the bellow right side of the equation system:
 N_active_node=0;
 for j=1:size(contactNodes,2)
-    N_active_node=N_active_node+size(contactNodes(j).indices,2);       
+    N_active_node=N_active_node+size(contactNodes(j).indices,1);       
 end
 zero_matrix=zeros(N_active_node,N_active_node);
 

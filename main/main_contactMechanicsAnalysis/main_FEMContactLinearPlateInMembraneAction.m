@@ -73,16 +73,16 @@ graph.visualization.geometry = 'current';
 
 %% rigid wall- line  [(x0,y0) ; (x1,y1)]
 % define bottom contact line segment
-%wall_1 = [-5, 0; 5,0];
-wall_2 = [-5, -0.1; 5,-0.1];
+wall_1 = [-5, -0.1; 2.2,-0.1];
+%wall_2 = [-5, -0.1; 2,-0.1];
 
 % add a wall to the segments of points
-segmentPoints(:,:,1) = wall_2;
-%segmentPoints(:,:,2) = wall_1;
+segmentPoints(:,:,1) = wall_1;
+%segmentPoints(:,:,2) = wall_2;
 
 % Define the structrure array
-% candidateNodes(1)=struct('indices',cn1);
-% candidateNodes(2)=struct('indices',cn2);
+%candidateNodes(1)=struct('indices',contactNodes);
+%candidateNodes(2)=struct('indices',contactNodes);
 
 %% Compute the load vector
 time = 0;
@@ -109,7 +109,7 @@ maxIteration = 100;
 %[displacement,lagrange] = solveSignoriniLagrange2(strMsh,homDBC,contactNodes,F,segmentsPoints,parameters,analysis,maxIteration); % or use Algorithm 2
 
 % fix this so it will also work with only one line
-%[displacement, lagrange] = multSolveSignoriniLagrange1(strMsh,homDBC,contactNodes,F,segmentPoints,parameters,analysis,maxIteration); % Use Algorithm 1 
+%[displacement, lagrange] = multSolveSignoriniLagrange1(strMsh,homDBC,candidateNodes,F,segmentPoints,parameters,analysis,maxIteration); % Use Algorithm 1 
 
 fprintf('\t Time :   %4.2f \n',cputime-ts);
 %% Postprocessing

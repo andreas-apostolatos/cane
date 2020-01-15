@@ -15,13 +15,37 @@ clc;
 clear all;
 
 %% Includes
-addpath('../nurbs','../nurbs/nurbs_base_vectors','../nurbs/nurbs_basis_functions',...
-        '../nurbs/nurbs_refinement','../nurbs/nurbs_geometry','../mesh',...
-        '../mesh2D','../nurbs/nurbs_graphics','../nurbs/nurbs_surface',...
-        '../algebra','../nurbs/nurbs_curve','../basisFunctions','../plot','../load',...
-        '../supports','../stiffnessMatrices','../plane_stress_analysis',...
-        '../boundaryConditions','../planeStressAnalysis','../lagrangeMultipliers');
 
+% Add general math functions
+addpath('../../generalMath/');
+
+% Add all functions related to parsing
+addpath('../../parsers/');
+
+% Add all functions related to the low order basis functions
+addpath('../../basisFunctions/');
+
+% Add all equation system solvers
+addpath('../../equationSystemSolvers/');
+
+% Add all the efficient computation functions
+addpath('../../efficientComputation/');
+
+% Add all functions related to plate in membrane action analysis
+addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
+        '../../FEMPlateInMembraneActionAnalysis/solutionMatricesAndVectors/',...
+        '../../FEMPlateInMembraneActionAnalysis/loads/',...
+        '../../FEMPlateInMembraneActionAnalysis/graphics/',...
+        '../../FEMPlateInMembraneActionAnalysis/output/',...
+        '../../FEMPlateInMembraneActionAnalysis/postprocessing/',...
+        '../../FEMPlateInMembraneActionAnalysis/errorComputation/');
+
+% NOTE - check what is not neaded and rearange it
+% Add all functions related to signorini frictionless contact problem
+addpath('../../contactMechanicsAnalysis/plot',...
+        '../../contactMechanicsAnalysis/planeStressAnalysis',...
+        '../../contactMechanicsAnalysis/lagrangeMultipliers');
+    
 %% NURBS parameters
 
 % Height
@@ -62,21 +86,18 @@ CP(:,:,4) = [1 1;1 1];
 materialProperties.E = 1e5;
 
 % Poisson ratio
-materialProperties.nu = 0.3;
+materialProperties.nue = 0.3;
 
 % Thickness of the plate
 materialProperties.t = 1;
 
 %% GUI
-
-% Analysis type
-analysis.dimension = '2d';
-analysis.dofs = 'displacements';
-analysis.physics = 'plain_strain';
-analysis.type = 'linear';
+% Analysis type -> get from parser, here for convenience
+analysis.type = 'planeStress';
 
 % On the graph
 graph.index = 1;
+
 % On the geometry visualization
 graph.visualization.geometry = 'reference_and_current';
 
@@ -131,37 +152,6 @@ meshAttributes.options.maxit = 20;
 
 % Maximum allowable relative gradient in the size function
 meshAttributes.options.dhmax = .08;
-
-%% Refinement of the initial geometry
-% 
-% % Degree elevation 
-% tp=0;  tq=0;
-% [CP,U,V,p,q] = degree_elevate_surface(p,q,U,V,CP,tp,tq);
-% % Knot insertion
-% n = 1;
-% [CP,U,V] = knot_refinement_consistent_surface(p,U,q,V,CP,n,n);
-
-%% Plot reference geometry
-% graph.index = plot_geometry(p,q,U,V,CP,graph);
-
-%% Dirichlet (essential) boundary conditions
-
-%boundaryConditions.dirichlet.number_of_segments = 1;
-%boundaryConditions.dirichlet.number_of_segment = zeros(boundaryConditions.dirichlet.number_of_segments,2);
-
-%boundaryConditions.dirichlet.segmentu(1,:) = [1 1];
-%boundaryConditions.dirichlet.segmentv(1,:) = [0.92 0.95];
-%boundaryConditions.dirichlet.dofs(1) = 1;
-%boundaryConditions.dirichlet.isOnU(1)=1;
-
-%boundaryConditions.dirichlet.segmentu(2,:) = [0 0];
-%boundaryConditions.dirichlet.segmentv(2,:) = [0.5 0.6];
-%boundaryConditions.dirichlet.dofs(2) = 1;
-%boundaryConditions.dirichlet.isOnU(2)=1;
-
-%boundaryConditions.tolerance_search = 1e-8;
-%boundaryConditions.increment = 1e-3;
-%boundaryConditions.tolerance_points = 1e-2;
 
 %% Neumann (natural) boundary conditions
 boundaryConditions.neumann.number_of_segments = 1;

@@ -1,4 +1,4 @@
-function [ C ] = multBuildConstraintMatrix(DOF, cn, active_nodes,segments )
+function C = multBuildConstraintMatrix(DOF,contactNodes,active_nodes,segments)
 %
 % MULTBUILDCONSTRAINTMATRIX Build the constraint matrix to be appended to K
 % The constraint matrix is built with these dimensions :
@@ -9,7 +9,7 @@ function [ C ] = multBuildConstraintMatrix(DOF, cn, active_nodes,segments )
 %
 %              Input :
 %                DOF : Number of DoF of the system
-%                 cn : STRUCTURE ARRAY 'cn(j=1..n).indices' 
+%       contactNodes : STRUCTURE ARRAY 'cn(j=1..n).indices' 
 %                      containing the global numbering of the canditate-nodes 
 %                      for contact to segments(j) 
 %                      in the field 'indices'
@@ -29,11 +29,10 @@ function [ C ] = multBuildConstraintMatrix(DOF, cn, active_nodes,segments )
 C=zeros(DOF,1);
 k=1;
 l=1;
-for j=1:size(cn,2)
-    N_node=size(cn(j).indices,2);
-    for i=1:N_node
+for j=1:size(contactNodes,2)
+    for i=1:size(contactNodes(j).indices,1)
         if isempty(active_nodes) || max(ismember(active_nodes,l))
-            C(2*cn(j).indices(i)-1:2*cn(j).indices(i),k)=segments.normals(j,:);
+            C(2*contactNodes(j).indices(i)-1:2*contactNodes(j).indices(i),k)=segments.normals(j,:);
             k=k+1;
         end
         l=l+1;

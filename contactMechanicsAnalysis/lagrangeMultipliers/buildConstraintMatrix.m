@@ -1,4 +1,4 @@
-function [ C ] = buildConstraintMatrix( N_unknown , active_nodes, segments )
+function C = buildConstraintMatrix( N_unknown , active_nodes, segments )
 %% Function documentation
 %
 % BUILDCONSTRAINTMATRIX Build the constraint matrix to be appended to K
