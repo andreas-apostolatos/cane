@@ -3,14 +3,13 @@ function [] = plot_segments(segments)
 %   Plot segments on current graph
  
 %% 1. Add the segments
-
 % create marks coordinates
-if(size(segments,3)>1) % if more than one segments exist
-    for i=1:size(segments,3)
-        contWall = createWall(squeeze(segments(:,:,i)));
+if(size(segments.points,3)>1) % if more than one segments exist
+    for i=1:size(segments.points,3)
+        contWall = createWall(squeeze(segments.points(:,:,i)));
         hold on;
-        if ~isempty(segments)
-            plot(squeeze(segments(:,1,i)),squeeze(segments(:,2,i)),'Linewidth',2,'Color','black');
+        if ~isempty(segments.points)
+            plot(squeeze(segments.points(:,1,i)),squeeze(segments.points(:,2,i)),'Linewidth',2,'Color','black');
         end
         for k =1:length(contWall.xw(:,1))
             plot(contWall.xw(k,:),contWall.yw(k,:),'LineWidth',1,'Color','black');
@@ -18,10 +17,10 @@ if(size(segments,3)>1) % if more than one segments exist
         hold off;
     end
 else
-    contWall = createWall(segments);
+    contWall = createWall(segments.points);
     hold on;
-    if ~isempty(segments)
-        plot(segments(:,1),segments(:,2),'Linewidth',2,'Color','black');
+    if ~isempty(segments.points)
+        plot(segments.points(:,1),segments.points(:,2),'Linewidth',2,'Color','black');
     end
     for k =1:length(contWall.xw(:,1))
         plot(contWall.xw(k,:),contWall.yw(k,:),'LineWidth',1,'Color','black');

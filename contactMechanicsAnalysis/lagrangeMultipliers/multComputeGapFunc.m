@@ -1,4 +1,4 @@
-function  contactNodes = multComputeGapFunc(contactNodes,segments,segmentsPoints )
+function  contactNodes = multComputeGapFunc(contactNodes,segments)
 %MULTICOMPUTEGAPFUNC Computes gap function
 % Returns the gap function which is the distance between nodes of the
 % structure and the segments points.
@@ -22,12 +22,17 @@ function  contactNodes = multComputeGapFunc(contactNodes,segments,segmentsPoints
 %
 for j=1:size(contactNodes,2)
     for i=1:size(contactNodes(j).indices,1)
-        %Normal distance to the segment i
-        contactNodes(j).gap(i,2)= dot( contactNodes(j).positions(i,1:2) , segments.normals(j,:) ) + segments.constants(j);
-        %Parallel distance to the left point of the segment i
-        contactNodes(j).gap(i,1)= dot( (contactNodes(j).positions(i,1:2)-segmentsPoints(1,:,j)) , segments.directors(j,:) );
-        %Parallel distance to the right point of the segment i
-        contactNodes(j).gap(i,3)= dot( (contactNodes(j).positions(i,1:2)-segmentsPoints(2,:,j)) , segments.directors(j,:) );    
+        % get node of interest
+        nodeOfInterest = contactNodes(j).positions(i,1:2);
+        
+        % Normal distance to the segment i
+        contactNodes(j).gap(i,2)= dot( nodeOfInterest , segments.normals(j,:) ) + segments.constants(j);
+        
+        % Parallel distance to the left point of the segment i
+        contactNodes(j).gap(i,1)= dot( (nodeOfInterest-segments.points(1,:,j)) , segments.directors(j,:) );
+        
+        % Parallel distance to the right point of the segment i
+        contactNodes(j).gap(i,3)= dot( (nodeOfInterest-segments.points(2,:,j)) , segments.directors(j,:) );    
     end
 end
 

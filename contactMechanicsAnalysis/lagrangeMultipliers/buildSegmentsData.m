@@ -1,4 +1,4 @@
-function segments = buildSegmentsData(segmentPoints)
+function segments = buildSegmentsData(segments)
 %% Function documentation
 %
 %BUILDSEGMENTSDATA Build a data structure segments
@@ -14,13 +14,18 @@ function segments = buildSegmentsData(segmentPoints)
 %                      rigid wall segments (normal vector, parallel vector,
 %                      position)
 %
-%%
-tmp=zeros(size(segmentPoints,3),2);
-segments=struct('normals',tmp,'directors',tmp,'constants',tmp(:,1),'number',0);
-for i=1:size(segmentPoints,3)
+%% Function main body
+% create a temporary array to initialize segmetns struct
+tmp=zeros(size(segments.points,3),2);
+segments.normals = tmp;
+segments.directors = tmp;
+segments.constants = tmp(:,1);
+
+% loop over the number of segments
+for i=1:size(segments.points,3)
     % change of distance in x and y direction
-    DX = segmentPoints(2,1,i)- segmentPoints(1,1,i);
-    DY = segmentPoints(2,2,i)- segmentPoints(1,2,i);
+    DX = segments.points(2,1,i)- segments.points(1,1,i);
+    DY = segments.points(2,2,i)- segments.points(1,2,i);
     % normalized segment director
     director = [DX DY];
     director = director/norm(director);
@@ -30,9 +35,10 @@ for i=1:size(segmentPoints,3)
     % assign variables
     segments.directors(i,:)=director;
     segments.normals(i,:)=normal;
-    segments.constants(i)=-dot(normal,segmentPoints(1,:,i));
+    % dot product between normal and fist point of the segment - what is?
+    segments.constants(i)=-dot(normal,segments.points(1,:,i));
 end
-segments.number=length(segments.constants); % delete this, not used
+
 end
 
  

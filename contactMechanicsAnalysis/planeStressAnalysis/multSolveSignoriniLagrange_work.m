@@ -8,8 +8,8 @@
 %                                                                         %
 %   Fabien Pean, Andreas Hauso, Georgios Koroniotis                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [displacement,lagrange] = multSolveSignoriniLagrange1...
-    (mesh,homDBC,contactNodes,F,segmentPoints,materialProperties,analysis,maxIteration)
+function [displacement,lagrange] = multSolveSignoriniLagrange_work...
+    (mesh,homDBC,contactNodes,F,segments,materialProperties,analysis,maxIteration)
 %% Function documentation
 %
 % Returns the displacement field and the Lagrange multipliers corresponding 
@@ -88,15 +88,17 @@ end
 
 %% 1. Compute the gap function
 
-% Compute normal, parallel and position vectors of the segments:
-segments = buildSegmentsData(segmentPoints);
+% Compute normal, parallel and position vectors of the segments
+segments = buildSegmentsData(segments);
 
-% Compute for all nodes the specific gap and save it in the field 'cn.gap':
-contactNodes = multComputeGapFunc(contactNodes, segments, segmentPoints);
+% Compute for all nodes the specific gap and save it in the field .gap
+contactNodes = multComputeGapFunc(contactNodes, segments);
 
 %% 2. Compute the master stiffness matrix of the structure
 fprintf('\t Computing master stiffness matrix... \n');
 
+% Get number of DOFs in original system
+nDOF = length(F);
 % Master global stiffness matrix
 K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,analysis);
 
@@ -104,18 +106,18 @@ K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,an
 fprintf('\t Creating the expanded system of equations... \n');
 
 % Assemble the values of the normal vector of segments to the constraint matrix
-C = multBuildConstraintMatrix(length(F),contactNodes,[],segments);
+C = multBuildConstraintMatrix(nDOF,contactNodes,[],segments);
 
 % Create a zero matrix for the bellow right side of the equation system
 zero_matrix = zeros(size(C,2),size(C,2));
 
 % Build an expanded system of equations
-K_expanded=[K,C;C',zero_matrix]; 
+K_exp=[K,C;C',zero_matrix]; 
 
-% Expand the F vector with the gap constants for every node:
-F_expanded = F;
+% Expand the F vector with the gap funciton for every node:
+F_exp = F;
 for j=1:size(contactNodes,2)
-    F_expanded = [F_expanded;-contactNodes(j).gap(:,2)];
+    F_exp = [F_exp;-contactNodes(j).gap(:,2)];
 end
 
 clear C;
@@ -123,7 +125,7 @@ clear zero_matrix;
 
 % Initial values for the itaration:
 it=0;
-d_expanded=zeros(length(F_expanded));
+displacement_exp=zeros(length(F_exp));
 inactive_nodes=[];
 inactive_old=[];
 
@@ -138,49 +140,79 @@ equations_counter=0;
 % If the Lagrange multiplier of the current node are valid and we had 
 % no change in the set of inactive_nodes during the last iteration 
 % the solution has been found and the loop is terminated
-while (it==0 || (it<maxIteration && ~(isequal(inactive_old,inactive_nodes) && max(d_expanded(length(F)+1:length(F_expanded)))<=0)))
+while (it==0 || (it<maxIteration && ~(isequal(inactive_old,inactive_nodes) && max(displacement_exp(nDOF+1:length(F_exp)))<=0)))
  
 inactive_old=inactive_nodes;
 % update iteration counter
 it=it+1;
     
-%% 4.1 Determine the inactive_nodes nodes
+%% 4.1 Determine inactive nodes
 
 % Detect non-penetrating nodes and nodes with non-compressive Lagr. multipliers
-inactive_nodes = multDetectInactiveNodes( length(F),contactNodes, d_expanded, segments );
+inactive_nodes = multDetectInactiveNodes(nDOF,contactNodes,displacement_exp,segments);
 
 %% 4.2 Reduce the system of equations according to the constraints
 
-% Merge the vectors with equation numbers which will be deleted due to a
-% Dirichlet boundary condition or a contact constraint:
-homDBC_cb=[homDBC,inactive_nodes];
-homDBC_cb=unique(homDBC_cb);
-homDBC_cb=sort(homDBC_cb);
+% Merge the homDBC and inactive_nodes into a vector of nodes that are no
+% longer necessary 
+% Equations with this numbers will be deleted due to a dirichlet 
+% boundary condition or a contact constraint
+unnecessaryNodes = [homDBC,inactive_nodes];
+unnecessaryNodes = unique(unnecessaryNodes);
 
-
-K_reduced = K_expanded;
-F_reduced = F_expanded;
+% initialize the reduced system
+K_red = K_exp;
+F_red = F_exp;
 
 % Remove constrained DOFs and inactive_nodes equations
-for i = length(homDBC_cb):-1:1
-    K_reduced(:,homDBC_cb(i)) = [];
-    K_reduced(homDBC_cb(i),:) = [];
-    F_reduced(homDBC_cb(i)) = [];
+for i = length(unnecessaryNodes):-1:1
+    K_red(:,unnecessaryNodes(i)) = [];
+    K_red(unnecessaryNodes(i),:) = [];
+    F_red(unnecessaryNodes(i)) = [];
 end
  
 %% 4.3 Solve the reduced system of equations
-equations_counter=equations_counter+length(K_reduced);
-fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_reduced), cond(K_reduced));
+equations_counter = equations_counter + length(K_red);
+fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red), cond(K_red));
 
-d_reduced = K_reduced\F_reduced;
-
+% solve using the backslash operator
+displacement_red = K_red\F_red;
 
 %% 4.4 Assemble to the expanded displacement/Lagrange multiplier vector
 
 % Build dexp out of dred:
-d_expanded = buildFullDisplacement(length(F_expanded),homDBC_cb,d_reduced);
+nDOFsFull = length(F_exp);
+displacement_exp = buildFullDisplacement(nDOFsFull,unnecessaryNodes,displacement_red);
+
+%% 4.5 Visualize the structure for each step
+
+% Select and save node numbers of active nodes
+allnodes=[];
+for j=1:size(contactNodes,2)
+    allnodes=[allnodes,contactNodes(j).indices];
+end
+lagrange.active_nodes=setdiff(allnodes,allnodes(inactive_nodes-nDOF));
+% The first entries correspond to the displacement
+displacement=displacement_exp(1:nDOF);
+% The last entries correspond to the Lagrange multipliers
+lagrange.multipliers=displacement_exp(nDOF+1:length(F_exp));
+% Keep only lagrange multipliers of the active nodes
+lagrange.multipliers=lagrange.multipliers(lagrange.multipliers < 0);
+
+
+% On the graph
+graph.index = it+1;
+% On the geometry visualization
+graph.visualization.geometry = 'current';
+
+graph.index = plot_currentConfigurationFEMPlateInMembraneAction(mesh,homDBC,displacement,graph);
+plot_segments(segments);
+plot_lagrangeMultipliers(mesh,displacement,lagrange,''); 
+
+
 
 end %end while loop
+
 
 %% 5. Get the values for the displacement and the Lagrange multipliers
 
@@ -189,25 +221,25 @@ allnodes=[];
 for j=1:size(contactNodes,2)
     allnodes=[allnodes,contactNodes(j).indices];
 end
-lagrange.active_nodes=setdiff(allnodes,allnodes(inactive_nodes-length(F)));
+lagrange.active_nodes=setdiff(allnodes,allnodes(inactive_nodes-nDOF));
 
 % The first entries correspond to the displacement
-displacement=d_expanded(1:length(F));
+displacement=displacement_exp(1:nDOF);
 
 % The last entries correspond to the Lagrange multipliers
-lagrange.multipliers=d_expanded(length(F)+1:length(F_expanded));
+lagrange.multipliers=displacement_exp(nDOF+1:length(F_exp));
 
 % Keep only lagrange multipliers of the active nodes
-lagrange.multipliers=lagrange.multipliers(lagrange.multipliers<0);
+lagrange.multipliers=lagrange.multipliers(lagrange.multipliers < 0);
 
 
-%% 5. Print info
+%% 6. Print info
 
 fprintf('\n');
 fprintf('Output informations...\n');
 fprintf('\t Constraints solved in %d iterations.A total of %d equations were solved. \n',it,equations_counter);
 fprintf('\t %d active nodes found.\n',length(lagrange.active_nodes));
 energy=displacement'*K*displacement;
-fprintf('\t #DOF: %d .Energy norm of the structure : %4.2f\n',length(F),energy);
+fprintf('\t #DOF: %d .Energy norm of the structure : %4.2f\n',nDOF,energy);
 
 end
