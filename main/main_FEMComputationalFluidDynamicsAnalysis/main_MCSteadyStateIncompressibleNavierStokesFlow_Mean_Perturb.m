@@ -122,14 +122,16 @@ p2_hist(1) = 0;
 % Initialize accuracy parameters
 djd1 = 1; % Initial accuracy of parameter 1
 djd2 = 1; % Initial accuracy of parameter 2
-delta_p1 = 0.05; % Perturbation of parameter 1
+delta_p1 = 0.005; % Perturbation of parameter 1
 delta_p2 = 0; % Perturbation of parameter 2 = 0 to analyze p1 only
 
 %Initialize initial state values
 p1_0 = 0.1; % Initial height of 2d building from GID input file
 p2_0 = 0.03; % Initial width of 2d building from GID input file
 
+global p1;
 p1 = p1_0; % Initialize initial states
+global p2;
 p2 = p2_0;
 
 % Parameters (I/O)
@@ -185,8 +187,6 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     referenceDrag_Nom = dragCoefficient;
  
     %% Solve the CFD problem with perturbed p1
-    p2 = temp_p2; % Ensure parameter 2 is nominal
-    p1 = p1 + delta_p1; % Adjust parameter 1
     t_tag = delta_p1;
     
     %% Update the mesh
@@ -200,7 +200,9 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         solve_LinearSystem,propFldDynamics, (i*t_tag));
 
     %% Calculate drag and lift force from the nodal forces
-
+    p2 = temp_p2; % Ensure parameter 2 is nominal
+    p1 = p1 + delta_p1; % Adjust parameter 1
+    
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,nodesALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...

@@ -24,8 +24,9 @@ function [dx,dy,dz] = ...
 %                       dz : movement in z coordinate of the current node
 
 %% Function main body
-if ~ischar(t)
-  dy = t;
+if ~ischar(t) 
+   [p1, p2] = get_opt_parameters;
+   dy = (y/p1)*t;
 else
   dy = 0;
 end
