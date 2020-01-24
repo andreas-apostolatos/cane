@@ -57,7 +57,7 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = '2D_Building_validation_test';
 
 %% Parse the data from the GiD input file
-[fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,~,analysis,parameters,...
+[fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,~,analysis,parameters,...
     propNLinearAnalysis,propFldDynamics,gaussInt,postProc] = ...
     parse_FluidModelFromGid...
     (pathToCase,caseName,'');
@@ -129,9 +129,7 @@ delta_p2 = 0; % Perturbation of parameter 2 = 0 to analyze p1 only
 p1_0 = 0.1; % Initial height of 2d building from GID input file
 p2_0 = 0.03; % Initial width of 2d building from GID input file
 
-global p1;
 p1 = p1_0; % Initialize initial states
-global p2;
 p2 = p2_0;
 
 % Parameters (I/O)
@@ -148,15 +146,13 @@ fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
 %Start time count
 tic
 
+% computeALEMM
+
 %% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
 while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)    
     %% Initialize temp variables with updated values from previous iteration
     temp_p1 = p1;
     temp_p2 = p2;
-    
-    if (i == 1)
-        t_tag = 'undefined';
-    end
     
     %% Solve the CFD problem in nominal state   
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
@@ -189,6 +185,14 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     %% Solve the CFD problem with perturbed p1
     t_tag = delta_p1;
     
+    %% Adjust the user-defined parameters within the ALE solver
+    propALE.propUser.p1 = p1;
+    propALE.propUser.p2 = p2;
+    
+    %% Calculate drag and lift force from the nodal forces
+    p2 = temp_p2; % Ensure parameter 2 is nominal
+    p1 = p1 + delta_p1; % Adjust parameter 1
+    
     %% Update the mesh
     %
     % Comments: The function below returns the updated mesh given the
@@ -196,15 +200,13 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     %           handles for each of the nodes.
     % 
     [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
-        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
         solve_LinearSystem,propFldDynamics, (i*t_tag));
 
-    %% Calculate drag and lift force from the nodal forces
-    p2 = temp_p2; % Ensure parameter 2 is nominal
-    p1 = p1 + delta_p1; % Adjust parameter 1
+
     
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,nodesALE,parameters,...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         gaussInt,caseName,'');

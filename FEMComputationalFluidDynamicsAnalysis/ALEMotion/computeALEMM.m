@@ -1,5 +1,5 @@
 function [dx,dy,dz] = ...
-    computeALEMM(x,y,z,t)
+    computeALEMM(x,y,z,t,propUser)
 %% Licensing
 %
 % License:         BSD License
@@ -17,6 +17,7 @@ function [dx,dy,dz] = ...
 %                        y : y coordinate of the current node
 %                        z : z coordinate of the current node
 %                        t : Current time step value
+%                 propUser : Extra user-defined properties
 %
 %                   Output :
 %                       dx : movement in x coordinate of the current node
@@ -24,8 +25,11 @@ function [dx,dy,dz] = ...
 %                       dz : movement in z coordinate of the current node
 
 %% Function main body
-if ~ischar(t) 
-   [p1, p2] = get_opt_parameters;
+
+p1 = propUser.p1;
+p2 = propUser.p2;
+
+if ~ischar(t)
    dy = (y/p1)*t;
 else
   dy = 0;

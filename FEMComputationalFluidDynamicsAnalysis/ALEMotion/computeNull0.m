@@ -1,5 +1,5 @@
 function [dx,dy,dz] = ...
-    computeNull0(x,y,z,t)
+    computeNull0(x,y,z,t,varargin)
 %% Licensing
 %
 % License:         BSD License
