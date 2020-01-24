@@ -62,7 +62,7 @@ caseName = 'example_01_noGap';
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 %% GUI
-% Analysis type -> get from parser, here for convenience
+% Analysis type -> it's parser, here for convenience
 analysis.type = 'planeStress';
 
 % On the graph
@@ -73,18 +73,14 @@ graph.visualization.geometry = 'current';
 
 %% rigid wall- line  [(x0,y0) ; (x1,y1)]
 % define bottom contact line segment
-%wall_1 = [1, 1; 8,3];
-wall_1 = [-5, -0.1; 2,-0.1];
-%wall_2 = [2, -0.1; 5,-0.1];
+wall_1 = [0.5, -0.5; 1.5,-0.1];
+wall_2 = [1.5, -0.1; 2,-0.1];
+wall_3 = [2, -0.1; 3,-0.5];
 
 % add a wall to the segments of points
 segments.points(:,:,1) = wall_1;
-%segmentPoints(:,:,2) = wall_2;
-
-% Define the structrure array
-%candidateNodes.indices = contactNodes;
-candidateNodes(1)=struct('indices',contactNodes);
-%candidateNodes(2)=struct('indices',contactNodes);
+segments.points(:,:,2) = wall_2;
+segments.points(:,:,3) = wall_3;
 
 %% Compute the load vector
 time = 0;
@@ -105,19 +101,21 @@ plot_segments(segments);
 %% Solve the system and get the displacement field
 ts = cputime;
 
-maxIteration = 100;
+maxIteration = 30;
 
-%[displacement, lagrange] = solveSignoriniLagrange1(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration); % Use Algorithm 1 
+%[displacement,lagrange] = solveSignoriniLagrange1(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration); % Use Algorithm 1 
 %[displacement,lagrange] = solveSignoriniLagrange2(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration); % or use Algorithm 2
 
 % fix this so it will also work with only one line
-[displacement, lagrange] = multSolveSignoriniLagrange_work(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration); % Use Algorithm 1 
+[displacement,lagrange] = multSolveSignoriniLagrange_work(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration); % Use Algorithm 1 
 
 fprintf('\t Time :   %4.2f \n',cputime-ts);
+
 %% Postprocessing
+graph.index = maxIteration;
 graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,displacement,graph);
-plot_segments(segmentPoints);
+plot_segments(segments);
 % To show vertical bars for the Lagrange multiplier values insert 'v' as last parameter
-plot_lagrangeMultipliers(strMsh,displacement,lagrange,''); 
+plot_lagrangeMultipliers(strMsh,displacement,lagrange); 
 
 %% End of the script

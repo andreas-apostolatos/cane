@@ -286,9 +286,9 @@ for k = 1:numel(block)
 end
 if ~isempty(out)
     out = out{1};
-    contactNodes = cell2mat(out(:,1));
+    contactNodes.indices = cell2mat(out(:,1));
 else
-    contactNodes = [];
+    contactNodes.indices = [];
 end
 
 %% 12. Get edge connectivity arrays for the Neumann edges

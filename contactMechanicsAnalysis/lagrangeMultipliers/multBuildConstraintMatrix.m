@@ -26,13 +26,18 @@ function C = multBuildConstraintMatrix(DOF,contactNodes,active_nodes,segments)
 %
 %%
 
-C=zeros(DOF,1);
+%C = zeros(DOF, (segments.number*size(contactNodes.indices,1)) );
+C = zeros(DOF,1);
 k=1;
 l=1;
-for j=1:size(contactNodes,2)
-    for i=1:size(contactNodes(j).indices,1)
+% loop through segments
+for j=1:segments.number
+    % loop through every contact node in each segment
+    for i=1:size(contactNodes.indices,1)
         if isempty(active_nodes) || max(ismember(active_nodes,l))
-            C(2*contactNodes(j).indices(i)-1:2*contactNodes(j).indices(i),k)=segments.normals(j,:);
+            % find the index of constrain
+            index = 2*contactNodes.indices(i)-1 : 2*contactNodes.indices(i);
+            C(index,k)=segments.normals(j,:);
             k=k+1;
         end
         l=l+1;

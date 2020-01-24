@@ -1,31 +1,29 @@
 function [] = plot_segments(segments)
-%PLOTSEGMENTS Plot segments on current graph
 %   Plot segments on current graph
  
-%% 1. Add the segments
-% create marks coordinates
-if(size(segments.points,3)>1) % if more than one segments exist
+%% 
+% check if segmets exist
+if ~isempty(segments.points)
+    % loop through the number of segments
     for i=1:size(segments.points,3)
-        contWall = createWall(squeeze(segments.points(:,:,i)));
+        % create contour
+        contourWall = createWall(segments.points(:,:,i));
+
         hold on;
-        if ~isempty(segments.points)
-            plot(squeeze(segments.points(:,1,i)),squeeze(segments.points(:,2,i)),'Linewidth',2,'Color','black');
-        end
-        for k =1:length(contWall.xw(:,1))
-            plot(contWall.xw(k,:),contWall.yw(k,:),'LineWidth',1,'Color','black');
-        end
+        % plot a line form start to end coordiante x0 to x1
+        startPoint = segments.points(:,1,i);
+        endPoint = segments.points(:,2,i);
+        plot(startPoint,endPoint,'-','Linewidth',2,'Color','black');
+        
+        %plot(startPoint,endPoint,':','Linewidth',1,'Color','black');
+       
+        
+        % plot contours below the line
+%         for k =1:length(contourWall.xw(:,1))
+%             plot(contourWall.xw(k,:),contourWall.yw(k,:),'LineWidth',1,'Color','black');
+%         end
         hold off;
     end
-else
-    contWall = createWall(segments.points);
-    hold on;
-    if ~isempty(segments.points)
-        plot(segments.points(:,1),segments.points(:,2),'Linewidth',2,'Color','black');
-    end
-    for k =1:length(contWall.xw(:,1))
-        plot(contWall.xw(k,:),contWall.yw(k,:),'LineWidth',1,'Color','black');
-    end
-    hold off;
 end
 
 end

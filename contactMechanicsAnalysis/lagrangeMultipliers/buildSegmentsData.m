@@ -16,7 +16,8 @@ function segments = buildSegmentsData(segments)
 %
 %% Function main body
 % create a temporary array to initialize segmetns struct
-tmp=zeros(size(segments.points,3),2);
+segments.number = size(segments.points,3);
+tmp=zeros(segments.number,2);
 segments.normals = tmp;
 segments.directors = tmp;
 segments.constants = tmp(:,1);

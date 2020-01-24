@@ -19,19 +19,21 @@ function inactive_nodes = multDetectInactiveNodes...
 % initialize variables
 inactive_nodes=[];
 k=1;
+% loop over displacement_exp vector
 % loop over the number of contact nodes segments
-for j=1:size(contactNodes,2)
+for j=1:segments.number
     % loop over every node in that segment
-    for i=1:size(contactNodes(j).indices,1)
+    for i=1:size(contactNodes.indices,1)
         
-        tmp = displacement_exp(2*contactNodes(j).indices(i)-1:1:2*contactNodes(j).indices(i));
+        index = 2*contactNodes.indices(i)-1 :1: 2*contactNodes.indices(i);
+        tmp = displacement_exp(index);
         tmp_normal = dot(tmp,segments.normals(j,:));
         tmp_parallel = dot(tmp,segments.directors(j,:));
 
         % get distances to the segment i
-        leftGap = contactNodes(j).gap(i,1);
-        normalGap = contactNodes(j).gap(i,2);
-        rightGap = contactNodes(j).gap(i,3);
+        leftGap = contactNodes.gap(i,1,j);
+        normalGap = contactNodes.gap(i,2,j);
+        rightGap = contactNodes.gap(i,3,j);
         
         % conditions for geometry (non-penetration)
         cnd1 = tmp_normal + normalGap > sqrt(eps);
@@ -39,7 +41,7 @@ for j=1:size(contactNodes,2)
         cnd3 = tmp_parallel > max(leftGap,rightGap);
         
         % condition for Lagrange multipliers (non-compressive)
-        cnd4 = displacement_exp(nDOF+i) > 0;
+        cnd4 = displacement_exp(nDOF+k) > 0;
         
         % if any of the conditions hold
         if (cnd1 || cnd2 || cnd3 || cnd4)

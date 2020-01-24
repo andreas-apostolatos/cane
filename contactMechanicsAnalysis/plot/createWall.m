@@ -49,13 +49,13 @@ if isempty(wall)==0
 % Direction vector of the wall line
 dir=[wall(2,1)-wall(1,1);wall(2,2)-wall(1,2)];
 
-%rotation Matrix for rigid wall marker lines
+% Rotation Matrix for rigid wall marker lines
 a=-3*pi/4;
 rotation=[cos(a),-sin(a);sin(a),cos(a)];
 rot_dir=rotation*dir;
 rot_dir=rot_dir./20;
 
-%Coordinates for the  Matrix for rigid wall marker lines
+% Coordinates for the  Matrix for rigid wall marker lines
 for j=1:number_marking_lines
 
         xw(j,1)=wall(1,1)+j*1/number_marking_lines*dir(1);
@@ -63,7 +63,6 @@ for j=1:number_marking_lines
 
         yw(j,1)=wall(1,2)+j*1/number_marking_lines*dir(2);
         yw(j,2)= yw(j,1)+rot_dir(2);
-    
         
 end
 end

@@ -19,20 +19,22 @@ function  contactNodes = multComputeGapFunc(contactNodes,segments)
 %                gap : Matrix containing distance of every node to the
 %                      segment (normal, and parallel to both
 %                      extremities of the segment)
-%
-for j=1:size(contactNodes,2)
-    for i=1:size(contactNodes(j).indices,1)
+%%
+% loop through the number of segments
+for j=1:segments.number
+    % loop through the contact nodes
+    for i=1:size(contactNodes.indices,1)
         % get node of interest
-        nodeOfInterest = contactNodes(j).positions(i,1:2);
+        nodeOfInterest = contactNodes.positions(i,1:2);
         
         % Normal distance to the segment i
-        contactNodes(j).gap(i,2)= dot( nodeOfInterest , segments.normals(j,:) ) + segments.constants(j);
+        contactNodes.gap(i,2,j)= dot( nodeOfInterest , segments.normals(j,:) ) + segments.constants(j);
         
         % Parallel distance to the left point of the segment i
-        contactNodes(j).gap(i,1)= dot( (nodeOfInterest-segments.points(1,:,j)) , segments.directors(j,:) );
+        contactNodes.gap(i,1,j)= dot( (nodeOfInterest-segments.points(1,:,j)) , segments.directors(j,:) );
         
         % Parallel distance to the right point of the segment i
-        contactNodes(j).gap(i,3)= dot( (nodeOfInterest-segments.points(2,:,j)) , segments.directors(j,:) );    
+        contactNodes.gap(i,3,j)= dot( (nodeOfInterest-segments.points(2,:,j)) , segments.directors(j,:) );    
     end
 end
 
