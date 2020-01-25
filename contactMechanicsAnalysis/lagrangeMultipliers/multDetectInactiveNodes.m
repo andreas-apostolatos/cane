@@ -19,6 +19,7 @@ function inactive_nodes = multDetectInactiveNodes...
 % initialize variables
 inactive_nodes=[];
 k=1;
+
 % loop over displacement_exp vector
 % loop over the number of contact nodes segments
 for j=1:segments.number

@@ -1,4 +1,4 @@
-function [ F ] = multBuildRHS( F,active_nodes, cn )
+function F_exp = multBuildRHS(F,contactNodes,activeNodes,segments)
 %% Function documentation
 % BUILDRHS add the gap values to the right hand side
 % Add the gap function of every Lagrange multiplier to the load vector
@@ -20,28 +20,30 @@ function [ F ] = multBuildRHS( F,active_nodes, cn )
 %                      list 'active_nodes' and the 
 %
 %%
-DOF=length(F);
+% get number of DOFs
+nDOF = length(F);
 
-N_active_node=0;
-for j=1:size(cn,2)
-    N_active_node=N_active_node+size(cn(j).indices,2);       
-end
-F(N_active_node)=0;
+% initialize F_exp and add zeros
+zero_vector = zeros(size(activeNodes,2),1);
+F_exp = [F;zero_vector];
 
+% initialize counters
 k=1;
 l=1;
-for j=1:size(cn,2)
-    N_node=size(cn(j).indices,2);
-for i=1:N_node
+% loop through the number of segments
+for j=1:segments.number
+    % loop through contact nodes
+    for i=1:size(contactNodes.indices,1)
 
-    if isempty(active_nodes) || max(ismember(active_nodes,l))
-    F(DOF+k)=squeeze(-cn(j).gap(i,2));
-    
-    k=k+1;
+        if (isempty(activeNodes) || max(ismember(activeNodes,l)))
+            F_exp(nDOF+k) = -contactNodes.gap(i,2,j);
+            
+            k=k+1;
+        end
+        l=l+1;
     end
-    l=l+1;
 end
-end
+
 end
 
  

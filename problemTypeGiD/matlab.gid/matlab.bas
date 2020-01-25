@@ -167,6 +167,7 @@ FLUID_ELEMENTS
 
 FLUID_DIRICHLET_NODES*\
 *set Cond Fluid-Dirichlet-Over-Lines *nodes
+*add Cond Fluid-Dirichlet-Over-Points *nodes
 *loop nodes OnlyInCond
 *format "%8i"
 
@@ -221,11 +222,12 @@ NaN  *\
 *end loop
 
 FLUID_DIRICHLET_ALE_NODES*\
-*set Cond Fluid-Dirichlet-ALE *nodes
+*set Cond Fluid-Dirichlet-ALE-Lines *nodes
+*add Cond Fluid-Dirichlet-ALE-Points *nodes
 *loop nodes OnlyInCond
 *format "%8i"
 
-*NodesNum *cond(FunctionHandleToALEMotion)*\
+*NodesNum *cond(FunctionHandleToALEMotion) *cond(FreeBoundary)*\
 *end loop
 
 FLUID_POST_PROC_NODES*\

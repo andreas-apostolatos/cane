@@ -1,4 +1,5 @@
-function [ active_nodes ] = multDetectActiveNodes( cn, displacement, segments )
+function activeNodes = multDetectActiveNodes...
+    (contactNodes,displacement,segments)
 %MULTIDETECTACTIVENODES Detect the active nodes for the current segment
 % Loops over all segments to check whether the displacement of the node put
 % in an active position according to the segment
@@ -16,19 +17,40 @@ function [ active_nodes ] = multDetectActiveNodes( cn, displacement, segments )
 %        active_node : The resulting vector containing index of the 
 %         restricted vector of mesh.boundaryNodes containing global indices
 %
-active_nodes=[];
+%%
+% initialize variables
+activeNodes=[];
 k=1;
-for j=1:size(cn,2)
-for i=1:size(cn(j).indices,2)%loop over every node
-    tmp_normal=dot(displacement(2*cn(j).indices(i)-1:1:2*cn(j).indices(i)),segments.normals(j,:));%computation for 2D analysis with 2disp DoFs per node
-    tmp_parallel=dot(displacement(2*cn(j).indices(i)-1:1:2*cn(j).indices(i)),segments.directors(j,:));
 
-    if (tmp_normal+cn(j).gap(i,2)<sqrt(eps) && tmp_parallel>min(cn(j).gap(i,1),cn(j).gap(i,3)) && tmp_parallel<max(cn(j).gap(i,1),cn(j).gap(i,3)))
-     active_nodes=[active_nodes,k];
+% loop over displacement_exp vector
+% loop over the number of contact nodes segments
+for j=1:segments.number
+    % loop over every node in that segment
+    for i=1:size(contactNodes.indices,1)
+        
+        index = 2*contactNodes.indices(i)-1 :1: 2*contactNodes.indices(i);
+        tmp = displacement(index);
+        tmp_normal=  dot(tmp,segments.normals(j,:));
+        tmp_parallel=dot(tmp,segments.directors(j,:));
+        
+        % get distances to the segment i
+        leftGap = contactNodes.gap(i,1,j);
+        normalGap = contactNodes.gap(i,2,j);
+        rightGap = contactNodes.gap(i,3,j);
+        
+        % conditions for geometry (non-penetration)
+        cnd1 = tmp_normal + normalGap < sqrt(eps);
+        cnd2 = tmp_parallel > min(leftGap,rightGap);
+        cnd3 = tmp_parallel < max(leftGap,rightGap);
+        
+        % if all conditions hold
+        if (cnd1 && cnd2 && cnd3)
+            activeNodes = [activeNodes,k];
+        end
+        
+        % update counter
+        k=k+1;
     end
-    k=k+1;
-end
-end
 end
 
- 
+end

@@ -1,6 +1,28 @@
 BOOK: Constraints
 
-NUMBER: 1 CONDITION: Fluid-Dirichlet-Over-Lines
+NUMBER: 1 CONDITION: Fluid-Dirichlet-Over-Points
+CONDTYPE: over points
+CONDMESHTYPE: over nodes
+QUESTION: X-Constraint#CB#(0,1)
+VALUE: 0
+HELP:not yet included
+QUESTION: X-Value
+VALUE: 0.0
+QUESTION: Y-Constraint#CB#(0,1)
+VALUE: 0
+QUESTION: Y-Value
+VALUE: 0.0
+QUESTION: Z-Constraint#CB#(0,1)
+VALUE: 0
+QUESTION: Z-Value
+VALUE: 0.0
+QUESTION: P-Constraint#CB#(0,1)
+VALUE: 0
+QUESTION: P-Value
+VALUE: 0.0
+END CONDITION
+
+NUMBER: 2 CONDITION: Fluid-Dirichlet-Over-Lines
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 QUESTION: X-Constraint#CB#(0,1)
@@ -22,7 +44,7 @@ QUESTION: P-Value
 VALUE: 0.0
 END CONDITION
 
-NUMBER: 2 CONDITION: Fluid-Dirichlet-Over-Surfaces
+NUMBER: 3 CONDITION: Fluid-Dirichlet-Over-Surfaces
 CONDTYPE: over surfaces
 CONDMESHTYPE: over nodes
 QUESTION: X-Constraint#CB#(0,1)
@@ -43,14 +65,25 @@ QUESTION: P-Value
 VALUE: 0.0
 END CONDITION
 
-NUMBER: 3 CONDITION: Fluid-Dirichlet-ALE
+NUMBER: 4 CONDITION: Fluid-Dirichlet-ALE-Points
+CONDTYPE: over points
+CONDMESHTYPE: over nodes
+QUESTION: FunctionHandleToALEMotion
+VALUE: functionHandle
+QUESTION: FreeBoundary#CB#(0,1)
+VALUE: 0
+END CONDITION
+
+NUMBER: 5 CONDITION: Fluid-Dirichlet-ALE-Lines
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 QUESTION: FunctionHandleToALEMotion
 VALUE: functionHandle
+QUESTION: FreeBoundary#CB#(0,1)
+VALUE: 0
 END CONDITION
 
-NUMBER: 4 CONDITION: Fluid-PostProcessing-Over-Lines
+NUMBER: 6 CONDITION: Fluid-PostProcessing-Over-Lines
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 QUESTION: BodyNumber
@@ -59,7 +92,7 @@ QUESTION: FunctionHandleToPostProcessing
 VALUE: computeResultingTotalForceOnSelectedDomain
 END CONDITION
 
-NUMBER: 5 CONDITION: Fluid-PostProcessing-Over-Surfaces
+NUMBER: 7 CONDITION: Fluid-PostProcessing-Over-Surfaces
 CONDTYPE: over surfaces
 CONDMESHTYPE: over nodes
 QUESTION: BodyNumber
@@ -68,7 +101,7 @@ QUESTION: FunctionHandleToPostProcessing
 VALUE: computeResultingTotalForceOnSelectedDomain
 END CONDITION
 
-NUMBER: 6 CONDITION: Structure-Dirichlet
+NUMBER: 8 CONDITION: Structure-Dirichlet
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 QUESTION: X-Constraint#CB#(0,1)
@@ -86,7 +119,7 @@ QUESTION: Z-Value
 VALUE: 0.0
 END CONDITION
 
-NUMBER: 7 CONDITION: FSI-Interface
+NUMBER: 9 CONDITION: FSI-Interface
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 QUESTION: X-Constraint#CB#(0,1)
@@ -106,7 +139,7 @@ END CONDITION
 
 BOOK: Loads
 
-NUMBER: 8 CONDITION: Structure-Force
+NUMBER: 10 CONDITION: Structure-Force
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 QUESTION: ForceType#CB#(boundaryLoad,whatever)
@@ -117,47 +150,47 @@ END CONDITION
 
 BOOK: Contact
 
-NUMBER: 9 CONDITION: Structure-Contact
+NUMBER: 11 CONDITION: Structure-Contact
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 END CONDITION
 
 BOOK: Domains
 
-NUMBER: 10 CONDITION: Fluid-Nodes-Over-Surfaces
+NUMBER: 12 CONDITION: Fluid-Nodes-Over-Surfaces
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 CONDMESHTYPE: over nodes
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 11 CONDITION: Fluid-Nodes-Over-Volumes
+NUMBER: 13 CONDITION: Fluid-Nodes-Over-Volumes
 CONDTYPE: over volumes
 CONDMESHTYPE: over elements
 CONDMESHTYPE: over nodes
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 12 CONDITION: Fluid-Elements-Over-Surfaces
+NUMBER: 14 CONDITION: Fluid-Elements-Over-Surfaces
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 13 CONDITION: Fluid-Elements-Over-Volumes
+NUMBER: 15 CONDITION: Fluid-Elements-Over-Volumes
 CONDTYPE: over volumes
 CONDMESHTYPE: over elements
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 14 CONDITION: Structure-Nodes
+NUMBER: 16 CONDITION: Structure-Nodes
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 CONDMESHTYPE: over nodes
 TITLE: Solid
 END CONDITION
 
-NUMBER: 15 CONDITION: Structure-Elements
+NUMBER: 17 CONDITION: Structure-Elements
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 TITLE: Solid

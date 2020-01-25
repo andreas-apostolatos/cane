@@ -111,11 +111,8 @@ fprintf('\t Creating the expanded system of equations... \n');
 % Assemble the values of the normal vector of segments to the constraint matrix
 C = multBuildConstraintMatrix(nDOFs,contactNodes,[],segments);
 
-% Create a zero matrix for the bellow right side of the equation system
-zero_matrix = zeros(size(C,2),size(C,2));
-
 % Build an expanded system of equations
-K_exp=[K,C;C',zero_matrix]; 
+K_exp = [K,C;C',zeros(size(C,2))]; 
 
 % Expand the F vector with the gap funciton for every node:
 F_exp = F;
@@ -124,7 +121,6 @@ for j=1:segments.number
 end
 
 clear C;
-clear zero_matrix;
 
 % Initial values for the itaration:
 it=0;
@@ -175,7 +171,7 @@ end
  
 %% 4.3 Solve the reduced system of equations
 equations_counter = equations_counter + length(K_red);
-fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red), cond(K_red));
+fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
 
 % solve using the backslash operator
 displacement_red = K_red\F_red;
@@ -217,7 +213,7 @@ plot_segments(segments);
 plot_lagrangeMultipliers(mesh,displacement,lagrange); 
 
 
-end %end while loop
+end % end while loop
 
 
 %% 5. Get the values for the displacement and the Lagrange multipliers

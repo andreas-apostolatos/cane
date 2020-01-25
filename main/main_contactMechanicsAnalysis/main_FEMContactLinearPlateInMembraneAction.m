@@ -91,7 +91,6 @@ F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'outputEnabl
 % not implemented yet
 
 %% Visualization of the configuration
-% NOTE - combine this function 
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
     (strMsh,F,homDBC,graph,'outputEnabled');
 
@@ -103,19 +102,20 @@ ts = cputime;
 
 maxIteration = 30;
 
-%[displacement,lagrange] = solveSignoriniLagrange1(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration); % Use Algorithm 1 
-%[displacement,lagrange] = solveSignoriniLagrange2(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration); % or use Algorithm 2
+% This is here only for my help and it will be deleted later
+%[displacement,lagrange] = solveSignoriniLagrange1(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration); 
+%[displacement,lagrange] = solveSignoriniLagrange2(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration);
 
-% fix this so it will also work with only one line
-[displacement,lagrange] = multSolveSignoriniLagrange_work(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration); % Use Algorithm 1 
+% THIS IS THE WORKING SOLVER
+%[displacement,lagrange] = multSolveSignoriniLagrange_work(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration); 
+[displacement,lagrange] = multSolveSignoriniLagrange_work_2(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration);
 
-fprintf('\t Time :   %4.2f \n',cputime-ts);
+fprintf('\t Time: %4.2f \n',cputime-ts);
 
 %% Postprocessing
 graph.index = maxIteration;
 graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,displacement,graph);
 plot_segments(segments);
-% To show vertical bars for the Lagrange multiplier values insert 'v' as last parameter
 plot_lagrangeMultipliers(strMsh,displacement,lagrange); 
 
 %% End of the script
