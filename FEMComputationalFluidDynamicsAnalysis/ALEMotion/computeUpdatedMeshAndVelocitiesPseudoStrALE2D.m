@@ -218,10 +218,10 @@ if ~isempty(propALE)
         msh.nodes(i,2) = msh.initialNodes(i,2) + dHatALE(2*i);
     end
     
-    graph.index = 1;
-    graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-        (msh,'undefined',zeros(length(msh.nodes(:,1)),1),[],graph,'');
-    graph.index = graph.index + 1;
+%     graph.index = 1;
+%     graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
+%         (msh,'undefined',zeros(length(msh.nodes(:,1)),1),[],graph,'');
+%     graph.index = graph.index + 1;
 
     %% 7. Loop over all the ALE nodes, compute the mesh velocity and updated the inhomogeneous Dirichlet boundary conditions
     for i = 1:length(propALE.nodes(:,1))

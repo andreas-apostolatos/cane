@@ -108,37 +108,37 @@ iterationLimit = 4; % Limit search iterations
 design_penalization = 1e4; % Design penalty used in J calculations
 
 % Initialize abstract function containers
-J = zeros(iterationLimit+1);
-J(1) = 0;
-dJdp1 = zeros(iterationLimit+1 , 1);
-dJdp1(1) = 0;
-dJdp2 = zeros(iterationLimit+1 , 1);
-dJdp2(1) = 0;
-p1_hist = zeros(iterationLimit+1 , 1);
-p1_hist(1) = 0;
-p2_hist = zeros(iterationLimit+1 , 1);
-p2_hist(1) = 0;
+djdp1 = [];
+djdp2 = [];
+p1_hist = [];
+p2_hist = [];
 
 % Initialize accuracy parameters
 djd1 = 1; % Initial accuracy of parameter 1
 djd2 = 1; % Initial accuracy of parameter 2
-delta_p1 = 0.005; % Perturbation of parameter 1
-delta_p2 = 0; % Perturbation of parameter 2 = 0 to analyze p1 only
+propALE.propUser.delta_p1 = 0.005; % Perturbation of parameter 1
+propALE.propUser.delta_p2 = 0.001; % Perturbation of parameter 2 = 0 to analyze p1 only
+propALE.propUser.iterate_p1 = 0;
+propALE.propUser.iterate_p2 = 0;
+gamma = 1e-4;
 
-%Initialize initial state values
+%Initialize state values
 p1_0 = 0.1; % Initial height of 2d building from GID input file
-p2_0 = 0.03; % Initial width of 2d building from GID input file
+p2_0 = 0.02; % Initial width of 2d building from GID input file
+x_0 = 0.3; % Initial x location of 2d building from GID input file
 
-p1 = p1_0; % Initialize initial states
+% Initialize parameter states
+p1 = p1_0;
 p2 = p2_0;
+propALE.propUser.x_Mid = x_0 + (p2*0.5); % Locate center of building for dx motion
 
 % Parameters (I/O)
 PlotFlag = 'False';
 
 %% Define abstract base functions and logging process
-J_  = @(J_, p1, p2) J_ + design_penalization*0.5*((p1 - p1_0)^2.0 + (p2 - p2_0)^2.0);
-dJdp1_ = @(dJdp1_, p1) dJdp1_ + design_penalization*(p1 - p1_0);
-dJdp2_ = @(dJdp2_, p2) dJdp2_ + design_penalization*(p2 - p2_0);
+%J_  = @(J_, p1, p2) J_ + design_penalization*0.5*((p1 - p1_0)^2.0 + (p2 - p2_0)^2.0);
+djdp1_ = @(djdp1_, p1) djdp1_ + design_penalization*(p1 - p1_0);
+djdp2_ = @(djdp2_, p2) djdp2_ + design_penalization*(p2 - p2_0);
 
 % Set up progress bar
 fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
@@ -146,14 +146,12 @@ fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
 %Start time count
 tic
 
-% computeALEMM
-
 %% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
 while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)    
-    %% Initialize temp variables with updated values from previous iteration
-    temp_p1 = p1;
-    temp_p2 = p2;
-    
+    %% Update internal variables with updated values from previous iteration
+    propALE.propUser.p1 = p1;
+    propALE.propUser.p2 = p2;
+     
     %% Solve the CFD problem in nominal state   
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,'undefined',parameters,...
@@ -161,146 +159,123 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         gaussInt,caseName,'');
     
-    %% Calculate drag and lift force from the nodal forces
+    % Calculate drag and lift force from the nodal forces
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
 
-    %% Calculate drag and lift coefficient based on drag and lift force
-
-    % get Fx and Fy from post processing
+    % Calculate drag and lift coefficient based on drag and lift force
+    % Retrieve Fx and Fy from post processing
     forcesOnDomain = postProc_update.valuePostProc{1};
     Fx = forcesOnDomain(1,1);
     Fy = forcesOnDomain(2,1);
 
-    % calculate drag and lift coefficiet
+    % Calculate drag and lift coefficients
     dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
     liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
 
-    % find absolute value so we don't get negative coefficients
+    % Remove negative coefficients
     liftCoefficient = abs(liftCoefficient);
 
-    %% Write nominal output vector
+    % Write nominal output vector
     output_Nom(i,:) = [i, liftCoefficient, dragCoefficient];  
-    referenceDrag_Nom = dragCoefficient;
+    referenceDrag_Nom = dragCoefficient; % Define reference drag of nominal state for accuracy calculations
  
-    %% Solve the CFD problem with perturbed p1
-    t_tag = delta_p1;
+    %% Solve the CFD problem with perturbed p1   
+    p1 = propALE.propUser.p1 + propALE.propUser.delta_p1; % Adjust user-defined parameter 1
+    propALE.propUser.Perturb_Flag = 'dy';
     
-    %% Adjust the user-defined parameters within the ALE solver
-    propALE.propUser.p1 = p1;
-    propALE.propUser.p2 = p2;
-    
-    %% Calculate drag and lift force from the nodal forces
-    p2 = temp_p2; % Ensure parameter 2 is nominal
-    p1 = p1 + delta_p1; % Adjust parameter 1
-    
-    %% Update the mesh
-    %
-    % Comments: The function below returns the updated mesh given the
-    %           boundary conditions defined in nodesALE via the function
-    %           handles for each of the nodes.
-    % 
-    [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
+    % Update the mesh for perturbed state 1
+    [fldMsh_p1,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
-        solve_LinearSystem,propFldDynamics, (i*t_tag));
+        solve_LinearSystem,propFldDynamics, i);
 
-
-    
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
+        (fldMsh_p1,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         gaussInt,caseName,'');
 
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
 
-    %% Calculate drag and lift coefficient based on drag and lift force
-
-    % get Fx and Fy from post processing
-    forcesOnDomain_update = postProc_update.valuePostProc{1};
+    forcesOnDomain = postProc_update.valuePostProc{1};
     Fx = forcesOnDomain(1,1);
     Fy = forcesOnDomain(2,1);
 
-    % calculate drag and lift coefficiet
     dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
     liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
 
-    % find absolute value so we don't get negative coefficients
     liftCoefficient = abs(liftCoefficient);
 
     % Write output vector
     output_p1(i,:) = [p1, liftCoefficient, dragCoefficient];
 
-    % Compute sensitivities via finite differences
-    drag_dp1 = (dragCoefficient - referenceDrag_Nom) / delta_p1;
+    % Compute sensitivities via finite differencing
+    drag_dp1 = (dragCoefficient - referenceDrag_Nom) / propALE.propUser.delta_p1;
           
-%     %% Solve the CFD problem with perturbed p2  
-%     p1 = temp_p1; % Ensure parameter 1 is nominal
-%     p2 = p2 + delta_p2; % Adjust parameter 2
-%       
-%     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-%         (fldMsh,homDBC,inhomDBC,valuesInhomDBCModified,nodesALE,parameters,...
-%         computeBodyForces,analysis,computeInitialConditions,...
-%         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-%         gaussInt,caseName,'');
-% 
-%     %% Calculate drag and lift force from the nodal forces
-%     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
-% 
-%     %% Calculate drag and lift coefficient based on drag and lift force
-%     rho = parameters.rho; % density
-% 
-%     % get Fx and Fy from post processing
-%     forcesOnDomain = postProc_update.valuePostProc{1};
-%     Fx = forcesOnDomain(1,1);
-%     Fy = forcesOnDomain(2,1);
-% 
-%     % calculate drag and lift coefficient
-%     dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
-%     liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
-% 
-%     % find absolute value so we don't get negative coefficients
-%     liftCoefficient = abs(liftCoefficient);
-% 
-%     % Write output vector
-%     output_p2(i,:) = [p2, liftCoefficient, dragCoefficient];
-%  
-%     % Compute sensitivities via finite differences
-%     drag_dp2 = (dragCoefficient - referenceDrag_Nom) / delta_p2;
+    %% Solve the CFD problem with perturbed p2  
+    p2 = propALE.propUser.p2 + propALE.propUser.delta_p2; % Adjust user-defined parameter 1
+    propALE.propUser.Perturb_Flag = 'dx';
+    
+    % Update the mesh for perturbed state 2
+    [fldMsh_p2,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
+        solve_LinearSystem,propFldDynamics, i);
+    
+    [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
+        (fldMsh_p2,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
+        computeBodyForces,analysis,computeInitialConditions,...
+        VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
+        gaussInt,caseName,'');
+
+    postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
+
+    forcesOnDomain = postProc_update.valuePostProc{1};
+    Fx = forcesOnDomain(1,1);
+    Fy = forcesOnDomain(2,1);
+
+    dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
+    liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
+
+    liftCoefficient = abs(liftCoefficient);
+
+    output_p2(i,:) = [p2, liftCoefficient, dragCoefficient];
+ 
+    drag_dp2 = (dragCoefficient - referenceDrag_Nom) / propALE.propUser.delta_p2;
      
     %% Compute objective function and gradients
-    J(i+1) = J_(referenceDrag_Nom,temp_p1,temp_p2); % Compute J
-    
-    dJdp1(i+1) = dJdp1_(drag_dp1,temp_p1); % Compute gradient for parameter 1
-    djd1 = dJdp1(i+1); % Populate accuracy parameter 1
-    p1_hist(i+1) = temp_p1; % Record p1 values
-    
-    dJdp2(i+1) = 0; % To anlayze p1 only set djdp2 = 0   
-%     dJdp2(i+1) = dJdp2_(drag_dp2,temp_p2); % Compute gradient for parameter 2
-%     djd2 = dJdp2(i+1); % Populate accuracy parameter 2
-    p2_hist(i+1) = temp_p2; % Record p2 values
+    if i > 1
+    djd1 = djdp1_(drag_dp1,propALE.propUser.p1); % Compute gradient for parameter 1
+    djd2 = djdp2_(drag_dp2,propALE.propUser.p2); % Compute gradient for parameter 2
+    end
+%    djd2 = 0; % To anlayze p1 only set djd2 = 0      
     
     %% Update step size - Barzilai-Borwein step length for gradient descent
-    denom = (dJdp1(i+1) - dJdp1(i))^2 + (dJdp2(i+1) - dJdp2(i))^2;
-    gamma = ((p1_hist(i+1) - p1_hist(i)) * (dJdp1(i+1) - dJdp1(i)) + (p2_hist(i+1) - p2_hist(i)) * (dJdp2(i+1) - dJdp2(i)))/denom;
+    if isempty(p1_hist) == 0      
+        denom = (djd1 - djdp1(end))^2 + (djd2 - djdp2(end))^2;
+        gamma = ((propALE.propUser.p1 - p1_hist(end)) * (djd1 - djdp1(end)) + (propALE.propUser.p2 - p2_hist(end)) * (djd2 - djdp2(end)))/denom;
+    end
     
     %% Update parameter values for next iteration
-    iterate_p1 = sign(dJdp1(i+1))*min(abs(gamma*dJdp1(i+1)), 0.1);
-    p1 = temp_p1 - iterate_p1; 
-%     p2 = temp_p2 - sign(dJdp2(i+1))*min(abs(gamma*dJdp2(i+1)), 0.1);
-
-    %% Update the mesh
-    %
-    % Comments: The function below returns the updated mesh given the
-    %           boundary conditions defined in nodesALE via the function
-    %           handles for each of the nodes.
-    % 
-%     [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
-%         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
-%         solve_LinearSystem,propFldDynamics, -iterate_p1);
-        
+    propALE.propUser.iterate_p1 = sign(djd1)*min(abs(gamma*djd1), (0.01*p1_0)); % Calculate gradient descent
+    propALE.propUser.iterate_p2 = sign(djd2)*min(abs(gamma*djd2), (0.01*p2_0)); % Calculate gradient descent
+    p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1; % Gradient descent update
+    p2 = propALE.propUser.p2 - propALE.propUser.iterate_p2; % Gradient descent update
+    p2 = max(p2, (0.5*p2_0)); % Width constraint
+    
+    % Update parameter history
+    p1_hist = [p1_hist, propALE.propUser.p1]; 
+    p2_hist = [p2_hist, propALE.propUser.p2];
+    djdp1 = [djdp1, djd1];
+    djdp2 = [djdp2, djd2];   
+    
+    %% Update the mesh for the adjusted nominal state
+    propALE.propUser.Perturb_Flag = 'dxdy';
+    
+    [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
+        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
+        solve_LinearSystem,propFldDynamics, i);
+    
     %% Increment iteration counter
     i = i+1;
-    t_tag = -iterate_p1;
         
     %% Update progress bar
     fprintf('\b|\n');

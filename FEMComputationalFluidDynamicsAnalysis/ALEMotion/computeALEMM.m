@@ -28,13 +28,40 @@ function [dx,dy,dz] = ...
 
 p1 = propUser.p1;
 p2 = propUser.p2;
+delta_p1 = propUser.delta_p1;
+delta_p2 = propUser.delta_p2;
+iterate_p1 = propUser.iterate_p1;
+iterate_p2 = propUser.iterate_p2;
+Perturb_Flag = propUser.Perturb_Flag;
+x_Mid = propUser.x_Mid;
 
 if ~ischar(t)
-   dy = (y/p1)*t;
+   if strcmp(Perturb_Flag, 'dx')
+       if x < x_Mid
+           dx = 0.5*delta_p2;
+       elseif x > x_Mid
+           dx = -0.5*delta_p2;           
+       elseif x == x_Mid
+           dx = 0;           
+       end         
+       dy = 0;       
+   elseif strcmp(Perturb_Flag, 'dy')
+       dx = 0;
+       dy = (y/p1)*delta_p1;
+   elseif strcmp(Perturb_Flag, 'dxdy')
+       if x < x_Mid
+           dx = -0.5*iterate_p2;
+       elseif x > x_Mid
+           dx = 0.5*iterate_p2;           
+       elseif x == x_Mid
+           dx = 0;       
+       end
+       dy = -iterate_p1;
+   end
 else
   dy = 0;
+  dx = 0;
 end
-dx = 0;
 dz = 0;
 
 end
