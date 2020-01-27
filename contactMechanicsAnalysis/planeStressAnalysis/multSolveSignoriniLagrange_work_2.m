@@ -126,7 +126,7 @@ end
 displacement_red = zeros(length(F_red),1);
 
 % Initial values for the iteration
-cndMain = 1;
+isCndMain = true;
 activeNodes = [];
 nActiveNodes = 0;
 it = 0;
@@ -136,99 +136,111 @@ equations_counter = 0;
     
 % Iterate until no more invalid Lagrange multipliers AND no new active nodes
 % are added in the pool
-while(cndMain && it<maxIteration)    
+while(isCndMain && it<maxIteration)    
 
-%% 4.1 Assemble to the complete displacement vector
-displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
-
-%% 4.2 Detect active nodes
-activeNodes_tmp = multDetectActiveNodes(contactNodes,displacement,segments);
-
-if(isequaln(activeNodes_tmp,activeNodes) && it~=0)
-    cndMain = 0;
-end
-     
-%% 4.3 Rebuild system if new active nodes found
-if(~isempty(activeNodes_tmp) && cndMain)
-    
-    % Update number of active nodes
-    activeNodes = activeNodes_tmp;
-    nActiveNodes = length(activeNodes);
-    
-    % Build constraint matrix C and rhs F
-    C  = multBuildConstraintMatrix(nDOFs,contactNodes,activeNodes,segments);
-    F_red = multBuildRHS(F,contactNodes,activeNodes,segments);
-    
-    % Build master system matrix
-    K_red = [K,C;C',zeros(size(C,2))];
-    
-    % Reduce the system according to the BCs
-    for i = length(homDBC):-1:1
-        K_red(:,homDBC(i)) = [];
-        K_red(homDBC(i),:) = [];
-        F_red(homDBC(i)) = [];
-    end
-end
-%% 4.4 Relax the system until ONLY valid Lagrange multipliers are computed
-cndLagrange=1;
-while(cndLagrange && it<maxIteration)
-    
-    it=it+1;
-    cndLagrange=0;
-    
-    % Compute the displacement & Lagrange multipliers
-    equations_counter=equations_counter+length(K_red);
-    fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
-    
-    % Solve using the backslash operator
-    displacement_red = K_red\F_red;
-    
-    % Loop through the lagrange part of displacement vector
-    for i=length(displacement_red) :-1: (length(displacement_red)-nActiveNodes+1)
-        
-        % Check if lagrange multiplier is non-compressive
-        if(displacement_red(i)>=0)
-            
-            % Delete non-valid Lagrange multipliers and related rows
-            K_red(:,i) = [];
-            K_red(i,:) = [];
-            F_red(i) = [];
-            activeNodes(i-length(displacement_red)+nActiveNodes)=[];
-            
-            % Set conditions to true
-            cndLagrange=1;
-            cndMain=1;
-        end
-    end
-    nActiveNodes=length(activeNodes);
-    
-    
-    
-    %% 4.5 Visualize the structure for each step
-
-    % Select and save node numbers of active nodes
-    allContactNodes=[];
-    for j=1:segments.number
-        allContactNodes=[allContactNodes;contactNodes.indices];
-    end  
-
-    % Build full displacement vector
+    %% 4.1 Assemble to the complete displacement vector
     displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
 
-    % Keep only lagrange multipliers of the active nodes
-    lagrange.multipliers = displacement_red(length(displacement_red)-nActiveNodes+1:length(displacement_red));
-    lagrange.active_nodes = allContactNodes(activeNodes);
+    %% 4.2 Detect active nodes
+    activeNodes_tmp = multDetectActiveNodes(contactNodes,displacement,segments);
 
-    % On the graph
-    graph.index = it + 1;
-    % On the geometry visualization
-    graph.visualization.geometry = 'current';
+    if(isequaln(activeNodes_tmp,activeNodes) && it~=0)
+        isCndMain = false;
+    end
 
-    graph.index = plot_currentConfigurationFEMPlateInMembraneAction(mesh,homDBC,displacement,graph);
-    plot_segments(segments);
-    plot_lagrangeMultipliers(mesh,displacement,lagrange); 
+    %% 4.3 Rebuild system if new active nodes found
+    if(~isempty(activeNodes_tmp) && isCndMain)
+
+        % Update number of active nodes
+        activeNodes = activeNodes_tmp;
+        nActiveNodes = length(activeNodes);
+
+        % Build constraint matrix C and rhs F
+        C  = multBuildConstraintMatrix(nDOFs,contactNodes,activeNodes,segments);
+        F_red = multBuildRHS(F,contactNodes,activeNodes,segments);
+
+        % Build master system matrix
+        K_red = [K  C
+                 C' zeros(size(C,2))];
+
+        % Reduce the system according to the BCs
+        K_red(:,homDBC) = [];
+        K_red(homDBC,:) = [];
+        F_red(homDBC) = [];
+    end
+    %% 4.4 Relax the system until ONLY valid Lagrange multipliers are computed
+    isCndLagrange = true;
     
-end % end of innner while loop
+    while(isCndLagrange && it<maxIteration)
+
+        it = it + 1;
+        isCndLagrange = false;
+
+        % Compute the displacement & Lagrange multipliers
+        equations_counter=equations_counter+length(K_red);
+        fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
+
+        % Solve using the backslash operator
+        displacement_red = K_red\F_red;
+
+        
+%         lmDOFsIndices = length(displacement_red)-nActiveNodes+1:length(displacement_red);
+%         
+%         
+%         if norm(displacement_red(lmDOFsIndices) >= 0) ~= 0
+%             isCndLagrange = true;
+%             isCndMain = true;
+%         end
+%         
+%         K_red(:,displacement_red(lmDOFsIndices) >= 0 )
+        
+        
+        % Loop through the lagrange part of displacement vector
+        for i=length(displacement_red) :-1: (length(displacement_red)-nActiveNodes+1)
+
+            % Check if lagrange multiplier is non-compressive
+            if(displacement_red(i)>=0)
+
+                % Delete non-valid Lagrange multipliers and related rows
+                K_red(:,i) = [];
+                K_red(i,:) = [];
+                F_red(i) = [];
+                activeNodes(i-length(displacement_red)+nActiveNodes)=[];
+
+                % Set conditions to true
+                isCndLagrange = true;
+                isCndMain = true;
+            end
+        end
+        nActiveNodes=length(activeNodes);
+
+
+
+        %% 4.5 Visualize the structure for each step
+
+        % Select and save node numbers of active nodes
+        allContactNodes=[];
+        for j=1:segments.number
+            allContactNodes=[allContactNodes;contactNodes.indices];
+        end  
+
+        % Build full displacement vector
+        displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
+
+        % Keep only lagrange multipliers of the active nodes
+        lagrange.multipliers = displacement_red(length(displacement_red)-nActiveNodes+1:length(displacement_red));
+        lagrange.active_nodes = allContactNodes(activeNodes);
+
+        % On the graph
+        graph.index = it + 1;
+        % On the geometry visualization
+        graph.visualization.geometry = 'current';
+
+        graph.index = plot_currentConfigurationFEMPlateInMembraneAction(mesh,homDBC,displacement,graph);
+        plot_segments(segments);
+        plot_lagrangeMultipliers(mesh,displacement,lagrange); 
+
+    end % end of innner while loop
 
 end % end of main while loop
 
