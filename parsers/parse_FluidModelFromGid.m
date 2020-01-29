@@ -1,4 +1,4 @@
-function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
+function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,NBC,analysis,...
     parameters,propNLinearAnalysis,propFldDynamics,gaussInt,postProc] = ...
     parse_FluidModelFromGid(pathToCase,caseName,outMsg)
 %% Licensing
@@ -29,7 +29,7 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %                       applied
 %      valuesInhomDBC : The prescribed values for the inhomogeneous 
 %                       Dirichlet boundary conditions
-%            nodesALE : The nodes on the ALE boundary
+%             propALE : The nodes on the ALE boundary
 %                           .nodes : The coordinates of the nodes
 %                       .fctHandle : The function handle to the computation
 %                                    of the prescribed motion on the ALE
@@ -313,12 +313,12 @@ for k = 1:numel(block)
 end
 if ~isempty(out)
     out = out{1};
-    nodesALE.nodes = cell2mat(out(:,1));
+    propALE.nodes = cell2mat(out(:,1));
     outFctHandle = out(:,2);
-    nodesALE.fctHandle = cell2mat(outFctHandle{1});
+    propALE.fctHandle = cell2mat(outFctHandle{1});
     fldMsh.initialNodes = fldMsh.nodes;
 else
-    nodesALE = [];
+    propALE = [];
 end
 
 if strcmp(outMsg,'outputEnabled') && ~isempty(out)

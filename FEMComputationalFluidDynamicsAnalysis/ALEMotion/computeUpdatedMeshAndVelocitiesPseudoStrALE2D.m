@@ -1,5 +1,5 @@
 function [msh,uMeshALE,inhomDOFs,valuesInhomDOFs] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
-    (msh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,solve_LinearSystem,propTransientAnalysis,t)
+    (msh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,solve_LinearSystem,propTransientAnalysis,t)
 %% Licensing
 %
 % License:         BSD License
@@ -21,11 +21,12 @@ function [msh,uMeshALE,inhomDOFs,valuesInhomDOFs] = computeUpdatedMeshAndVelocit
 %                         inhomogeneous boundary conditions are applied
 %       valuesInhomDOFs : The values of the inhomogeneous Dirichlet 
 %                         boundary conditions at each node
-%              nodesALE : The nodes on the ALE boundary:
+%               propALE : Properties regarding the ALE boundary
 %                           .nodes : The sequence of the nodal coordinates
 %                                    on the ALE boundary
 %                       .fcthandle : Function handle to the computation of
 %                                    the ALE motion
+%                         propUser : Extra user-defined parameters
 %    solve_LinearSystem : Function handle to the solver for the linear 
 %                         equation system
 % propTransientAnalysis : On the transient analysis :
@@ -95,7 +96,7 @@ function [msh,uMeshALE,inhomDOFs,valuesInhomDOFs] = computeUpdatedMeshAndVelocit
 
 %% 0. Read input
 
-% Initialize dummy arrays
+% Initialize dummy arrayst
 uSavedALE = 'undefined'; 
 uDotSavedALE = 'undefined'; 
 uDDotSavedALE = 'undefined'; 
@@ -112,6 +113,9 @@ analysisALE.type = 'planeStress';
 % The material properties of the pseudo-structural solver
 parametersALE.nue = 0;
 parametersALE.E = 1e3;
+
+% User-defined properties
+propUser = propALE.propUser;
 
 % Zero body forces
 bF = @(x,y,z,t) zeros(length(x),1,3);
@@ -148,14 +152,14 @@ counterHomDBC = 1;
 counterInhomDBC = 1;
 
 %% The following steps are only performed if there exists an ALE boundary
-if ~isempty(nodesALE)
+if ~isempty(propALE)
     %% 1. Save the coordinates of the nodes before the ALE motion
     nodesSaved = msh.nodes;
     
     %% 2. Loop over all the ALE nodes and assign the homogeneous and inhomogeneous Dirichlet boundary conditions for the ALE nodes
-    for counterALE = 1:length(nodesALE.nodes(:,1))
+    for counterALE = 1:length(propALE.nodes(:,1))
         %% 2i. Find the node ID in the node cloud
-        nodeID = nodesALE.nodes(counterALE,1);
+        nodeID = propALE.nodes(counterALE,1);
 
         %% 2ii. Get the coordinates of the node
         x = msh.initialNodes(nodeID,1);
@@ -163,10 +167,10 @@ if ~isempty(nodesALE)
         z = msh.initialNodes(nodeID,3);
 
         %% 2iii. Get function handle for ALE motion computation
-        computeALEMotion = str2func(nodesALE.fctHandle((counterALE),:));
+        computeALEMotion = str2func(propALE.fctHandle((counterALE),:));
 
         %% 2iv. Compute the motion at the given node
-        [dx,dy,~] = computeALEMotion(x,y,z,t);
+        [dx,dy,~] = computeALEMotion(x,y,z,t,propUser);
         
         %% 2v. Assign the homogeneous or inhomogeneous boundary condition for the given node
         if dx == 0
@@ -213,11 +217,16 @@ if ~isempty(nodesALE)
         msh.nodes(i,1) = msh.initialNodes(i,1) + dHatALE(2*i-1);
         msh.nodes(i,2) = msh.initialNodes(i,2) + dHatALE(2*i);
     end
+    
+%     graph.index = 1;
+%     graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
+%         (msh,'undefined',zeros(length(msh.nodes(:,1)),1),[],graph,'');
+%     graph.index = graph.index + 1;
 
     %% 7. Loop over all the ALE nodes, compute the mesh velocity and updated the inhomogeneous Dirichlet boundary conditions
-    for i = 1:length(nodesALE.nodes(:,1))
+    for i = 1:length(propALE.nodes(:,1))
         %% 7i. Find the node ID
-        nodeID = nodesALE.nodes(i,1);
+        nodeID = propALE.nodes(i,1);
         
         %% 7ii. Compute the velocity of the node using a first order interpolation
         if strcmp(propTransientAnalysis.timeDependence,'TRANSIENT')
@@ -233,14 +242,14 @@ if ~isempty(nodesALE)
         %% 7iii. Collect all the inhomogeneous boundary conditions from the ALE motion into an array
         
         % Velocity in x-direction
-        if  ux ~= 0 && strcmp(nodesALE.fctHandle(i,:),'computeALEMF')
+        if  ux ~= 0 && strcmp(propALE.fctHandle(i,:),'computeALEMF')
             inhomDOFsALE(1,counterInhomDOFs) = 3*nodeID-2;
             valuesInhomDOFsALE(1,counterInhomDOFs) = ux;
             counterInhomDOFs = counterInhomDOFs + 1;
         end
         
         % Velocity in y-direction
-        if uy ~= 0 && strcmp(nodesALE.fctHandle(i,:),'computeALEMF')
+        if uy ~= 0 && strcmp(propALE.fctHandle(i,:),'computeALEMF')
             inhomDOFsALE(1,counterIhnHomDOFs) = 3*nodeID-1;
             valuesInhomDOFsALE(1,counterIhnHomDOFs) = uy;
             counterIhnHomDOFs = counterIhnHomDOFs + 1;
