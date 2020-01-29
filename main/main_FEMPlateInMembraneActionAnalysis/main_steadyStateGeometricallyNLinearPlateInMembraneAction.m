@@ -71,6 +71,8 @@ pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 % caseName = 'unitTest_curvedPlateTipShearPlaneStress';
 caseName = 'NACA2412_AoA5_CSD';
 
+caseName = 'test_structure';
+
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
     propNLinearAnalysis,propStrDynamics,gaussInt] = ...

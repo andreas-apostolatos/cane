@@ -194,7 +194,7 @@ for iEl = 1:length(mesh.elements(:,1))
         %% 2v.5. Compute the material, the geometric, the mass matrix, the internal residual and external body force vector at the Gauss point
         [KMaterialEl,KGeometricEl,resIntEl,FBodyEl] = ...
             computeElTangentStiffMtxResVctFEMPlateInMembraneAction...
-            (uEl,dN,bF,parameters,C,DetJxxi,GW);
+            (uEl,dN,bF,parameters,C,DetJxxi,GW(iGP,1));
 
         %% 2v.6. Assemble the local matrices and vectors to the global ones via the EFT
         
