@@ -170,10 +170,12 @@ end
 % Get the element discrete solution vector of the previous Newton iteration step
 upEl = up(EFT);
 
-% Get the dicrete mesh velocity vector (0 since we don't do ALE) GOT TO BE FIXED
-uMeshALEEL = upEl * 0;
-% upEl = up(EFT); what i was doing before
-% uMeshALEEL = uMeshALE(EFT); what i was doing before
+% Get the dicrete mesh velocity vector
+if ~ischar(uMeshALE)
+    uMeshALEEL = uMeshALE(EFT);
+else
+    uMeshALEEL = zeros(noDOFsEl,1);
+end
 
 % define function to calculate euclidean norm
 euclideanNorm = @(nodes) sqrt( nodes(:,1,1).^2 + nodes(:,2,1).^2 + nodes(:,3,1).^2 );

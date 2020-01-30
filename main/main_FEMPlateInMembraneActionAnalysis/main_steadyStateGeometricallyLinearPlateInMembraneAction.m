@@ -73,7 +73,7 @@ caseName = 'cantileverBeamPlaneStress';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics] = ...
+    propNLinearAnalysis,~,gaussInt] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 %% GUI
@@ -91,9 +91,7 @@ computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed
 
 % Quadrature for the stiffness matrix and the load vector of the problem
 % 'default', 'user'
-intLoad.type = 'default';
 intDomain.type = 'default';
-intLoad.noGP = 1;
 intDomain.noGP = 1;
 
 % Quadrature for the L2-norm of the error
@@ -114,7 +112,7 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
 %% Compute the load vector
 t = 0;
-F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,intLoad,'outputEnabled');
+F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,gaussInt,'outputEnabled');
 
 %% Visualization of the configuration
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...

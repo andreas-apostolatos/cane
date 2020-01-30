@@ -107,6 +107,6 @@ resIntEl = B'*stressCauchyVoigt*DetJxxi*GW;
 %% 8. Compute the body force vector at the Gauss point
 NMtx = [dN(1,1) 0       dN(2,1) 0       dN(3,1) 0
         0       dN(1,1) 0       dN(2,1) 0       dN(3,1)];
-FBodyEl = NMtx'*bF(1:2,1)*DetJxxi*GW;
+FBodyEl = NMtx'*bF(1:2)*DetJxxi*GW;
 
 end

@@ -123,7 +123,7 @@ end
 %% GUI
 
 % On the transient analysis properties
-if strcmp(propFldDynamics.method,'bossak')
+if strcmp(propFldDynamics.method,'BOSSAK')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;
     propFldDynamics.computeUpdatedVct = ...

@@ -171,7 +171,7 @@ block(1) = [];
 out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
 propFldDynamics.timeDependence = out{1}{2};
 propFldDynamics.method = out{1}{4};
-if strcmp(propFldDynamics.method,'bossak')
+if strcmp(propFldDynamics.method,'BOSSAK')
     propFldDynamics.alphaBeta =  str2double(out{1}{6});
     propFldDynamics.gamma =  str2double(out{1}{8});
 end
@@ -184,7 +184,7 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('>> Fluid dynamics: %s \n',propFldDynamics.timeDependence);
     if ~strcmp(propFldDynamics.timeDependence,'STEADY_STATE')
         fprintf('\t>> Time integration method: %s \n',propFldDynamics.method);
-        if strcmp(propFldDynamics.method,'bossak')
+        if strcmp(propFldDynamics.method,'BOSSAK')
             fprintf('\t \t>> alphaBeta =  %s \n',propFldDynamics.alphaBeta);
             fprintf('\t \t>> gamma =  %s \n',propFldDynamics.gamma);
         end
@@ -318,7 +318,7 @@ if ~isempty(out)
     nodesALE.fctHandle = cell2mat(outFctHandle{1});
     fldMsh.initialNodes = fldMsh.nodes;
 else
-    nodesALE = [];
+    nodesALE = 'undefined';
 end
 
 if strcmp(outMsg,'outputEnabled') && ~isempty(out)
