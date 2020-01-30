@@ -180,12 +180,14 @@ for counterEFT = 1:noNodesEl
 end
 
 %% 2. Get the element discrete solution vector of the previous Newton iteration step
-% upEl = up(EFT); what i was doing before
 upEl = up(EFT);
 
-%% 3. Get the dicrete mesh velocity vector (0 since we don't do ALE) GOT TO BE FIXED
-% uMeshALEEL = uMeshALE(EFT); what i was doing before
-uMeshALEEL = upEl*0;
+%% 3. Get the dicrete mesh velocity vector
+if ~char(uMeshALE)
+    uMeshALEEL = uMeshALE(EFT);
+else
+    uMeshALEEL = zeros(noDOFsEl,1);
+end
 
 %% 4. Get the coordinates of the nodes in a matrix form
 

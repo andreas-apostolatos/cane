@@ -79,8 +79,6 @@ caseName = 'flowAroundCylinderAdaptiveALE';
 % caseName = 'squareObstacleInFlow';
 % caseName = 'flowAroundSquareObjectBoundaryLayerPowerLaw'; % problemZero, needs then ALE module
 
-% caseName = 'test_fluid';
-
 %% Parse the data from the GiD input file
 [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,parameters,...
     propNLinearAnalysis,propFldDynamics,gaussInt] = ...
@@ -125,7 +123,7 @@ end
 %% GUI
 
 % On the transient analysis properties
-if strcmp(propFldDynamics.method,'bossak')
+if strcmp(propFldDynamics.method,'BOSSAK')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;
     propFldDynamics.computeUpdatedVct = ...
