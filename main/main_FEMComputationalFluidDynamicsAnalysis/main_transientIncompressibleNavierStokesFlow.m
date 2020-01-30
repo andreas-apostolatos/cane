@@ -79,7 +79,7 @@ caseName = 'flowAroundCylinderAdaptiveALE';
 % caseName = 'squareObstacleInFlow';
 % caseName = 'flowAroundSquareObjectBoundaryLayerPowerLaw'; % problemZero, needs then ALE module
 
-caseName = 'test_fluid';
+% caseName = 'test_fluid';
 
 %% Parse the data from the GiD input file
 [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,parameters,...

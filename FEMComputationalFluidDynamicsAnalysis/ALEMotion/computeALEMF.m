@@ -35,13 +35,14 @@ function [dx,dy,dz] = ...
 %     dy = 0;
 % end
 
-amplification = .5;
-frequency = 10;
-if ~ischar(t)
-  dy = amplification*sin(frequency*pi*t);
-else
-  dy = 0;
-end
+% amplification = .5;
+% frequency = 10;
+% if ~ischar(t)
+%   dy = amplification*sin(frequency*pi*t);
+% else
+%   dy = 0;
+% end
+dy = 0;
 dx = 0;
 dz = 0;
 
