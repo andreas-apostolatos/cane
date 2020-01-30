@@ -18,7 +18,9 @@ clc;
 close all;
 
 %% Includes
-addpath('../probabilityDistributionFunctions/');
+
+% Add all functions related to the Monte Carlo Simulation
+addpath('../../MonteCarloSimulationAnalysis/probabilityDistributionFunctions/');
 
 %% Input data
 meanValue = 10;
@@ -53,7 +55,3 @@ title('Quasi Monte Carlo Distribution');
 figure(4);
 histfit(latinHypercubeDistribution, noBins);
 title('Latin Hypercube Distribution');
-
-
-
-

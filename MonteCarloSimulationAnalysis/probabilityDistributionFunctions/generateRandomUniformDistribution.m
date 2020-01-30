@@ -23,6 +23,4 @@ function distribution = generateRandomUniformDistribution(meanValue, standardDev
 intervalSize = 0.5*standardDeviation*sqrt(12);
 distribution = 2*intervalSize*rand(noSamples,1) + meanValue - intervalSize;
 
-
-
 end
