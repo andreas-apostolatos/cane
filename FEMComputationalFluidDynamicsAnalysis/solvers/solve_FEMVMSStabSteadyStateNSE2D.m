@@ -1,7 +1,7 @@
 function [up,FComplete,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2D...
     (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,parameters,...
     computeBodyForces,analysis,computeInitCnds,VTKResultFile,...
-    solve_LinearSystem,propFldDynamics,propNLinearAnalysis,gaussInt,...
+    solve_LinearSystem,propFldDynamics,propNLinearAnalysis,noIterStep,gaussInt,...
     caseName,outMsg)
 %% Licensing
 %
@@ -123,7 +123,6 @@ uMeshALE = 'undefined';
 massMtx = 'undefined';
 dampMtx = 'undefined';
 t = 'undefined';
-noTimeStep = 0;
 
 % Define tabulation for the output to the command window
 tab = '\t';
@@ -182,7 +181,7 @@ end
 %% 4. Write out the results into a VTK file
 writeOutputFEMIncompressibleFlowToVTK(analysis,propNLinearAnalysis,...
     propFldDynamics,fldMsh,parameters,up,uDot,uDDot,DOF4Output,caseName,...
-    pathToOutput,title,noTimeStep);
+    pathToOutput,title,noIterStep);
 
 %% 5. Appendix
 if strcmp(outMsg,'outputEnabled')
