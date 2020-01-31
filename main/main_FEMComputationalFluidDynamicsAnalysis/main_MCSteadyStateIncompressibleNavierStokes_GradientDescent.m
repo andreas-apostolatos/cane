@@ -125,7 +125,7 @@ gamma = 1e-4;
 %Initialize state values
 p1_0 = 0.1; % Initial height of 2d building from GID input file
 p2_0 = 0.02; % Initial width of 2d building from GID input file
-x_0 = 0.3; % Initial x location of 2d building from GID input file
+x_0 = computeStructureBoundary(fldMsh,propALE); % Initial x location of 2d building from GID input file
 
 % Initialize parameter states
 p1 = p1_0;
