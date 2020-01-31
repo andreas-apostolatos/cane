@@ -89,6 +89,8 @@ end
 
 %% Define the name of the vtk file from where to resume the simulation
 VTKResultFile = 'undefined';
+propVTK_true.isOutput = true;
+propVTK_false.isOutput = false;
 
 %% Input parameters
 % max input velocity defined in the reference paper
@@ -125,7 +127,7 @@ gamma = 1e-4;
 %Initialize state values
 p1_0 = 0.1; % Initial height of 2d building from GID input file
 p2_0 = 0.02; % Initial width of 2d building from GID input file
-x_0 = 0.3; % Initial x location of 2d building from GID input file
+x_0 = computeStructureBoundary(fldMsh,propALE); % Initial x location of 2d building from GID input file
 
 % Initialize parameter states
 p1 = p1_0;
@@ -157,7 +159,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,'undefined',parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-        i,gaussInt,caseName,'');
+        i,propVTK_true,gaussInt,caseName,'outputEnabled');
     
     % Calculate drag and lift force from the nodal forces
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
@@ -192,7 +194,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         (fldMsh_p1,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-        gaussInt,caseName,'');
+        i,propVTK_false,gaussInt,caseName,'');
 
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
 
@@ -224,7 +226,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         (fldMsh_p2,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-        gaussInt,caseName,'');
+        i,propVTK_false,gaussInt,caseName,'');
 
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
 
