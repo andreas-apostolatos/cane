@@ -57,7 +57,7 @@ addpath('../../efficientComputation/');
 %% GUI
 
 % On the body forces
-computeBodyForces = @computeConstantVerticalBodyForceVct;
+computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
 
 % On the writing the output function
 writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
@@ -121,8 +121,6 @@ if strcmp(caseName,'flowAroundSquareObjectBoundaryLayerPowerLaw')
 end
 
 %% GUI
-
-% On the transient analysis properties
 if strcmp(propFldDynamics.method,'BOSSAK')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;

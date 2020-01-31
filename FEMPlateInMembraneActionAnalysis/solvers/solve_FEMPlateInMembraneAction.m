@@ -1,7 +1,7 @@
 function [dHat,FComplete,minElSize] = ...
     solve_FEMPlateInMembraneAction(analysis,strMsh,homDOFs,inhomDOFs,valuesInhomDOFs,...
     NBC,bodyForces,parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-    propNLinearAnalysis,propStrDynamics,gaussInt,caseName,pathToOutput,...
+    propNLinearAnalysis,propGaussInt,caseName,pathToOutput,...
     isUnitTest,outMsg)
 %% Licensing
 %
@@ -45,14 +45,7 @@ function [dHat,FComplete,minElSize] = ...
 %                           .tolerance : The residual tolerance
 %                             .maxIter : The maximum number of the 
 %                                        nonlinear iterations
-%        propStrDynamics : .timeDependence : Steady-state or transient 
-%                                            analysis
-%                                  .scheme : The time integration scheme
-%                                      .T0 : The start time of the 
-%                                            simulation
-%                                    .TEnd : The end time of the simulation
-%                                 .nTSteps : The number of the time steps
-%               gaussInt : On the numerical integration (quadrature)
+%           propGaussInt : On the numerical integration (quadrature)
 %                                  .type : 'default', 'user'
 %                            .domainNoGP : Number of Gauss Points for the 
 %                                          domain integration
@@ -157,14 +150,14 @@ freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
 
 %% 2. Compute the load vector
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,analysis,NBC,t,gaussInt,outMsg);
+    (strMsh,analysis,NBC,t,propGaussInt,outMsg);
 
 %% 3. Solve the linear equation system
 [dHat,FComplete,~,minElSize] = solve_FEMLinearSystem(analysis,uSaved,...
     uDotSaved,uDDotSaved,strMsh,F,bodyForces,parameters,dHat,uDot,uDDot,...
     massMtx,dampMtx,computeStiffMtxLoadVct,DOFNumbering,freeDOFs,homDOFs,...
     inhomDOFs,valuesInhomDOFs,uMeshALE,solve_LinearSystem,propStrDynamics,...
-    propNLinearAnalysis,gaussInt,tab,outMsg);
+    propNLinearAnalysis,propGaussInt,tab,outMsg);
 
 %% 4. Write out the results into a file if the case is not a unit test
 if ~isUnitTest

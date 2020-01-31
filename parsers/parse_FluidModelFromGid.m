@@ -1,5 +1,5 @@
 function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
-    parameters,propNLinearAnalysis,propFldDynamics,gaussInt,postProc] = ...
+    parameters,propNLinearAnalysis,propFldDynamics,propGaussInt,postProc] = ...
     parse_FluidModelFromGid(pathToCase,caseName,outMsg)
 %% Licensing
 %
@@ -58,7 +58,7 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,...
 %                               .T0 : The start time of the simulation
 %                             .TEnd : The end time of the simulation
 %                      .noTimeSteps : The number of the time steps
-%            gaussInt : On the Gauss Point integration
+%        propGaussInt : On the Gauss Point integration
 %                                 .type : 'default', 'user'
 %                           .domainNoGP : Number of Gauss Points for the 
 %                                         domain integration
@@ -199,16 +199,16 @@ end
 block = regexp(fstring,'FLUID_INTEGRATION','split');
 block(1) = [];
 out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
-gaussInt.type = out{1}{2};
-if strcmp(gaussInt.type,'user')
-    gaussInt.domainNoGP = str2double(out{1}{4});
-    gaussInt.boundaryNoGP = str2double(out{1}{6});
+propGaussInt.type = out{1}{2};
+if strcmp(propGaussInt.type,'user')
+    propGaussInt.domainNoGP = str2double(out{1}{4});
+    propGaussInt.boundaryNoGP = str2double(out{1}{6});
 end
 if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Gauss integration type: %s \n',gaussInt.type);
-    if strcmp(gaussInt.type,'user')
-        fprintf('\t>> No. Gauss Points for the domain integration: %d \n',gaussInt.domainNoGP);
-        fprintf('\t>> No. Gauss Points for the boundary integration: %d \n',gaussInt.boundaryNoGP);
+    fprintf('>> Gauss integration type: %s \n',propGaussInt.type);
+    if strcmp(propGaussInt.type,'user')
+        fprintf('\t>> No. Gauss Points for the domain integration: %d \n',propGaussInt.domainNoGP);
+        fprintf('\t>> No. Gauss Points for the boundary integration: %d \n',propGaussInt.boundaryNoGP);
     end
 end
 
@@ -389,10 +389,10 @@ if ~isempty(out)
     counterLines = 1;
 
     % Loop over each node pair
-    for i=1:length(NBC.nodes)
-        for j=i:length(NBC.nodes)
+    for i = 1:length(NBC.nodes)
+        for j = i:length(NBC.nodes)
             % If we are not in the same node
-            if i~=j
+            if i ~= j
                 % Get the node index in the element array
                 nodeI = NBC.nodes(i);
                 nodeJ = NBC.nodes(j);
