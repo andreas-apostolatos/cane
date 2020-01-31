@@ -1,4 +1,4 @@
-function bF = computeConstantVerticalBodyForceVct(x,y,z,t)
+function bF = computeConstantVerticalStructureBodyForceVct(x,y,z,t)
 %% Licensing
 %
 % License:         BSD License
@@ -19,7 +19,9 @@ function bF = computeConstantVerticalBodyForceVct(x,y,z,t)
 %          bF : The body force vector bF = [0; 0; 0]
 %
 %% Function main body
-bF = zeros(3,length(x));
+
+bF = zeros(length(x),1,3);
+% bF = zeros(3,length(x));
 
 end
 
