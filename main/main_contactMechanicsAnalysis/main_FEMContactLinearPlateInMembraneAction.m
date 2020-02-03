@@ -70,15 +70,17 @@ graph.visualization.geometry = 'current';
 %% Rigid wall- line  [(x0,y0) ; (x1,y1)]
 
 if strcmp(caseName,'example_01_bridge')
-    % define bottom contact line segment
-    wall_1 = [0.5, -0.5; 1.5,-0.1];
-    wall_2 = [1.5, -0.1; 2,-0.1];
-    wall_3 = [2, -0.1; 3,-0.5];
+%     % define bottom contact line segment
+%     wall_1 = [0.5, -0.5; 1.5,-0.1];
+%     wall_2 = [1.5, -0.1; 2,-0.1];
+%     wall_3 = [2, -0.1; 3,-0.5];
+% 
+%     % add a wall to the segments of points
+%     segments.points(:,:,1) = wall_1;
+%     segments.points(:,:,2) = wall_2;
+%     segments.points(:,:,3) = wall_3;
 
-    % add a wall to the segments of points
-    segments.points(:,:,1) = wall_1;
-    segments.points(:,:,2) = wall_2;
-    segments.points(:,:,3) = wall_3;
+segments = createCircleSegments(2,-5.1,5,19);
     
 elseif strcmp(caseName,'example_02_wedge')
     % define bottom contact line segment
@@ -89,7 +91,11 @@ elseif strcmp(caseName,'example_02_wedge')
     segments.points(:,:,1) = wall_1;
     segments.points(:,:,2) = wall_2;
     
+elseif strcmp(caseName,'example_03_benchmark')
+    
+    
 end
+
 
 %% Compute the load vector
 time = 0;
