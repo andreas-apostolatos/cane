@@ -1,15 +1,17 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                         %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. K.-U. Bletzinger                 %
-%   _____________________________________________________                 %
-%                                                                         %
-%   Authors                                                               %
-%   _______                                                               %
-%                                                                         %
-%   Fabien Pean, Andreas Hauso, Georgios Koroniotis                       %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [displacement, lagrange] = multSolveSignoriniLagrange_work_2...
+function [displacement,lagrange] = solveSignoriniLagrange_2...
     (mesh,homDBC,contactNodes,F, segments,materialProperties,analysis,maxIteration)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%                  Andreas Apostolatos
+%                  -------------------
+%                  Fabien Pean
+%                  Andreas Hauso
+%                  Georgios Koroniotis
+%
 %% Function documentation
 %
 % Returns the displacement field and the Lagrange multipliers corresponding 
@@ -52,13 +54,9 @@ function [displacement, lagrange] = multSolveSignoriniLagrange_work_2...
 %   4.1 Assemble to the complete displacement vector
 %   4.2 Detect active nodes
 %   4.3 Rebuild system if new active nodes found
-%       4.3.1 Update number of active nodes
-%       4.3.2 Build constraint matrix C and rhs F
-%       4.3.3 Build master system matrix
-%       4.3.4 Reduce the system according to the BCs
 %   4.4 Relax the system until ONLY valid Lagrange multipliers are computed
 %   |->
-%   4.4.1 Compute the displacement & Lagrange multipliers
+%   4.4.1 Compute the displacement and Lagrange multipliers
 %   4.4.2 Detect and delete non-valid Lagrange multipliers and related rows
 %   <-|
 %<-|
@@ -87,18 +85,13 @@ for i=size(contactNodes.indices,1):-1:1
 end
 contactNodes.positions=mesh.nodes(contactNodes.indices,:);
 
-% test the above function by drawing the nodes 
-% x = contactNodes.positions(:,1);
-% y = contactNodes.positions(:,2);
-% plot(x,y,'ro');
-
 %% 1. Compute the gap function
 
 % Compute normal, parallel and position vectors of the segments
 segments = buildSegmentsData(segments);
 
 % Compute for all nodes the specific gap and save it in the field .gap
-contactNodes = multComputeGapFunc(contactNodes,segments);
+contactNodes = computeGapFunction(contactNodes,segments);
 
 %% 2. Compute the master stiffness matrix of the structure
 fprintf('\t Computing master stiffness matrix... \n');
@@ -114,11 +107,10 @@ fprintf('\t Reducing the system according to the constraints... \n');
 K_red = K;
 F_red = F;
 
-for i = length(homDBC):-1:1
-    K_red(:,homDBC(i)) = [];
-    K_red(homDBC(i),:) = [];
-    F_red(homDBC(i)) = [];
-end
+% Remove constrained DOFs (homDBCs)
+K_red(:,homDBC) = [];
+K_red(homDBC,:) = [];
+F_red(homDBC) = [];
 
 %% 4. Solve the system according to Lagrange multipliers
 
@@ -142,7 +134,7 @@ while(isCndMain && it<maxIteration)
     displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
 
     %% 4.2 Detect active nodes
-    activeNodes_tmp = multDetectActiveNodes(contactNodes,displacement,segments);
+    activeNodes_tmp = detectActiveNodes(contactNodes,displacement,segments);
 
     if(isequaln(activeNodes_tmp,activeNodes) && it~=0)
         isCndMain = false;
@@ -156,91 +148,58 @@ while(isCndMain && it<maxIteration)
         nActiveNodes = length(activeNodes);
 
         % Build constraint matrix C and rhs F
-        C  = multBuildConstraintMatrix(nDOFs,contactNodes,activeNodes,segments);
-        F_red = multBuildRHS(F,contactNodes,activeNodes,segments);
+        C  = buildConstraintMatrix(nDOFs,contactNodes,activeNodes,segments);
+        F_red = buildRHS(F,contactNodes,activeNodes,segments);
 
         % Build master system matrix
-        K_red = [K  C
-                 C' zeros(size(C,2))];
+        K_red = [K,C;C',zeros(size(C,2))];
 
         % Reduce the system according to the BCs
         K_red(:,homDBC) = [];
         K_red(homDBC,:) = [];
         F_red(homDBC) = [];
     end
+    
     %% 4.4 Relax the system until ONLY valid Lagrange multipliers are computed
     isCndLagrange = true;
-    
+
     while(isCndLagrange && it<maxIteration)
 
         it = it + 1;
         isCndLagrange = false;
 
-        % Compute the displacement & Lagrange multipliers
-        equations_counter=equations_counter+length(K_red);
+        %% 4.4.1 Compute the displacement and Lagrange multipliers
+        equations_counter = equations_counter + length(K_red);
         fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
 
         % Solve using the backslash operator
         displacement_red = K_red\F_red;
-
         
-%         lmDOFsIndices = length(displacement_red)-nActiveNodes+1:length(displacement_red);
-%         
-%         
-%         if norm(displacement_red(lmDOFsIndices) >= 0) ~= 0
-%             isCndLagrange = true;
-%             isCndMain = true;
-%         end
-%         
-%         K_red(:,displacement_red(lmDOFsIndices) >= 0 )
+        %% 4.4.2 Detect and delete non-valid Lagrange multipliers and related rows
         
+        % Lagrange Multipliers indices
+        lmDOFsIndices = length(displacement_red)-nActiveNodes+1:length(displacement_red);
         
-        % Loop through the lagrange part of displacement vector
-        for i=length(displacement_red) :-1: (length(displacement_red)-nActiveNodes+1)
-
-            % Check if lagrange multiplier is non-compressive
-            if(displacement_red(i)>=0)
-
-                % Delete non-valid Lagrange multipliers and related rows
-                K_red(:,i) = [];
-                K_red(i,:) = [];
-                F_red(i) = [];
-                activeNodes(i-length(displacement_red)+nActiveNodes)=[];
-
-                % Set conditions to true
-                isCndLagrange = true;
-                isCndMain = true;
-            end
+        if max(displacement_red(lmDOFsIndices)) > 0
+            isCndLagrange = true;
+            isCndMain = true;
         end
+        
+        % Find the indices of only non-compressive Lagrange Multipliers
+        lmDOFsIndices = lmDOFsIndices(displacement_red(lmDOFsIndices)>=0);
+       
+        % Delete non-valid Lagrange multipliers and related rows
+        K_red(:,lmDOFsIndices) = [];
+        K_red(lmDOFsIndices,:) = [];
+        F_red(lmDOFsIndices) = [];
+        
+        % Delete active nodes related to non-valid Lagrange multipliers
+        activeNodes(lmDOFsIndices-length(displacement_red)+nActiveNodes) = [];
+        
+        % Update the number of active nodes
         nActiveNodes=length(activeNodes);
 
-
-
-        %% 4.5 Visualize the structure for each step
-
-        % Select and save node numbers of active nodes
-        allContactNodes=[];
-        for j=1:segments.number
-            allContactNodes=[allContactNodes;contactNodes.indices];
-        end  
-
-        % Build full displacement vector
-        displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
-
-        % Keep only lagrange multipliers of the active nodes
-        lagrange.multipliers = displacement_red(length(displacement_red)-nActiveNodes+1:length(displacement_red));
-        lagrange.active_nodes = allContactNodes(activeNodes);
-
-        % On the graph
-        graph.index = it + 1;
-        % On the geometry visualization
-        graph.visualization.geometry = 'current';
-
-        graph.index = plot_currentConfigurationFEMPlateInMembraneAction(mesh,homDBC,displacement,graph);
-        plot_segments(segments);
-        plot_lagrangeMultipliers(mesh,displacement,lagrange); 
-
-    end % end of innner while loop
+    end % end of inner while loop
 
 end % end of main while loop
 

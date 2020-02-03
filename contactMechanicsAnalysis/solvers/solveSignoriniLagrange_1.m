@@ -1,15 +1,17 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                         %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. K.-U. Bletzinger                 %
-%   _____________________________________________________                 %
-%                                                                         %
-%   Authors                                                               %
-%   _______                                                               %
-%                                                                         %
-%   Fabien Pean, Andreas Hauso, Georgios Koroniotis                       %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [displacement,lagrange] = multSolveSignoriniLagrange_work...
+function [displacement,lagrange] = solveSignoriniLagrange_1...
     (mesh,homDBC,contactNodes,F,segments,materialProperties,analysis,maxIteration)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%                  Andreas Apostolatos
+%                  -------------------
+%                  Fabien Pean
+%                  Andreas Hauso
+%                  Georgios Koroniotis
+%
 %% Function documentation
 %
 % Returns the displacement field and the Lagrange multipliers corresponding 
@@ -82,12 +84,7 @@ for i=size(contactNodes.indices,1):-1:1
        contactNodes.indices(i)=[];
     end
 end
-contactNodes.positions=mesh.nodes(contactNodes.indices,:);
-
-% test the above function by drawing the nodes 
-% x = contactNodes.positions(:,1);
-% y = contactNodes.positions(:,2);
-% plot(x,y,'ro');
+contactNodes.positions = mesh.nodes(contactNodes.indices,:);
 
 %% 1. Compute the gap function
 
@@ -95,7 +92,7 @@ contactNodes.positions=mesh.nodes(contactNodes.indices,:);
 segments = buildSegmentsData(segments);
 
 % Compute for all nodes the specific gap and save it in the field .gap
-contactNodes = multComputeGapFunc(contactNodes, segments);
+contactNodes = computeGapFunction(contactNodes,segments);
 
 %% 2. Compute the master stiffness matrix of the structure
 fprintf('\t Computing master stiffness matrix... \n');
@@ -109,7 +106,7 @@ K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,an
 fprintf('\t Creating the expanded system of equations... \n');
 
 % Assemble the values of the normal vector of segments to the constraint matrix
-C = multBuildConstraintMatrix(nDOFs,contactNodes,[],segments);
+C = buildConstraintMatrix(nDOFs,contactNodes,[],segments);
 
 % Build an expanded system of equations
 K_exp = [K,C;C',zeros(size(C,2))]; 
@@ -123,32 +120,30 @@ end
 clear C;
 
 % Initial values for the itaration:
-it=0;
-displacement_exp=zeros(length(F_exp));
-inactive_DOFs=[];
-inactive_old_DOFs=[];
+it = 0;
+displacement_exp = zeros(length(F_exp));
+inactive_DOFs = [];
+inactive_old_DOFs = [];
 
 % Counts the number of equations which are solved during iteration
-equations_counter=0;
+equations_counter = 0;
 
 %% 4. Solve the system iteratively
 
 % Repeat loop until all Lagrange multipliers are valid and system converges 
-% to stable solution:
-% Check whether solution is found
-% If the Lagrange multiplier of the current node are valid and we had 
-% no change in the set of inactive_nodes during the last iteration 
-% the solution has been found and the loop is terminated
+% to stable solution. If the Lagrange multiplier of the current node are 
+% valid and we had no change in the set of inactive_nodes during the last
+% iteration the solution has been found and the loop is terminated
 while (it==0 || (it<maxIteration && ~(isequal(inactive_old_DOFs,inactive_DOFs) && max(displacement_exp(nDOFs+1:length(F_exp)))<=0)))
  
-inactive_old_DOFs=inactive_DOFs;
+inactive_old_DOFs = inactive_DOFs;
 % update iteration counter
-it=it+1;
+it = it + 1;
     
 %% 4.1 Determine inactive nodes
 
-% Detect non-penetrating nodes and nodes with non-compressive Lagr. multipliers
-inactive_DOFs = multDetectInactiveNodes(nDOFs,contactNodes,displacement_exp,segments);
+% Detect non-penetrating nodes and nodes with non-compressive Lagrange multipliers
+inactive_DOFs = detectInactiveNodes(nDOFs,contactNodes,displacement_exp,segments);
 
 %% 4.2 Reduce the system of equations according to the constraints
 
@@ -163,11 +158,10 @@ K_red = K_exp;
 F_red = F_exp;
 
 % Remove constrained DOFs and inactiveDOFs equations
-for i = length(unnecessaryDOFs):-1:1
-    K_red(:,unnecessaryDOFs(i)) = [];
-    K_red(unnecessaryDOFs(i),:) = [];
-    F_red(unnecessaryDOFs(i)) = [];
-end
+K_red(:,unnecessaryDOFs) = [];
+K_red(unnecessaryDOFs,:) = [];
+F_red(unnecessaryDOFs) = [];
+
  
 %% 4.3 Solve the reduced system of equations
 equations_counter = equations_counter + length(K_red);
@@ -181,37 +175,6 @@ displacement_red = K_red\F_red;
 % Build dexp out of dred:
 nDOFsFull = length(F_exp);
 displacement_exp = buildFullDisplacement(nDOFsFull,unnecessaryDOFs,displacement_red);
-
-%% 4.5 Visualize the structure for each step
-
-% Select and save node numbers of active nodes
-allContactNodes=[];
-for j=1:segments.number
-    allContactNodes = [allContactNodes;contactNodes.indices];
-end
-
-% The first entries in displacement_exp correspond to the displacement
-displacement = displacement_exp(1:nDOFs);
-
-% The last entries in displacement_exp correspond to the Lagrange multipliers
-lagrangeMultipliers = displacement_exp(nDOFs+1 : nDOFsFull);
-
-% Find the active nodes where lagrange multipliers apply
-activeNodes = allContactNodes(lagrangeMultipliers < 0);
-lagrange.active_nodes = activeNodes;
-
-% Keep only lagrange multipliers of the active nodes
-lagrange.multipliers = lagrangeMultipliers(lagrangeMultipliers<0);
-
-% On the graph
-graph.index = it + 1;
-% On the geometry visualization
-graph.visualization.geometry = 'current';
-
-graph.index = plot_currentConfigurationFEMPlateInMembraneAction(mesh,homDBC,displacement,graph);
-plot_segments(segments);
-plot_lagrangeMultipliers(mesh,displacement,lagrange); 
-
 
 end % end while loop
 

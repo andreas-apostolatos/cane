@@ -1,11 +1,10 @@
-function C = multBuildConstraintMatrix(DOF,contactNodes,activeNodes,segments)
+function C = buildConstraintMatrix(nDOF,contactNodes,activeNodes,segments)
 %
-% MULTBUILDCONSTRAINTMATRIX Build the constraint matrix to be appended to K
+% Build the constraint matrix to be appended to K
 % The constraint matrix is built with these dimensions :
-% number of displacement unknowns X number of Lagractive_nodesge multipliers
+% nDOF x number of active Lagrange multipliers
 % The matrix is filled with the normal vectors of the segments applied on
 % the right couple of displacement.
-% APPLY THIS FUNCTION IF MORE THAN ONE RIGID WALL SEGMENT EXISTS
 %
 %              Input :
 %                DOF : Number of DoF of the system
@@ -24,9 +23,9 @@ function C = multBuildConstraintMatrix(DOF,contactNodes,activeNodes,segments)
 %             Output :
 %                  C : The Constraint matrix
 %
-%%
+%% Function main body
 
-C = zeros(DOF,1);
+C = zeros(nDOF,1);
 k=1;
 l=1;
 % loop through segments

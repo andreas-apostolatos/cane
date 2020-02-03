@@ -46,41 +46,50 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 % NOTE - check what is not neaded and rearange it
 % Add all functions related to signorini frictionless contact problem
 addpath('../../contactMechanicsAnalysis/plot',...
-        '../../contactMechanicsAnalysis/planeStressAnalysis',...
-        '../../contactMechanicsAnalysis/lagrangeMultipliers');
+        '../../contactMechanicsAnalysis/solvers',...
+        '../../contactMechanicsAnalysis/supportFunctions');
 
 %% Parse data from GiD input file
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-caseName = 'example_01_noGap';
-% caseName = ... NOTE - add all test cases
+caseName = 'example_01_bridge';
+%caseName = 'example_02_wedge';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
     propNLinearAnalysis,propStrDynamics,gaussInt,contactNodes] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
-%% GUI
-% Analysis type -> it's parser, here for convenience
-analysis.type = 'planeStress';
-
-% On the graph
+%% GUI - graph
 graph.index = 1;
 
 % On the geometry visualization
 graph.visualization.geometry = 'current';
 
-%% rigid wall- line  [(x0,y0) ; (x1,y1)]
-% define bottom contact line segment
-wall_1 = [0.5, -0.5; 1.5,-0.1];
-wall_2 = [1.5, -0.1; 2,-0.1];
-wall_3 = [2, -0.1; 3,-0.5];
+%% Rigid wall- line  [(x0,y0) ; (x1,y1)]
 
-% add a wall to the segments of points
-segments.points(:,:,1) = wall_1;
-segments.points(:,:,2) = wall_2;
-segments.points(:,:,3) = wall_3;
+if strcmp(caseName,'example_01_bridge')
+    % define bottom contact line segment
+    wall_1 = [0.5, -0.5; 1.5,-0.1];
+    wall_2 = [1.5, -0.1; 2,-0.1];
+    wall_3 = [2, -0.1; 3,-0.5];
+
+    % add a wall to the segments of points
+    segments.points(:,:,1) = wall_1;
+    segments.points(:,:,2) = wall_2;
+    segments.points(:,:,3) = wall_3;
+    
+elseif strcmp(caseName,'example_02_wedge')
+    % define bottom contact line segment
+    wall_1 = [-1, 3.75; -1, -2];
+    wall_2 = [-0.33333, -2; 1.2, 3.75];
+    
+    % add a wall to the segments of points
+    segments.points(:,:,1) = wall_1;
+    segments.points(:,:,2) = wall_2;
+    
+end
 
 %% Compute the load vector
 time = 0;
@@ -102,20 +111,14 @@ ts = cputime;
 
 maxIteration = 30;
 
-% This is here only for my help and it will be deleted later
-%[displacement,lagrange] = solveSignoriniLagrange1(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration); 
-%[displacement,lagrange] = solveSignoriniLagrange2(strMsh,homDBC,candidateNodes,F,segments,parameters,analysis,maxIteration);
-
-% THIS IS THE WORKING SOLVER
-%[displacement,lagrange] = multSolveSignoriniLagrange_work(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration); 
-[displacement,lagrange] = multSolveSignoriniLagrange_work_2(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration);
+[displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration); 
+%[displacement,lagrange] = solveSignoriniLagrange_2(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration);
 
 fprintf('\t Time: %4.2f \n',cputime-ts);
 
 %% Postprocessing
-graph.index = maxIteration;
 graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,displacement,graph);
 plot_segments(segments);
-plot_lagrangeMultipliers(strMsh,displacement,lagrange); 
+plot_activeNodes(strMsh,displacement,lagrange); 
 
 %% End of the script

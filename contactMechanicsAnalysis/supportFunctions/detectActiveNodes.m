@@ -1,9 +1,8 @@
-function activeNodes = multDetectActiveNodes...
+function activeNodes = detectActiveNodes...
     (contactNodes,displacement,segments)
 %MULTIDETECTACTIVENODES Detect the active nodes for the current segment
 % Loops over all segments to check whether the displacement of the node put
 % in an active position according to the segment
-% APPLY THIS FUNCTION IF MORE THAN ONE RIGID WALL SEGMENT EXISTS
 %
 %              Input :
 %                 cn : STRUCTURE ARRAY 'cn(j=1..n).indices' 

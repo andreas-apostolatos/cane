@@ -1,4 +1,4 @@
-function F_exp = multBuildRHS(F,contactNodes,activeNodes,segments)
+function F_exp = buildRHS(F,contactNodes,activeNodes,segments)
 %% Function documentation
 % BUILDRHS add the gap values to the right hand side
 % Add the gap function of every Lagrange multiplier to the load vector
