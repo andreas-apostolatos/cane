@@ -6,6 +6,7 @@
 \usepackage{import}
 \usepackage{graphicx}
 \usepackage{color}
+\usepackage[]{algorithm2e}
 
 \setlength{\parindent}{0cm}
 
@@ -28,7 +29,9 @@
 
 \section{Theory}\label{sec:variational_formulation}
 
-Given is a deformable body which is geometrically described by $\Omega \subset \mathbb{R}^d$ where $d = 2,3$ stands for the problem's dimensions. Its deformation due to the applied boundary conditions can be uniquely defined by a displacement field $\mathbf{u} = u_i \, \mathbf{e}_i$, $\mathbf{e}_i$ being the Cartesian basis, which maps each each material point of the reference configuration $\mathbf{X} \in \Omega$ to a material point in the current configuration $\mathbf{x} \in \Omega_t$, that is, $\mathbf{x} = \mathbf{X} + \mathbf{u}$.\\
+\subsection{Linear elasticity}\label{subsec:linear_elasticity}
+
+Given is a deformable body which is geometrically described by $\Omega \subset \mathbb{R}^d$ where $d = 2,3$ stands for the number of the problem's spatial dimensions. Its deformation due to the applied boundary conditions can be uniquely defined by a displacement field $\mathbf{u} = u_i \, \mathbf{e}_i$, $\mathbf{e}_i$ being the Cartesian basis, which maps each each material point of the reference configuration $\mathbf{X} \in \Omega$ to a material point in the current configuration $\mathbf{x} \in \Omega_t$, that is, $\mathbf{x} = \mathbf{X} + \mathbf{u}$.\\
 
 The strain is described by means of the \textit{Green-Lagrange} (GL) strain second order tensor $\boldsymbol{\mathcal{E}} \in \mathfrak{S}^2$ given by,
 
@@ -77,34 +80,70 @@ Given the Dirichlet boundary conditions along $\Gamma_{\text{d}}$ where the disp
 	\label{eq:strong_formulation}
 \end{subequations}
 
-where $\mathbf{n}$ stands for the unit outward normal vector to Neumann boundary $\Gamma_{\text{n}}$.\\
+where $\mathbf{n}$ stands for the unit outward normal vector to Neumann boundary $\Gamma_{\text{n}}$.
 
-Assumed is also that there is a boundary $\Gamma_{\text{c}} = \Gamma_{\text{c}} (\mathbf{u})$ along which body $\Omega$ is expected to come into contact with a rigid body $\mathfrak{F}$. The so-called gap function is then defined along $\Gamma_{\text{c}}$, namely $\mathbf{g}:\Gamma_{\text{c}} \rightarrow \mathbb{R}$ and measures the normal distance between the deformable and the rigid body $\Omega$ along $\Gamma_{\text{c}}$ and $\mathfrak{F}$, respectively. In this way, the so-called complementarity conditions can be stated as follows,
+\subsection{Contact conditions}\label{subsec:contact_conditions}
+
+Assumed is also that there is a boundary $\Gamma_{\text{c}} = \Gamma_{\text{c}} (\mathbf{u})$ along which body $\Omega$ is expected to come into contact with a rigid body $\mathfrak{F}$ along a portion of its surface $\mathbb{S} \subset \partial \mathfrak{F}$. Assumed is that for each material particle $\mathbf{X} \in \Gamma_{\text{c}}$ there exists a unique material particle $\mathbf{Z} \in \mathbb{S}$ which is closest to $\mathbf{X}$ in Euclidean sense,
+
+\begin{equation}
+	\mathbf{Z} (\mathbf{X}) = \arg \min_{\mathbf{Y} \in \Gamma_{\text{c}}} \left\| \mathbf{X} - \mathbf{Y} \right\|_2 \;. \label{eq:euclidean_distance}
+\end{equation}
+
+The so-called gap function is then defined along $\Gamma_{\text{c}}$, namely $\mathbf{g}:\Gamma_{\text{c}} \rightarrow \mathbb{R}$ and measures the normal distance between the deformable and the rigid body $\Omega$ along $\Gamma_{\text{c}}$ and $\mathbb{S}$,
+
+\begin{equation}
+	g = u_n - g_0 \quad \text{for all }\mathbf{X} \in \Gamma_{\text{c}} \:, \label{eq:gap_function}
+\end{equation}
+
+where $u_n = \mathbf{u} \cdot\mathbf{n}$ is the normal component of the displacement field given the outward normal $\mathbf{n}$ to $\Gamma_{\text{c}}$ at $\mathbf{X} \in \Gamma_{\text{c}}$ and $g_0(\mathbf{X})$ is the initial gap given by,
+
+\begin{equation}
+	g_0(\mathbf{X}) = - (\mathbf{X} - \mathbf{Z}(\mathbf{X})) \cdot \mathbf{n}(\mathbf{X}) \quad \text{for all }\mathbf{X} \in \Gamma_{\text{c}} \;. \label{eq:initial_gap}
+\end{equation}
+
+Herein it is assumed that neither the closest point $\mathbf{Z}$ nor the outward normal $\mathbf{z}$ depend on the displacement field $\mathbf{u}$ but solely on the point $\mathbf{X} \in \Gamma_{\text{c}}$ and that $\mathbf{k} (\mathbf{X}) = - \mathbf{n} (\mathbf{X})$, where $\mathbf{k} (\mathbf{X})$ stands for the outward normal to $\mathbb{S}$ at $\mathbf{Z} \in \mathbb{S}$. These assumptions are valid for sufficiently small gaps. Moreover, the following conditions are assumed,
+
+\begin{itemize}
+
+	\item[i.] No material particle can penetrate the body $\mathfrak{F}$, hence $g(\mathbf{X}) \le 0$ for all $\mathbf{X} \in \Gamma_{\text{c}}$,
+	
+	\item[ii.] Surface $\mathbb{S}$ is sufficiently lubricated such that no shear tractions develop, that is, $t_t = \mathbf{n} \cdot \boldsymbol{\mathcal{S}} \cdot \mathbf{t} = 0$ where $\mathbf{t}$ stands for the normal tangent vector to $\mathbb{S}$,
+	
+	\item[iii.] The normal tractions along $\Gamma_{\text{c}}$ are compressive, that is, $t_n = \mathbf{n} \cdot \boldsymbol{\mathcal{S}} \cdot \mathbf{n} \ge 0$,
+	
+	\item[iv.] If there is contact along $\Gamma_{\text{c}}$ then $g = 0$ and $t_n \ge 0$ whereas is there is no contact along $\Gamma_{\text{c}}$ then $g \le 0$ and $t_n = 0$
+
+\end{itemize}
+
+In this way, the so-called complementarity conditions can be stated as follows,
 
 \begin{subequations}
 	\begin{alignat}{1}
-		u_n - g_n &\le 0 \;, \label{eq:complementarity_cnd_gap} \\
+		g &\le 0 \;, \label{eq:complementarity_cnd_gap} \\
 		t_n &\ge 0 \;,  \label{eq:complementarity_cnd_traction} \\
-		t_n\,(u_n - g_n) &= 0 \label{eq:complementarity_cnd_mixed}
+		t_n\,g &= 0 \:. \label{eq:complementarity_cnd_mixed} 
 	\end{alignat}
 	\label{eq:complementarity_cnds}
 \end{subequations}
 
-where $t_n = \mathbf{n} \cdot \boldsymbol{\mathcal{S}} \cdot \mathbf{n}$, $u_n = \mathbf{u} \cdot \mathbf{n}$ and $g_n = \mathbf{g} \cdot \mathbf{n}$ stand for is the normal to the boundary $\Gamma_{\text{c}}$ traction vector, the normal to the boundary $\Gamma_{\text{c}}$ component of the displacement field and the gap function with respect to the outward unit normal vector $\mathbf{n}$. Condition in Eq.~\eqref{eq:complementarity_cnd_gap} stands for the non-penetration condition whereas condition in Eq.~\eqref{eq:complementarity_cnd_traction} states that the stresses along the contact boundary need to be compressive.\\
+Condition in Eq.~\eqref{eq:complementarity_cnd_gap} stands for the non-penetration condition whereas condition in Eq.~\eqref{eq:complementarity_cnd_traction} states that the stresses along the contact boundary need to be compressive. Eq.~\eqref{eq:complementarity_cnd_mixed} is a direct consequence of condition iv.
+
+\subsection{Variational formulation}\label{subsec:variational_formulation}
 
 The weak formulation of the problem in Eq.~\eqref{eq:strong_formulation} subject to the complementarity conditions in Eq.~\eqref{eq:complementarity_cnds} can be written by means of the Langrange Multipliers method: Find $\mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega)$ with $\mathbf{u} = \mathbf{g}$ on $\Gamma_{\text{d}}$ and $\lambda \in \mathcal{L}^2(\Gamma_{\text{c}})$ with $\lambda \ge 0$ such that,
 
 \begin{subequations}
 	\begin{alignat}{1}
 		\int_{\Omega} \delta \boldsymbol{\mathcal{E}} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega + \int_{\Gamma_{\text{c}}} \delta u_n \, \lambda \: \text{d} \Gamma &= \int_{\Omega} \delta \mathbf{u} \cdot \mathbf{b} \: \text{d} \Omega + \int_{\Gamma_{\text{n}}} \bar{\mathbf{t}} \cdot \mathbf{u} \: \text{d} \Gamma \label{eq:variational_formulation_delta_u} \\
-		\int_{\Gamma_{\text{c}}} \delta \lambda \, u_n \: \text{d} \Gamma &= \int_{\Gamma_{\text{c}}} \delta \lambda \, g_n \: \text{d} \Gamma \;, \label{eq:variational_formulation_delta_lambda}
+		\int_{\Gamma_{\text{c}}} \delta \lambda \, u_n \: \text{d} \Gamma &= \int_{\Gamma_{\text{c}}} \delta \lambda \, g_0 \: \text{d} \Gamma \;, \label{eq:variational_formulation_delta_lambda}
 	\end{alignat}
 	\label{eq:variational_problem_signorini}
 \end{subequations}
 
 for all $\delta \mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega)$ and for all $\delta \lambda \in \mathcal{L}^2(\Gamma_{\text{c}})$ with $\delta \lambda \ge 0$. In fact, $\lambda$ in this case represents the normal traction along the contact boundary $\Gamma_{\text{c}}$ and therefore it must be positive, see Eq.~\eqref{eq:complementarity_cnd_traction}. Eq.~\eqref{eq:variational_formulation_delta_u} is nothing else but the internal virtual work in $\Omega$, whereas Eq.~\eqref{eq:variational_formulation_delta_lambda} accounts for the variation of complementarity condition in Eq.~\eqref{eq:complementarity_cnd_mixed} and renders the problem symmetric as it is also demonstrated in its discrete form.\\
 
-Important is to note that the variational problem in Eq.~\eqref{eq:variational_problem_signorini} only when $\Gamma_{\text{c}} \neq \emptyset$. The latter means that there has to be a non-empty set $\Gamma_{\text{c}}$ along which the complementarity conditions in Eq.~\eqref{eq:complementarity_cnds} are valid. Otherwise, in case that $\Gamma_{\text{c}} = \emptyset$ variational problem in Eq.~\eqref{eq:variational_problem_signorini} reduces to: Find $\mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega)$ with $\mathbf{u} = \mathbf{g}$ on $\Gamma_{\text{d}}$ such that,
+Important is to note that the variational problem in Eq.~\eqref{eq:variational_problem_signorini} is valid only when $\Gamma_{\text{c}} \neq \emptyset$. The latter means that there has to be a non-empty set $\Gamma_{\text{c}}$ along which the complementarity conditions in Eq.~\eqref{eq:complementarity_cnds} are valid. Otherwise, in case that $\Gamma_{\text{c}} = \emptyset$ variational problem in Eq.~\eqref{eq:variational_problem_signorini} reduces to: Find $\mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega)$ with $\mathbf{u} = \mathbf{g}$ on $\Gamma_{\text{d}}$ such that,
 
 \begin{equation}
 	\int_{\Omega} \delta \boldsymbol{\mathcal{E}} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega = \int_{\Omega} \delta \mathbf{u} \cdot \mathbf{b} \: \text{d} \Omega + \int_{\Gamma_{\text{n}}} \bar{\mathbf{t}} \cdot \mathbf{u} \: \text{d} \Gamma \quad \text{for all } \delta \mathbf{u} \in \boldsymbol{\mathcal{H}}^1 (\Omega) \;. \label{eq:variational_formulation_structural_mechanics} \\
@@ -121,7 +160,7 @@ Assumed is that the displacement field is discretized with the standard linear \
 	\end{alignat}
 \end{subequations}
 
-where the basis linear/bilinear functions $\boldsymbol{\varphi}_i$ are constructed as a dual product of the linear/bilinear shape functions $N_i$ at the element's parametric space and the Cartesian basis $\mathbf{e}_i$. Accordingly, $\hat{u}_i$ and $\delta\hat{u}_i$ stand for the \textit{Degrees of Freedom} (DOFs) of the unknown and the test fields, respectively, and $n \in \mathbb{N}$ is the number of nodes in the mesh. Subscript $h$ indicates then the smallest element length size within the employed mesh.\\
+where the linear/bilinear basis functions $\boldsymbol{\varphi}_i$ are constructed as a dual product of the linear/bilinear shape functions $N_i$ at the element's parametric space and the Cartesian basis $\mathbf{e}_i$. Accordingly, $\hat{u}_i$ and $\delta\hat{u}_i$ stand for the \textit{Degrees of Freedom} (DOFs) of the unknown and the test fields, respectively, and $n \in \mathbb{N}$ is the number of nodes in the mesh. Subscript $h$ indicates then the smallest element length size within the employed mesh.\\
 
 Within the node-based contact method, the shape functions for the discretization of the Lagrange Multipliers fields $\lambda$ and $\delta \lambda$ are chosen the diract delta distributions supported on the finite element nodes $\mathbf{X}_i$, that is,
 
@@ -177,7 +216,7 @@ It is worth noting that within linear FEM, the boundary $\Gamma_{\text{c}}$ is o
 The $i$-th component of the residual vector $\boldsymbol{\mathcal{R}}$ derived from Eq.~\eqref{eq:variational_formulation_delta_lambda} is defined as follows,
 
 \begin{equation}
-	\mathcal{R}_i ( \hat{u}_i ) = \bar{n} (\mathbf{X}_i) \, \hat{u}_i \;.
+	\mathcal{R}_i ( \hat{u}_i ) = \bar{n} (\mathbf{X}_i) \, \hat{u}_i - g_0(\mathbf{X}_i) \;.
 \end{equation}
 
 Then, the tangent stiffness matrix $\mathbf{K}$ has components,
@@ -203,5 +242,41 @@ at each active node $\mathbf{X}_i \in \Gamma_{\text{c}}$. Vectors $\hat{\mathbf{
 \end{subequations}
 
 The index $\hat{i}$ on $\hat{\mathbf{u}}$ and $\hat{\boldsymbol{\lambda}}$ indicates the Newton-Raphson iteration and $\Delta_{\hat{i}} (\bullet) = (\bullet)_{\hat{i} + 1} - (\bullet)_{\hat{i}}$.
+
+\section{Realization}
+
+As aforementioned, the actual contact surface $\Gamma_{\text{c}}$ is not known in advanced, since it depends on the solution $\mathbf{u}$. Given the variational inequality nature of the problem, an iterative approach is employed. This procedure is illustrated in Algorithm~\ref{alg:contact_algorithm}.
+
+\begin{algorithm}[H]
+
+	compute the initial gap function in Eq.~\eqref{eq:initial_gap} \; \vspace*{5pt}
+
+	\While{conditions in~\eqref{eq:complementarity_cnd_gap}-~\eqref{eq:complementarity_cnd_traction} are not satisfied}{
+	\vspace*{5pt}
+	
+	solve the elasticity problem in Eq.~\eqref{eq:variational_formulation_structural_mechanics} \;	\vspace*{5pt}
+	
+	find the nodes penetrating the rigid body $\mathfrak{F}$ \; \vspace*{5pt}
+	
+	update the vector of Lagrange Multipliers in Eq.~\eqref{eq:discretization_lambda} with the new constraints \; \vspace*{5pt} 
+	
+	compute the normal traction at the contact nodes using the Lagrange Multipliers solution \;	\vspace*{5pt}	
+	
+	compute the new Lagrange Multipliers matrix in Eq.~\eqref{eq:lagrange_multipliers_matrix} \vspace*{5pt} \;
+	
+	assemble the new constrained by Lagrange Multipliers system in Eq.~\eqref{eq:system_discrete_form_lagrange_multipliers} \; \vspace*{5pt}
+	
+	
+	}
+
+	\caption{Contact algorithm}
+	
+	\label{alg:contact_algorithm}
+\end{algorithm}
+
+% \bibliographystyle{elsarticle-num-names}
+\bibliographystyle{alpha}
+\bibliography{literature}
+\nocite{*}
 
 \end{document}
