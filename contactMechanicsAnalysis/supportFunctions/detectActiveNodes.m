@@ -1,22 +1,33 @@
-function activeNodes = detectActiveNodes...
-    (contactNodes,displacement,segments)
-%MULTIDETECTACTIVENODES Detect the active nodes for the current segment
-% Loops over all segments to check whether the displacement of the node put
-% in an active position according to the segment
+function activeNodes = detectActiveNodes(contactNodes,displacement,segments)
+%% Licensing
 %
-%              Input :
-%                 cn : STRUCTURE ARRAY 'cn(j=1..n).indices' 
-%                      containing the global numbering of the canditate-nodes 
-%                      for contact to segments(j) 
-%                      in the field 'indices' and the gap in the field 'gap'
-%       displacement : Vector of the FULL displacement field
-%           segments : Structure containing infos about constraint segments
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%                  Andreas Apostolatos
+%
+% Date : 04.02.2020
+%
+%% Function documentation
+%
+% Detect the active nodes for the current segment. Loops over all segments
+% to check whether the displacement of the node put in an active position
+% according to the segment
+%
+%          Input :
+%   contactNodes : structure containing the global numbering of contact
+%                  canditate-nodes coordinates of the candidate nodes
+%   displacement : Vector of the FULL displacement field
+%       segments : data stucture containing informations about the
+%                  rigid wall segments (normal vector, parallel vector,
+%                  position)
 %      
-%             Output :
-%        active_node : The resulting vector containing index of the 
-%         restricted vector of mesh.boundaryNodes containing global indices
+%         Output :
+%    active_node : Vector containing global indices of active contact nodes
 %
-%%
+%% Function main body
+
 % initialize variables
 activeNodes=[];
 k=1;

@@ -1,20 +1,36 @@
 function inactive_nodes = detectInactiveNodes...
     (nDOF,contactNodes,displacement_exp,segments)
-%MULTIDETECTINACTIVENODES Detect the inactive nodes for the current segment
-% Loops over all segments to check whether the displacement of the node put
-% in an active position according to the segment, or whether the Lagrange
-% multipliers are non-compressevive
-% APPLY THIS FUNCTION IF MORE THAN ONE RIGID WALL SEGMENT EXISTS
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%                  Andreas Apostolatos
+%
+% Date : 04.02.2020
+%
+%% Function documentation
+%
+% Detect the inactive nodes for the current segment Loops over all segments
+% to check whether the displacement of the node put in an active position
+% according to the segment, or whether the Lagrange multipliers are valid
 %
 %              Input :
 %               nDOF : total number of DOFs in the system
-%       contactNodes : List of indices of the nodes which shall be evaluated
-%   displacement_exp : Vector of the FULL displacement field and Lagrange multipliers
-%           segments : Structure containing infos about constraint segments
+%       contactNodes : structure containing the global numbering of contact
+%                      canditate-nodes coordinates of the candidate nodes
+%   displacement_exp : Vector of the FULL displacement and Lagrange multipliers
+%           segments : data stucture containing informations about the
+%                      rigid wall segments (normal vector, parallel vector,
+%                      position)
 %      
 %             Output :
 %      inactive_node : The resulting vector containing index of the 
-%         restricted vector of mesh.boundaryNodes containing global indices
+%                      restricted vector of mesh.boundaryNodes containing 
+%                      the global indices
+%
+%% Function main body
 
 % initialize variables
 inactive_nodes=[];

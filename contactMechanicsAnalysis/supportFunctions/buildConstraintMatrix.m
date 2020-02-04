@@ -6,22 +6,20 @@ function C = buildConstraintMatrix(nDOF,contactNodes,activeNodes,segments)
 % The matrix is filled with the normal vectors of the segments applied on
 % the right couple of displacement.
 %
-%              Input :
-%                DOF : Number of DoF of the system
-%       contactNodes : STRUCTURE ARRAY 'cn(j=1..n).indices' 
-%                      containing the global numbering of the canditate-nodes 
-%                      for contact to segments(j) 
-%                      in the field 'indices'
-%       active_nodes : List of indices of the nodes for which the matrix should be built
-%                      (e.g. the set of all currently active nodes).If
-%                      active_nodes is empty all nodes defined in cn are
-%                      taken
-%           segments : data stucture containing informations about the
-%                      rigid wall segments (field for the normal vector is
-%                      required)
+%             Input :
+%               DOF : Number of DoF of the system
+%      contactNodes : structure containing the global numbering of the 
+%                     contact canditate nodes for contact to segments
+%      active_nodes : List of indices of the nodes for which the matrix 
+%                     should be built (e.g. the set of all currently active
+%                     nodes).If active_nodes is empty all nodes defined in
+%                     contactNodes are taken
+%          segments : data stucture containing informations about the
+%                     rigid wall segments (field for the normal vector is
+%                     required)
 %
-%             Output :
-%                  C : The Constraint matrix
+%            Output :
+%                 C : The Constraint matrix
 %
 %% Function main body
 

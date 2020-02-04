@@ -39,7 +39,8 @@ function [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
 %                                    folder load)
 %            analysis : On the analysis type
 %                             .type : The analysis type
-%          parameters : Problem specific technical parameters
+%          parameters : Problem specific technical (physical) parameters
+%                       (.rho,.E,.nue,.t)
 % propNLinearAnalysis :     .method : The employed nonlinear method
 %                        .tolerance : The residual tolerance
 %                          .maxIter : The maximum number of the nonlinear 
@@ -55,6 +56,7 @@ function [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
 %                                       domain integration
 %                       .boundaryNoGP : Number of Gauss Points for the 
 %                                       boundary integration
+%        contactNodes : .indices : Global numbering of contact nodes
 %
 % Function layout :
 %

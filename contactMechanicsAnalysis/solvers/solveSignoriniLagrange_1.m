@@ -15,29 +15,27 @@ function [displacement,lagrange] = solveSignoriniLagrange_1...
 %% Function documentation
 %
 % Returns the displacement field and the Lagrange multipliers corresponding 
-% to a plain stress/strain analysis for the given mesh of the geometry 
+% to a plain stress/strain analysis for the given mesh and geometry 
 % together with its Dirichlet and Neumann boundary conditions and the 
-% contact constraints for MULTIPLE rigids walls by applying the Lagrange
+% contact constraints for multiple rigids walls by applying the Lagrange
 % multiplier method.
-% In the structure array candidateNodes(j) can be specified which canditates 
-% for contact nodes are related to a certain wall segment(j)
 % 
 %              Input :
 %               mesh : Elements and nodes of the mesh
 %             homDBC : Vector of the prescribed DoFs (by global numbering)
-%     candidateNodes : STRUCTURE ARRAY '(j=1..n).indices' 
-%                      containing the global numbering of the canditate-nodes 
-%                      for contact to segment j [segmentPoints(:,:,j)] 
-%                      in the field 'indices'
+%       contactNodes : structure containing the global numbering of the
+%                      canditate contact nodes
 %                  F : Global load vector
-%      segmentPoints : Matrix with the coordinates of two wall determining
+%           segments : Matrix with the coordinates of two wall determining
 %                      points, for every segment j=1..n
 % materialProperties : The material properties of the structure
+%           analysis : Structure about the analysis type
+%       maxIteration : Maximum number of iterations
 %
 %             Output :
 %       displacement : The resulting displacement field
-%           lagrange : The resulting values of the Lagrange multipliers (*.multipliers)
-%                      and the node numbers of the active nodes (*.active_nodes)
+%           lagrange : .multipliers  : values of the Lagrange multipliers
+%                    : .active_nodes : node numbers of the active nodes
 %
 % Function layout :
 %
@@ -212,5 +210,8 @@ fprintf('Output informations...\n');
 fprintf('\t Constraints solved in %d iterations. A total of %d equations were solved. \n',it,equations_counter);
 fprintf('\t %d active nodes found.\n',length(lagrange.active_nodes));
 fprintf('\t #DOF: %d \n\t Energy norm of the structure: %4.2f\n',nDOFs,energy);
+if it >= maxIteration
+    fprintf('\t Max number of iterations of has been reached !! Not Converged !!\n');
+end
 
 end

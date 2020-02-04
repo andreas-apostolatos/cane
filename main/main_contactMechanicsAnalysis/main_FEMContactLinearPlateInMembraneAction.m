@@ -43,7 +43,6 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
         '../../FEMPlateInMembraneActionAnalysis/postprocessing/',...
         '../../FEMPlateInMembraneActionAnalysis/errorComputation/');
 
-% NOTE - check what is not neaded and rearange it
 % Add all functions related to signorini frictionless contact problem
 addpath('../../contactMechanicsAnalysis/plot',...
         '../../contactMechanicsAnalysis/solvers',...
@@ -61,7 +60,7 @@ caseName = 'example_01_bridge';
     propNLinearAnalysis,propStrDynamics,gaussInt,contactNodes] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
-%% GUI - graph
+%% GUI - on the graph
 graph.index = 1;
 
 % On the geometry visualization
@@ -69,18 +68,17 @@ graph.visualization.geometry = 'current';
 
 %% Rigid wall- line  [(x0,y0) ; (x1,y1)]
 
+% different line segments for different cases
 if strcmp(caseName,'example_01_bridge')
-%     % define bottom contact line segment
-%     wall_1 = [0.5, -0.5; 1.5,-0.1];
-%     wall_2 = [1.5, -0.1; 2,-0.1];
-%     wall_3 = [2, -0.1; 3,-0.5];
-% 
-%     % add a wall to the segments of points
-%     segments.points(:,:,1) = wall_1;
-%     segments.points(:,:,2) = wall_2;
-%     segments.points(:,:,3) = wall_3;
+    % define bottom contact line segment
+    wall_1 = [-0.5, -0.5; 2,-0.1];
+    wall_2 = [2, -0.1; 4.5,-0.5];
 
-segments = createCircleSegments(2,-5.1,5,19);
+    % add a wall to the segments of points
+    segments.points(:,:,1) = wall_1;
+    segments.points(:,:,2) = wall_2;
+    
+%     segments = createCircleSegments(2,-5.1,5,19);
     
 elseif strcmp(caseName,'example_02_wedge')
     % define bottom contact line segment
@@ -90,12 +88,8 @@ elseif strcmp(caseName,'example_02_wedge')
     % add a wall to the segments of points
     segments.points(:,:,1) = wall_1;
     segments.points(:,:,2) = wall_2;
-    
-elseif strcmp(caseName,'example_03_benchmark')
-    
-    
-end
 
+end
 
 %% Compute the load vector
 time = 0;

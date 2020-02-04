@@ -1,4 +1,5 @@
-function [contact_length,contact_force,max_contact_press] = contactLengthForcePressure(mesh,displacement,active_nodes,lagr_mult,materialProperties)
+function [contactLength,contactForce,maxContactPress] = contactLengthForcePressure...
+    (mesh,displacement,active_nodes,lagr_mult,materialProperties)
 %  CONTACTLENGTHFORCEPRESSURE: Computes the length of contact, its reaction force
 %  and the maximal pressure. Used for the comparison with analytical values
 %  according to Hertz contact Theory. 
@@ -51,12 +52,12 @@ for i=1:length(lagr_mult)
 
 end
 
-contact_length(size(active_node,2))=0;
-contact_force(size(active_node,2))=0;
+contactLength(size(active_node,2))=0;
+contactForce(size(active_node,2))=0;
 
 for i=1:size(active_node,2)
 
-    contact_force(i)=sum(active_lagr(:,i));
+    contactForce(i)=sum(active_lagr(:,i));
     for j=2:size(active_node,1)
         
         if active_node(j,i)~=0
@@ -69,7 +70,7 @@ for i=1:size(active_node,2)
            f0=-active_lagr(j-1,i);
            f1=-active_lagr(j,i);
            
-          contact_length(i)=contact_length(i)+sqrt((x0-x1)^2+(y0-y1)^2);
+          contactLength(i)=contactLength(i)+sqrt((x0-x1)^2+(y0-y1)^2);
           
           
         contact_press(j-1,i)=(f0+f1)/(2*materialProperties.t*(sqrt((x0-x1)^2+(y0-y1)^2)));
@@ -80,15 +81,6 @@ for i=1:size(active_node,2)
     
 end
 
-   max_contact_press=max(max(contact_press));
-
+   maxContactPress=max(max(contact_press));
 
 end
-
-
-
-
-
-
-
-

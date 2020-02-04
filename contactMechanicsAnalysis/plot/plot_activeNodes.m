@@ -1,20 +1,28 @@
-function [] = plot_activeNodes...
-    (mesh,displacement,lagrange)
+function [] = plot_activeNodes(mesh,displacement,lagrange)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%                  Andreas Apostolatos
+%
+% Date : 04.02.2020
+%
 %% Function documentation
 %
 % Task: Plots a red dot for every node and if a direction is specified bars
 %       for the values of the Lagrange multipliers
 % 
-%                Input :
-%                 mesh : Elements and nodes of the mesh
-%         displacement : The displacement field
-%         active_nodes : List with the node indices óf the active nodes
-% lagrange_multipliers : Vector with Lagrange multipliers for every active node
+%            Input :
+%             mesh : Elements and nodes of the mesh
+%     displacement : The full displacement field
+%         lagrange : Vector with Lagrange multipliers for every active node
 %
-%             Output :
-%                  []
+%           Output : []
 %
-%% 
+%% Function main body
+
 % assign variables
 active_nodes = lagrange.active_nodes;
 

@@ -15,30 +15,27 @@ function [displacement,lagrange] = solveSignoriniLagrange_2...
 %% Function documentation
 %
 % Returns the displacement field and the Lagrange multipliers corresponding 
-% to a plain stress/strain analysis for the given mesh of the geometry 
+% to a plain stress/strain analysis for the given mesh and geometry 
 % together with its Dirichlet and Neumann boundary conditions and the 
-% contact constraints for MULTIPLE rigid walls by applying the Lagrange
+% contact constraints for multiple rigids walls by applying the Lagrange
 % multiplier method.
-% In the structure array cn(j) can be specified which canditates for 
-% contact nodes are related to a certain wall segment (j)
 % 
 %              Input :
 %               mesh : Elements and nodes of the mesh
-%                 rb : Vector of the prescribed DoFs (by global numbering)
-%                 cn : STRUCTURE ARRAY 'cn(j=1..n).indices' 
-%                      containing the global numbering of the canditate-nodes 
-%                      for contact to segment j [segmentPoints(j,:,:)] 
-%                      in the field 'indices'
+%             homDBC : Vector of the prescribed DoFs (by global numbering)
+%       contactNodes : structure containing the global numbering of the
+%                      canditate contact nodes
 %                  F : Global load vector
-%     segmentsPoints : Matrix with the coordinates of two wall determining
+%           segments : Matrix with the coordinates of two wall determining
 %                      points, for every segment j=1..n
 % materialProperties : The material properties of the structure
-%              graph : Structure containing information on the graphics
+%           analysis : Structure about the analysis type
+%       maxIteration : Maximum number of iterations
 %
 %             Output :
 %       displacement : The resulting displacement field
-%           lagrange : The resulting values of the Lagrange multipliers (*.multipliers)
-%                      and the node numbers of the active nodes (*.active_nodes)
+%           lagrange : .multipliers  : values of the Lagrange multipliers
+%                    : .active_nodes : node numbers of the active nodes
 %
 % Function layout :
 %
@@ -127,7 +124,7 @@ it = 0;
 equations_counter = 0;
     
 % Iterate until no more invalid Lagrange multipliers AND no new active nodes
-% are added in the pool
+% are added in the pool AND max number of iterations in not reached
 while(isCndMain && it<maxIteration)    
 
     %% 4.1 Assemble to the complete displacement vector
@@ -215,7 +212,8 @@ end
 displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
 
 % Keep only lagrange multipliers of the active nodes
-lagrange.multipliers = displacement_red(length(displacement_red)-nActiveNodes+1:length(displacement_red));
+lagrangeIndices = length(displacement_red)-nActiveNodes+1:length(displacement_red);
+lagrange.multipliers = displacement_red(lagrangeIndices);
 lagrange.active_nodes = allContactNodes(activeNodes);
 
 %% 6. Print info
@@ -229,5 +227,8 @@ fprintf('Output informations...\n');
 fprintf('\t Constraints solved in %d iterations. A total of %d equations were solved. \n',it,equations_counter);
 fprintf('\t %d active nodes found.\n',length(lagrange.active_nodes));
 fprintf('\t #DOF: %d \n\t Energy norm of the structure: %4.2f\n',nDOFs,energy);
+if it >= maxIteration
+    fprintf('\t Max number of iterations of has been reached !! Not Converged !!\n');
+end
 
 end

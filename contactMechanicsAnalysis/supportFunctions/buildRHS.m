@@ -1,25 +1,24 @@
 function F_exp = buildRHS(F,contactNodes,activeNodes,segments)
 %% Function documentation
-% BUILDRHS add the gap values to the right hand side
-% Add the gap function of every Lagrange multiplier to the load vector
-% APPLY THIS FUNCTION IF MORE THAN ONE RIGID WALL SEGMENT EXISTS
+%
+% Add the gap function of every Lagrange multiplier to the RHS load vector
 % 
-%              Input :
-%                Fin : Number of non prescribed DoF
-%       active_nodes : List of indices of the nodes for which the matrix should be built
-%                      (e.g. the set of all currently active nodes)
-%                 cn : STRUCTURE ARRAY 'cn(j=1..n).indices' 
-%                      containing the global numbering of the canditate-nodes 
-%                      for contact to segments(j) 
-%                      in the field 'indices' and the gap in the field 'gap'
+%          Input :
+%              F : Number of non prescribed DoF
+%   contactNodes : structure containing the global numbering of contact
+%                  canditate-nodes coordinates of the candidate nodes
+%    activeNodes : List of indices of the nodes for which the matrix should
+%                  be built (e.g. the set of all currently active nodes)
+%       segments : data stucture containing informations about the rigid 
+%                  wall segments (normal vector, parallel vector, position)
 %
-%             Output :
-%                  F : Vector containing in its first entries the force 
-%                      on every DoF  and in its last entries   
-%                      the gap constant for all nodes defined in the 
-%                      list 'active_nodes' and the 
+%         Output :
+%          F_exp : Vector containing in its first entries the force on every
+%                  DoF  and in its last entries the gap constant for all 
+%                  nodes defined in the activeNodes
 %
-%%
+%% Function main body
+
 % get number of DOFs
 nDOF = length(F);
 
@@ -45,5 +44,3 @@ for j=1:segments.number
 end
 
 end
-
- 

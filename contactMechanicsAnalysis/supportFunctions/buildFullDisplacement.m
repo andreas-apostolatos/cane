@@ -1,20 +1,31 @@
 function displacement = buildFullDisplacement(nDOF,homDBC,displacement_red)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%                  Andreas Apostolatos
+%
+% Date : 04.02.2020
+%
 %% Function documentation
 %
-% BUILDFULLDISPLACEMENT: All prescribed DoFs are set to be zero. The other
-%                        DoFs are assigned to value contained in dred
+% All prescribed DOFs are set to be zero. The other DOFs are assigned to
+% value contained in displacement_red(uced)
 % 
-%              Input :
-%               nDOF : Number of non prescribed DoF
-%             homDBC : List of indices of prescribed DoFs  
-%   displacement_red : Vector with the values for the assignment
+%             Input :
+%              nDOF : Number of non-prescribed DOFs
+%            homDBC : List of indices of prescribed DOFs  
+%  displacement_red : Vector with the values for the assignment
 %
-%             Output :
-%       displacement : Vector with the displacement on every DoF
-%                     (if this function is called out of an expanded system 
-%                     the vector displacement contains also Lagrange multipliers 'dexp')
+%            Output :
+%      displacement : Vector with the displacement on every DOF (if this
+%                     function is called out of an expanded system the
+%                     vector displacement contains also Lagrange multipliers
 %
-%%
+%% Function main body
+
 % Dimension of the complete displacement vector
 displacement = zeros(nDOF,1);
 

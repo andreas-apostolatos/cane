@@ -7,9 +7,6 @@ function segments = createCircleSegments(xCenter,yCenter,radius,nSegments)
 % Main authors:    Marko Leskovar
 %                  Andreas Apostolatos
 %
-%% Function documentation
-%
-%
 %% Function main body
 
 % Initialize coordinates
