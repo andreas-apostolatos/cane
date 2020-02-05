@@ -1,23 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Altug Emiroglu, M.Sc.              (altug.emiroglu@tum.de)            %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Script documentation
 %
 % Task : Geometrically nonlinear transient plane stress analysis
@@ -77,7 +64,7 @@ isUnitTest = false;
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,gaussInt] = ...
+    propNLinearAnalysis,propStrDynamics,propGaussInt] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 %% GUI
@@ -119,7 +106,7 @@ minElSize = solve_FEMPlateInMembraneActionNLinearTransient...
     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,...
     @computeLoadVctFEMPlateInMembraneAction,...
     parameters,propNLinearAnalysis,propStrDynamics,solve_LinearSystem,...
-    gaussInt,caseName,isUnitTest,'outputEnabled');
+    propGaussInt,caseName,isUnitTest,'outputEnabled');
 
 %% Postprocessing
 % graph.visualization.geometry = 'reference_and_current';

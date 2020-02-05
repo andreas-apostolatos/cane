@@ -129,8 +129,8 @@ end
 % Note that CELL_SIZE uses ELEMENT_ORDER + 1 because the order of each 
 % element is included as a data item.
 cellSize = 0;
-for elementID = 1:noElements
-    check = isnan(elements(:,elementID));
+for iElmtId = 1:noElements
+    check = isnan(elements(:,iElmtId));
     if check(4) == 1
     cellSize = cellSize + 4;
     else
@@ -143,8 +143,8 @@ fprintf(output,'\n' );
 fprintf(output,'CELLS  %d  %d\n',noElements,cellSize);
 
 % Loop over all the elements in the mesh
-for elementID = 1:noElements
-    check = isnan(elements(:,elementID));
+for iElmtId = 1:noElements
+    check = isnan(elements(:,iElmtId));
     if check(4) == 1
         elementOrder = 3;
         % Write out the element order
@@ -153,7 +153,7 @@ for elementID = 1:noElements
         % Loop over all the polynomial orders
         for order = 1:elementOrder
             % Write out the polynomial order
-            fprintf(output,'  %d',elements(order,elementID));
+            fprintf(output,'  %d',elements(order,iElmtId));
         end
         
         % Change line
@@ -165,7 +165,7 @@ for elementID = 1:noElements
         % Loop over all the polynomial orders
         for order = 1:elementOrder
             % Write out the polynomial order
-            fprintf(output,'  %d',elements(order,elementID));
+            fprintf(output,'  %d',elements(order,iElmtId));
         end
         
         % Change line
@@ -182,8 +182,8 @@ fprintf (output,'CELL_TYPES %d\n',noElements);
 
 % Loop over all the elements and write out the nodal coordinates and the
 % element connectivities according to the element order
-for elementID = 1:noElements
-    check = isnan(elements(:,elementID));
+for iElmtId = 1:noElements
+    check = isnan(elements(:,iElmtId));
     if check(4) == 1
         fprintf (output,'5\n');
     else
@@ -195,11 +195,11 @@ end
 fprintf(output,'\n' );
 fprintf(output,'CELL_DATA %d\n',noElements);
 fprintf(output,'TENSORS strain double\n');
-for elementID = 1 : noElements
-    fprintf(output,'  %f  %f  %f\n',epsilon(1,elementID),epsilon(3,elementID),0.0);
-    fprintf(output,'  %f  %f  %f\n',epsilon(3,elementID),epsilon(2,elementID),0.0);
+for iElmtId = 1 : noElements
+    fprintf(output,'  %f  %f  %f\n',epsilon(1,iElmtId),epsilon(3,iElmtId),0.0);
+    fprintf(output,'  %f  %f  %f\n',epsilon(3,iElmtId),epsilon(2,iElmtId),0.0);
     fprintf(output,'  %f  %f  %f\n',0.0,0.0,0.0);
-    if elementID ~= noElements
+    if iElmtId ~= noElements
         fprintf(output,'\n');
     end
 end
@@ -215,11 +215,11 @@ end
 fprintf(output,'\n' );
 fprintf(output,'CELL_DATA %d\n',noElements);
 fprintf(output,'TENSORS stress double\n');
-for elementID = 1 : noElements
-    fprintf(output,'  %f  %f  %f\n',sigma(1,elementID),sigma(3,elementID),0.0);
-    fprintf(output,'  %f  %f  %f\n',sigma(3,elementID),sigma(2,elementID),0.0);
+for iElmtId = 1 : noElements
+    fprintf(output,'  %f  %f  %f\n',sigma(1,iElmtId),sigma(3,iElmtId),0.0);
+    fprintf(output,'  %f  %f  %f\n',sigma(3,iElmtId),sigma(2,iElmtId),0.0);
     fprintf(output,'  %f  %f  %f\n\n',0.0,0.0,0.0);
-    if elementID~=noElements
+    if iElmtId~=noElements
         fprintf(output,'\n');
     end
 end

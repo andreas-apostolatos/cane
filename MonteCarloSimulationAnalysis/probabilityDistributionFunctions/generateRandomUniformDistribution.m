@@ -20,6 +20,7 @@ function distribution = generateRandomUniformDistribution(meanValue, standardDev
 %      distribution : Random vector of noSamples uniformly distributed
 %       
 %% Function main body
-distribution = 2*standardDeviation*rand(noSamples,1) + meanValue - standardDeviation;
+intervalSize = 0.5*standardDeviation*sqrt(12);
+distribution = 2*intervalSize*rand(noSamples,1) + meanValue - intervalSize;
 
 end

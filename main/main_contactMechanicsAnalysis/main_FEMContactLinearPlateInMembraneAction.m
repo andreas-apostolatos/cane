@@ -52,8 +52,8 @@ addpath('../../contactMechanicsAnalysis/plot',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-caseName = 'example_01_bridge';
-%caseName = 'example_02_wedge';
+% caseName = 'example_01_bridge';
+caseName = 'example_02_wedge';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
@@ -90,7 +90,7 @@ elseif strcmp(caseName,'example_02_wedge')
     segments.points(:,:,2) = wall_2;
 
 end
-
+% computeConstantVerticalLoad
 %% Compute the load vector
 time = 0;
 F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'outputEnabled');

@@ -123,9 +123,6 @@ valuesInhomDBCALE = [];
 inhomDOFsALE = [];
 valuesInhomDOFsALE = [];
 
-%%%%% TEST
-homDOFsALE = [];
-
 % Number of nodes in the domain
 noNodes = length(msh.nodes(:,1));
 
@@ -252,11 +249,8 @@ if ~isempty(nodesALE)
     valuesInhomDOFs = [valuesInhomDOFs,valuesInhomDOFsALE];
     [inhomDOFs,indexSorting] = sort(inhomDOFs);
     valuesInhomDOFs = valuesInhomDOFs(indexSorting);
-    
-    %% 9. Clean up the array of the homogeneous Dirichlet boundary conditions
-    homDOFs(homDOFsALE) = [];
 
-    %% 10. Compute the mesh velocity at the interior nodes of mesh using a first order interpolation
+    %% 9. Compute the mesh velocity at the interior nodes of mesh using a first order interpolation
     for i = 1:length(msh.nodes(:,1))
         if strcmp(propTransientAnalysis.timeDependence,'TRANSIENT')
             ux = (msh.nodes(i,1) - nodesSaved(i,1))/propTransientAnalysis.dt;

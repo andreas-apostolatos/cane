@@ -1,22 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Script documentation
 %
 % Task : Convergence study for the plane stress analysis over the a plate
@@ -126,7 +114,7 @@ caseName = 'infinitePlateWithHoleQuadrilaterals';
 
 % Parse the case
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics] = ...
+    propNLinearAnalysis,~,~] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 % Find the global numbering of the selected for postprocessing node
@@ -151,7 +139,7 @@ plot_referenceConfigurationFEMPlateInMembraneAction...
 [dHat,FComplete,minElEdgeSizeOverkill] = solve_FEMPlateInMembraneAction...
     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
     parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-    propNLinearAnalysis,propStrDynamics,intDomain,caseName,pathToOutput,...
+    propNLinearAnalysis,intDomain,caseName,pathToOutput,...
     isUnitTest,'outputEnabled');
 
 % Compute the displacement field of the selected for postprocessing node
@@ -183,7 +171,7 @@ for iRefStep = 1:noRef
     
     % Parse the corresponding case
     [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-        propNLinearAnalysis,propStrDynamics] = ...
+        propNLinearAnalysis,~,~] = ...
         parse_StructuralModelFromGid(pathToCase,caseNameCurrent,'outputEnabled');
     
     % Find the global node numbering of the slected for postprocessing node
@@ -202,7 +190,7 @@ for iRefStep = 1:noRef
     [dHat,FComplete,minElEdgeSize(iRefStep,1)] = solve_FEMPlateInMembraneAction...
         (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
         parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-        propNLinearAnalysis,propStrDynamics,intDomain,caseName,pathToOutput,...
+        propNLinearAnalysis,intDomain,caseName,pathToOutput,...
         isUnitTest,'outputEnabled');
     
     % Compute the displacement field for the slected for postprocessing node

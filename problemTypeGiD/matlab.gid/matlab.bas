@@ -45,7 +45,11 @@ STRUCTURE_NLINEAR_SCHEME
 STRUCTURE_TRANSIENT_ANALYSIS
  SOLVER *GenData(STR_Time_Analysis_Type)
  TIME_INTEGRATION *GenData(STR_Time_Integration_Scheme)
+<<<<<<< HEAD
  ALPHA_BETA *GenData(STR_Alpha/Beta)
+=======
+ ALPHA_BETA *GenData(STR_AlphaBeta)
+>>>>>>> master
  GAMMA *GenData(STR_Gamma)
  START_TIME *GenData(STR_Start_Time)
  END_TIME *GenData(STR_End_Time)
@@ -140,7 +144,11 @@ FLUID_NLINEAR_SCHEME
 FLUID_TRANSIENT_ANALYSIS
  SOLVER *GenData(CFD_Time_Analysis_Type)
  TIME_INTEGRATION *GenData(CFD_Time_Integration_Scheme)
+<<<<<<< HEAD
  ALPHA_BETA *GenData(CFD_Alpha/Beta)
+=======
+ ALPHA_BETA *GenData(CFD_AlphaBeta)
+>>>>>>> master
  GAMMA *GenData(CFD_Gamma)
  START_TIME *GenData(CFD_Start_Time)
  END_TIME *GenData(CFD_End_Time)

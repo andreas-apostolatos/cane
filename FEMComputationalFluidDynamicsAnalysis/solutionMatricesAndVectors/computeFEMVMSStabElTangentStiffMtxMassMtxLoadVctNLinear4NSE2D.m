@@ -124,7 +124,7 @@ zero = zeros(noElmnts,1,1);
 xiBoperatorTangentConvection = zeros(noElmnts,noDOFsEl,noDOFsEl);
 
 % Compute the relative (ALE) velocity
-relVelocity = (upEl-uMeshALEEL)';
+relVelocity = (upEl - uMeshALEEL)';
 
 % Initialize the velocities basis function matrix only if the source term
 % (body forces) are non-zero as well as the matrix due to the stabilization 
