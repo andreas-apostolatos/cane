@@ -56,7 +56,7 @@ if ~ischar(t)
        elseif x == x_Mid
            dx = 0;       
        end
-       dy = -iterate_p1;
+       dy = -(y1/p1)*iterate_p1;
    end
 else
   dy = 0;
