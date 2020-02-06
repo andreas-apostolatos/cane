@@ -106,7 +106,7 @@ valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDOF
 
 %% Variable initialization
 i = 1; % Counter initialization for iteration tree search
-iterationLimit = 4; % Limit search iterations
+iterationLimit = 20; % Limit search iterations
 design_penalization = 1e4; % Design penalty used in J calculations
 
 % Initialize abstract function containers
@@ -118,8 +118,8 @@ p2_hist = [];
 % Initialize accuracy parameters
 djd1 = 1; % Initial accuracy of parameter 1
 djd2 = 1; % Initial accuracy of parameter 2
-propALE.propUser.delta_p1 = 0.005; % Perturbation of parameter 1
-propALE.propUser.delta_p2 = 0.001; % Perturbation of parameter 2 = 0 to analyze p1 only
+propALE.propUser.delta_p1 = .1; %0.005; % Perturbation of parameter 1
+propALE.propUser.delta_p2 = .05;%0.001; % Perturbation of parameter 2 = 0 to analyze p1 only
 propALE.propUser.iterate_p1 = 0;
 propALE.propUser.iterate_p2 = 0;
 gamma = 1e-4;
@@ -133,6 +133,11 @@ x_0 = computeStructureBoundary(fldMsh,propALE); % Initial x location of 2d build
 p1 = p1_0;
 p2 = p2_0;
 propALE.propUser.x_Mid = x_0 + (p2*0.5); % Locate center of building for dx motion
+
+% Initialization of the solution
+noNodes = length(fldMsh.nodes(:,1));
+noDOFs = 3*noNodes;
+up = zeros(noDOFs,1);
 
 % Parameters (I/O)
 PlotFlag = 'False';
@@ -155,8 +160,8 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     propALE.propUser.p2 = p2;
      
     %% Solve the CFD problem in nominal state   
-    [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh,homDOFs,inhomDOFs,valuesInhomDBCModified,'undefined',parameters,...
+    [up,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
+        (fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,'undefined',parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         i,propVTK_true,gaussInt,caseName,'outputEnabled');
@@ -191,7 +196,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         solve_LinearSystem,propFldDynamics, i);
 
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh_p1,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
+        (fldMsh_p1,up,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         i,propVTK_false,gaussInt,caseName,'');
@@ -223,7 +228,7 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
         solve_LinearSystem,propFldDynamics, i);
     
     [~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh_p2,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
+        (fldMsh_p2,up,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
         VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
         i,propVTK_false,gaussInt,caseName,'');
@@ -259,8 +264,8 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     %% Update parameter values for next iteration
     propALE.propUser.iterate_p1 = sign(djd1)*min(abs(gamma*djd1), (0.01*p1_0)); % Calculate gradient descent
     propALE.propUser.iterate_p2 = sign(djd2)*min(abs(gamma*djd2), (0.01*p2_0)); % Calculate gradient descent
-    p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1; % Gradient descent update
-    p2 = propALE.propUser.p2 - propALE.propUser.iterate_p2; % Gradient descent update
+    p1 = propALE.propUser.p1 + propALE.propUser.iterate_p1; % Gradient descent update
+    p2 = propALE.propUser.p2 +  propALE.propUser.iterate_p2; % Gradient descent update
     p2 = max(p2, (0.5*p2_0)); % Width constraint
     
     % Update parameter history

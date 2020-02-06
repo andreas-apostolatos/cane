@@ -1,5 +1,5 @@
 function [up,FComplete,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2D...
-    (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,parameters,...
+    (fldMsh,up,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,parameters,...
     computeBodyForces,analysis,computeInitCnds,VTKResultFile,...
     solve_LinearSystem,propFldDynamics,propNLinearAnalysis,noIterStep,propVTK,...
     gaussInt,caseName,outMsg)
@@ -18,6 +18,7 @@ function [up,FComplete,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2
 %
 %               Input :
 %              fldMsh : Nodes and elements for the fluid mesh
+%                  up : Initial conditions
 %             homDOFs : The global numbering of the DOFs where homogeneous
 %                       Dirichlet boundary conditions are applied
 %           inhomDOFs : The global numbering of the DOFs where
@@ -139,9 +140,6 @@ DOFNumbering = 1:noDOFs;
 % Get the DOF numbering for each component of the displacement field and
 % the pressure seperately
 DOF4Output = [1:3:noDOFs-2; 2:3:noDOFs-1; 3:3:noDOFs];
-
-% Prediction
-up = zeros(noDOFs,1);
 
 % Computation of the force vector
 F = zeros(noDOFs,1);
