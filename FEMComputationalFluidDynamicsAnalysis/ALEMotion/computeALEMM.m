@@ -50,13 +50,13 @@ if ~ischar(t)
        dy = (y/p1)*delta_p1;
    elseif strcmp(Perturb_Flag, 'dxdy')
        if x < x_Mid
-           dx = -0.5*iterate_p2;
+           dx = 0.5*iterate_p2;
        elseif x > x_Mid
-           dx = 0.5*iterate_p2;           
+           dx = -0.5*iterate_p2;           
        elseif x == x_Mid
            dx = 0;       
        end
-       dy = -(y/p1)*iterate_p1;
+       dy = (y/p1)*iterate_p1;
    end
 else
   dy = 0;
