@@ -1,4 +1,4 @@
-function inactive_nodes = detectInactiveNodes...
+function inactive_DOFs = detectInactiveNodes...
     (nDOF,contactNodes,displacement_exp,segments)
 %% Licensing
 %
@@ -26,14 +26,14 @@ function inactive_nodes = detectInactiveNodes...
 %                      position)
 %      
 %             Output :
-%      inactive_node : The resulting vector containing index of the 
+%      inactive_DOFs : The resulting vector containing index of the 
 %                      restricted vector of mesh.boundaryNodes containing 
 %                      the global indices
 %
 %% Function main body
 
 % initialize variables
-inactive_nodes=[];
+inactive_DOFs=[];
 k=1;
 
 % loop over displacement_exp vector
@@ -43,9 +43,9 @@ for j=1:segments.number
     for i=1:size(contactNodes.indices,1)
         
         index = 2*contactNodes.indices(i)-1 :1: 2*contactNodes.indices(i);
-        tmp = displacement_exp(index);
-        tmp_normal = dot(tmp,segments.normals(j,:));
-        tmp_parallel = dot(tmp,segments.directors(j,:));
+        tmp_displacement = displacement_exp(index);
+        tmp_normal = dot(tmp_displacement,segments.normals(j,:));
+        tmp_parallel = dot(tmp_displacement,segments.directors(j,:));
 
         % get distances to the segment i
         leftGap = contactNodes.gap(i,1,j);
@@ -53,16 +53,16 @@ for j=1:segments.number
         rightGap = contactNodes.gap(i,3,j);
         
         % conditions for geometry (non-penetration)
-        cnd1 = tmp_normal + normalGap > sqrt(eps);
-        cnd2 = tmp_parallel < min(leftGap,rightGap);
-        cnd3 = tmp_parallel > max(leftGap,rightGap);
+        isCnd1 = tmp_normal + normalGap > sqrt(eps);
+        isCnd2 = tmp_parallel > leftGap;
+        isCnd3 = tmp_parallel < rightGap;
         
         % condition for Lagrange multipliers (non-compressive)
-        cnd4 = displacement_exp(nDOF+k) > 0;
+        isCnd4 = displacement_exp(nDOF+k) > 0;
         
-        % if any of the conditions hold
-        if (cnd1 || cnd2 || cnd3 || cnd4)
-            inactive_nodes = [inactive_nodes,nDOF+k];
+        % if any of the conditions hold then the node is inactive
+        if (isCnd1 || isCnd2 || isCnd3 || isCnd4)
+            inactive_DOFs = [inactive_DOFs,nDOF+k];
         end
         
         % update counter

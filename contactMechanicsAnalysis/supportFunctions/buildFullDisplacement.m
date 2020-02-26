@@ -1,4 +1,4 @@
-function displacement = buildFullDisplacement(nDOF,homDBC,displacement_red)
+function displacement = buildFullDisplacement(nDOFsFull,homDBC,displacement_red)
 %% Licensing
 %
 % License:         BSD License
@@ -15,7 +15,7 @@ function displacement = buildFullDisplacement(nDOF,homDBC,displacement_red)
 % value contained in displacement_red(uced)
 % 
 %             Input :
-%              nDOF : Number of non-prescribed DOFs
+%         nDOFsFull : Number of non-prescribed DOFs
 %            homDBC : List of indices of prescribed DOFs  
 %  displacement_red : Vector with the values for the assignment
 %
@@ -27,22 +27,22 @@ function displacement = buildFullDisplacement(nDOF,homDBC,displacement_red)
 %% Function main body
 
 % Dimension of the complete displacement vector
-displacement = zeros(nDOF,1);
+displacement = zeros(nDOFsFull,1);
 
 % Initialize counters
-i=1;
+n=1;
 k=1;
 
 % loop over degrees of freedom
-for l = 1:nDOF
+for i = 1:nDOFsFull
     % if we are in a Dirichlet boundary condition location add 0
-    if (i<=length(homDBC) && l==homDBC(i))
-        displacement(l,1) = 0;
+    if (n<=length(homDBC) && i==homDBC(n))
+        displacement(i,1) = 0;
         % update counter
-        i=i+1;
+        n=n+1;
     % if not add the Control Point displacement 
     else
-        displacement(l,1) = displacement_red(k);
+        displacement(i,1) = displacement_red(k);
         % update counter
         k=k+1;
     end

@@ -7,7 +7,7 @@ function C = buildConstraintMatrix(nDOF,contactNodes,activeNodes,segments)
 % the right couple of displacement.
 %
 %             Input :
-%               DOF : Number of DoF of the system
+%              nDOF : Number of DoF of the system
 %      contactNodes : structure containing the global numbering of the 
 %                     contact canditate nodes for contact to segments
 %      active_nodes : List of indices of the nodes for which the matrix 

@@ -48,7 +48,7 @@ for i=1:size(segments.points,3)
     % assign variables
     segments.directors(i,:)=director;
     segments.normals(i,:)=normal;
-    % dot product between normal and fist point of the segment - what is?
+    % dot product between normal and first point of the segment
     segments.constants(i)=-dot(normal,segments.points(1,:,i));
 end
 

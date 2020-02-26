@@ -77,7 +77,7 @@ for i=size(contactNodes.indices,1):-1:1
     % Determine how many Dirichlet conditions correspond to the node:  
     nodeHasDirichlet=ismember(floor((homDBC+1)/2),contactNodes.indices(i));
     numberOfDirichlet=length(nodeHasDirichlet(nodeHasDirichlet==1));
-    % If the 2D node has at least two Dirichlet conditions exclude it from the contact canditates :  
+    % If the 2D node has at least two Dirichlet conditions exclude it from the contact canditates  
     if (numberOfDirichlet>=2)
        contactNodes.indices(i)=[];
     end
@@ -119,7 +119,7 @@ clear C;
 
 % Initial values for the itaration:
 it = 0;
-displacement_exp = zeros(length(F_exp));
+displacement_exp = zeros(length(F_exp),1);
 inactive_DOFs = [];
 inactive_old_DOFs = [];
 
@@ -176,7 +176,6 @@ displacement_exp = buildFullDisplacement(nDOFsFull,unnecessaryDOFs,displacement_
 
 end % end while loop
 
-
 %% 5. Get the values for the displacement and the Lagrange multipliers
 
 % Select and save node numbers of active nodes
@@ -196,7 +195,7 @@ activeNodes = allContactNodes(lagrangeMultipliers < 0);
 lagrange.active_nodes = activeNodes;
 
 % Keep only lagrange multipliers of the active nodes
-lagrange.multipliers = lagrangeMultipliers(lagrangeMultipliers<0);
+lagrange.multipliers = lagrangeMultipliers(lagrangeMultipliers < 0);
 
 
 %% 6. Print info

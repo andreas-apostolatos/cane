@@ -52,8 +52,9 @@ addpath('../../contactMechanicsAnalysis/plot',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-% caseName = 'example_01_bridge';
-caseName = 'example_02_wedge';
+%caseName = 'example_01_bridge';
+%caseName = 'example_02_wedge';
+caseName = 'example_03_hertz';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
@@ -89,8 +90,15 @@ elseif strcmp(caseName,'example_02_wedge')
     segments.points(:,:,1) = wall_1;
     segments.points(:,:,2) = wall_2;
 
+elseif strcmp(caseName,'example_03_hertz')
+    % define bottom contact line segment
+    wall_1 = [5, -1; 5, 5];
+    
+    % add a wall to the segments of points
+    segments.points(:,:,1) = wall_1;    
+    
 end
-% computeConstantVerticalLoad
+
 %% Compute the load vector
 time = 0;
 F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'outputEnabled');
@@ -120,5 +128,22 @@ fprintf('\t Time: %4.2f \n',cputime-ts);
 graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,displacement,graph);
 plot_segments(segments);
 plot_activeNodes(strMsh,displacement,lagrange); 
+
+
+%% Get the length of the contact area and the reaction force on the contact
+if strcmp(caseName,'example_03_hertz')
+    [contactLength,contactForce,maxContactPressure] = computeContactResultants(strMsh,displacement,lagrange,parameters);
+    
+    radius = 5;
+    force = sum(F);
+    hertzContactLength = sqrt(4*(2*force)*radius*((1-parameters.nue^2)/parameters.E)/(pi*parameters.t));
+    hertzPressure = 2*(2*force)/(parameters.t*pi*hertzContactLength);
+
+    fprintf('\t The COMPUTED contact length is: %f \n',contactLength);
+    fprintf('\t The (HERTZ)  contact length is: %f \n\n',hertzContactLength);
+
+    fprintf('\t The maximal COMPUTED pressure is: %f \n',maxContactPressure);
+    fprintf('\t The maximal (HERTZ)  pressure is: %f \n',hertzPressure);
+end
 
 %% End of the script
