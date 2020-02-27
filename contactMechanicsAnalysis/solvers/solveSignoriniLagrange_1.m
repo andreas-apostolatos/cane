@@ -134,45 +134,46 @@ equations_counter = 0;
 % iteration the solution has been found and the loop is terminated
 while (it==0 || (it<maxIteration && ~(isequal(inactive_old_DOFs,inactive_DOFs) && max(displacement_exp(nDOFs+1:length(F_exp)))<=0)))
  
-inactive_old_DOFs = inactive_DOFs;
-% update iteration counter
-it = it + 1;
-    
-%% 4.1 Determine inactive nodes
+    inactive_old_DOFs = inactive_DOFs;
+    % update iteration counter
+    it = it + 1;
 
-% Detect non-penetrating nodes and nodes with non-compressive Lagrange multipliers
-inactive_DOFs = detectInactiveNodes(nDOFs,contactNodes,displacement_exp,segments);
+    %% 4.1 Determine inactive nodes
 
-%% 4.2 Reduce the system of equations according to the constraints
+    % Detect non-penetrating nodes and nodes with non-compressive Lagrange multipliers
+    inactive_DOFs = detectInactiveDOFs(nDOFs,contactNodes,displacement_exp,segments);
 
-% Merge the homDBC and inactiveDOFs into a vector of DOFs that are no
-% longer necessary. Equations with this numbers will be deleted due to a 
-% dirichlet boundary condition or a contact constraint
-unnecessaryDOFs = [homDBC,inactive_DOFs];
-unnecessaryDOFs = unique(unnecessaryDOFs);
+    %% 4.2 Reduce the system of equations according to the constraints
 
-% initialize the reduced system
-K_red = K_exp;
-F_red = F_exp;
+    % Merge the homDBC and inactiveDOFs into a vector of DOFs that are no
+    % longer necessary. Equations with this numbers will be deleted due to a 
+    % dirichlet boundary condition or a contact constraint
+    unnecessaryDOFs = [homDBC,inactive_DOFs];
+    unnecessaryDOFs = unique(unnecessaryDOFs);
 
-% Remove constrained DOFs and inactiveDOFs equations
-K_red(:,unnecessaryDOFs) = [];
-K_red(unnecessaryDOFs,:) = [];
-F_red(unnecessaryDOFs) = [];
+    % initialize the reduced system
+    K_red = K_exp;
+    F_red = F_exp;
 
- 
-%% 4.3 Solve the reduced system of equations
-equations_counter = equations_counter + length(K_red);
-fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
+    % Remove constrained DOFs and inactiveDOFs equations
+    K_red(:,unnecessaryDOFs) = [];
+    K_red(unnecessaryDOFs,:) = [];
+    F_red(unnecessaryDOFs) = [];
 
-% solve using the backslash operator
-displacement_red = K_red\F_red;
 
-%% 4.4 Assemble to the expanded displacement/Lagrange multiplier vector
+    %% 4.3 Solve the reduced system of equations
+    equations_counter = equations_counter + length(K_red);
+    fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
 
-% Build dexp out of dred:
-nDOFsFull = length(F_exp);
-displacement_exp = buildFullDisplacement(nDOFsFull,unnecessaryDOFs,displacement_red);
+    % solve using the backslash operator
+    displacement_red = K_red\F_red;
+
+    %% 4.4 Assemble to the expanded displacement/Lagrange multiplier vector
+
+    % Build dexp out of dred:
+    nDOFsFull = length(F_exp);
+    displacement_exp = buildFullDisplacement...
+                       (nDOFsFull,unnecessaryDOFs,displacement_red);
 
 end % end while loop
 

@@ -1,86 +1,81 @@
 function [contactLength,contactForce,maxContactPressure] = computeContactResultants...
     (mesh,displacement,lagrange,parameters)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Marko Leskovar
+%                  Andreas Apostolatos
+%
+% Date : 27.02.2020
+%
+%% Function documentation
+%
 % Computes the length of contact, its reaction force and the maximal
-% pressure. Used for the comparison with analytical values according to
-% Hertz contact theory. 
+% pressure. Used in unit test for the comparison with analytical values
+% according to Hertz contact theory. 
 %
-%               Input :
-%                mesh : Elements and nodes of the mesh
-%        displacement : The displacement field
-%        active_nodes : List of indices of the nodes which shall be
-%                        evaluated (e.g. the set of all currently active nodes)
-%           lagr_mult : Vector with the Lagrange multiplier for every node 
-%                       contained in 'active_nodes'
-%          parameters : The material properties of the structure
+%              Input :
+%               mesh : Elements and nodes of the mesh
+%       displacement : The resulting displacement field
+%           lagrange : .multipliers  : values of the Lagrange multipliers
+%                    : .active_nodes : node numbers of the active nodes
+%         parameters : The material properties of the structure
 %
-%              Output :
-%       contactLength : Length of contact area
-%        contactForce : The total reaction force on the contact 
-%  maxContactPressure : The maximal compressive pressure on the contact 
+%             Output :
+%      contactLength : Length of contact area
+%       contactForce : The total reaction force on the contact 
+% maxContactPressure : The maximal compressive pressure on the contact 
 %
-%%
+%% Function main body
 
 % Initialize the array of the displaced nodes
-nodes_displaced = zeros(length(mesh.nodes),3);
+nodesDisplaced = zeros(length(mesh.nodes),3);
 
 % Initialize pseudocounter
-counter = 1;
+n=1;
 
-% Update the mesh with displacements
 for i=1:length(mesh.nodes)
-    % Add the x and y components of the displacement field to mesh nodes
-    nodes_displaced(i,1) = mesh.nodes(i,1) + displacement(2*counter-1);
-    nodes_displaced(i,2) = mesh.nodes(i,2) + displacement(2*counter);
+    
+    % Add the x and y components of the displacement field
+    nodesDisplaced(i,1) = mesh.nodes(i,1) + displacement(2*n-1);
+    nodesDisplaced(i,2) = mesh.nodes(i,2) + displacement(2*n);
     
     % Update counter
-    counter = counter + 1;
+    n=n+1;
 end
 
-k=1;
-l=1;
-for i=1:length(lagrange.multipliers)
-   
-    if lagrange.multipliers(i)<0
-        
-        active_node(k,l) = lagrange.active_nodes(i);
-        active_lagr(k,l) = lagrange.multipliers(i);
-        k=k+1;
-    elseif i>1 && lagrange.multipliers(i-1)<0 && lagrange.multipliers(i)>=0
-        l=l+1;
-        
-    end
+% Compute contact force, which is just the sum of lagrange multipliers
+contactForce = sum(lagrange.multipliers);
 
+% Initialize contact length
+contactLength = 0;
+contactPressure = zeros(size(lagrange.active_nodes,1)-1,1);
 
-end
-
-contactLength(size(active_node,2))=0;
-contactForce(size(active_node,2))=0;
-
-for i=1:size(active_node,2)
-
-    contactForce(i)=sum(active_lagr(:,i));
-    for j=2:size(active_node,1)
-        
-        if active_node(j,i)~=0
-           x0=nodes_displaced(active_node(j-1,i),1);
-           y0=nodes_displaced(active_node(j-1,i),2);
-                
-           x1=nodes_displaced(active_node(j,i),1);
-           y1=nodes_displaced(active_node(j,i),2);
-           
-           f0=-active_lagr(j-1,i);
-           f1=-active_lagr(j,i);
-           
-           contactLength(i)=contactLength(i)+sqrt((x0-x1)^2+(y0-y1)^2);
-          
-           contactPressure(j-1,i)=(f0+f1)/(2*parameters.t*(sqrt((x0-x1)^2+(y0-y1)^2)));
-
-        end
+% Loop over every lagrange multiplier
+for j=2:size(lagrange.active_nodes,1)
     
-    end
+    % Find x0 and y0 coordinate
+    x0 = nodesDisplaced(lagrange.active_nodes(j-1),1);
+    y0 = nodesDisplaced(lagrange.active_nodes(j-1),2);
+    % Find x1 and y1 coordinate
+    x1 = nodesDisplaced(lagrange.active_nodes(j),1);
+    y1 = nodesDisplaced(lagrange.active_nodes(j),2);
+    
+    % Find force at node 0 and 1
+    f0 = -lagrange.multipliers(j-1);
+    f1 = -lagrange.multipliers(j);
+    
+    % Calculate the distance between the nodes of contact
+    contactLength = contactLength+sqrt((x0-x1)^2+(y0-y1)^2);
+    
+    % Calculate the pressure in each segment
+    contactPressure(j-1) = (f0+f1)/(2*parameters.t*(sqrt((x0-x1)^2+(y0-y1)^2)));
     
 end
 
-maxContactPressure = max(max(contactPressure));
+% Get the maximum pressure of all segments
+maxContactPressure = max(contactPressure);
 
 end

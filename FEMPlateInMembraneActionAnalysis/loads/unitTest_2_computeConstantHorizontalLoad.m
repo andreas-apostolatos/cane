@@ -1,4 +1,4 @@
-function load = computeConstantHorizontalLoad(x,y,z,t)
+function load = unitTest_computeConstantHorizontalLoad(x,y,z,t)
 %% Licensing
 %
 % License:         BSD License
@@ -9,7 +9,9 @@ function load = computeConstantHorizontalLoad(x,y,z,t)
 %% Function documentation
 %
 % Returns the applied load vector at the physical location x,y,z and at
-% time t. The load is assumed to be constant and horizontal (x-direction).
+% time t. The load is assumed to be constant and horizontal (x-direction)
+% and this function for the computation of the load vector is used in the 
+% unit test cases so it is not meant to be modified.
 %
 %       Input :
 %       x,y,z : The physical location where the load is applied

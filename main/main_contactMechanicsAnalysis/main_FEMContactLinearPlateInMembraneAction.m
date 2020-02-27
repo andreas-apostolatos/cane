@@ -79,7 +79,7 @@ if strcmp(caseName,'example_01_bridge')
     segments.points(:,:,1) = wall_1;
     segments.points(:,:,2) = wall_2;
     
-%     segments = createCircleSegments(2,-5.1,5,19);
+    %segments = createCircleSegments(2,-5.1,5,19);
     
 elseif strcmp(caseName,'example_02_wedge')
     % define bottom contact line segment
