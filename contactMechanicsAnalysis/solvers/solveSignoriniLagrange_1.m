@@ -1,5 +1,5 @@
 function [displacement,lagrange] = solveSignoriniLagrange_1...
-    (mesh,homDBC,contactNodes,F,segments,materialProperties,analysis,maxIteration)
+    (mesh,homDBC,contactNodes,F,segments,materialProperties,analysis,maxIteration,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -31,13 +31,14 @@ function [displacement,lagrange] = solveSignoriniLagrange_1...
 % materialProperties : The material properties of the structure
 %           analysis : Structure about the analysis type
 %       maxIteration : Maximum number of iterations
+%             outMsg : write 'outputEnabled' to show output during runtime
 %
 %             Output :
 %       displacement : The resulting displacement field
 %           lagrange : .multipliers  : values of the Lagrange multipliers
 %                    : .active_nodes : node numbers of the active nodes
 %
-% Function layout :
+%% Function layout
 %
 % 0. Remove fully constrained nodes
 %
@@ -59,20 +60,21 @@ function [displacement,lagrange] = solveSignoriniLagrange_1...
 % <-|
 % 5. Get the values for the displacement and the Lagrange multipliers
 %
-% 6.  Print info
+% 6. Print info
 %
 %% Function main body
-if strcmp(analysis.type,'planeStress')
-    fprintf('Plane stress analysis has been initiated \n');
-elseif strcmp(analysis.type,'planeStrain')
-    fprintf('Plane strain analysis has been initiated \n');
-end
-fprintf('\n');
+if strcmp(outMsg,'outputEnabled')
+    if strcmp(analysis.type,'planeStress')
+        fprintf('Plane stress analysis has been initiated \n');
+    elseif strcmp(analysis.type,'planeStrain')
+        fprintf('Plane strain analysis has been initiated \n');
+    end
+    fprintf('\n');
+end    
 
 %% 0. Remove fully constrained nodes
 
-% Remove fully constrained nodes from the tests
-% from number of indices until 1
+% Remove fully constrained nodes from the set of contact nodes
 for i=size(contactNodes.indices,1):-1:1
     % Determine how many Dirichlet conditions correspond to the node:  
     nodeHasDirichlet=ismember(floor((homDBC+1)/2),contactNodes.indices(i));
@@ -93,7 +95,9 @@ segments = buildSegmentsData(segments);
 contactNodes = computeGapFunction(contactNodes,segments);
 
 %% 2. Compute the master stiffness matrix of the structure
-fprintf('\t Computing master stiffness matrix... \n');
+if strcmp(outMsg,'outputEnabled')
+    fprintf('\t Computing master stiffness matrix... \n');
+end
 
 % Get number of DOFs in original system
 nDOFs = length(F);
@@ -101,7 +105,9 @@ nDOFs = length(F);
 K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,analysis);
 
 %% 3. Create the expanded system of equations
-fprintf('\t Creating the expanded system of equations... \n');
+if strcmp(outMsg,'outputEnabled')
+    fprintf('\t Creating the expanded system of equations... \n');
+end
 
 % Assemble the values of the normal vector of segments to the constraint matrix
 C = buildConstraintMatrix(nDOFs,contactNodes,[],segments);
@@ -120,6 +126,7 @@ clear C;
 % Initial values for the itaration:
 it = 0;
 displacement_exp = zeros(length(F_exp),1);
+nDOFsFull = length(F_exp);
 inactive_DOFs = [];
 inactive_old_DOFs = [];
 
@@ -162,16 +169,20 @@ while (it==0 || (it<maxIteration && ~(isequal(inactive_old_DOFs,inactive_DOFs) &
 
 
     %% 4.3 Solve the reduced system of equations
+    
+    % count the number of total solved equations
     equations_counter = equations_counter + length(K_red);
-    fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
-
+    
+    if strcmp(outMsg,'outputEnabled')
+        fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
+    end
+    
     % solve using the backslash operator
     displacement_red = K_red\F_red;
 
     %% 4.4 Assemble to the expanded displacement/Lagrange multiplier vector
 
     % Build dexp out of dred:
-    nDOFsFull = length(F_exp);
     displacement_exp = buildFullDisplacement...
                        (nDOFsFull,unnecessaryDOFs,displacement_red);
 
@@ -200,18 +211,18 @@ lagrange.multipliers = lagrangeMultipliers(lagrangeMultipliers < 0);
 
 
 %% 6. Print info
-
-% energy of the structure
-energy = displacement'*K*displacement;
-
-% output
-fprintf('\n');
-fprintf('Output informations...\n');
-fprintf('\t Constraints solved in %d iterations. A total of %d equations were solved. \n',it,equations_counter);
-fprintf('\t %d active nodes found.\n',length(lagrange.active_nodes));
-fprintf('\t #DOF: %d \n\t Energy norm of the structure: %4.2f\n',nDOFs,energy);
-if it >= maxIteration
-    fprintf('\t Max number of iterations of has been reached !! Not Converged !!\n');
+if strcmp(outMsg,'outputEnabled')
+    % energy of the structure
+    energy = displacement'*K*displacement;
+    % output
+    fprintf('\n');
+    fprintf('Output informations...\n');
+    fprintf('\t Constraints solved in %d iterations. A total of %d equations were solved. \n',it,equations_counter);
+    fprintf('\t %d active nodes found.\n',length(lagrange.active_nodes));
+    fprintf('\t #DOF: %d \n\t Energy norm of the structure: %4.2f\n',nDOFs,energy);
+    if it >= maxIteration
+        fprintf('\t Max number of iterations of has been reached !! Not Converged !!\n');
+    end
 end
 
 end

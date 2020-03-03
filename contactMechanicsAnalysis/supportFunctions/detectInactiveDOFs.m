@@ -54,8 +54,8 @@ for j=1:segments.number
         
         % conditions for geometry (non-penetration)
         isCnd1 = tmp_normal + normalGap > sqrt(eps);
-        isCnd2 = tmp_parallel > leftGap;
-        isCnd3 = tmp_parallel < rightGap;
+        isCnd2 = tmp_parallel > max(leftGap,rightGap);
+        isCnd3 = tmp_parallel < min(leftGap,rightGap);
         
         % condition for Lagrange multipliers (non-compressive)
         isCnd4 = displacement_exp(nDOF+k) > 0;

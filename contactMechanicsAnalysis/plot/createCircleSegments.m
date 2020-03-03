@@ -22,7 +22,6 @@ for i=1:nSegments-1
     
     x0 = coordinates(i,1);
     y0 = coordinates(i,2);
-    
     x1 = coordinates(i+1,1);
     y1 = coordinates(i+1,2);
     

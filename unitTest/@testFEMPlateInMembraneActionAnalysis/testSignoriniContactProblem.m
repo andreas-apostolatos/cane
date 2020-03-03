@@ -11,9 +11,24 @@ function testSignoriniContactProblem(testCase)
 %
 % Task : Analysis of Signorini contact problem
 %
-% Date : 12.01.2020
+% Date : 03.03.2020
 %
-
+%% Function layout
+%
+% 0. Parse data from GiD input file
+%
+% 1. Define rigid wall- line
+%
+% 2. Compute the load vector
+%
+% 3. Solve the system and get the displacement field
+%
+% 4. Get the length of the contact area and the reaction force on the contact
+%
+% 5. Define the expected solution
+%
+% 6. Verify the results
+%
 %% 0. Parse data from GiD input file
 
 % Define the path to the case
@@ -22,9 +37,9 @@ caseName = 'unitTest_HertzContact';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,~,~,NBC,analysis,parameters,~,~,gaussInt,contactNodes] = ...
-    parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
+    parse_StructuralModelFromGid(pathToCase,caseName,'');
 
-%% 1. Rigid wall- line  [(x0,y0) ; (x1,y1)]
+%% 1. Define rigid wall- line  [(x0,y0) ; (x1,y1)]
 
 % define bottom contact line segment
 wall_1 = [5, -1; 5, 5];
@@ -34,13 +49,13 @@ segments.points(:,:,1) = wall_1;
 
 %% 2. Compute the load vector
 time = 0;
-F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'outputEnabled');
+F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'');
 
 %% 3. Solve the system and get the displacement field
 
 maxIteration = 30;
 
-[displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration); 
+[displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration,''); 
 %[displacement,lagrange] = solveSignoriniLagrange_2(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration);
 
 %% 4. Get the length of the contact area and the reaction force on the contact
@@ -58,14 +73,14 @@ hertzPressure = 2*(2*force)/(parameters.t*pi*hertzContactLength);
 
 %% 5. Define the expected solution
 
-% Define the expected computed solutions
-expComputedPressure = 10425.385904;
-expComputedContactLength = 0.864596;
+% Define the expected computed solutions from previous tests
+expComputedPressure = 10726.32519035318;
+expComputedContactLength = 0.876276913636778;
 
 %% 6. Verify the results
 
 % Define tolerances for both cases
-absTol = 1e-5;
+absTol = 1e-9;
 relTol = 1e-1;
 
 % Compare expected values

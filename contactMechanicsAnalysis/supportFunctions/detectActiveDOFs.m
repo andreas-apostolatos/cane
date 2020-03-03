@@ -1,4 +1,4 @@
-function activeNodes = detectActiveNodes(contactNodes,displacement,segments)
+function activeNodes = detectActiveDOFs(contactNodes,displacement,segments)
 %% Licensing
 %
 % License:         BSD License

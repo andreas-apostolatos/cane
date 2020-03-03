@@ -52,9 +52,9 @@ addpath('../../contactMechanicsAnalysis/plot',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-%caseName = 'example_01_bridge';
+caseName = 'example_01_bridge';
 %caseName = 'example_02_wedge';
-caseName = 'example_03_hertz';
+%caseName = 'example_03_hertz';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
@@ -119,8 +119,8 @@ ts = cputime;
 
 maxIteration = 30;
 
-[displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration); 
-%[displacement,lagrange] = solveSignoriniLagrange_2(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration);
+[displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration,'outputEnabled'); 
+%[displacement,lagrange] = solveSignoriniLagrange_2(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration,'outputEnabled');
 
 fprintf('\t Time: %4.2f \n',cputime-ts);
 
@@ -129,10 +129,10 @@ graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,di
 plot_segments(segments);
 plot_activeNodes(strMsh,displacement,lagrange); 
 
-
 %% Get the length of the contact area and the reaction force on the contact
 if strcmp(caseName,'example_03_hertz')
-    [contactLength,contactForce,maxContactPressure] = computeContactResultants(strMsh,displacement,lagrange,parameters);
+    [contactLength,contactForce,maxContactPressure] = ...
+        computeContactResultants(strMsh,displacement,lagrange,parameters);
     
     radius = 5;
     force = sum(F);
