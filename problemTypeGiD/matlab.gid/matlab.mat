@@ -11,6 +11,8 @@ QUESTION: Density
 VALUE: 1.0
 QUESTION: Poisson_Ratio
 VALUE: 0.333
+QUESTION: Thickness
+VALUE: 1.0
 END MATERIAL
 
 MATERIAL: Aluminium
@@ -24,6 +26,8 @@ QUESTION: Density
 VALUE: 1.0
 QUESTION: Poisson_Ratio
 VALUE: 0.333
+QUESTION: Thickness
+VALUE: 1.0
 END MATERIAL
 
 

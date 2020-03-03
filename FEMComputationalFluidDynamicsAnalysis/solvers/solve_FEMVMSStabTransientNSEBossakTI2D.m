@@ -123,6 +123,7 @@ elseif strcmp(analysis.type,'NAVIER_STOKES_2D')
 else
     error('Error in the dimensionality of the analysis');
 end
+
 % Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
 
@@ -130,6 +131,7 @@ pathToOutput = '../../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
 computeConstantMatrices = 'undefined';
 NBC = 'undefined';
 computeLoadVct = 'undefined';
+computeUpdatedMeshAndVelocities = 'undefined';
 
 % Define tabulation for the output in the command window
 tab = '\t';
@@ -172,7 +174,7 @@ freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
     computeLoadVct,parameters,@solve_FEMNLinearSystem,...
     computeConstantMatrices,@computeMassMtx4FEMVMSStabNSE2D,...
     @computeFEMVMSStabMtxAndVct4NLinear4NSE,...
-    @computeUpdatedMeshAndVelocitiesPseudoStrALE2D,solve_LinearSystem,...
+    computeUpdatedMeshAndVelocities,solve_LinearSystem,...
     propFldDynamics,propNLinearAnalysis,gaussInt,caseName,pathToOutput,...
     title,DOF4Output,writeOutputToFile,tab,outMsg);
 

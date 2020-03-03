@@ -5,7 +5,7 @@ function [uHistory,minElSize] = solve_FEMTransientAnalysis...
     computeConstantProblemMatrices,computeMassMtx,...
     computeProblemMatricesSteadyState,computeUpdatedMesh,...
     solve_LinearSystem,propTransientAnalysis,propNLinearAnalysis,...
-    gaussInt,caseName,pathToOutput,title,DOF4Output,writeOutputToVTK,...
+    propGaussInt,caseName,pathToOutput,title,DOF4Output,writeOutputToVTK,...
     tab,outMsg)
 %% Licensing
 %
@@ -100,7 +100,7 @@ function [uHistory,minElSize] = solve_FEMTransientAnalysis...
 %                                    .eps : The residual tolerance
 %                                .maxIter : The maximum number of nonlinear
 %                                           iterations
-%                         gaussInt : On the spatial integration
+%                     propGaussInt : On the spatial integration
 %                                         .type : 'default', 'user'
 %                                   .domainNoGP : Number of Gauss Points 
 %                                                 for the domain 
@@ -260,7 +260,7 @@ if isa(computeMassMtx,'function_handle')
         fprintf(strcat(tab,'Computing the mass matrix of the system\n'));
         fprintf(strcat(tab,'---------------------------------------\n\n'));
     end
-    massMtx = computeMassMtx(analysis,msh,parameters,gaussInt);
+    massMtx = computeMassMtx(analysis,msh,parameters,propGaussInt);
 else
     error('Variable computeMassMtx is not defining a function handle as expected');
 end
@@ -277,7 +277,7 @@ if isfield(propTransientAnalysis,'damping')
         fprintf(strcat(tab,'------------------------------------------\n\n'));
     end 
     dampMtx = propTransientAnalysis.damping.computeDampMtx...
-        (analysis,msh,parameters,gaussInt);
+        (analysis,msh,parameters,propGaussInt);
 else
     dampMtx = 'undefined';
 end
@@ -306,17 +306,17 @@ while t < propTransientAnalysis.TEnd && noTimeStep < propTransientAnalysis.noTim
     end
     
     %% 7iv. Solve the mesh motion problem and update the mesh node locations and velocities
-    if ~ischar(nodesALE)
+    if ~ischar(nodesALE) && ~isempty(nodesALE)
         [msh,uMeshALE,inhomDOFs,valuesInhomDOFs] = ...
             computeUpdatedMesh(msh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
             solve_LinearSystem,propTransientAnalysis,t);
-    elseif strcmp(nodesALE,'undefined')
+    else
         uMeshALE = 'undefined';
     end
     
     %% 7v. Compute the load vector at the current time step
     if ~ischar(computeLoadVct)
-        FHistory(:,noTimeStep) = computeLoadVct(msh,analysis,NBC,t,gaussInt,'');
+        FHistory(:,noTimeStep) = computeLoadVct(msh,analysis,NBC,t,propGaussInt,'');
     elseif strcmp(computeLoadVct,'undefined')
         FHistory(:,noTimeStep) = zeros(noDOFs,1);  
     end
@@ -327,12 +327,12 @@ while t < propTransientAnalysis.TEnd && noTimeStep < propTransientAnalysis.noTim
     uDDotSaved = uDDot;
     
     %% 7vii. Solve the equation system
-    [u,FComplete,hasConverged,minElSize] = solve_FEMEquationSystem...
+    [u,~,hasConverged,minElSize] = solve_FEMEquationSystem...
         (analysis,uSaved,uDotSaved,uDDotSaved,msh,FHistory(:,noTimeStep),...
         computeBodyForceVct,parameters,u,uDot,uDDot,massMtx,dampMtx,...
         computeProblemMatricesSteadyState,DOFNumbering,freeDOFs,homDOFs,...
         inhomDOFs,valuesInhomDOFs,uMeshALE,solve_LinearSystem,...
-        propTransientAnalysis,t,propNLinearAnalysis,gaussInt,...
+        propTransientAnalysis,t,propNLinearAnalysis,propGaussInt,...
         strcat(tab,'\t'),outMsg);
     
     %% 7viii. Update the time derivatives of the field

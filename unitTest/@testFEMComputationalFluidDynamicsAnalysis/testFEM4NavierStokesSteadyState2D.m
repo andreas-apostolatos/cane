@@ -23,11 +23,13 @@ function testFEM4NavierStokesSteadyState2D(testCase)
 %
 % 4. Define the name of the vtk file from where to resume the simulation
 %
-% 5. Solve the CFD problem
+% 5. Initialize the solution with zero
 %
-% 6. Define the expected solutions
+% 6. Solve the CFD problem
 %
-% 7. Verify the results
+% 7. Define the expected solutions
+%
+% 8. Verify the results
 %
 %% Function main body
 
@@ -40,9 +42,15 @@ absTol = 1e-15;
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = 'unitTest_flowAroundCylinderAdaptiveSteadyState';
 
+% Properties for the VTK visualization
+propVTK.isOutput = false;
+
+% Define dummy variables
+noIterStep = 'undefined';
+
 %% 1. Parse the data from the GiD input file
-[fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,~,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,gaussInt] = ...
+[fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,~,analysis,parameters,...
+    propNLinearAnalysis,propFldDynamics,propGaussInt,~] = ...
     parse_FluidModelFromGid...
     (pathToCase,caseName,'');
 
@@ -56,7 +64,7 @@ computeBodyForces = @computeConstantVerticalBodyForceVct;
 computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
 
 % On the transient analysis properties
-if strcmp(propFldDynamics.method,'bossak')
+if strcmp(propFldDynamics.method,'BOSSAK')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;
     propFldDynamics.computeUpdatedVct = ...
@@ -75,14 +83,17 @@ end
 %% 4. Define the name of the vtk file from where to resume the simulation
 VTKResultFile = 'undefined';
 
-%% 5. Solve the CFD problem
+%% 5. Initialize the solution with zero
+up = zeros(3*length(fldMsh.nodes(:,1)),1);
+
+%% 6. Solve the CFD problem
 [up,~,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2D...
-    (fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,parameters,...
+    (fldMsh,up,homDBC,inhomDBC,valuesInhomDBC,propALE,parameters,...
     computeBodyForces,analysis,computeInitialConditions,...
     VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-    gaussInt,caseName,'');
+    noIterStep,propVTK,propGaussInt,caseName,'');
 
-%% 6. Define the expected solutions
+%% 7. Define the expected solutions
 
 % Define the expected solution in terms of the nodal solution values
 expSolUP = [                   0
@@ -5084,7 +5095,7 @@ expSolHasConverged = true;
 % Define the expected solution in terms of the minimum element size
 expSolMinElEdgeSize = 0.009999779997580;
 
-%% 7. Verify the results
+%% 8. Verify the results
 testCase.verifyEqual(up,expSolUP,'AbsTol',absTol);
 testCase.verifyEqual(hasConverged,expSolHasConverged,'AbsTol',absTol);
 testCase.verifyEqual(minElSize,expSolMinElEdgeSize,'AbsTol',absTol);

@@ -115,7 +115,11 @@ parametersALE.nue = 0;
 parametersALE.E = 1e3;
 
 % User-defined properties
-propUser = propALE.propUser;
+if isfield(propALE,'propUser')
+    propUser = propALE.propUser;
+else
+    propUser = 'undefined';
+end
 
 % Zero body forces
 bF = @(x,y,z,t) zeros(length(x),1,3);

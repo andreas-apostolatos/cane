@@ -3,7 +3,7 @@ function [u,FComplete,hasConverged,minElASize] = solve_FEMNLinearSystem...
     uDot,uDDot,massMtx,dampMtx,computeNLinearMtrcsSteadyState,...
     DOFNumbering,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,uMeshALE,...
     solve_LinearSystem,propTransientAnalysis,t,propNLinearAnalysis,...
-    gaussInt,tab,outMsg)
+    propGaussInt,tab,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -80,7 +80,7 @@ function [u,FComplete,hasConverged,minElASize] = solve_FEMNLinearSystem...
 %                                          .eps : The residual tolerance
 %                                      .maxIter : The maximum number of 
 %                                                 nonlinear iterations
-%                       gaussInt : On the spatial integration
+%                   propGaussInt : On the spatial integration
 %                                           .type : 'default', 'user'
 %                                     .domainNoGP : Number of Gauss Points 
 %                                                   for the domain 
@@ -135,26 +135,26 @@ if propNLinearAnalysis.noLoadSteps == 1
 end
 
 %% 1. Loop over all load steps
-for counterLoadStep = 1:propNLinearAnalysis.noLoadSteps
+for iLS = 1:propNLinearAnalysis.noLoadSteps
     if strcmp(outMsg,'outputEnabled') && isLoadSteps
-        fprintf(strcat(tab,'Load step %d/%d \n'),counterLoadStep,propNLinearAnalysis.noLoadSteps);
+        fprintf(strcat(tab,'Load step %d/%d \n'),iLS,propNLinearAnalysis.noLoadSteps);
         fprintf(strcat(tab,'----------------\n'));
         fprintf('\n');
     end
     %% 1i. Compute the load factor
-    loadFactor = counterLoadStep/propNLinearAnalysis.noLoadSteps;
+    loadFactor = iLS/propNLinearAnalysis.noLoadSteps;
     
     %% 1ii. Loop over all the Newton-Rapson iterations
     if strcmp(outMsg,'outputEnabled')
         msgPNR = sprintf(strcat(tab,tabLoadSteps,'Looping over all the Newton iterations\n',tab,tabLoadSteps,'-------------------------------------- \n \n'));
         fprintf(msgPNR);
     end
-    for counterNewton = 1:propNLinearAnalysis.maxIter
+    for iNR = 1:propNLinearAnalysis.maxIter
         %% 1ii.1. Compute the tangent stiffness matrix and the residual vector for the steady-state problem
         [tanMtx,resVct,minElASize] = computeNLinearMtrcsSteadyState...
             (analysis,u,uSaved,uDot,uDotSaved,uMeshALE,DOFNumbering,mesh,...
             F,loadFactor,propTransientAnalysis,t,parameters,bodyForces,...
-            gaussInt);
+            propGaussInt);
         
         %% 1ii.2. Compute the tangent stiffness matrix and the residual vector for the transient problem
         if isfield(propTransientAnalysis,'timeDependence')
@@ -172,7 +172,7 @@ for counterLoadStep = 1:propNLinearAnalysis.noLoadSteps
 
         %% 1ii.3. Compute the right-hand side (RHS) residual vector in equation
         RHS = - resVct;
-        if norm(valuesInhomDOFs) ~= 0 && counterNewton == 1
+        if norm(valuesInhomDOFs) ~= 0 && iNR == 1
             RHS = RHS + tanMtx(:,inhomDOFs)*loadFactor*valuesInhomDOFs';
         end
 
@@ -183,12 +183,12 @@ for counterLoadStep = 1:propNLinearAnalysis.noLoadSteps
 
         % Issue a message on the evolution of the residual vector
         if strcmp(outMsg,'outputEnabled')
-            msgNR = sprintf(strcat(tab,tabLoadSteps,'\t||resVct|| = %d at nonlinear iteration No. = %d \n'),residualNorm,counterNewton);
+            msgNR = sprintf(strcat(tab,tabLoadSteps,'\t||resVct|| = %d at nonlinear iteration No. = %d \n'),residualNorm,iNR);
             fprintf(msgNR);
         end
 
         % Check the convergence of the Newton iterations
-        if residualNorm <= propNLinearAnalysis.eps && counterNewton ~= 1
+        if residualNorm <= propNLinearAnalysis.eps && iNR ~= 1
             if strcmp(outMsg,'outputEnabled')
                 msgANR = sprintf(strcat('\n',tab,tabLoadSteps,'\tNonlinear iterations converged! \n \n \n'));
                 fprintf(msgANR);
@@ -198,7 +198,7 @@ for counterLoadStep = 1:propNLinearAnalysis.noLoadSteps
         end
 
         % If the Newton iterations do not converge after specified limit:
-        if counterNewton == propNLinearAnalysis.maxIter
+        if iNR == propNLinearAnalysis.maxIter
             if strcmp(outMsg,'outputEnabled')
                 if ~ischar(propTransientAnalysis)
                     warning('Nonlinear iterations did not converge for the fixed time step of %d',propTransientAnalysis.dt);
@@ -220,11 +220,12 @@ for counterLoadStep = 1:propNLinearAnalysis.noLoadSteps
 
         %% 1ii.6. Re-assemble to the complete vector of unknowns
         u(freeDOFs) = u(freeDOFs) + deltauRed;
-        if counterNewton == 1
+        if iNR == 1
             u(homDOFs) = 0;
             u(inhomDOFs) = valuesInhomDOFs;
         end
     end
+    
     %% 1iii. If the nonlinear iterations have not converged break the loop
     if ~hasConverged
         break;

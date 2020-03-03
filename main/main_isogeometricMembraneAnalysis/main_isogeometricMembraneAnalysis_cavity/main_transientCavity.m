@@ -118,7 +118,7 @@ for iPatches= 1:nxi1
         if CP1(iPatches,j,4)~=1
             isNURBS1 = 1;
             break;
-        end        
+        end
     end
     if isNURBS1
         break;
@@ -164,7 +164,7 @@ analysis.type = 'isogeometricMembraneAnalysis';
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver; % solve_LinearSystemGMResWithIncompleteLUPreconditioning
 
 % Co-simulation with EMPIRE
-propEmpireCoSimulation.isCoSimulation = false; % Flag on whether co-simulation with EMPIRE is assumed
+propEmpireCoSimulation.isCoSimulation = true; % Flag on whether co-simulation with EMPIRE is assumed
 propEmpireCoSimulation.isInterfaceLayer = false; % Flag on whether the matlab client is used as an interface layer
 propEmpireCoSimulation.strMatlabXml = 'empireMatlab'; % Name of the xml file for Matlab
 

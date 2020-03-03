@@ -1,22 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Script documentation
 %
 % Task : Convergence study for the plane stress analysis over the quarter
@@ -74,7 +62,7 @@ z = 0;
 nodeCoord = [x y z];
 
 % Function handle to the body force vector computation
-bodyForces = @computeConstantVerticalBodyForceVct;
+bodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Function handle to the linear equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;

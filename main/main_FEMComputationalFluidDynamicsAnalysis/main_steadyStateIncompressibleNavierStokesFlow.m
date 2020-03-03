@@ -63,12 +63,18 @@ computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 % caseName = 'flowAroundCylinderAdaptiveSteadyStateALE';
-caseName = 'NACA2412_AoA5_CFD';
-% caseName = 'unitTest_flowAroundCylinderAdaptiveSteadyState';
+% caseName = 'NACA2412_AoA5_CFD';
+caseName = 'unitTest_flowAroundCylinderAdaptiveSteadyState';
+
+% Number of solution step
+noIterStep = 1;
+
+% VTK properties
+propVTK.isOutput = true;
 
 %% Parse the data from the GiD input file
 [fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,gaussInt,~] = ...
+    propNLinearAnalysis,propFldDynamics,propGaussInt,~] = ...
     parse_FluidModelFromGid...
     (pathToCase,caseName,'outputEnabled');
 
@@ -95,11 +101,14 @@ end
 % VTKResultFile = '_contourPlots_75';
 VTKResultFile = 'undefined';
 
+%% Initialize solution
+up = zeros(3*length(fldMsh.nodes(:,1)),1);
+
 %% Solve the CFD problem
 [up,FComplete,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2D...
-    (fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,parameters,...
+    (fldMsh,up,homDBC,inhomDBC,valuesInhomDBC,nodesALE,parameters,...
     computeBodyForces,analysis,computeInitialConditions,...
     VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-    gaussInt,caseName,'outputEnabled');
+    noIterStep,propVTK,propGaussInt,caseName,'outputEnabled');
 
 %% END OF THE SCRIPT

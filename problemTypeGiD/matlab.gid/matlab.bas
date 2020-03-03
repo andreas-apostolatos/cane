@@ -32,6 +32,7 @@ STRUCTURE_MATERIAL_PROPERTIES
  DENSITY,*MatProp(Density)
  YOUNGS_MODULUS,*MatProp(Young_Modulus)
  POISSON_RATIO,*MatProp(Poisson_Ratio)
+ THICKNESS,*MatProp(Thickness)
 *endif
 *end loop
 
@@ -44,7 +45,7 @@ STRUCTURE_NLINEAR_SCHEME
 STRUCTURE_TRANSIENT_ANALYSIS
  SOLVER *GenData(STR_Time_Analysis_Type)
  TIME_INTEGRATION *GenData(STR_Time_Integration_Scheme)
- ALPHA_BETA *GenData(STR_Alpha/Beta)
+ ALPHA_BETA *GenData(STR_AlphaBeta)
  GAMMA *GenData(STR_Gamma)
  START_TIME *GenData(STR_Start_Time)
  END_TIME *GenData(STR_End_Time)
@@ -105,6 +106,13 @@ STRUCTURE_FORCE_NODES*\
 *endif
 *end loop
 
+STRUCTURE_CONTACT_NODES*\
+*set Cond Structure-Contact *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*NodesNum *\
+*end loop
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
@@ -132,7 +140,7 @@ FLUID_NLINEAR_SCHEME
 FLUID_TRANSIENT_ANALYSIS
  SOLVER *GenData(CFD_Time_Analysis_Type)
  TIME_INTEGRATION *GenData(CFD_Time_Integration_Scheme)
- ALPHA_BETA *GenData(CFD_Alpha/Beta)
+ ALPHA_BETA *GenData(CFD_AlphaBeta)
  GAMMA *GenData(CFD_Gamma)
  START_TIME *GenData(CFD_Start_Time)
  END_TIME *GenData(CFD_End_Time)
@@ -159,6 +167,7 @@ FLUID_ELEMENTS
 
 FLUID_DIRICHLET_NODES*\
 *set Cond Fluid-Dirichlet-Over-Lines *nodes
+*add Cond Fluid-Dirichlet-Over-Points *nodes
 *loop nodes OnlyInCond
 *format "%8i"
 
@@ -213,11 +222,12 @@ NaN  *\
 *end loop
 
 FLUID_DIRICHLET_ALE_NODES*\
-*set Cond Fluid-Dirichlet-ALE *nodes
+*set Cond Fluid-Dirichlet-ALE-Lines *nodes
+*add Cond Fluid-Dirichlet-ALE-Points *nodes
 *loop nodes OnlyInCond
 *format "%8i"
 
-*NodesNum *cond(FunctionHandleToALEMotion)*\
+*NodesNum *cond(FunctionHandleToALEMotion) *cond(FreeBoundary)*\
 *end loop
 
 FLUID_POST_PROC_NODES*\

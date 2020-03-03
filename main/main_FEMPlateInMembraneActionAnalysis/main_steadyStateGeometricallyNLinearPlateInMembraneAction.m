@@ -1,22 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Script documentation
 %
 % Task : Plane stress analysis for a rectangular plate subject to uniform
@@ -73,13 +61,13 @@ caseName = 'NACA2412_AoA5_CSD';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,gaussInt] = ...
+    propNLinearAnalysis,propStrDynamics,propGaussInt] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 %% GUI
 
 % On the body forces
-bodyForces = @computeConstantVerticalBodyForceVct;
+bodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Initialize graphics index
 graph.index = 1;
@@ -98,7 +86,7 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 [dHat,FComplete,minElSize] = ...
     solve_FEMPlateInMembraneActionNLinear...
     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
-    parameters,solve_LinearSystem,propNLinearAnalysis,gaussInt,caseName,...
+    parameters,solve_LinearSystem,propNLinearAnalysis,propGaussInt,caseName,...
     pathToOutput,'outputEnabled');
 
 %% Postprocessing

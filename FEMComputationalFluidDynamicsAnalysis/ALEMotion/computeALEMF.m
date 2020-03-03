@@ -1,5 +1,5 @@
 function [dx,dy,dz] = ...
-    computeALEMF(x,y,z,t)
+    computeALEMF(x,y,z,t,varargin)
 %% Licensing
 %
 % License:         BSD License

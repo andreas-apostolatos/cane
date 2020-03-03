@@ -1,7 +1,7 @@
 function [dHat,FComplete,minElSize] = ...
     solve_FEMPlateInMembraneActionNLinear(analysis,strMsh,homDOFs,inhomDOFs,...
     valuesInhomDOFs,NBC,computeBodyForces,parameters,solve_LinearSystem,...
-    propNLinearAnalysis,gaussInt,caseName,pathToOutput,outMsg)
+    propNLinearAnalysis,propGaussInt,caseName,pathToOutput,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -40,7 +40,7 @@ function [dHat,FComplete,minElSize] = ...
 %                       .tolerance : The residual tolerance
 %                         .maxIter : The maximum number of the nonlinear 
 %                                    iterations
-%           gaussInt : On the numerical integration (quadrature)
+%       propGaussInt : On the numerical integration (quadrature)
 %                       .type : 'default', 'manual'
 %                       .noGP : Number of Gauss Points
 %           caseName : The name of the case in the inputGiD case folder
@@ -139,7 +139,7 @@ freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
 
 %% 2. Compute load vector corresponding to a conservative load
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,analysis,NBC,t,gaussInt,'');
+    (strMsh,analysis,NBC,t,propGaussInt,'');
 
 %% 3. Solve the linear equation system
 [dHat,~,FComplete,minElSize] = solve_FEMNLinearSystem...
@@ -148,7 +148,7 @@ F = computeLoadVctFEMPlateInMembraneAction...
         @computeTangentStiffMtxResVctFEMPlateInMembraneAction,...
         DOFNumbering,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
         uMeshALE,solve_LinearSystem,propTransientAnalysis,t,...
-        propNLinearAnalysis,gaussInt,tab,outMsg);
+        propNLinearAnalysis,propGaussInt,tab,outMsg);
 
 %% 4. Write out the results into a file
 fprintf('>> Writting out the results to "%s"\n',strcat(pathToOutput,caseName,'/'));

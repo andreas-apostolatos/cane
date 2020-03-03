@@ -1,22 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Script documentation
 %
 % Task : Plane stress analysis for a rectangular plate subject to uniform
@@ -73,7 +61,7 @@ caseName = 'cantileverBeamPlaneStress';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics] = ...
+    propNLinearAnalysis,~,propGaussInt] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 %% GUI
@@ -91,10 +79,8 @@ computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed
 
 % Quadrature for the stiffness matrix and the load vector of the problem
 % 'default', 'user'
-intLoad.type = 'default';
-intDomain.type = 'default';
-intLoad.noGP = 1;
-intDomain.noGP = 1;
+propIntDomain.type = 'default';
+propIntDomain.noGP = 1;
 
 % Quadrature for the L2-norm of the error
 intError.type = 'user';
@@ -114,7 +100,7 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
 %% Compute the load vector
 t = 0;
-F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,intLoad,'outputEnabled');
+F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,propGaussInt,'outputEnabled');
 
 %% Visualization of the configuration
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
@@ -124,7 +110,7 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
 [dHat,FComplete,minElSize] = solve_FEMPlateInMembraneAction...
     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
     parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-    propNLinearAnalysis,propStrDynamics,intDomain,caseName,pathToOutput,...
+    propNLinearAnalysis,propIntDomain,caseName,pathToOutput,...
     isUnitTest,'outputEnabled');
 
 %% Postprocessing
