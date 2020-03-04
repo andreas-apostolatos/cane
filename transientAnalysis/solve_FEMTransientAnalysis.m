@@ -306,11 +306,11 @@ while t < propTransientAnalysis.TEnd && noTimeStep < propTransientAnalysis.noTim
     end
     
     %% 7iv. Solve the mesh motion problem and update the mesh node locations and velocities
-    if ~ischar(nodesALE)
+    if ~ischar(nodesALE) && ~isempty(nodesALE)
         [msh,uMeshALE,inhomDOFs,valuesInhomDOFs] = ...
             computeUpdatedMesh(msh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
             solve_LinearSystem,propTransientAnalysis,t);
-    elseif strcmp(nodesALE,'undefined')
+    else
         uMeshALE = 'undefined';
     end
     

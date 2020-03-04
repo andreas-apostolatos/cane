@@ -254,8 +254,8 @@ end
 
 % Check if there exist a nonconservative loading
 isConservative = true;
-for counterNBC = 1:BSplinePatches{1}.NBC.noCnd
-    if BSplinePatches{1}.NBC.isFollower(counterNBC,1)
+for iNBC = 1:BSplinePatches{1}.NBC.noCnd
+    if BSplinePatches{1}.NBC.isFollower(iNBC,1)
         isConservative = false;
         break;
     end
@@ -388,32 +388,32 @@ if ~isConservative
 end
 
 %% 7iv. Loop over the Neumann boundary conditions of the current patch
-warning([tab 'Tangent stiffness matrix computation does not take into account the follower loads!']);
-% for counterNBC = 1:NBC.noCnd
-%     %% 7iv.1. Get the function handle for the load vector computation
-%     funcHandle = str2func(NBC.computeLoadVct{counterNBC});
-% 
-%     %% 7iv.2. Compute the load vector and the tangent matrix resulting from the application of follower loads
-%     if ~(propTransientAnalysis.isStaticStep && NBC.isTimeDependent(counterNBC,1))
-%         [FGamma,tanMtxLoadPatch] = funcHandle(FGamma,BSplinePatches{1},...
-%             NBC.xiLoadExtension{counterNBC},NBC.etaLoadExtension{counterNBC},...
-%             NBC.loadAmplitude{counterNBC},NBC.loadDirection{counterNBC},...
-%             NBC.isFollower(counterNBC,1),t,BSplinePatches{1}.int,'');
-%         if NBC.isFollower(counterNBC,1)
-%             tanMtxLoad{1} = tanMtxLoad{1} + tanMtxLoadPatch;
-%         end
-%     end
-% 
-%     %% 7iv.3. If the loading is not conservative add the contribution to the non-conservative load vector
-%     if NBC.isFollower(counterNBC,1)
-%         BSplinePatches{1}.FNonConservative = BSplinePatches{1}.FNonConservative + ...
-%             FGamma;
-%     end
-% 
-%     %% 7iv.4. Add The compute external load vector into the B-Spline array
-%     BSplinePatches{1}.FGamma = BSplinePatches{1}.FGamma +...
-%         FGamma;
-% end
+% warning([tab 'Tangent stiffness matrix computation does not take into account the follower loads!']);
+for iNBC = 1:NBC.noCnd
+    %% 7iv.1. Get the function handle for the load vector computation
+    funcHandle = str2func(NBC.computeLoadVct{iNBC});
+
+    %% 7iv.2. Compute the load vector and the tangent matrix resulting from the application of follower loads
+    if ~(propTransientAnalysis.isStaticStep && NBC.isTimeDependent(iNBC,1))
+        [FGamma,tanMtxLoadPatch] = funcHandle(FGamma,BSplinePatches{1},...
+            NBC.xiLoadExtension{iNBC},NBC.etaLoadExtension{iNBC},...
+            NBC.loadAmplitude{iNBC},NBC.loadDirection{iNBC},...
+            NBC.isFollower(iNBC,1),t,BSplinePatches{1}.int,'');
+        if NBC.isFollower(iNBC,1)
+            tanMtxLoad{1} = tanMtxLoad{1} + tanMtxLoadPatch;
+        end
+    end
+
+    %% 7iv.3. If the loading is not conservative add the contribution to the non-conservative load vector
+    if NBC.isFollower(iNBC,1)
+        BSplinePatches{1}.FNonConservative = BSplinePatches{1}.FNonConservative + ...
+            FGamma;
+    end
+
+    %% 7iv.4. Add The compute external load vector into the B-Spline array
+    BSplinePatches{1}.FGamma = BSplinePatches{1}.FGamma +...
+        FGamma;
+end
 
 %% 8. Compute the linear stiffness matrix of the membrane problem
 if strcmp(outMsg,'outputEnabled')

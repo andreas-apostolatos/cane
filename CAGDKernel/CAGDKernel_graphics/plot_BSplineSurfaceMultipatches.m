@@ -80,14 +80,16 @@ for counterPatches = 1:noPatches
   isNURBS = BSplinePatches{counterPatches}.isNURBS;
   
   %% 1ii. Create the B-Spline surface
-  [Xp1,Yp1,Zp1] = createBSplineSurfaceOnCartesianSpace(p,q,Xi,Eta,CP,isNURBS,xiGrid,etaGrid);
+  [Xp1,Yp1,Zp1] = createBSplineSurfaceOnCartesianSpace...
+      (p,q,Xi,Eta,CP,isNURBS,'undefined','undefined',xiGrid,etaGrid);
 
   %% 1iii. Plot the surface
   surf(Xp1,Yp1,Zp1,'FaceColor',color,'EdgeColor','none');
   hold on;
 
   %% 1iv. Plot the element edges
-  plot_knotsForBSplineSurfaceOnCartesianSpace(p,q,Xi,Eta,CP,isNURBS,isDeformed,xiGrid,etaGrid);
+  plot_knotsForBSplineSurfaceOnCartesianSpace...
+      (p,q,Xi,Eta,CP,isNURBS,isDeformed,xiGrid,etaGrid);
 
   %% 1v. Plot the Control polygon for the surface
   plot_ControlPolygonBSplineSurface(CP);

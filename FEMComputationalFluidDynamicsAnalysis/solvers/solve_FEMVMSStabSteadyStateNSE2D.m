@@ -1,8 +1,8 @@
 function [up,FComplete,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2D...
-    (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,parameters,...
+    (fldMsh,up,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,parameters,...
     computeBodyForces,analysis,computeInitCnds,VTKResultFile,...
-    solve_LinearSystem,propFldDynamics,propNLinearAnalysis,gaussInt,...
-    caseName,outMsg)
+    solve_LinearSystem,propFldDynamics,propNLinearAnalysis,noIterStep,propVTK,...
+    gaussInt,caseName,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -18,6 +18,7 @@ function [up,FComplete,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2
 %
 %               Input :
 %              fldMsh : Nodes and elements for the fluid mesh
+%                  up : Initial conditions
 %             homDOFs : The global numbering of the DOFs where homogeneous
 %                       Dirichlet boundary conditions are applied
 %           inhomDOFs : The global numbering of the DOFs where
@@ -123,7 +124,6 @@ uMeshALE = 'undefined';
 massMtx = 'undefined';
 dampMtx = 'undefined';
 t = 'undefined';
-noTimeStep = 0;
 
 % Define tabulation for the output to the command window
 tab = '\t';
@@ -140,9 +140,6 @@ DOFNumbering = 1:noDOFs;
 % Get the DOF numbering for each component of the displacement field and
 % the pressure seperately
 DOF4Output = [1:3:noDOFs-2; 2:3:noDOFs-1; 3:3:noDOFs];
-
-% Prediction
-up = zeros(noDOFs,1);
 
 % Computation of the force vector
 F = zeros(noDOFs,1);
@@ -180,9 +177,11 @@ end
     propFldDynamics,t,propNLinearAnalysis,gaussInt,tab,outMsg);
 
 %% 4. Write out the results into a VTK file
-writeOutputFEMIncompressibleFlowToVTK(analysis,propNLinearAnalysis,...
-    propFldDynamics,fldMsh,parameters,up,uDot,uDDot,DOF4Output,caseName,...
-    pathToOutput,title,noTimeStep);
+if propVTK.isOutput
+    writeOutputFEMIncompressibleFlowToVTK(analysis,propNLinearAnalysis,...
+        propFldDynamics,fldMsh,parameters,up,uDot,uDDot,DOF4Output,caseName,...
+        pathToOutput,title,noIterStep);
+end
 
 %% 5. Appendix
 if strcmp(outMsg,'outputEnabled')
