@@ -1,4 +1,4 @@
-function  contactNodes = computeGapFunction(contactNodes,segments)
+function  propContact = computeGapFunction(mesh,propContact,segments)
 %% Licensing
 %
 % License:         BSD License
@@ -24,26 +24,28 @@ function  contactNodes = computeGapFunction(contactNodes,segments)
 %                      end points of the segment(s)
 %
 %             Output :
-%   contactNodes.gap : Matrix containing distance of every node to each
-%                      segment (normal and parallel to both ends)
+%   contactNodes.gap : Normal distance of every node to each segment
 %
 %% %% Function main body
 
 % loop through the number of segments
-for j=1:segments.number
+for m=1:segments.number
     % loop through the contact nodes
-    for i=1:size(contactNodes.indices,1)
-        % get node of interest
-        nodeOfInterest = contactNodes.positions(i,1:2);
+    for n=1:size(propContact.nodeIDs,1)
         
-        % Normal distance to the segment i
-        contactNodes.gap(i,2,j)= dot( nodeOfInterest , segments.normals(j,:) ) + segments.constants(j);
+        % get node of interest - P
+        P = mesh.nodes(propContact.nodeIDs(n),1:2);
         
-        % Parallel distance to the left point of the segment i
-        contactNodes.gap(i,1,j)= dot( (nodeOfInterest-segments.points(1,:,j)) , segments.directors(j,:) );
+        % get the start and the end point of each segment - A and B
+        A = segments.points(1,:,m);
+        B = segments.points(2,:,m);
         
-        % Parallel distance to the right point of the segment i
-        contactNodes.gap(i,3,j)= dot( (nodeOfInterest-segments.points(2,:,j)) , segments.directors(j,:) );    
+        % projection point on the segment - Ps
+        lambda = ((A-B)*(P-A)')/((A-B)*(B-A)');
+        Ps = (1-lambda)*A+lambda*B;
+        
+        % compute distance to the segment - normal*vector
+        propContact.gap(n,m) = segments.normals(m,:)*(P-Ps)';
     end
 end
 

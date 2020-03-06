@@ -1,5 +1,5 @@
 function inactive_DOFs = detectInactiveDOFs...
-    (nDOF,contactNodes,displacement_exp,segments)
+    (nDOF,mesh,propContact,displacement_exp,segments)
 %% Licensing
 %
 % License:         BSD License
@@ -33,32 +33,45 @@ function inactive_DOFs = detectInactiveDOFs...
 %% Function main body
 
 % initialize variables
-inactive_DOFs=[];
+inactive_DOFs = [];
 k=1;
 
-% loop over displacement_exp vector
-% loop over the number of contact nodes segments
-for j=1:segments.number
-    % loop over every node in that segment
-    for i=1:size(contactNodes.indices,1)
-        
-        index = 2*contactNodes.indices(i)-1 :1: 2*contactNodes.indices(i);
-        tmp_displacement = displacement_exp(index);
-        tmp_normal = dot(tmp_displacement,segments.normals(j,:));
-        tmp_parallel = dot(tmp_displacement,segments.directors(j,:));
+% set tolerance for contact
+tolerance = sqrt(eps);
 
-        % get distances to the segment i
-        leftGap = contactNodes.gap(i,1,j);
-        normalGap = contactNodes.gap(i,2,j);
-        rightGap = contactNodes.gap(i,3,j);
+% loop over the number of contact nodes segments
+for m=1:segments.number
+    % loop over every contact node in that segment
+    for n=1:size(propContact.nodeIDs,1)
+        
+        % get displacement of the node of interest
+        DOFs = 2*propContact.nodeIDs(n)-1 :1: 2*propContact.nodeIDs(n);
+        u = displacement_exp(DOFs);
+        
+        % get node of interest - P
+        P = mesh.nodes(propContact.nodeIDs(n),1:2);
+        
+        % add displacement to the node of interest
+        R = P + u';
+        
+        % get the start and the end point of each segment - A and B
+        A = segments.points(1,:,m);
+        B = segments.points(2,:,m);
+        
+        % projection of point on the segment - Rs
+        lambda = ((A-B)*(R-A)')/((A-B)*(B-A)');
+        Rs = (1-lambda)*A+lambda*B;
+        
+        % compute distance to the segment - normal*vector
+        gap = segments.normals(m,:)*(R-Rs)';
         
         % conditions for geometry (non-penetration)
-        isCnd1 = tmp_normal + normalGap > sqrt(eps);
-        isCnd2 = tmp_parallel > max(leftGap,rightGap);
-        isCnd3 = tmp_parallel < min(leftGap,rightGap);
+        isCnd1 = gap >= tolerance;
+        isCnd2 = lambda <= tolerance;
+        isCnd3 = lambda > 1;
         
         % condition for Lagrange multipliers (non-compressive)
-        isCnd4 = displacement_exp(nDOF+k) > 0;
+        isCnd4 = displacement_exp(nDOF+k) > tolerance;
         
         % if any of the conditions hold then the node is inactive
         if (isCnd1 || isCnd2 || isCnd3 || isCnd4)

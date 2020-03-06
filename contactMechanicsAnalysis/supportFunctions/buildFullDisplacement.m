@@ -1,4 +1,4 @@
-function displacement = buildFullDisplacement(nDOFsFull,unnecessaryDOFs,displacement_red)
+function displacement = buildFullDisplacement(nDOFsFull,constrained_DOFs,displacement_red)
 %% Licensing
 %
 % License:         BSD License
@@ -34,15 +34,15 @@ n=1;
 k=1;
 
 % loop over degrees of freedom
-for i = 1:nDOFsFull
-    % if we are in the location of unnecessaryDOFs add 0
-    if (n<=length(unnecessaryDOFs) && i==unnecessaryDOFs(n))
-        displacement(i,1) = 0;
+for m = 1:nDOFsFull
+    % if we are in the location of constrained_DOFs add 0
+    if (n <= length(constrained_DOFs) && m == constrained_DOFs(n))
+        displacement(m,1) = 0;
         % update counter
         n=n+1;
     % if not add the displacement from reduced system 
     else
-        displacement(i,1) = displacement_red(k);
+        displacement(m,1) = displacement_red(k);
         % update counter
         k=k+1;
     end

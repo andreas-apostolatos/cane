@@ -27,29 +27,21 @@ function segments = buildSegmentsData(segments)
 %
 %% Function main body
 
-% create a temporary array to initialize segmetns struct
+% assign the number of segments
 segments.number = size(segments.points,3);
-tmp=zeros(segments.number,2);
-segments.normals = tmp;
-segments.directors = tmp;
-segments.constants = tmp(:,1);
+% prealocate vector of normals and directors
+segments.normals = zeros(segments.number,2);
 
 % loop over the number of segments
-for i=1:size(segments.points,3)
+for m=1:segments.number
     % change of distance in x and y direction
-    DX = segments.points(2,1,i)- segments.points(1,1,i);
-    DY = segments.points(2,2,i)- segments.points(1,2,i);
-    % normalized segment director
-    director = [DX DY];
-    director = director/norm(director);
+    DX = segments.points(2,1,m)- segments.points(1,1,m);
+    DY = segments.points(2,2,m)- segments.points(1,2,m);
     % normalized segment normal
-    normal = [-DY DX];
+    normal = [-DY, DX];
     normal = normal/norm(normal);
     % assign variables
-    segments.directors(i,:)=director;
-    segments.normals(i,:)=normal;
-    % dot product between normal and first point of the segment
-    segments.constants(i)=-dot(normal,segments.points(1,:,i));
+    segments.normals(m,:)=normal;
 end
 
 end

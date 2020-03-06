@@ -1,5 +1,5 @@
 function [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,propGaussInt,contactNodes] = ...
+    propNLinearAnalysis,propStrDynamics,propGaussInt,propContact] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,outMsg)
 %% Licensing
 %
@@ -56,7 +56,8 @@ function [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
 %                                       domain integration
 %                       .boundaryNoGP : Number of Gauss Points for the 
 %                                       boundary integration
-%        contactNodes : .indices : Global numbering of contact nodes
+%         propContact :      .nodeIDs : Global numbering of contact nodes
+%                       numberOfNodes : number of contact nodes
 %
 % Function layout :
 %
@@ -288,9 +289,11 @@ for k = 1:numel(block)
 end
 if ~isempty(out)
     out = out{1};
-    contactNodes.indices = cell2mat(out(:,1));
+    propContact.nodeIDs = cell2mat(out(:,1));
+    propContact.numberOfNodes = length(propContact.nodeIDs);
 else
-    contactNodes.indices = [];
+    propContact.nodeIDs = [];
+    propContact.numberOfNodes = 0;
 end
 
 %% 12. Get edge connectivity arrays for the Neumann edges

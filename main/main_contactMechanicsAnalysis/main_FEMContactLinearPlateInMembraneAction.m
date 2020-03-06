@@ -56,9 +56,10 @@ caseName = 'example_01_bridge';
 %caseName = 'example_02_wedge';
 %caseName = 'example_03_hertz';
 
+
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,gaussInt,contactNodes] = ...
+    propNLinearAnalysis,propStrDynamics,gaussInt,propContact] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 %% GUI - on the graph
@@ -71,24 +72,21 @@ graph.visualization.geometry = 'current';
 
 % different line segments for different cases
 if strcmp(caseName,'example_01_bridge')
-    % define bottom contact line segment
-    wall_1 = [-0.5, -0.5; 2,-0.1];
-    wall_2 = [2, -0.1; 4.5,-0.5];
-
-    % add a wall to the segments of points
-    segments.points(:,:,1) = wall_1;
-    segments.points(:,:,2) = wall_2;
+   
+    % define bottom contact line segment and add it to the segments
+%     segments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
+%     segments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
+%     segments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
     
-    %segments = createCircleSegments(2,-5.1,5,19);
+    % Circular segmnet - x,y,radius,numberOfSegments
+    segments = createCircleSegments(2,-4.1,4,19);
     
 elseif strcmp(caseName,'example_02_wedge')
-    % define bottom contact line segment
-    wall_1 = [-1, 3.75; -1, -2];
-    wall_2 = [-0.33333, -2; 1.2, 3.75];
     
-    % add a wall to the segments of points
-    segments.points(:,:,1) = wall_1;
-    segments.points(:,:,2) = wall_2;
+    % define bottom contact line segment and add it to the segments
+    segments.points(:,:,1) = [-1, 3.75; -1, -2];
+    segments.points(:,:,2) = [-0.33333, -2; 1.2, 3.75];
+    %segments.points(:,:,3) = [-1, -2; -0.33333, -2];
 
 elseif strcmp(caseName,'example_03_hertz')
     % define bottom contact line segment
@@ -119,7 +117,7 @@ ts = cputime;
 
 maxIteration = 30;
 
-[displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration,'outputEnabled'); 
+[displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,propContact,F,segments,parameters,analysis,maxIteration,'outputEnabled'); 
 %[displacement,lagrange] = solveSignoriniLagrange_2(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration,'outputEnabled');
 
 fprintf('\t Time: %4.2f \n',cputime-ts);

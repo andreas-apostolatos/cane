@@ -1,4 +1,4 @@
-function C = buildConstraintMatrix(nDOF,contactNodes,activeNodes,segments)
+function C = buildConstraintMatrix(nDOF,propContact,activeNodes,segments)
 %
 % Build the constraint matrix to be appended to K. The constraint matrix is
 % built with dimensions: nDOF x number of active Lagrange multipliers
@@ -29,13 +29,13 @@ C = zeros(nDOF,1);
 k=1;
 l=1;
 % loop through segments
-for j=1:segments.number
+for m=1:segments.number
     % loop through every contact node in each segment
-    for i=1:size(contactNodes.indices,1)
+    for n=1:size(propContact.nodeIDs,1)
         if isempty(activeNodes) || max(ismember(activeNodes,l))
             % find the index of constrain
-            index = 2*contactNodes.indices(i)-1 : 2*contactNodes.indices(i);
-            C(index,k)=segments.normals(j,:);
+            DOFs = 2*propContact.nodeIDs(n)-1 : 2*propContact.nodeIDs(n);
+            C(DOFs,k) = segments.normals(m,:);
             k=k+1;
         end
         l=l+1;

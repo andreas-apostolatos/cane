@@ -1,5 +1,5 @@
 function [displacement,lagrange] = solveSignoriniLagrange_1...
-    (mesh,homDBC,contactNodes,F,segments,materialProperties,analysis,maxIteration,outMsg)
+    (mesh,homDBC,propContact,F,segments,materialProperties,analysis,maxIteration,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -56,7 +56,9 @@ function [displacement,lagrange] = solveSignoriniLagrange_1...
 %  
 %    4.3 Solve the reduced system of equations
 %  
-%    4.3 Assemble to the expanded displacement/Lagrange  multiplier vector
+%    4.4 Assemble to the expanded displacement/Lagrange  multiplier vector
+%
+%    4.5 Evaluate convergence conditions
 % <-|
 % 5. Get the values for the displacement and the Lagrange multipliers
 %
@@ -75,24 +77,24 @@ end
 %% 0. Remove fully constrained nodes
 
 % Remove fully constrained nodes from the set of contact nodes
-for i=size(contactNodes.indices,1):-1:1
+for n=size(propContact.nodeIDs,1):-1:1
     % Determine how many Dirichlet conditions correspond to the node:  
-    nodeHasDirichlet=ismember(floor((homDBC+1)/2),contactNodes.indices(i));
-    numberOfDirichlet=length(nodeHasDirichlet(nodeHasDirichlet==1));
+    nodeHasDirichlet = ismember(floor((homDBC+1)/2),propContact.nodeIDs(n));
+    numberOfDirichlet = length(nodeHasDirichlet(nodeHasDirichlet==true));
     % If the 2D node has at least two Dirichlet conditions exclude it from the contact canditates  
     if (numberOfDirichlet>=2)
-       contactNodes.indices(i)=[];
+       propContact.nodeIDs(n)=[];
     end
 end
-contactNodes.positions = mesh.nodes(contactNodes.indices,:);
+propContact.numberOfNodes = length(propContact.nodeIDs);
 
 %% 1. Compute the gap function
 
-% Compute normal, parallel and position vectors of the segments
+% Compute normal vectors of the segments
 segments = buildSegmentsData(segments);
 
 % Compute for all nodes the specific gap and save it in the field .gap
-contactNodes = computeGapFunction(contactNodes,segments);
+propContact = computeGapFunction(mesh,propContact,segments);
 
 %% 2. Compute the master stiffness matrix of the structure
 if strcmp(outMsg,'outputEnabled')
@@ -101,6 +103,7 @@ end
 
 % Get number of DOFs in original system
 nDOFs = length(F);
+
 % Master global stiffness matrix
 K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,analysis);
 
@@ -110,25 +113,31 @@ if strcmp(outMsg,'outputEnabled')
 end
 
 % Assemble the values of the normal vector of segments to the constraint matrix
-C = buildConstraintMatrix(nDOFs,contactNodes,[],segments);
+C = buildConstraintMatrix(nDOFs,propContact,[],segments);
 
 % Build an expanded system of equations
 K_exp = [K,C;C',zeros(size(C,2))]; 
 
-% Expand the F vector with the gap funciton for every node:
-F_exp = F;
-for j=1:segments.number
-    F_exp = [F_exp;-contactNodes.gap(:,2,j)];
-end
+% Build a gap function
+gap = reshape(propContact.gap,[],1);
+
+% Expand the F vector with the gap funciton
+F_exp = [F;-gap];
+
+% Get number of DOFs in expanded system
+nDOFsFull = length(F_exp);
 
 clear C;
+clear gap;
 
-% Initial values for the itaration:
-it = 0;
+% Initial values for the iteration:
 displacement_exp = zeros(length(F_exp),1);
-nDOFsFull = length(F_exp);
+it = 1;
 inactive_DOFs = [];
-inactive_old_DOFs = [];
+
+% Inialize convergence conditions
+isCnd_DOFs = false;
+isCnd_lagrange = false;
 
 % Counts the number of equations which are solved during iteration
 equations_counter = 0;
@@ -139,34 +148,32 @@ equations_counter = 0;
 % to stable solution. If the Lagrange multiplier of the current node are 
 % valid and we had no change in the set of inactive_nodes during the last
 % iteration the solution has been found and the loop is terminated
-while (it==0 || (it<maxIteration && ~(isequal(inactive_old_DOFs,inactive_DOFs) && max(displacement_exp(nDOFs+1:length(F_exp)))<=0)))
+while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
  
+    % Assign inactive DOFs to the ones from previous iteration
     inactive_old_DOFs = inactive_DOFs;
-    % update iteration counter
-    it = it + 1;
-
+   
     %% 4.1 Determine inactive nodes
 
     % Detect non-penetrating nodes and nodes with non-compressive Lagrange multipliers
-    inactive_DOFs = detectInactiveDOFs(nDOFs,contactNodes,displacement_exp,segments);
+    inactive_DOFs = detectInactiveDOFs(nDOFs,mesh,propContact,displacement_exp,segments);
 
     %% 4.2 Reduce the system of equations according to the constraints
 
-    % Merge the homDBC and inactiveDOFs into a vector of DOFs that are no
-    % longer necessary. Equations with this numbers will be deleted due to a 
+    % Merge the homDBC and inactive_DOFs into a vector of DOFs that are no
+    % longer needed. Equations with this numbers will be deleted due to a
     % dirichlet boundary condition or a contact constraint
-    unnecessaryDOFs = [homDBC,inactive_DOFs];
-    unnecessaryDOFs = unique(unnecessaryDOFs);
+    constrained_DOFs = [homDBC,inactive_DOFs];
+    constrained_DOFs = unique(constrained_DOFs);
 
     % initialize the reduced system
     K_red = K_exp;
     F_red = F_exp;
 
-    % Remove constrained DOFs and inactiveDOFs equations
-    K_red(:,unnecessaryDOFs) = [];
-    K_red(unnecessaryDOFs,:) = [];
-    F_red(unnecessaryDOFs) = [];
-
+    % Remove constrained DOFs and inactive_DOFs equations
+    K_red(:,constrained_DOFs) = [];
+    K_red(constrained_DOFs,:) = [];
+    F_red(constrained_DOFs) = [];
 
     %% 4.3 Solve the reduced system of equations
     
@@ -177,30 +184,38 @@ while (it==0 || (it<maxIteration && ~(isequal(inactive_old_DOFs,inactive_DOFs) &
         fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
     end
     
-    % solve using the backslash operator
+    % solve the reduced system using the backslash operator
     displacement_red = K_red\F_red;
 
     %% 4.4 Assemble to the expanded displacement/Lagrange multiplier vector
 
-    % Build dexp out of dred:
+    % Build expanded displacement vector out of reduced displacement vector
     displacement_exp = buildFullDisplacement...
-                       (nDOFsFull,unnecessaryDOFs,displacement_red);
+                       (nDOFsFull,constrained_DOFs,displacement_red);
+           
+    %% 4.5 Evaluate convergence conditions
+    
+    % check if the non-active degrees of freedom did not change
+    isCnd_DOFs = isequal(inactive_old_DOFs,inactive_DOFs);
+    
+    % check if lagrange multipliers are negative
+    isCnd_lagrange = max(displacement_exp(nDOFs+1:length(F_exp))) <= 0;
+    
+    % update iteration counter
+    it = it + 1;
 
 end % end while loop
 
 %% 5. Get the values for the displacement and the Lagrange multipliers
-
-% Select and save node numbers of active nodes
-allContactNodes=[];
-for j=1:segments.number
-    allContactNodes = [allContactNodes;contactNodes.indices];
-end
 
 % The first entries in displacement_exp correspond to the displacement
 displacement = displacement_exp(1:nDOFs);
 
 % The last entries in displacement_exp correspond to the Lagrange multipliers
 lagrangeMultipliers = displacement_exp(nDOFs+1 : nDOFsFull);
+
+% Create an 1D vector of all contact nodes
+allContactNodes = repmat(propContact.nodeIDs,segments.number,1);
 
 % Find the active nodes where lagrange multipliers apply
 activeNodes = allContactNodes(lagrangeMultipliers < 0);
@@ -220,8 +235,8 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('\t Constraints solved in %d iterations. A total of %d equations were solved. \n',it,equations_counter);
     fprintf('\t %d active nodes found.\n',length(lagrange.active_nodes));
     fprintf('\t #DOF: %d \n\t Energy norm of the structure: %4.2f\n',nDOFs,energy);
-    if it >= maxIteration
-        fprintf('\t Max number of iterations of has been reached !! Not Converged !!\n');
+    if (it >= maxIteration)
+        fprintf('\t Max number of iterations of has been reached!\n');
     end
 end
 

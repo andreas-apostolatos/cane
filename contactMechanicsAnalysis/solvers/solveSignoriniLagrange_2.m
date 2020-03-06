@@ -72,18 +72,17 @@ end
 
 %% 0. Remove fully constrained nodes
 
-% Remove fully constrained nodes from the tests
-% from number of indices until 1
-for i=size(contactNodes.indices,1):-1:1
+% Remove fully constrained nodes from the set of contact nodes
+for n=size(propContact.nodeIDs,1):-1:1
     % Determine how many Dirichlet conditions correspond to the node:  
-    nodeHasDirichlet=ismember(floor((homDBC+1)/2),contactNodes.indices(i));
-    numberOfDirichlet=length(nodeHasDirichlet(nodeHasDirichlet==1));
-    % If the 2D node has at least two Dirichlet conditions exclude it from the contact canditates :  
+    nodeHasDirichlet = ismember(floor((homDBC+1)/2),propContact.nodeIDs(n));
+    numberOfDirichlet = length(nodeHasDirichlet(nodeHasDirichlet==true));
+    % If the 2D node has at least two Dirichlet conditions exclude it from the contact canditates  
     if (numberOfDirichlet>=2)
-       contactNodes.indices(i)=[];
+       propContact.nodeIDs(n)=[];
     end
 end
-contactNodes.positions=mesh.nodes(contactNodes.indices,:);
+propContact.numberOfNodes = length(propContact.nodeIDs);
 
 %% 1. Compute the gap function
 
@@ -91,7 +90,7 @@ contactNodes.positions=mesh.nodes(contactNodes.indices,:);
 segments = buildSegmentsData(segments);
 
 % Compute for all nodes the specific gap and save it in the field .gap
-contactNodes = computeGapFunction(contactNodes,segments);
+propContact = computeGapFunction(mesh,propContact,segments);
 
 %% 2. Compute the master stiffness matrix of the structure
 if strcmp(outMsg,'outputEnabled')
