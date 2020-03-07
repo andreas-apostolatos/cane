@@ -16,7 +16,8 @@ function displacement = buildFullDisplacement(nDOFsFull,constrained_DOFs,displac
 % 
 %             Input :
 %         nDOFsFull : Number of non-prescribed DOFs
-%            homDBC : List of indices of prescribed DOFs  
+%  constrained_DOFs : Vector of DOFs that were previously deleted to obtain
+%                     reduced system of equations
 %  displacement_red : Vector with the values for the assignment
 %
 %            Output :

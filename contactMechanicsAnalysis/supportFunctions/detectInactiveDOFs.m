@@ -1,5 +1,5 @@
 function inactive_DOFs = detectInactiveDOFs...
-    (nDOF,mesh,propContact,displacement_exp,segments)
+    (nDOFs,mesh,propContact,displacement_exp,segments)
 %% Licensing
 %
 % License:         BSD License
@@ -17,7 +17,7 @@ function inactive_DOFs = detectInactiveDOFs...
 % according to the segment, or whether the Lagrange multipliers are valid
 %
 %              Input :
-%               nDOF : total number of DOFs in the system
+%              nDOFs : total number of DOFs in the system
 %       contactNodes : structure containing the global numbering of contact
 %                      canditate-nodes coordinates of the candidate nodes
 %   displacement_exp : Vector of the FULL displacement and Lagrange multipliers
@@ -33,20 +33,22 @@ function inactive_DOFs = detectInactiveDOFs...
 %% Function main body
 
 % initialize variables
-inactive_DOFs = [];
+inactive_DOFs = zeros(1, segments.number*propContact.numberOfNodes);
 k=1;
+l=1;
 
 % set tolerance for contact
 tolerance = sqrt(eps);
 
+% loop over displacement_exp vector
 % loop over the number of contact nodes segments
 for m=1:segments.number
     % loop over every contact node in that segment
-    for n=1:size(propContact.nodeIDs,1)
+    for n=1:propContact.numberOfNodes
         
         % get displacement of the node of interest
-        DOFs = 2*propContact.nodeIDs(n)-1 :1: 2*propContact.nodeIDs(n);
-        u = displacement_exp(DOFs);
+        DOF = 2*propContact.nodeIDs(n)-1 : 2*propContact.nodeIDs(n);
+        u = displacement_exp(DOF);
         
         % get node of interest - P
         P = mesh.nodes(propContact.nodeIDs(n),1:2);
@@ -66,21 +68,25 @@ for m=1:segments.number
         gap = segments.normals(m,:)*(R-Rs)';
         
         % conditions for geometry (non-penetration)
-        isCnd1 = gap >= tolerance;
-        isCnd2 = lambda <= tolerance;
-        isCnd3 = lambda > 1;
+        isCnd1 = gap > tolerance;
+        isCnd2 = lambda < tolerance;
+        isCnd3 = lambda >= 1;
         
         % condition for Lagrange multipliers (non-compressive)
-        isCnd4 = displacement_exp(nDOF+k) > tolerance;
+        isCnd4 = displacement_exp(nDOFs+k) > tolerance;
         
         % if any of the conditions hold then the node is inactive
         if (isCnd1 || isCnd2 || isCnd3 || isCnd4)
-            inactive_DOFs = [inactive_DOFs,nDOF+k];
+            inactive_DOFs(l) = nDOFs+k;
+            l=l+1;
         end
         
         % update counter
         k=k+1;
     end
 end
+
+% keep only non-zero entries of the inactive_DOFs
+inactive_DOFs = inactive_DOFs(1:l-1);
 
 end

@@ -23,11 +23,11 @@ function [displacement,lagrange] = solveSignoriniLagrange_1...
 %              Input :
 %               mesh : Elements and nodes of the mesh
 %             homDBC : Vector of the prescribed DoFs (by global numbering)
-%       contactNodes : structure containing the global numbering of the
+%        propContact : structure containing the global numbering of the
 %                      canditate contact nodes
 %                  F : Global load vector
 %           segments : Matrix with the coordinates of two wall determining
-%                      points, for every segment j=1..n
+%                      points, for every segment m=1..n
 % materialProperties : The material properties of the structure
 %           analysis : Structure about the analysis type
 %       maxIteration : Maximum number of iterations
@@ -39,8 +39,6 @@ function [displacement,lagrange] = solveSignoriniLagrange_1...
 %                    : .active_nodes : node numbers of the active nodes
 %
 %% Function layout
-%
-% 0. Remove fully constrained nodes
 %
 % 1. Compute the gap function
 %
@@ -74,21 +72,13 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('\n');
 end    
 
-%% 0. Remove fully constrained nodes
+%% 1. Remove fully constrained nodes and Compute the gap function
 
-% Remove fully constrained nodes from the set of contact nodes
-for n=size(propContact.nodeIDs,1):-1:1
-    % Determine how many Dirichlet conditions correspond to the node:  
-    nodeHasDirichlet = ismember(floor((homDBC+1)/2),propContact.nodeIDs(n));
-    numberOfDirichlet = length(nodeHasDirichlet(nodeHasDirichlet==true));
-    % If the 2D node has at least two Dirichlet conditions exclude it from the contact canditates  
-    if (numberOfDirichlet>=2)
-       propContact.nodeIDs(n)=[];
-    end
-end
-propContact.numberOfNodes = length(propContact.nodeIDs);
-
-%% 1. Compute the gap function
+% Remove fully contrained nodes
+propContact = removeFullyConstrainedNodes(homDBC, propContact);
+% x = mesh.nodes(propContact.nodeIDs(:),1);
+% y = mesh.nodes(propContact.nodeIDs(:),2);
+% plot(x,y,'ro');
 
 % Compute normal vectors of the segments
 segments = buildSegmentsData(segments);
@@ -119,19 +109,19 @@ C = buildConstraintMatrix(nDOFs,propContact,[],segments);
 K_exp = [K,C;C',zeros(size(C,2))]; 
 
 % Build a gap function
-gap = reshape(propContact.gap,[],1);
+gapFunction = reshape(propContact.gap,[],1);
 
 % Expand the F vector with the gap funciton
-F_exp = [F;-gap];
+F_exp = [F;-gapFunction];
 
 % Get number of DOFs in expanded system
 nDOFsFull = length(F_exp);
 
 clear C;
-clear gap;
+clear gapFunction;
 
 % Initial values for the iteration:
-displacement_exp = zeros(length(F_exp),1);
+displacement_exp = zeros(nDOFsFull,1);
 it = 1;
 inactive_DOFs = [];
 
@@ -166,7 +156,7 @@ while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
     constrained_DOFs = [homDBC,inactive_DOFs];
     constrained_DOFs = unique(constrained_DOFs);
 
-    % initialize the reduced system
+    % Initialize the reduced system
     K_red = K_exp;
     F_red = F_exp;
 
@@ -177,14 +167,14 @@ while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
 
     %% 4.3 Solve the reduced system of equations
     
-    % count the number of total solved equations
+    % Count the number of total solved equations
     equations_counter = equations_counter + length(K_red);
     
     if strcmp(outMsg,'outputEnabled')
         fprintf('\t Solving the linear system of %d equations, condition number %e ... \n',length(K_red),cond(K_red));
     end
     
-    % solve the reduced system using the backslash operator
+    % Solve the reduced system using the backslash operator
     displacement_red = K_red\F_red;
 
     %% 4.4 Assemble to the expanded displacement/Lagrange multiplier vector
@@ -201,25 +191,24 @@ while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
     % check if lagrange multipliers are negative
     isCnd_lagrange = max(displacement_exp(nDOFs+1:length(F_exp))) <= 0;
     
-    % update iteration counter
+    % update the iteration counter
     it = it + 1;
 
 end % end while loop
 
 %% 5. Get the values for the displacement and the Lagrange multipliers
 
-% The first entries in displacement_exp correspond to the displacement
+% The first entries in displacement_exp correspond to the displacements
 displacement = displacement_exp(1:nDOFs);
 
-% The last entries in displacement_exp correspond to the Lagrange multipliers
+% The last entries in displacement_exp correspond to Lagrange multipliers
 lagrangeMultipliers = displacement_exp(nDOFs+1 : nDOFsFull);
 
 % Create an 1D vector of all contact nodes
 allContactNodes = repmat(propContact.nodeIDs,segments.number,1);
 
 % Find the active nodes where lagrange multipliers apply
-activeNodes = allContactNodes(lagrangeMultipliers < 0);
-lagrange.active_nodes = activeNodes;
+lagrange.active_nodes = allContactNodes(lagrangeMultipliers < 0);
 
 % Keep only lagrange multipliers of the active nodes
 lagrange.multipliers = lagrangeMultipliers(lagrangeMultipliers < 0);

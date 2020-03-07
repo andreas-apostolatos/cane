@@ -1,4 +1,4 @@
-function F_exp = buildRHS(F,contactNodes,activeNodes,segments)
+function F_exp = buildRHS(F,propContact,activeNodes,segments)
 %% Function documentation
 %
 % Add the gap function of every Lagrange multiplier to the RHS load vector
@@ -30,12 +30,12 @@ F_exp = [F;zero_vector];
 k=1;
 l=1;
 % loop through the number of segments
-for j=1:segments.number
+for m=1:segments.number
     % loop through contact nodes
-    for i=1:size(contactNodes.indices,1)
+    for n=1:propContact.numberOfNodes
 
         if (isempty(activeNodes) || max(ismember(activeNodes,l)))
-            F_exp(nDOF+k) = -contactNodes.gap(i,2,j);
+            F_exp(nDOF+k) = -propContact.gap(n,m);
             
             k=k+1;
         end

@@ -1,5 +1,5 @@
 function [displacement,lagrange] = solveSignoriniLagrange_2...
-    (mesh,homDBC,contactNodes,F, segments,materialProperties,analysis,maxIteration,outMsg)
+    (mesh,homDBC,propContact,F,segments,materialProperties,analysis,maxIteration,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -40,9 +40,7 @@ function [displacement,lagrange] = solveSignoriniLagrange_2...
 %
 % Function layout :
 %
-% 0. Remove fully constrained nodes
-%
-% 1. Compute the gap function
+% 1. Remove fully constrained nodes and Compute the gap function
 %
 % 2. Compute the master stiffness matrix of the structure
 %
@@ -70,23 +68,15 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('\n');
 end
 
-%% 0. Remove fully constrained nodes
+%% 1. Remove fully constrained nodes and Compute the gap function
 
-% Remove fully constrained nodes from the set of contact nodes
-for n=size(propContact.nodeIDs,1):-1:1
-    % Determine how many Dirichlet conditions correspond to the node:  
-    nodeHasDirichlet = ismember(floor((homDBC+1)/2),propContact.nodeIDs(n));
-    numberOfDirichlet = length(nodeHasDirichlet(nodeHasDirichlet==true));
-    % If the 2D node has at least two Dirichlet conditions exclude it from the contact canditates  
-    if (numberOfDirichlet>=2)
-       propContact.nodeIDs(n)=[];
-    end
-end
-propContact.numberOfNodes = length(propContact.nodeIDs);
+% Remove fully contrained nodes
+propContact = removeFullyConstrainedNodes(homDBC, propContact);
+% x = mesh.nodes(propContact.nodeIDs(:),1);
+% y = mesh.nodes(propContact.nodeIDs(:),2);
+% plot(x,y,'ro');
 
-%% 1. Compute the gap function
-
-% Compute normal, parallel and position vectors of the segments
+% Compute normal vectors of the segments
 segments = buildSegmentsData(segments);
 
 % Compute for all nodes the specific gap and save it in the field .gap
@@ -99,6 +89,7 @@ end
 
 % Get number of DOFs in original system
 nDOFs = length(F);
+
 % Master global stiffness matrix
 K = computeStiffnessMatrixPlateInMembraneActionLinear(mesh,materialProperties,analysis);
 
@@ -137,7 +128,7 @@ while(isCndMain && it<maxIteration)
     displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
 
     %% 4.2 Detect active nodes
-    activeNodes_tmp = detectActiveDOFs(contactNodes,displacement,segments);
+    activeNodes_tmp = detectActiveDOFs(mesh,propContact,displacement,segments);
 
     if(isequaln(activeNodes_tmp,activeNodes) && it~=0)
         isCndMain = false;
@@ -151,8 +142,8 @@ while(isCndMain && it<maxIteration)
         nActiveNodes = length(activeNodes);
 
         % Build constraint matrix C and rhs F
-        C  = buildConstraintMatrix(nDOFs,contactNodes,activeNodes,segments);
-        F_red = buildRHS(F,contactNodes,activeNodes,segments);
+        C  = buildConstraintMatrix(nDOFs,propContact,activeNodes,segments);
+        F_red = buildRHS(F,propContact,activeNodes,segments);
 
         % Build master system matrix
         K_red = [K,C;C',zeros(size(C,2))];
@@ -216,7 +207,7 @@ end % end of main while loop
 % Select and save node numbers of active nodes
 allContactNodes=[];
 for j=1:segments.number
-    allContactNodes=[allContactNodes;contactNodes.indices];
+    allContactNodes=[allContactNodes;propContact.nodeIDs];
 end  
 
 % Build full displacement vector

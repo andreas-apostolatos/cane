@@ -1,14 +1,13 @@
 function C = buildConstraintMatrix(nDOF,propContact,activeNodes,segments)
 %
 % Build the constraint matrix to be appended to K. The constraint matrix is
-% built with dimensions: nDOF x number of active Lagrange multipliers
-%
-% The matrix is filled with the normal vectors of the segments applied on
-% the right couple of displacement.
+% built with dimensions: nDOF x number of active Lagrange multipliers. The
+% matrix is filled with the normal vectors of the segments applied on the
+% right couple of displacement
 %
 %             Input :
 %              nDOF : Number of DoF of the system
-%      contactNodes : structure containing the global numbering of the 
+%       propContact : structure containing the global numbering of the 
 %                     contact canditate nodes for contact to segments
 %      active_nodes : List of indices of the nodes for which the matrix 
 %                     should be built (e.g. the set of all currently active
@@ -31,11 +30,11 @@ l=1;
 % loop through segments
 for m=1:segments.number
     % loop through every contact node in each segment
-    for n=1:size(propContact.nodeIDs,1)
+    for n=1:propContact.numberOfNodes
         if isempty(activeNodes) || max(ismember(activeNodes,l))
             % find the index of constrain
-            DOFs = 2*propContact.nodeIDs(n)-1 : 2*propContact.nodeIDs(n);
-            C(DOFs,k) = segments.normals(m,:);
+            DOF = 2*propContact.nodeIDs(n)-1 : 2*propContact.nodeIDs(n);
+            C(DOF,k) = segments.normals(m,:);
             k=k+1;
         end
         l=l+1;

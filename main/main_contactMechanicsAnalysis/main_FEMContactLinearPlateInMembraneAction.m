@@ -73,20 +73,26 @@ graph.visualization.geometry = 'current';
 % different line segments for different cases
 if strcmp(caseName,'example_01_bridge')
    
-    % define bottom contact line segment and add it to the segments
+    % Either define bottom contact line segment and add it to the segments
 %     segments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
 %     segments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
 %     segments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
     
-    % Circular segmnet - x,y,radius,numberOfSegments
-    segments = createCircleSegments(2,-4.1,4,19);
+    % ...or define a circular contact boundary
+    center = [2,-4.1];
+    radius = 4;
+    startAngle = 3*pi/4;
+    endAngle = pi/4;
+    nSegments = 20;
+    % Create circular segments
+    segments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
     
 elseif strcmp(caseName,'example_02_wedge')
     
     % define bottom contact line segment and add it to the segments
     segments.points(:,:,1) = [-1, 3.75; -1, -2];
     segments.points(:,:,2) = [-0.33333, -2; 1.2, 3.75];
-    %segments.points(:,:,3) = [-1, -2; -0.33333, -2];
+    segments.points(:,:,3) = [-1, -2; -0.33333, -2];
 
 elseif strcmp(caseName,'example_03_hertz')
     % define bottom contact line segment
@@ -118,7 +124,7 @@ ts = cputime;
 maxIteration = 30;
 
 [displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,propContact,F,segments,parameters,analysis,maxIteration,'outputEnabled'); 
-%[displacement,lagrange] = solveSignoriniLagrange_2(strMsh,homDBC,contactNodes,F,segments,parameters,analysis,maxIteration,'outputEnabled');
+%[displacement,lagrange] = solveSignoriniLagrange_2(strMsh,homDBC,propContact,F,segments,parameters,analysis,maxIteration,'outputEnabled');
 
 fprintf('\t Time: %4.2f \n',cputime-ts);
 
@@ -127,7 +133,7 @@ graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,di
 plot_segments(segments);
 plot_activeNodes(strMsh,displacement,lagrange); 
 
-%% Get the length of the contact area and the reaction force on the contact
+% Get the length of the contact area and the reaction force on the contact
 if strcmp(caseName,'example_03_hertz')
     [contactLength,contactForce,maxContactPressure] = ...
         computeContactResultants(strMsh,displacement,lagrange,parameters);

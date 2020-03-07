@@ -1,4 +1,4 @@
-function activeNodes = detectActiveDOFs(contactNodes,displacement,segments)
+function activeNodes = detectActiveDOFs(mesh,propContact,displacement,segments)
 %% Licensing
 %
 % License:         BSD License
@@ -7,7 +7,7 @@ function activeNodes = detectActiveDOFs(contactNodes,displacement,segments)
 % Main authors:    Marko Leskovar
 %                  Andreas Apostolatos
 %
-% Date : 04.02.2020
+% Date : 07.03.2020
 %
 %% Function documentation
 %
@@ -32,29 +32,43 @@ function activeNodes = detectActiveDOFs(contactNodes,displacement,segments)
 activeNodes=[];
 k=1;
 
+% set tolerance for contact
+tolerance = sqrt(eps);
+
 % loop over displacement_exp vector
 % loop over the number of contact nodes segments
-for j=1:segments.number
+for m=1:segments.number
     % loop over every node in that segment
-    for i=1:size(contactNodes.indices,1)
+    for n=1:propContact.numberOfNodes
         
-        index = 2*contactNodes.indices(i)-1 :1: 2*contactNodes.indices(i);
-        tmp = displacement(index);
-        tmp_normal=  dot(tmp,segments.normals(j,:));
-        tmp_parallel=dot(tmp,segments.directors(j,:));
+        % get displacement of the node of interest
+        DOF = 2*propContact.nodeIDs(n)-1 : 2*propContact.nodeIDs(n);
+        u = displacement(DOF);
         
-        % get distances to the segment i
-        leftGap = contactNodes.gap(i,1,j);
-        normalGap = contactNodes.gap(i,2,j);
-        rightGap = contactNodes.gap(i,3,j);
+        % get node of interest - P
+        P = mesh.nodes(propContact.nodeIDs(n),1:2);
         
-        % conditions for geometry (non-penetration)
-        cnd1 = tmp_normal + normalGap < sqrt(eps);
-        cnd2 = tmp_parallel > min(leftGap,rightGap);
-        cnd3 = tmp_parallel < max(leftGap,rightGap);
+        % add displacement to the node of interest
+        R = P + u';
+        
+        % get the start and the end point of each segment - A and B
+        A = segments.points(1,:,m);
+        B = segments.points(2,:,m);
+        
+        % projection of point on the segment - Rs
+        lambda = ((A-B)*(R-A)')/((A-B)*(B-A)');
+        Rs = (1-lambda)*A+lambda*B;
+        
+        % compute distance to the segment - normal*vector
+        gap = segments.normals(m,:)*(R-Rs)';
+        
+        % conditions for geometry (penetration)
+        isCnd1 = gap < tolerance;
+        isCnd2 = lambda > tolerance;
+        isCnd3 = lambda <= 1;
         
         % if all conditions hold
-        if (cnd1 && cnd2 && cnd3)
+        if (isCnd1 && isCnd2 && isCnd3)
             activeNodes = [activeNodes,k];
         end
         

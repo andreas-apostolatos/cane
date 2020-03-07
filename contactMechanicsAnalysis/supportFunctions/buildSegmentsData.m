@@ -7,7 +7,7 @@ function segments = buildSegmentsData(segments)
 % Main authors:    Marko Leskovar
 %                  Andreas Apostolatos
 %
-% Date : 03.02.2020
+% Date: 07.03.2020
 %
 %% Function documentation
 %
@@ -21,9 +21,8 @@ function segments = buildSegmentsData(segments)
 %                      direction 3 depends on the number of walls
 %
 %             Output :
-%           segments : data stucture containing informations about the
-%                      rigid wall segments (normal vector, parallel vector,
-%                      position)
+%           segments : data stucture containing informations about segments
+%                      points and normal vector
 %
 %% Function main body
 
@@ -34,14 +33,16 @@ segments.normals = zeros(segments.number,2);
 
 % loop over the number of segments
 for m=1:segments.number
+    
     % change of distance in x and y direction
     DX = segments.points(2,1,m)- segments.points(1,1,m);
     DY = segments.points(2,2,m)- segments.points(1,2,m);
-    % normalized segment normal
+    
+    % segment normal vector
     normal = [-DY, DX];
-    normal = normal/norm(normal);
-    % assign variables
-    segments.normals(m,:)=normal;
+
+    % assign  segment normalized normal vector
+    segments.normals(m,:) = normal/norm(normal);
 end
 
 end

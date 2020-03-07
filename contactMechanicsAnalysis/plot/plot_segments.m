@@ -7,6 +7,8 @@ function [] = plot_segments(segments)
 % Main authors:    Marko Leskovar
 %                  Andreas Apostolatos
 %
+% Date: 07.02.2020
+%
 %% Function documentation
 %
 % Plot line segments on the current graph
