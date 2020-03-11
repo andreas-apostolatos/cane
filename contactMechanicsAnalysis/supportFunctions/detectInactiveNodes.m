@@ -61,16 +61,16 @@ for m=1:segments.number
         B = segments.points(2,:,m);
         
         % projection of point on the segment - Rs
-        lambda = ((A-B)*(R-A)')/((A-B)*(B-A)');
-        Rs = (1-lambda)*A+lambda*B;
+        alpha = ((A-B)*(R-A)')/((A-B)*(B-A)');
+        Rs = (1-alpha)*A+alpha*B;
         
         % compute distance to the segment - normal*vector
         gap = segments.normals(m,:)*(R-Rs)';
         
         % conditions for geometry (non-penetration)
         isCnd1 = gap > tolerance;
-        isCnd2 = lambda < tolerance;
-        isCnd3 = lambda >= 1;
+        isCnd2 = alpha < tolerance;
+        isCnd3 = alpha >= 1;
         
         % condition for Lagrange multipliers (non-compressive)
         isCnd4 = displacement_exp(nDOFs+k) > tolerance;

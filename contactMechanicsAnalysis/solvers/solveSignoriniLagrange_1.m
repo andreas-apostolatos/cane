@@ -123,7 +123,7 @@ clear gapFunction;
 % Initial values for the iteration:
 displacement_exp = zeros(nDOFsFull,1);
 it = 1;
-inactive_DOFs = [];
+inactive_nodes = [];
 
 % Inialize convergence conditions
 isCnd_DOFs = false;
@@ -141,19 +141,19 @@ equations_counter = 0;
 while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
  
     % Assign inactive DOFs to the ones from previous iteration
-    inactive_old_DOFs = inactive_DOFs;
+    inactive_old_nodes = inactive_nodes;
    
     %% 4.1 Determine inactive nodes
 
     % Detect non-penetrating nodes and nodes with non-compressive Lagrange multipliers
-    inactive_DOFs = detectInactiveNodes(nDOFs,mesh,propContact,displacement_exp,segments);
+    inactive_nodes = detectInactiveNodes(nDOFs,mesh,propContact,displacement_exp,segments);
 
     %% 4.2 Reduce the system of equations according to the constraints
 
     % Merge the homDBC and inactive_DOFs into a vector of DOFs that are no
     % longer needed. Equations with this numbers will be deleted due to a
     % dirichlet boundary condition or a contact constraint
-    constrained_DOFs = [homDBC,inactive_DOFs];
+    constrained_DOFs = [homDBC,inactive_nodes];
     constrained_DOFs = unique(constrained_DOFs);
 
     % Initialize the reduced system
@@ -186,7 +186,7 @@ while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
     %% 4.5 Evaluate convergence conditions
     
     % check if the non-active degrees of freedom did not change
-    isCnd_DOFs = isequal(inactive_old_DOFs,inactive_DOFs);
+    isCnd_DOFs = isequal(inactive_old_nodes,inactive_nodes);
     
     % check if lagrange multipliers are negative
     isCnd_lagrange = max(displacement_exp(nDOFs+1:length(F_exp))) <= 0;

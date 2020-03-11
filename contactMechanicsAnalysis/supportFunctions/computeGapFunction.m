@@ -40,8 +40,8 @@ for m=1:segments.number
         B = segments.points(2,:,m);
         
         % projection point on the segment - Ps
-        lambda = ((A-B)*(R-A)')/((A-B)*(B-A)');
-        Rs = (1-lambda)*A+lambda*B;
+        alpha = ((A-B)*(R-A)')/((A-B)*(B-A)');
+        Rs = (1-alpha)*A+alpha*B;
         
         % compute distance to the segment - normal*vector P-Ps
         propContact.gap(n,m) = segments.normals(m,:)*(R-Rs)';
