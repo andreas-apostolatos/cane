@@ -61,11 +61,7 @@ caseName = 'cantileverBeamPlaneStress';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-<<<<<<< HEAD
-    propNLinearAnalysis] = ...
-=======
     propNLinearAnalysis,~,propGaussInt] = ...
->>>>>>> master
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
 %% GUI
@@ -104,7 +100,7 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
 %% Compute the load vector
 t = 0;
-F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,propGaussInt,'outputEnabled');
+F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,t,propGaussInt,'outputEnabled');
 
 %% Visualization of the configuration
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...

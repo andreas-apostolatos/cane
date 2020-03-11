@@ -84,9 +84,10 @@ if strcmp(caseName,'example_01_bridge')
     startAngle = 3*pi/4;
     endAngle = pi/4;
     nSegments = 20;
+    
     % Create circular segments
     segments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
-    
+   
 elseif strcmp(caseName,'example_02_wedge')
     
     % define bottom contact line segment and add it to the segments

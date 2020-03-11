@@ -40,7 +40,7 @@ function [displacement,lagrange] = solveSignoriniLagrange_1...
 %
 %% Function layout
 %
-% 1. Compute the gap function
+% 1. Remove fully constrained nodes and Compute the gap function
 %
 % 2. Compute the master stiffness matrix of the structure
 %
@@ -146,7 +146,7 @@ while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
     %% 4.1 Determine inactive nodes
 
     % Detect non-penetrating nodes and nodes with non-compressive Lagrange multipliers
-    inactive_DOFs = detectInactiveDOFs(nDOFs,mesh,propContact,displacement_exp,segments);
+    inactive_DOFs = detectInactiveNodes(nDOFs,mesh,propContact,displacement_exp,segments);
 
     %% 4.2 Reduce the system of equations according to the constraints
 

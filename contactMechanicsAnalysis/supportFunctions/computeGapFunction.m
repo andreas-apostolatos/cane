@@ -11,7 +11,7 @@ function  propContact = computeGapFunction(mesh,propContact,segments)
 %
 %% Function documentation
 %
-% Expands a data structure contactNodes. Gap function is the distance
+% Expands a data structure propContact. Gap function is the distance
 % between nodes of the structure and the segments points (walls)
 %
 %             Input :
@@ -32,19 +32,19 @@ for m=1:segments.number
     % loop through the contact nodes
     for n=1:size(propContact.nodeIDs,1)
         
-        % get node of interest - P
-        P = mesh.nodes(propContact.nodeIDs(n),1:2);
+        % get node of interest - R = P
+        R = mesh.nodes(propContact.nodeIDs(n),1:2);
         
         % get the start and the end point of each segment - A and B
         A = segments.points(1,:,m);
         B = segments.points(2,:,m);
         
         % projection point on the segment - Ps
-        lambda = ((A-B)*(P-A)')/((A-B)*(B-A)');
-        Ps = (1-lambda)*A+lambda*B;
+        lambda = ((A-B)*(R-A)')/((A-B)*(B-A)');
+        Rs = (1-lambda)*A+lambda*B;
         
         % compute distance to the segment - normal*vector P-Ps
-        propContact.gap(n,m) = segments.normals(m,:)*(P-Ps)';
+        propContact.gap(n,m) = segments.normals(m,:)*(R-Rs)';
     end
 end
 

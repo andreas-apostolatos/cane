@@ -1,4 +1,4 @@
-function inactive_DOFs = detectInactiveDOFs...
+function inactive_DOFs = detectInactiveNodes...
     (nDOFs,mesh,propContact,displacement_exp,segments)
 %% Licensing
 %
@@ -12,7 +12,7 @@ function inactive_DOFs = detectInactiveDOFs...
 %
 %% Function documentation
 %
-% Detect the inactive nodes for the current segment Loops over all segments
+% Detect the inactive nodes for the current segment. Loops over all segments
 % to check whether the displacement of the node put in an active position
 % according to the segment, or whether the Lagrange multipliers are valid
 %

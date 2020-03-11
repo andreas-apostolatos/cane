@@ -1,4 +1,4 @@
-function activeNodes = detectActiveDOFs(mesh,propContact,displacement,segments)
+function activeNodes = detectActiveNodes(mesh,propContact,displacement,segments)
 %% Licensing
 %
 % License:         BSD License
