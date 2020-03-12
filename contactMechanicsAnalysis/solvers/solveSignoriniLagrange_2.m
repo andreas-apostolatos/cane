@@ -113,37 +113,38 @@ displacement_red = zeros(length(F_red),1);
 
 % Initial values for the iteration
 isCndMain = true;
-activeNodes = [];
-nActiveNodes = 0;
-it = 0;
+active_nodes = [];
+numberOfActiveNodes = 0;
+it = 1;
 
 % Counts the number of equations which are solved during iteration   
 equations_counter = 0;
     
 % Iterate until no more invalid Lagrange multipliers AND no new active nodes
 % are added in the pool AND max number of iterations in not reached
-while(isCndMain && it<maxIteration)    
+while(isCndMain && it <= maxIteration)    
 
-    %% 4.1 Assemble to the complete displacement vector
-    displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
+    %% 4.1 Build the expanded (complete) displacement vector
+    displacement_exp = buildFullDisplacement(nDOFs,homDBC,displacement_red);
 
     %% 4.2 Detect active nodes
-    activeNodes_tmp = detectActiveDOFs(mesh,propContact,displacement,segments);
+    active_nodes_temp = detectActiveNodes(mesh,propContact,displacement_exp,segments);
 
-    if(isequaln(activeNodes_tmp,activeNodes) && it~=0)
+    % Evaluate convergence condition
+    if(isequaln(active_nodes_temp,active_nodes) && it~=1)
         isCndMain = false;
     end
 
     %% 4.3 Rebuild system if new active nodes found
-    if(~isempty(activeNodes_tmp) && isCndMain)
+    if(~isempty(active_nodes_temp) && isCndMain)
 
-        % Update number of active nodes
-        activeNodes = activeNodes_tmp;
-        nActiveNodes = length(activeNodes);
+        % Update the active nodes
+        active_nodes = active_nodes_temp;
+        numberOfActiveNodes = length(active_nodes);
 
-        % Build constraint matrix C and rhs F
-        C  = buildConstraintMatrix(nDOFs,propContact,activeNodes,segments);
-        F_red = buildRHS(F,propContact,activeNodes,segments);
+        % Build constraint matrix C and force vector F
+        C  = buildConstraintMatrix(nDOFs,propContact,active_nodes,segments);
+        F_red = buildRHS(F,propContact,active_nodes,segments);
 
         % Build master system matrix
         K_red = [K,C;C',zeros(size(C,2))];
@@ -152,19 +153,21 @@ while(isCndMain && it<maxIteration)
         K_red(:,homDBC) = [];
         K_red(homDBC,:) = [];
         F_red(homDBC) = [];
+        
     end
     
     %% 4.4 Relax the system until ONLY valid Lagrange multipliers are computed
+    
+    % Initialize Lagrange condition
     isCndLagrange = true;
+    
+    while(isCndLagrange && it <= maxIteration)
 
-    while(isCndLagrange && it<maxIteration)
-
-        it = it + 1;
         isCndLagrange = false;
 
         %% 4.4.1 Compute the displacement and Lagrange multipliers
         
-        % count the number of total solved equations
+        % Count the number of total solved equations
         equations_counter = equations_counter + length(K_red);
         
         if strcmp(outMsg,'outputEnabled')
@@ -176,9 +179,13 @@ while(isCndMain && it<maxIteration)
         
         %% 4.4.2 Detect and delete non-valid Lagrange multipliers and related rows
         
-        % Lagrange Multipliers indices
-        lmDOFsIndices = length(displacement_red)-nActiveNodes+1:length(displacement_red);
+        % Get the number of DOFs in reduced system
+        nDOFs_red = length(displacement_red);
         
+        % Lagrange multipliers indices
+        lmDOFsIndices = nDOFs_red-numberOfActiveNodes+1 : nDOFs_red;
+        
+        % Check if all Lagrange multipliers are valid
         if max(displacement_red(lmDOFsIndices)) > 0
             isCndLagrange = true;
             isCndMain = true;
@@ -193,30 +200,32 @@ while(isCndMain && it<maxIteration)
         F_red(lmDOFsIndices) = [];
         
         % Delete active nodes related to non-valid Lagrange multipliers
-        activeNodes(lmDOFsIndices-length(displacement_red)+nActiveNodes) = [];
+        active_nodes(lmDOFsIndices - nDOFs_red+numberOfActiveNodes) = [];
         
         % Update the number of active nodes
-        nActiveNodes=length(activeNodes);
+        numberOfActiveNodes = length(active_nodes);
+        
+        % update the iteration counter
+        it = it + 1;
 
     end % end of inner while loop
 
 end % end of main while loop
 
-%% 5. Compute the complete load vector and verify the results
-
-% Select and save node numbers of active nodes
-allContactNodes=[];
-for j=1:segments.number
-    allContactNodes=[allContactNodes;propContact.nodeIDs];
-end  
+%% 5. Get the values for the displacement and the Lagrange multipliers
 
 % Build full displacement vector
 displacement = buildFullDisplacement(nDOFs,homDBC,displacement_red);
 
+% Create an 1D vector of all contact nodes
+allContactNodes = repmat(propContact.nodeIDs,segments.number,1);
+
+% Find the active nodes where lagrange multipliers apply
+lagrange.active_nodes = allContactNodes(active_nodes);
+
 % Keep only lagrange multipliers of the active nodes
-lagrangeIndices = length(displacement_red)-nActiveNodes+1:length(displacement_red);
-lagrange.multipliers = displacement_red(lagrangeIndices);
-lagrange.active_nodes = allContactNodes(activeNodes);
+lagrange.multipliers = ...
+    displacement_red(nDOFs_red-numberOfActiveNodes+1 : nDOFs_red);
 
 %% 6. Print info
 if strcmp(outMsg,'outputEnabled')

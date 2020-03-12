@@ -1,4 +1,4 @@
-function activeNodes = detectActiveNodes(mesh,propContact,displacement,segments)
+function active_nodes = detectActiveNodes(mesh,propContact,displacement,segments)
 %% Licensing
 %
 % License:         BSD License
@@ -29,8 +29,9 @@ function activeNodes = detectActiveNodes(mesh,propContact,displacement,segments)
 %% Function main body
 
 % initialize variables
-activeNodes=[];
+active_nodes = zeros(1, segments.number*propContact.numberOfNodes);
 k=1;
+l=1;
 
 % set tolerance for contact
 tolerance = sqrt(eps);
@@ -56,25 +57,29 @@ for m=1:segments.number
         B = segments.points(2,:,m);
         
         % projection of point on the segment - Rs
-        lambda = ((A-B)*(R-A)')/((A-B)*(B-A)');
-        Rs = (1-lambda)*A+lambda*B;
+        alpha = ((A-B)*(R-A)')/((A-B)*(B-A)');
+        Rs = (1-alpha)*A+alpha*B;
         
         % compute distance to the segment - normal*vector
         gap = segments.normals(m,:)*(R-Rs)';
         
         % conditions for geometry (penetration)
         isCnd1 = gap < tolerance;
-        isCnd2 = lambda > tolerance;
-        isCnd3 = lambda <= 1;
+        isCnd2 = alpha > tolerance;
+        isCnd3 = alpha <= 1;
         
         % if all conditions hold
         if (isCnd1 && isCnd2 && isCnd3)
-            activeNodes = [activeNodes,k];
+            active_nodes(l) = k;
+            l=l+1;
         end
         
         % update counter
         k=k+1;
     end
 end
+
+% keep only non-zero entries of the active_nodes
+active_nodes = active_nodes(1:l-1);
 
 end

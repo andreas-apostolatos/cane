@@ -138,7 +138,7 @@ equations_counter = 0;
 % to stable solution. If the Lagrange multiplier of the current node are 
 % valid and we had no change in the set of inactive_nodes during the last
 % iteration the solution has been found and the loop is terminated
-while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
+while (it <= maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
  
     % Assign inactive DOFs to the ones from previous iteration
     inactive_old_nodes = inactive_nodes;
@@ -177,7 +177,7 @@ while (it<maxIteration && ~(isCnd_DOFs && isCnd_lagrange))
     % Solve the reduced system using the backslash operator
     displacement_red = K_red\F_red;
 
-    %% 4.4 Assemble to the expanded displacement/Lagrange multiplier vector
+    %% 4.4 Assemble the expanded displacement/Lagrange multiplier vector
 
     % Build expanded displacement vector out of reduced displacement vector
     displacement_exp = buildFullDisplacement...

@@ -1,4 +1,4 @@
-function inactive_DOFs = detectInactiveNodes...
+function inactive_nodes = detectInactiveNodes...
     (nDOFs,mesh,propContact,displacement_exp,segments)
 %% Licensing
 %
@@ -33,7 +33,7 @@ function inactive_DOFs = detectInactiveNodes...
 %% Function main body
 
 % initialize variables
-inactive_DOFs = zeros(1, segments.number*propContact.numberOfNodes);
+inactive_nodes = zeros(1, segments.number*propContact.numberOfNodes);
 k=1;
 l=1;
 
@@ -77,7 +77,7 @@ for m=1:segments.number
         
         % if any of the conditions hold then the node is inactive
         if (isCnd1 || isCnd2 || isCnd3 || isCnd4)
-            inactive_DOFs(l) = nDOFs+k;
+            inactive_nodes(l) = nDOFs+k;
             l=l+1;
         end
         
@@ -86,7 +86,7 @@ for m=1:segments.number
     end
 end
 
-% keep only non-zero entries of the inactive_DOFs
-inactive_DOFs = inactive_DOFs(1:l-1);
+% keep only non-zero entries of the inactive_nodes
+inactive_nodes = inactive_nodes(1:l-1);
 
 end

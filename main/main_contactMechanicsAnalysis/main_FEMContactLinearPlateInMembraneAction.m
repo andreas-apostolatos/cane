@@ -74,9 +74,9 @@ graph.visualization.geometry = 'current';
 if strcmp(caseName,'example_01_bridge')
    
     % Either define bottom contact line segment and add it to the segments
-%     segments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
-%     segments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
-%     segments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
+    segments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
+    segments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
+    segments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
     
     % ...or define a circular contact boundary
     center = [2,-4.1];
@@ -86,7 +86,7 @@ if strcmp(caseName,'example_01_bridge')
     nSegments = 20;
     
     % Create circular segments
-    segments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
+%     segments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
    
 elseif strcmp(caseName,'example_02_wedge')
     
@@ -101,7 +101,7 @@ elseif strcmp(caseName,'example_03_hertz')
     
     % add a wall to the segments of points
     segments.points(:,:,1) = wall_1;    
-    
+
 end
 
 %% Compute the load vector
