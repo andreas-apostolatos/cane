@@ -1,5 +1,5 @@
 function [dx,dy,dz] = ...
-    computeALEMCYL(x,y,z,t,propUser)
+    computeALEMC(x,y,z,t,propUser)
 %% Licensing
 %
 % License:         BSD License

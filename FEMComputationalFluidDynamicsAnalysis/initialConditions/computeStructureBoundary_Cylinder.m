@@ -76,7 +76,7 @@ if ~isempty(propALE)
     for counterALE = 1:length(propALE.nodes(:,1))
         
         % Exacute if the node function handle equates to the structure handle
-        if strcmp(propALE.fctHandle((counterALE),:),'computeALEMCYL')
+        if strcmp(propALE.fctHandle((counterALE),:),'computeALEMC')
             %% 2i. Find the node ID in the node cloud
             nodeID = propALE.nodes(counterALE,1);
 

@@ -69,12 +69,10 @@ propNLinearAnalysis.maxIter = 10;
 propNLinearAnalysis.eps = 1e-5;
 
 %% GUI
-
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
 
 % On the initial conditions
-%computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE2D;
 computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
 
 % On the transient analysis properties
@@ -100,7 +98,6 @@ propVTK_true.isOutput = true;
 propVTK_false.isOutput = false;
 
 %% Input parameters
-
 % max input velocity defined in the reference paper
 Umax = .1;
 
@@ -108,10 +105,9 @@ Umax = .1;
 valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
 
 %% Variable initialization
-
-i = 1; % Counter initialization for iteration tree search
+i = 1; % Counter initialization for iteration search
 iterationLimit = 15; % Limit search iterations
-design_penalization = 1e4; % Design penalty used in J calculations
+design_penalization = 1e4; % Design penalty used in gradient calculations
 
 % Initialize abstract function containers
 djdp1 = [];
@@ -124,7 +120,7 @@ propALE.propUser.iterate_p1 = 0;
 gamma = 1e-4;
 
 %Initialize state values
-[x_Min,y_Min,p1_0] = computeStructureBoundary_Cylinder(fldMsh,propALE); % Initial x location of 2d building from GID input file
+[x_Min,y_Min,p1_0] = computeStructureBoundary_Cylinder(fldMsh,propALE); % Minimum cylinder center coordinates and initial radius
 
 % Initialize parameter states
 p1 = p1_0;
@@ -141,7 +137,7 @@ PlotFlag = 'False';
 
 %% Define abstract base functions and logging process
 %J_  = @(J_, p1, p2) J_ + design_penalization*0.5*((p1 - p1_0)^2.0 + (p2 - p2_0)^2.0);
-% djdp1_ = @(djdp1_, p1) djdp1_ + design_penalization*(p1 - p1_0);
+%djdp1_ = @(djdp1_, p1) djdp1_ + design_penalization*(p1 - p1_0);
 djdp1_ = @(djdp1_, p1) djdp1_;
 
 % Set up progress bar
@@ -151,7 +147,7 @@ fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
 tic
 
 %% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
-while (max(abs(djd1)) > 1e-4 && i <= iterationLimit)
+while (abs(djd1) > 1e-10 && i <= iterationLimit)
     %% Update internal variables with updated values from previous iteration
     propALE.propUser.p1 = p1;
      
@@ -165,13 +161,12 @@ while (max(abs(djd1)) > 1e-4 && i <= iterationLimit)
     % Calculate drag and lift force from the nodal forces
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
 
-    % Calculate drag and lift coefficient based on drag and lift force
     % Retrieve Fx and Fy from post processing
     forcesOnDomain = postProc_update.valuePostProc{1};
     Fx = forcesOnDomain(1,1);
     Fy = forcesOnDomain(2,1);
 
-    % Calculate drag and lift coefficients
+    % Set drag and lift
     lift = Fy;
     drag = Fx;
 
@@ -187,12 +182,7 @@ while (max(abs(djd1)) > 1e-4 && i <= iterationLimit)
     [fldMsh_p1,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
         solve_LinearSystem,propFldDynamics, i);
-    
-    graph.index = 1;  
-    graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-        (fldMsh_p1,'undefined',zeros(length(fldMsh_p1.nodes(:,1)),1),[],graph,'');
-    graph.index = graph.index + 1;
-    
+
     [~,FComplete,~,~] = solve_FEMVMSStabSteadyStateNSE2D...
         (fldMsh_p1,up,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
@@ -215,9 +205,8 @@ while (max(abs(djd1)) > 1e-4 && i <= iterationLimit)
     drag_dp1 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p1;
               
     %% Compute gradient
-    if i > 1
-        djd1 = djdp1_(drag_dp1,propALE.propUser.p1); % Compute gradient for parameter 1
-    end
+    djd1 = djdp1_(drag_dp1,propALE.propUser.p1); % Compute gradient for parameter 1
+
     %% Update step size - Barzilai-Borwein step length for gradient descent
 %     if isempty(p1_hist) == 0      
 %         denom = (djd1 - djdp1(end))^2 + (djd2 - djdp2(end))^2;
@@ -231,25 +220,22 @@ while (max(abs(djd1)) > 1e-4 && i <= iterationLimit)
 %     p2 = propALE.propUser.p2 +  propALE.propUser.iterate_p2; % Gradient descent update
 %     p2 = max(p2, (0.5*p2_0)); % Width constraint
     
-    %propALE.propUser.iterate_p1 = djd1*propALE.propUser.delta_p1;
-    propALE.propUser.iterate_p1 = propALE.propUser.delta_p1;
-    p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1;
-    
-    % Update parameter history
+    % Update parameter history   
 %     p1_hist = [p1_hist, propALE.propUser.p1]; 
 %     djdp1 = [djdp1, djd1];
+
+    propALE.propUser.iterate_p1 = djd1*propALE.propUser.delta_p1;
+    p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1;
+    
     propALE.propUser.Perturb_Flag = 'set_final';
 
     %% Update the mesh for the adjusted nominal state  
     [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
         solve_LinearSystem,propFldDynamics, i);
-        
-    graph.index = 1;    
-    graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-        (fldMsh,'undefined',zeros(length(fldMsh.nodes(:,1)),1),[],graph,'');
-    graph.index = graph.index + 1;
     
+    fldMsh.initialNodes = fldMsh.nodes;
+
     %% Increment iteration counter
     i = i + 1;
         

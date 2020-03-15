@@ -94,15 +94,10 @@ propVTK_false.isOutput = false;
 
 %% Input parameters
 % max input velocity defined in the reference paper
-Umax = 0.3;
+Umax = 0.1;
 
-% define parameters used in reference paper and simualiton
-D = 0.1;    % diameter of the body
-Ubar = 0.2; % mid velocity
-rho = parameters.rho; % density
-
-%% Change input velocity to have the parabolic distribution for each randomized input
-valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
+%% Change input velocity to have the power law distribution for each randomized input
+valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
 
 %% Variable initialization
 i = 1; % Counter initialization for iteration tree search
@@ -139,7 +134,7 @@ noNodes = length(fldMsh.nodes(:,1));
 noDOFs = 3*noNodes;
 up = zeros(noDOFs,1);
 
-% Parameters (I/O)
+% Parameters (I/O) (True/False)
 PlotFlag = 'False';
 
 %% Define abstract base functions and logging process
@@ -169,23 +164,19 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     % Calculate drag and lift force from the nodal forces
     postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
 
-    % Calculate drag and lift coefficient based on drag and lift force
     % Retrieve Fx and Fy from post processing
     forcesOnDomain = postProc_update.valuePostProc{1};
     Fx = forcesOnDomain(1,1);
     Fy = forcesOnDomain(2,1);
-
-    % Calculate drag and lift coefficients
-    dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
-    liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
-
-    % Remove negative coefficients
-    liftCoefficient = abs(liftCoefficient);
+    
+    % Set drag and lift
+    lift = Fy;
+    drag = Fx;
 
     % Write nominal output vector
-    output_Nom(i,:) = [i, liftCoefficient, dragCoefficient];  
-    referenceDrag_Nom = dragCoefficient; % Define reference drag of nominal state for accuracy calculations
- 
+    output_Nom(i,:) = [i, p1, lift, drag];  
+    referenceDrag_Nom = drag; % Define reference drag of nominal state for accuracy calculations
+
     %% Solve the CFD problem with perturbed p1   
     p1 = propALE.propUser.p1 + propALE.propUser.delta_p1; % Adjust user-defined parameter 1
     propALE.propUser.Perturb_Flag = 'dy';
@@ -207,16 +198,14 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     Fx = forcesOnDomain(1,1);
     Fy = forcesOnDomain(2,1);
 
-    dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
-    liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
-
-    liftCoefficient = abs(liftCoefficient);
+    lift = Fy;
+    drag = Fx;
 
     % Write output vector
-    output_p1(i,:) = [p1, liftCoefficient, dragCoefficient];
+    output_p1(i,:) = [i, p1, lift, drag];  
 
     % Compute sensitivities via finite differencing
-    drag_dp1 = (dragCoefficient - referenceDrag_Nom) / propALE.propUser.delta_p1;
+    drag_dp1 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p1;
           
     %% Solve the CFD problem with perturbed p2  
     p2 = propALE.propUser.p2 + propALE.propUser.delta_p2; % Adjust user-defined parameter 1
@@ -239,21 +228,18 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     Fx = forcesOnDomain(1,1);
     Fy = forcesOnDomain(2,1);
 
-    dragCoefficient = (2 * Fx)/(rho * Ubar * Ubar * D);
-    liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
+    lift = Fy;
+    drag = Fx;
 
-    liftCoefficient = abs(liftCoefficient);
+    output_p2(i,:) = [i, p1, lift, drag];  
 
-    output_p2(i,:) = [p2, liftCoefficient, dragCoefficient];
- 
-    drag_dp2 = (dragCoefficient - referenceDrag_Nom) / propALE.propUser.delta_p2;
-     
+    drag_dp2 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p2;
+
     %% Compute objective function and gradients
     if i > 1
     djd1 = djdp1_(drag_dp1,propALE.propUser.p1); % Compute gradient for parameter 1
     djd2 = djdp2_(drag_dp2,propALE.propUser.p2); % Compute gradient for parameter 2
     end
-%    djd2 = 0; % To anlayze p1 only set djd2 = 0      
     
     %% Update step size - Barzilai-Borwein step length for gradient descent
     if isempty(p1_hist) == 0      
@@ -264,15 +250,15 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     %% Update parameter values for next iteration
     propALE.propUser.iterate_p1 = sign(djd1)*min(abs(gamma*djd1), (0.01*p1_0)); % Calculate gradient descent
     propALE.propUser.iterate_p2 = sign(djd2)*min(abs(gamma*djd2), (0.01*p2_0)); % Calculate gradient descent
-    p1 = propALE.propUser.p1 + propALE.propUser.iterate_p1; % Gradient descent update
-    p2 = propALE.propUser.p2 +  propALE.propUser.iterate_p2; % Gradient descent update
+    p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1; % Gradient descent update
+    p2 = propALE.propUser.p2 -  propALE.propUser.iterate_p2; % Gradient descent update
     p2 = max(p2, (0.5*p2_0)); % Width constraint
     
     % Update parameter history
-    p1_hist = [p1_hist, propALE.propUser.p1]; 
-    p2_hist = [p2_hist, propALE.propUser.p2];
-    djdp1 = [djdp1, djd1];
-    djdp2 = [djdp2, djd2];   
+    p1_hist(i,:) = propALE.propUser.p1; 
+    p2_hist(i,:) = propALE.propUser.p2;
+    djdp1(i,:) = djd1;
+    djdp2(i,:) = djd2;   
     
     %% Update the mesh for the adjusted nominal state
     propALE.propUser.Perturb_Flag = 'dxdy';
@@ -280,6 +266,8 @@ while (max(abs(djd1),abs(djd2)) > 1e-4 && i <= iterationLimit)
     [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
         solve_LinearSystem,propFldDynamics, i);
+    
+    fldMsh.initialNodes = fldMsh.nodes;
     
     %% Increment iteration counter
     i = i+1;
@@ -293,21 +281,19 @@ end
 disp(['Elapsed time: ', num2str(toc)])
 
 %% Plot output results
-% Drag coefficient
 if strcmp(PlotFlag, 'True')
-    figure(graph.index)
+    % Drag
+    figure(1)
     histfit(output(:,2))
     yt = get(gca, 'YTick');
-    set(gca, 'YTick', yt, 'YTickLabel', yt/numel(output(:,2)))
-    title('Output histogram for the drag coefficient')
-    graph.index = graph.index + 1;
+    set(gca, 'YTick', yt, 'YTickLabel', yt/numel(output_Nom(:,4)))
+    title('Drag Output Histogram')
 
-    % Lift coefficient
-    figure(graph.index)
+    % Lift
+    figure(2)
     histfit(output(:,3))
     yt = get(gca, 'YTick');
-    set(gca, 'YTick', yt, 'YTickLabel', yt/numel(output(:,3)))
-    title('Output histogram for the lift coefficient')
-    graph.index = graph.index + 1;
+    set(gca, 'YTick', yt, 'YTickLabel', yt/numel(output_Nom(:,3)))
+    title('Lift Output Histogram')
 end
 %% END OF THE SCRIPT
