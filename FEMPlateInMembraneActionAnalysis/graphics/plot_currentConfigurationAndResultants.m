@@ -1,5 +1,5 @@
 function [index,minComp,maxComp] = plot_currentConfigurationAndResultants...
-    (mesh,rb,displacement,parameters,analysis,resultant,component,graph)
+    (mesh,homDBC,displacement,parameters,analysis,resultant,component,graph)
 %% Licensing
 %
 % License:         BSD License
@@ -15,7 +15,7 @@ function [index,minComp,maxComp] = plot_currentConfigurationAndResultants...
 %
 %              input :
 %               mesh : Elements and nodes of the mesh
-%                 rb : Vector of the Dirichlet boundary conditions with their
+%             homDBC : Vector of the Dirichlet boundary conditions with their
 %                      global numbering
 %       displacement : The displacement field sorted in a vector according to its
 %                      global numbering
@@ -126,7 +126,7 @@ end
 isAnalysis3d = false;
 if ~isempty(analysis) 
     if isfield(analysis,'type')
-        if strcmp(analysis.type,'PLANE_STESS') || strcmp(analysis.type,'PLANE_STRAIN')
+        if strcmp(analysis.type,'planeStress') || strcmp(analysis.type,'planeStrain')
             noDoFsElement = noNodesElement*2;
         end
     else
@@ -157,12 +157,12 @@ end
 % Compute the material matrix in case strains or stresses are requested
 if ~isempty(analysis)
     if isfield(analysis,'type')
-        if strcmp(analysis.type,'PLANE_STRESS')
+        if strcmp(analysis.type,'planeStress')
             preFactor = parameters.E/(1-parameters.nue^2);
             C = preFactor*[1                parameters.nue 0
                            parameters.nue   1              0
                            0                0              (1-parameters.nue)/2];
-        elseif strcmp(analysis.type,'PLAIN_STRAIN')
+        elseif strcmp(analysis.type,'planeStrain')
             preFactor = parameters.E*(1-parameters.nue)/(1+parameters.nue)/(1-2*parameters.nue);
             C = preFactor*[1                                 parameters.nue/(1-parameters.nue) 0
                            parameters.nue/(1-parameters.nue) 1                                 0

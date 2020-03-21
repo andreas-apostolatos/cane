@@ -245,34 +245,213 @@ The index $\hat{i}$ on $\hat{\mathbf{u}}$ and $\hat{\boldsymbol{\lambda}}$ indic
 
 \section{Realization}
 
-As aforementioned, the actual contact surface $\Gamma_{\text{c}}$ is not known in advanced, since it depends on the solution $\mathbf{u}$. Given the variational inequality nature of the problem, an iterative approach is employed. This procedure is illustrated in Algorithm~\ref{alg:contact_algorithm}.
+As aforementioned, the actual contact surface $\Gamma_{\text{c}}$ is not known in advanced, since it depends on the solution $\mathbf{u}$. Given the variational inequality nature of the problem, an iterative approach is employed. This procedure is illustrated in Algorithm~\ref{alg:contact_algorithm_1}. \\
 
 \begin{algorithm}[H]
 
-	compute the initial gap function in Eq.~\eqref{eq:initial_gap} \; \vspace*{5pt}
+	1. Remove fully constrained nodes and compute the initial gap function in Eq.~\eqref{eq:initial_gap} \; \vspace*{5pt}
+	
+    2. Compute the tangential stiffness matrix of the structure in Eq.~\eqref{eq:tangent_stiffness_matrix} \;	\vspace*{5pt}
+    
+    3. Create the expanded system of equations \;	\vspace*{5pt}
+    
+    4. Solve expanded system iteratively \;	\vspace*{5pt}
 
-	\While{conditions in~\eqref{eq:complementarity_cnd_gap}-~\eqref{eq:complementarity_cnd_traction} are not satisfied}{
+	\While{inactive nodes change $\mathbf{and}$ Lagrange Multipliers are not valid}{
 	\vspace*{5pt}
 	
-	solve the elasticity problem in Eq.~\eqref{eq:variational_formulation_structural_mechanics} \;	\vspace*{5pt}
+	4.1. Find the inactive nodes from expanded displacement (Lagrange Multiplier) vector \;	\vspace*{5pt}
 	
-	find the nodes penetrating the rigid body $\mathfrak{F}$ \; \vspace*{5pt}
+	4.2. Reduce the system of equations according to the inactive nodes \;	\vspace*{5pt}
 	
-	update the vector of Lagrange Multipliers in Eq.~\eqref{eq:discretization_lambda} with the new constraints \; \vspace*{5pt} 
+	4.3. Solve the reduced system of equations in Eq.~\eqref{eq:system_discrete_form_lagrange_multipliers} \;	\vspace*{5pt}
 	
-	compute the normal traction at the contact nodes using the Lagrange Multipliers solution \;	\vspace*{5pt}	
+	4.4. Assemble the expanded displacement (Lagrange Multiplier) vector in Eq.~\eqref{eq:vectors_of_dofs} \; \vspace*{5pt}
 	
-	compute the new Lagrange Multipliers matrix in Eq.~\eqref{eq:lagrange_multipliers_matrix} \vspace*{5pt} \;
+	4.5. Evaluate convergence conditions \; \vspace*{5pt}
 	
-	assemble the new constrained by Lagrange Multipliers system in Eq.~\eqref{eq:system_discrete_form_lagrange_multipliers} \; \vspace*{5pt}
-	
-	
-	}
+	}\vspace*{5pt}
+	5. Get the values for the displacement and the Lagrange Multipliers \; \vspace*{5pt}
 
-	\caption{Contact algorithm}
+	\caption{Contact algorithm 1}
 	
-	\label{alg:contact_algorithm}
+	\label{alg:contact_algorithm_1}
 \end{algorithm}
+
+
+\section{Appendix}
+
+This section focuses on the numerical implementation of the Signorini frictionless contact problem in MATLAB computing environment. All data types and functions used in the script are described fully in detail and reflect the algorithm discussed previously. 
+
+\subsection{Structure description}
+
+
+\subsubsection{segments} 
+
+Is a struct that contains the information about rigid boundary. It consists out of three fields. Field \textit{.points} is a 2x2xN matrix of coordinates structured as follows,
+
+\begin{equation}
+	\left[ \begin{array}{cc}
+		x_0 & y_0\\
+		x_1 & y_1
+    \end{array}	 \right] \;. \label{eq:segments_struct}
+\end{equation}
+
+Coordinates $x_0$ and $y_0$ represent the first point $\mathbf{A}$, while coordinates $x_1$ and $y_1$ represent the second point $\mathbf{B}$ of the segment. During the calculation, struct $\textbf{segments}$ is further expanded by the field \textit{.normals} which is a Nx2 matrix. Where N is the number of segments defined in the field \textit{.number}.\\
+
+When defining the rigid boundary user only has to define the field \textit{.points}. Orientation of each segment has to be respected by the user so that the normal vectors are orientated towards the body of interest. Other two fields are automatically constructed in the solver. Individual segments are independent from each other and do not have to be connected. It is recommended for individual segments to be longer than the size of mesh elements.
+
+
+\subsubsection{propContact}
+
+Is a struct that contains the information about the possible contact nodes defined by the user in GiD. It consists out of three fields. Field \textit{.nodeIDs} is an array that contains global numbering of the nodes. Size of that vector is stored in field \textit{.numberOfNodes}. Both fields are constructed during the parsing from GiD input file. Field \textit{.gap} contains perpendicular distances from each segment to each contact node and it is constructed during calculation of contact. It is a MxN matrix where M is the number of contact nodes and N is the number of segments. Each column is linked to one segment.\\
+
+User must define the possible contact nodes in GiD. In case of large applied forces, specifying the whole body as a boundary is usually a safe bet since large displacements and deformations in the first step of solver iteration might cause the contact nodes to move far away from the rigid boundary and in turn violating the linear gap function.
+
+
+\subsubsection{Lagrange}
+
+Is a struct containing the information about Lagrange Multipliers. It consists out of two fields. Field \textit{.active\_nodes} contains the global numbering of the mesh nodes where Lagrange Multipliers apply. So only the active contact nodes. While field \textit{.multipliers} stores the values of Lagrange Multipliers of that nodes. This enables us to visualize the contact nodes.
+
+
+
+
+\subsection{Function description}
+
+\subsubsection{removeFullyConstrainedNodes}
+
+Is a function that reduces the number of defined contact nodes. It removes fully constrained nodes from the set of possible contact nodes (\textit{propContact.nodeIDs}). Nodes that have both DOFs (x,y) fully constrained do not need to be tested for possible contact with the rigid boundary since they will not move. This function is not necessary for the solver, but it can speed up the code. 
+
+\subsubsection{buildSegmentsData}
+
+Is a function that expands a data structure $\textbf{segments}$ by the field \textit{.normals}. Normal vectors are perpendicular to the segment and normalized to have an unit length. 
+
+\subsubsection{computeGapFunction}
+
+Is a function that expands the data structure $\textbf{propContact}$ by the field \textit{.gap}. Gap function in our case is nothing more than a perpendicular distance from each node to each segment. Gap is shown on Figure \ref{im:gap_function} and calculated in the following way. Point $\mathbf{P}$ represents a node in undeformed configuration, while point $\mathbf{R}$ is the position of the node after applied displacement $\mathbf{u}$ and can be represented as follows,
+
+\begin{equation}
+	\mathbf{R} = \mathbf{P} + \mathbf{u} \:.
+	\label{eq:point_after_displacement}
+\end{equation}
+
+Initial gap function is only calculated for undeformed configuration at $\mathbf{u}$ = 0, therefore $\mathbf{R}$ = $\mathbf{P}$ and $\mathbf{g_0}$ = $\mathbf{g}$. Point $\mathbf{R}^*$ is the projection of the point $\mathbf{R}$ on the segment $\mathbf{AB}$ and can be represented by a linear combination of points $\mathbf{A}$ and $\mathbf{B}$ by parameter $\alpha$.
+
+\begin{equation}
+	\mathbf{R}^\ast = (1-\alpha)\mathbf{A} + \alpha\mathbf{B} \:.
+	\label{eq:projection_point_R}
+\end{equation}
+
+As vectors $\mathbf{AB}$ and $\mathbf{R}^*\mathbf{R}$ are perpendicular, their dot product must be equal to zero,
+
+\begin{equation}
+	(\mathbf{B}-\mathbf{A})\cdot(\mathbf{R}-\mathbf{R}^*) = 0 \:.
+	\label{eq:dot_product_equality}
+\end{equation}
+
+If we substitute Eq.~\eqref{eq:projection_point_R} into Eq.~\eqref{eq:dot_product_equality} we get a closed form for parametric distance $\alpha$ along the segment $\mathbf{AB}$,
+
+\begin{equation}
+	\alpha = \frac{(\mathbf{A}-\mathbf{B})\cdot(\mathbf{R}-\mathbf{A})}{(\mathbf{A}-\mathbf{B})\cdot(\mathbf{B}-\mathbf{A})}  \:,
+	\label{eq:parameter_alpha}
+\end{equation}
+
+\begin{equation}
+	\mathbf{g_o} = \mathbf{n}\cdot(\mathbf{R}-\mathbf{R}^*)  \:.
+	\label{eq:gap}
+\end{equation}
+
+Now we can easily compute point $\mathbf{R}^*$. Gap is then the dot product between normal and vector $\mathbf{R}^*\mathbf{R}$ in Eq.~\eqref{eq:gap} In case the node is penetrating the distance is negative, otherwise it is positive.
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.85\textwidth}\import{./figures/}{gap_function.pdf_tex}
+	\caption{Calculation of the gap function (Euclidean distance).}
+	\label{im:gap_function}
+\end{figure}
+
+\subsubsection{buildConstraintMatrix}
+
+Is a function that builds the constraint (Lagrange Multipliers) matrix $\mathbf{C}$ in Eq.~\eqref{eq:lagrange_multipliers_matrix} to be appended to the tangent stiffness matrix $\mathbf{K}$ in Eq.~\eqref{eq:tangent_stiffness_matrix}. The constraint matrix is built with dimensions MxN, where M is the number of DOFs and N is the number of segments multiplied by the the number of contact nodes. The matrix is filled with the normal vectors of the segments.
+
+\subsubsection{detectInactiveNodes}
+
+Is a function that detects inactive degrees of freedom in each step of iteration. Inactive DOFs are the ones that are non-penetrating and have non-compressive Lagrange multipliers. To check if a node is non-penetrating, we have to evaluate its gap function to each segment after applied displacement $\mathbf{u \ne}$ 0. Node $\mathbf{R}$ must not lie within the gray area marked on the Figure~\ref{im:non_penetration}. Calculation is the same as in $\textbf{computeGapFunction}$, but now two extra conditions must be satisfied,
+
+\begin{equation}
+	g > 0  \:,
+	\label{eq:within_penetration}
+\end{equation}
+
+\begin{equation}
+	0 < \alpha \leq 1  \:.
+	\label{eq:within_boundary}
+\end{equation}
+
+In addition to that, the node must have a non-compressive Lagrange Multiplier which is checked by Eq.~\eqref{eq:negative_lagrange}. If any of aforementioned conditions holds, the node is active.
+
+\begin{equation}
+	\lambda \leq 0 \:.
+	\label{eq:negative_lagrange}
+\end{equation}
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.85\textwidth}\import{./figures/}{non_penetration.pdf_tex}
+	\caption{Node penetration area.}
+	\label{im:non_penetration}
+\end{figure}
+
+\subsubsection{buildFullDisplacement}
+
+Is a function that rebuilds full expanded displacement (Lagrange Multipliers) vector from the reduced displacement vector. We loop over all degrees of freedom. If we are in location of DOF that was previously deleted due to a constraint we have to add 0, otherwise we simply copy the values from the reduced displacement vector.
+
+
+
+\subsection{Equation systems}
+
+\subsubsection{Expanded system of equations}
+
+Correspond to discrete system of equations in terms of a Newton-Raphson formulation in Eq.~\eqref{eq:system_discrete_form_lagrange_multipliers}. It is created in the third step of the solver, before entering the while loop. The expanded system of equations is build with full degrees of freedom of the system, as we would assume that all contact nodes can come with contact to any segment. Which nodes come into contact is of course not known in advance and it is computed during iterations. \\
+
+Size of the expanded system of equations is know in advance and it is build with dimensions depicted in Figure~\ref{im:expanded_system}.
+
+\begin{itemize}
+
+	\item[i.] $\mathbf{K_{exp}}$ is an expanded global stiffness matrix. It consists of tangent stiffness matrix $\mathbf{K}$ and constraint (Lagrange Multiplier) matrix $\mathbf{C}$.
+	
+	\item[ii.] $\mathbf{u_{exp}}$ is an expanded displacement vector. It contains displacements u for each DOF and Lagrange Multipliers $\lambda$ for each node to each segment.
+	
+	\item[iii.] $\mathbf{F_{exp}}$ is and expanded force vector. It contains applied forces for each DOF and the initial gap functions $g_0$ from each node to each segment.
+	
+	\item[iv.] $\mathbf{NUM}$ = number of segments $\mathbf{\cdot}$ number of contact nodes
+
+\end{itemize}
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.8\textwidth}\import{./figures/}{equation_system.pdf_tex}
+	\caption{Expanded system of equations.}
+	\label{im:expanded_system}
+\end{figure}
+
+\subsubsection{Reduced system of equations}
+
+After finding the inactive nodes in each iteration we can merge them together with homDBC and remove corresponding entries in expanded system. We get the reduced system of equations that we can be solved by, 
+
+\begin{equation}
+	\mathbf{u_{red}} = \mathbf{K_{red}}^{-1}  \mathbf{F_{red}} \:,
+	\label{eq:positive_gap}
+\end{equation}
+
+to obtain displacements. From reduced displacement vector the full (expanded) displacement vector is then build via function $\textbf{buildFullDisplacement}$.
+
+\subsubsection{Convergence conditions}
+
+There are two main convergence conditions that need to be meet before we exit the loop. Set of inactive nodes must stay the same as in previous iteration and all Lagrange multipliers have to be valid. In addition, we specify the maximum number of iterations in case our solution does not converge.
 
 % \bibliographystyle{elsarticle-num-names}
 \bibliographystyle{alpha}
