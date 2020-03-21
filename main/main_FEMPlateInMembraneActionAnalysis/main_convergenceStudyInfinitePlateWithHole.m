@@ -62,14 +62,14 @@ z = 0;
 nodeCoord = [x y z];
 
 % Function handle to the body force vector computation
-bodyForces = @computeConstantVecrticalBodyForceVct;
+bodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Function handle to the linear equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % Function handle to the computation of the linear stiffness matrix
-% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
-computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
+computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
+% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
 
 % Geometry characteristics for the case
 internalRadius = 4;
@@ -131,9 +131,9 @@ end
 
 % plot the reference configuration
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,analysis,NBC,0,intDomain,'outputEnabled');
+    (strMsh,NBC,0,intDomain,'outputEnabled');
 plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,analysis,F,homDBC,graph,'outputEnabled');
+    (strMsh,F,homDBC,graph,'outputEnabled');
 
 % Solve for the discrete displacement field of the overkill solution
 [dHat,FComplete,minElEdgeSizeOverkill] = solve_FEMPlateInMembraneAction...

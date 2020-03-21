@@ -62,11 +62,33 @@ caseName = 'example_01_bridge';
     propNLinearAnalysis,propStrDynamics,gaussInt,propContact] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
 
-%% GUI - on the graph
-graph.index = 1;
+%% UI
+
+% On the body forces
+bodyForces = @computeConstantVerticalStructureBodyForceVct;
+
+% Choose equation system solver
+solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
+% solve_LinearSystem = solve_LinearSystemGMResWithIncompleteLUPreconditioning;
+
+% Choose computation of the stiffness matrix
+computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
+% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
+
+% Update the contact properties
+propContact.maxIter = 30;
+
+% On whether the case is a unit test
+isUnitTest = true;
 
 % On the geometry visualization
 graph.visualization.geometry = 'current';
+
+% Initialize graphics index
+graph.index = 1;
+
+%% Output data to a VTK format
+pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
 %% Rigid wall- line  [(x0,y0) ; (x1,y1)]
 
@@ -74,9 +96,9 @@ graph.visualization.geometry = 'current';
 if strcmp(caseName,'example_01_bridge')
    
     % Either define bottom contact line segment and add it to the segments
-    segments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
-    segments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
-    segments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
+    contactSegments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
+    contactSegments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
+    contactSegments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
     
     % ...or define a circular contact boundary
     center = [2,-4.1];
@@ -91,47 +113,43 @@ if strcmp(caseName,'example_01_bridge')
 elseif strcmp(caseName,'example_02_wedge')
     
     % define bottom contact line segment and add it to the segments
-    segments.points(:,:,1) = [-1, 3.75; -1, -2];
-    segments.points(:,:,2) = [-0.33333, -2; 1.2, 3.75];
-    segments.points(:,:,3) = [-1, -2; -0.33333, -2];
+    contactSegments.points(:,:,1) = [-1, 3.75; -1, -2];
+    contactSegments.points(:,:,2) = [-0.33333, -2; 1.2, 3.75];
+    contactSegments.points(:,:,3) = [-1, -2; -0.33333, -2];
 
 elseif strcmp(caseName,'example_03_hertz')
     % define bottom contact line segment
     wall_1 = [5, -1; 5, 5];
     
     % add a wall to the segments of points
-    segments.points(:,:,1) = wall_1;    
+    contactSegments.points(:,:,1) = wall_1;    
 
 end
+
+%% Compute normals to segments
+contactSegments = buildSegmentsData(contactSegments);
 
 %% Compute the load vector
 time = 0;
 F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'outputEnabled');
 
 %% Output data to a VTK format
-% pathToOutput = '../../outputVTK/FEMContactLinearPlateInMembraneAction/';
-% not implemented yet
+pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
-%% Visualization of the configuration
+%% Plot the reference configuration
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,F,homDBC,graph,'outputEnabled');
-
-% plot the wall segment
-plot_segments(segments); 
+    (strMsh,F,homDBC,contactSegments,graph,'outputEnabled');
 
 %% Solve the system and get the displacement field
-ts = cputime;
-
-maxIteration = 30;
-
-[displacement,lagrange] = solveSignoriniLagrange_1(strMsh,homDBC,propContact,F,segments,parameters,analysis,maxIteration,'outputEnabled'); 
+[displacement,lagrange] = solveSignoriniLagrange_1...
+    (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,parameters,...
+    contactSegments,computeStiffMtxLoadVct,solve_LinearSystem,...
+    propNLinearAnalysis,propContact,gaussInt,caseName,pathToOutput,...
+    isUnitTest,'outputEnabled'); 
 %[displacement,lagrange] = solveSignoriniLagrange_2(strMsh,homDBC,propContact,F,segments,parameters,analysis,maxIteration,'outputEnabled');
 
-fprintf('\t Time: %4.2f \n',cputime-ts);
-
 %% Postprocessing
-graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,displacement,graph);
-plot_segments(segments);
+graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,contactSegments,displacement,graph);
 plot_activeNodes(strMsh,displacement,lagrange); 
 
 % Get the length of the contact area and the reaction force on the contact
