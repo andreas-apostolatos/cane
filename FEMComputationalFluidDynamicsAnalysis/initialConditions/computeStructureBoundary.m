@@ -1,4 +1,4 @@
-function [x_Min] = computeStructureBoundary(msh,propALE)
+function [x_Base_Min, x_Mid, x_Base_Width, x_Top_Width, y_Max] = computeStructureBoundary(msh,propALE)
 
 %% Licensing
 %
@@ -64,7 +64,7 @@ function [x_Min] = computeStructureBoundary(msh,propALE)
 %
 %   2ii. Get the coordinates of the node
 %
-% 3. Return the minimum x value
+% 3. Return the geometry of structure boundary
 
 %% 0 Initialize structure array counter
 i = 1;
@@ -90,7 +90,17 @@ if ~isempty(propALE)
         end
     end
     
-    %% 3. Return the minimum x coordinate
-    x_Min = min(x);
+    %% 3. Return the building geometry 
+    % Y Geometry  
+    y_Max = max(y);
+    y_max_index = find(y==y_Max); %Find indices for all nodes along the maximum y boundary
     
+    % X Geometry
+    x_Base_Min = min(x);
+    x_Base_Max = max(x);
+    x_Base_Width = x_Base_Max - x_Base_Min;
+    x_Mid = x_Base_Min + ((x_Base_Max-x_Base_Min)*0.5); % Locate center of building for dx motion
+    x_Top_Min = min(x(y_max_index)); %Calculate min/max of the upper boundary nodes. Used for tapered buildings
+    x_Top_Max = max(x(y_max_index));
+    x_Top_Width = x_Top_Max - x_Top_Min;
 end
