@@ -52,9 +52,9 @@ addpath('../../contactMechanicsAnalysis/plot',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-% caseName = 'example_01_bridge';
+caseName = 'example_01_bridge';
 % caseName = 'example_02_wedge';
-caseName = 'example_03_hertz';
+% caseName = 'example_03_hertz';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
@@ -78,7 +78,7 @@ computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
 propContact.maxIter = 30;
 
 % On whether the case is a unit test
-isUnitTest = true;
+isUnitTest = false;
 
 % On the geometry visualization
 graph.visualization.geometry = 'current';

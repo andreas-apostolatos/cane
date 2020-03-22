@@ -1,4 +1,4 @@
-function  propContact = computeGapFunction(mesh,propContact,segments)
+function  propContact = computeGapFunction(mesh,propContact,segmentsContact)
 %% Licensing
 %
 % License:         BSD License
@@ -22,7 +22,7 @@ function  propContact = computeGapFunction(mesh,propContact,segments)
 %       propContact : Data structure containing the contact properties,
 %                           .nodeIds : global numbering of contact nodes
 %                     .numberOfNodes : number of nodes 
-%          segments : Data sturcture containing information about the 
+%   segmentsContact : Data sturcture containing information about the 
 %                     boundaries of the rigid wall :
 %                           .points : a list of 2x2 matrices containing
 %                                      end points of the segment(s)
@@ -51,22 +51,22 @@ function  propContact = computeGapFunction(mesh,propContact,segments)
 %% Function main body
 
 %% 1. Loop over all segments
-for iSeg = 1:segments.number
+for iSeg = 1:segmentsContact.number
     %% 1i. Loop over all contact nodes
     for iCN = 1:size(propContact.nodeIDs,1)
         %% 1i.1. Get the nodal coordinates
         nodeContact = mesh.nodes(propContact.nodeIDs(iCN),1:2);
         
         %% 1i.2. Get the vertices of the segment
-        vertexA = segments.points(1,:,iSeg);
-        vertexB = segments.points(2,:,iSeg);
+        vertexA = segmentsContact.points(1,:,iSeg);
+        vertexB = segmentsContact.points(2,:,iSeg);
         
         %% 1i.3. Project the node on the segment
         lambda = ((vertexA - vertexB)*(nodeContact-vertexA)')/((vertexA - vertexB)*(vertexB - vertexA)');
         nodeContact_proj = (1 - lambda)*vertexA + lambda*vertexB;
         
         %% 1i.4. Compute the normal distance of the node to the segment
-        propContact.gap(iCN,iSeg) = segments.normals(iSeg,:)*(nodeContact - nodeContact_proj)';
+        propContact.gap(iCN,iSeg) = segmentsContact.normals(iSeg,:)*(nodeContact - nodeContact_proj)';
     end
 end
 

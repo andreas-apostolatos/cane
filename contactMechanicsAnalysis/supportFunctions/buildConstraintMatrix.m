@@ -1,4 +1,4 @@
-function C = buildConstraintMatrix(noDOFs,propContact,segments)
+function C = buildConstraintMatrix(noDOFs,propContact,segmentsContact)
 %% Licensing
 %
 % License:         BSD License
@@ -19,7 +19,7 @@ function C = buildConstraintMatrix(noDOFs,propContact,segments)
 %       propContact : Data structure containing the contact properties,
 %                           .nodeIds : global numbering of contact nodes
 %                     .numberOfNodes : number of nodes
-%          segments : Data sturcture containing information about the 
+%   segmentsContact : Data sturcture containing information about the 
 %                     boundaries of the rigid wall :
 %                           .points : a list of 2x2 matrices containing
 %                                      end points of the segment(s)
@@ -60,14 +60,14 @@ C = zeros(noDOFs, noDOFsLM);
 counterLM = 1;
 
 %% 1. Loop over all rigid segments
-for iSeg = 1:segments.number
+for iSeg = 1:segmentsContact.number
     %% 1i. Loop over all potential contact nodes
     for iCN = 1:propContact.numberOfNodes
         %% 1i.1. Find the DOFs of the node
         DOF = 2*propContact.nodeIDs(iCN) - 1 : 2*propContact.nodeIDs(iCN);
         
         %% 1i.2. Assemble the entry to the coupling matrix
-        C(DOF,counterLM) = segments.normals(iSeg,:);
+        C(DOF,counterLM) = segmentsContact.normals(iSeg,:);
         
         %% 1i.3. Update counter which counts the Lagrange Multipliers DOFs
         counterLM = counterLM + 1;
