@@ -1,5 +1,5 @@
 function [contactLength,contactForce,maxContactPressure] = computeContactResultants...
-    (mesh,displacement,lagrange,parameters)
+    (mesh,displacement,lambdaHat,nodeIDs_active,parameters)
 %% Licensing
 %
 % License:         BSD License
@@ -47,28 +47,28 @@ for i=1:length(mesh.nodes)
 end
 
 % Compute contact force, which is just the sum of lagrange multipliers
-contactForce = sum(lagrange.multipliers);
+contactForce = sum(lambdaHat);
 
 % Initialize contact length
 contactLength = 0;
-contactPressure = zeros(size(lagrange.active_nodes,1)-1,1);
+contactPressure = zeros(size(nodeIDs_active,1)-1,1);
 
 % Loop over every lagrange multiplier
-for j=2:size(lagrange.active_nodes,1)
+for j=2:size(nodeIDs_active,1)
     
     % Find x0 and y0 coordinate
-    x0 = nodesDisplaced(lagrange.active_nodes(j-1),1);
-    y0 = nodesDisplaced(lagrange.active_nodes(j-1),2);
+    x0 = nodesDisplaced(nodeIDs_active(j-1),1);
+    y0 = nodesDisplaced(nodeIDs_active(j-1),2);
     % Find x1 and y1 coordinate
-    x1 = nodesDisplaced(lagrange.active_nodes(j),1);
-    y1 = nodesDisplaced(lagrange.active_nodes(j),2);
+    x1 = nodesDisplaced(nodeIDs_active(j),1);
+    y1 = nodesDisplaced(nodeIDs_active(j),2);
     
     % Find force at node 0 and 1
-    f0 = -lagrange.multipliers(j-1);
-    f1 = -lagrange.multipliers(j);
+    f0 = - lambdaHat(j-1);
+    f1 = - lambdaHat(j);
     
     % Calculate the distance between the nodes of contact
-    contactLength = contactLength+sqrt((x0-x1)^2+(y0-y1)^2);
+    contactLength = contactLength + sqrt((x0-x1)^2+(y0-y1)^2);
     
     % Calculate the pressure in each segment
     contactPressure(j-1) = (f0+f1)/(2*parameters.t*(sqrt((x0-x1)^2+(y0-y1)^2)));

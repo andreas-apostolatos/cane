@@ -1,4 +1,4 @@
-function [] = plot_activeNodes(mesh,displacement,lagrange)
+function [] = plot_activeNodes(mesh,displacement,nodeIDs_active)
 %% Licensing
 %
 % License:         BSD License
@@ -24,14 +24,14 @@ function [] = plot_activeNodes(mesh,displacement,lagrange)
 %% Function main body
 
 % Check if active nodes exist
-if(isempty(lagrange.active_nodes))
+if(isempty(nodeIDs_active))
     fprintf('No contact nodes !\n');
     return; 
 end
 
 % Add the x and y components of the displacement field
-nodes_X = mesh.nodes(lagrange.active_nodes,1) + displacement(2*lagrange.active_nodes-1);
-nodes_Y = mesh.nodes(lagrange.active_nodes,2) + displacement(2*lagrange.active_nodes);
+nodes_X = mesh.nodes(nodeIDs_active,1) + displacement(2*nodeIDs_active-1);
+nodes_Y = mesh.nodes(nodeIDs_active,2) + displacement(2*nodeIDs_active);
 
 % Plot active nodes
 hold on;

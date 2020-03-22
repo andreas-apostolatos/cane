@@ -1,9 +1,9 @@
 function [u,FComplete,hasConverged,minElSize] = solve_FEMLinearSystem...
     (analysis,uSaved,uDotSaved,uDDotSaved,mesh,F,bodyForces,parameters,u,...
-    uDot,uDDot,massMtx,dampMtx,computeProblemMatricesSteadyState,...
-    DOFNumbering,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,uMeshALE,...
-    solve_LinearSystem,propTransientAnalysis,propNLinearAnalysis,...
-    int,tab,outMsg)
+    uDot,uDDot,massMtx,dampMtx,precompStiffMtx,precomResVct,...
+    computeProblemMatricesSteadyState,DOFNumbering,freeDOFs,homDOFs,...
+    inhomDOFs,valuesInhomDOFs,uMeshALE,solve_LinearSystem,...
+    propTransientAnalysis,propNLinearAnalysis,int,tab,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -38,6 +38,12 @@ function [u,FComplete,hasConverged,minElSize] = solve_FEMLinearSystem...
 %                              uDot : Initial guess for the time derivative 
 %                                     of the primary field (dummy input for 
 %                                     this function)
+%                           massMtx : Mass matrix
+%                           dampMtx : Damping matrix
+%                   precompStiffMtx : Precomputed part of the stiffness 
+%                                     matrix
+%                      precomResVct : Precomputed part of the residual 
+%                                     vector
 % computeProblemMatricesSteadyState : Function handle for the computation 
 %                                     of the matrices and vectors nessecary 
 %                                     for computing the solution vector
@@ -129,15 +135,32 @@ loadFactor = 'undefined';
 hasConverged = 'undefined';
 
 %% 1. Compute the linear matrices of the steady-state problem
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Computing the stiffness matrix of the system\n'));
+if isa(computeProblemMatricesSteadyState, 'function_handle')
+    if strcmp(outMsg,'outputEnabled')
+        fprintf(strcat(tab,'>> Computing the stiffness matrix of the system\n'));
+    end
+    [stiffMtx,resVct,minElSize] = computeProblemMatricesSteadyState...
+        (analysis,u,uSaved,uDot,uDotSaved,precompStiffMtx,precomResVct, ...
+        DOFNumbering,mesh,F,loadFactor,bodyForces,propTransientAnalysis,parameters,int);
+    if ~ischar(precompStiffMtx)
+        stiffMtx = stiffMtx + precompStiffMtx;
+    end
+    if ~ischar(precomResVct)
+        resVct = resVct + precomResVct;
+    end
+else
+    minElSize = 'undefined';
+    if ~ischar(precompStiffMtx)
+        stiffMtx = precompStiffMtx;
+    end
+    if ~ischar(precomResVct)
+        resVct = precomResVct;
+    end
 end
-[stiffMtx,resVct,minElSize] = computeProblemMatricesSteadyState(analysis,u,uSaved,uDot,uDotSaved, ...
-    DOFNumbering,mesh,F,loadFactor,bodyForces,propTransientAnalysis,parameters,int);
 
 %% 2. Compute the stiffness matrix and the residual vector for the transient problem
 if isfield(propTransientAnalysis,'timeDependence')
-    if ~strcmp(propTransientAnalysis.timeDependence,'STEADY-STATE')
+    if ~strcmp(propTransientAnalysis.timeDependence,'steadyState')
         if isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
             ~propTransientAnalysis.isStaticStep
             [stiffMtx,resVct] = propTransientAnalysis.computeProblemMtrcsTransient...

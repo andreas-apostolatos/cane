@@ -104,7 +104,7 @@ F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,propGaussInt,'o
 
 %% Visualization of the configuration
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,analysis,F,homDBC,graph,'outputEnabled');
+    (strMsh,analysis,F,homDBC,[],graph,'outputEnabled');
 
 %% Solve the plate in membrane action problem
 [dHat,FComplete,minElSize] = solve_FEMPlateInMembraneAction...
