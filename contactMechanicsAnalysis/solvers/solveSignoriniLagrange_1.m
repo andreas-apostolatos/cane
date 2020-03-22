@@ -160,15 +160,15 @@ F_exp = [F
          - gapFunction];
 
 % Get number of DOFs in expanded system
-nDOFsFull = length(F_exp);
+noDOFsFull = length(F_exp);
 
-freeDOFs = 1:nDOFsFull;
+freeDOFs = 1:noDOFsFull;
 
 clear C;
 clear gapFunction;
 
 % Initial values for the iteration:
-displacement_exp = zeros(nDOFsFull,1);
+displacement_exp = zeros(noDOFsFull,1);
 it = 1;
 inactive_nodes = [];
 
@@ -241,7 +241,7 @@ end % end while loop
 displacement = displacement_exp(1:noDOFs);
 
 % The last entries in displacement_exp correspond to Lagrange multipliers
-lagrangeMultipliers = displacement_exp(noDOFs+1 : nDOFsFull);
+lagrangeMultipliers = displacement_exp(noDOFs+1 : noDOFsFull);
 
 % Create an 1D vector of all contact nodes
 allContactNodes = repmat(propContact.nodeIDs,contactSegments.number,1);

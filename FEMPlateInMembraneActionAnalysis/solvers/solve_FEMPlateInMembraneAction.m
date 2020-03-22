@@ -150,7 +150,7 @@ freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
 
 %% 2. Compute the load vector
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,NBC,t,propGaussInt,outMsg);
+    (strMsh,analysis,NBC,t,propGaussInt,outMsg);
 
 %% 3. Solve the linear equation system
 [dHat,FComplete,~,minElSize] = solve_FEMLinearSystem(analysis,uSaved,...

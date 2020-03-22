@@ -131,9 +131,9 @@ end
 
 % plot the reference configuration
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,NBC,0,intDomain,'outputEnabled');
+    (strMsh,analysis,NBC,0,intDomain,'outputEnabled');
 plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,F,homDBC,graph,'outputEnabled');
+    (strMsh,analysis,F,homDBC,graph,'outputEnabled');
 
 % Solve for the discrete displacement field of the overkill solution
 [dHat,FComplete,minElEdgeSizeOverkill] = solve_FEMPlateInMembraneAction...

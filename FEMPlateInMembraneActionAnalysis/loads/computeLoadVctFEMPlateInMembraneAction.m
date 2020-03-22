@@ -1,5 +1,5 @@
 function F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,NBC,t,gaussInt,outMsg)
+    (strMsh,analysis,NBC,t,gaussInt,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -14,6 +14,7 @@ function F = computeLoadVctFEMPlateInMembraneAction...
 %
 %           Input :
 %          strMsh : Nodes and elements in the mesh
+%        analysis : .type : The analysis type
 %             NBC :    .nodes : The nodes where Neumann boundary 
 %                                conditions are applied
 %                    .loadType : The type of the load for each Neumann node
@@ -89,7 +90,9 @@ newtonRapshon.eps = 1e-9;
 noNodes = length(strMsh.nodes(:,1));
 
 % Number of DOFs
-noDOFs = 2*noNodes;
+if strcmp(analysis.type,'planeStress') || strcmp(analysis.type,'planeStrain')
+    noDOFs = 2*noNodes;
+end
 
 % Initialize output array
 F = zeros(noDOFs,1);

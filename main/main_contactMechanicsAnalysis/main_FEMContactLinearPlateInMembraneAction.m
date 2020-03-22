@@ -88,7 +88,7 @@ graph.index = 1;
 
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
-
+main_convergenceStudyInfinitePlateWithHole
 %% Rigid wall- line  [(x0,y0) ; (x1,y1)]
 
 % different line segments for different cases
