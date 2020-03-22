@@ -1,4 +1,4 @@
-function [x_Base_Min, x_Mid, x_Base_Width, x_Top_Width, y_Max] = computeStructureBoundary(msh,propALE)
+function [x_Base_Min,x_Mid,x_Base_Width,x_Top_Width,y_Max] = computeStructureBoundary(msh,propALE)
 
 %% Licensing
 %
@@ -9,46 +9,27 @@ function [x_Base_Min, x_Mid, x_Base_Width, x_Top_Width, y_Max] = computeStructur
 %
 %% Function documentation
 %
-% Returns the updated mesh node coordinates and the according velocities on
-% the moving boundaries. For the mesh motion the linear pseudo-structural
-% solver is employed.
+%  Returns geometrical 
 %
 %                 Input :
 %                   msh : Nodes and elements in the low order mesh:
 %                               .nodes : The nodes in the mesh
 %                            .elements : The elements in the mesh
-%             inhomDOFs : The global numbering of the DOFs where 
-%                         inhomogeneous boundary conditions are applied
-%       valuesInhomDOFs : The values of the inhomogeneous Dirichlet 
-%                         boundary conditions at each node
 %               propALE : Properties regarding the ALE boundary
 %                           .nodes : The sequence of the nodal coordinates
 %                                    on the ALE boundary
 %                       .fcthandle : Function handle to the computation of
 %                                    the ALE motion
 %                         propUser : Extra user-defined parameters
-%    solve_LinearSystem : Function handle to the solver for the linear 
-%                         equation system
-% propTransientAnalysis : On the transient analysis :
-%                               .method : The time integration method
-%                            .alphaBeta : (parameter for the Bossak scheme)
-%                                .gamma : (parameter for the Bossak scheme)
-%                               .TStart : Start time of the simulation
-%                                 .TEnd : End time of the simulation
-%                                   .nT : Number of time steps
-%                                   .dt : Time step
-%                     t : The current time instance
 %
 %                Output :
-%                   msh : The mesh with the updated nodal coordinates
-%              uMeshALE : The velocity of the nodes in the moving mesh due 
-%                         to the moving boundary
-%             inhomDOFs : The updated vector with the global numbering of 
-%                         the DOFs where inhomogeneous boundary conditions 
-%                         are applied
-%       valuesInhomDOFs : the updated vector with the values of the 
-%                         inhomogeneous Dirichlet boundary conditions at 
-%                         each node
+%            x_Base_Min : The minimum x coordinate of the structure
+%                 x_Mid : The mid point of the structure for width changes
+%          x_Base_Width : The width of the bottom of the structure for
+%                         taper calculations
+%           x_Top_Width : The width of the top of the structure for
+%                         taper calculations
+%                 y_Max : The maximum y coordinate of the structure
 %
 % Function layout :
 %
@@ -92,15 +73,15 @@ if ~isempty(propALE)
     
     %% 3. Return the building geometry 
     % Y Geometry  
-    y_Max = max(y);
-    y_max_index = find(y==y_Max); %Find indices for all nodes along the maximum y boundary
-    
+    y_Max = max(y); % Return max y coordinate of structure boundary
+    y_max_index = find(y==y_Max); % Find indices for all nodes along the maximum y boundary
+                                  % for top width calculation
     % X Geometry
-    x_Base_Min = min(x);
-    x_Base_Max = max(x);
-    x_Base_Width = x_Base_Max - x_Base_Min;
-    x_Mid = x_Base_Min + ((x_Base_Max-x_Base_Min)*0.5); % Locate center of building for dx motion
-    x_Top_Min = min(x(y_max_index)); %Calculate min/max of the upper boundary nodes. Used for tapered buildings
-    x_Top_Max = max(x(y_max_index));
-    x_Top_Width = x_Top_Max - x_Top_Min;
+    x_Base_Min = min(x); % Return min x coordinate of structure boundary
+    x_Base_Max = max(x); % Return max x coordinate of structure boundary
+    x_Base_Width = x_Base_Max - x_Base_Min; % Return width of structure base
+    x_Mid = x_Base_Min + (x_Base_Width*0.5); % Return center of building for dx motion
+    x_Top_Min = min(x(y_max_index)); % Return min of the upper boundary nodes
+    x_Top_Max = max(x(y_max_index)); % Return max of the upper boundary nodes
+    x_Top_Width = x_Top_Max - x_Top_Min; % Return width of structure top
 end

@@ -9,11 +9,11 @@
 %% Script documentation
 %
 % Task : Performs steady-state fluid optimization for a rectangular tower
-%        in flow whose design parameters are its width and height. The
+%        in flow whose design parameters depend on the defined geometry. The
 %        sensitivities are computed using Finite Differencing whereas a
 %        gradient-based descend optimization algorithm is employed.
 %
-% Date : 29.12.2019
+% Date : 22.03.2020
 %
 %% Preamble
 clear;
@@ -69,8 +69,9 @@ propNLinearAnalysis.maxIter = 10;
 propNLinearAnalysis.eps = 1e-5;
 
 %% GUI - ONLY WORKS WITH HEIGHT
-[samplingCall, Umax, iterationLimit, design_penalization, learning_rate, propALE.propUser.delta_p1, ...
-    propALE.propUser.delta_p2, propALE.propUser.delta_p3, h_limit, w_limit] = MonteCarloInputGUI();
+% Request user defined parameter input
+[samplingCall,Umax,iterationLimit,design_penalization,learning_rate,propALE.propUser.delta_p1,...
+ propALE.propUser.delta_p2,propALE.propUser.delta_p3,h_limit,w_limit] = MonteCarloInputGUI();
 
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
@@ -101,29 +102,31 @@ propVTK_true.isOutput = true;
 propVTK_false.isOutput = false;
 
 %% Change input velocity to have the power law distribution for each randomized input
-valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
+valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh,inhomDOFs,valuesInhomDOFs,Umax);
 
 %% Variable initialization
 i = 1; % Counter initialization for iteration tree search
 
 % Initialize boundary values of structure
-[propALE.propUser.x_Base_Min, propALE.propUser.x_Mid, propALE.propUser.x_Base_Width, ...
-    propALE.propUser.x_Top_Width, propALE.propUser.y_Max] = computeStructureBoundary(fldMsh,propALE);
+[propALE.propUser.x_Base_Min,propALE.propUser.x_Mid,propALE.propUser.x_Base_Width,...
+ propALE.propUser.x_Top_Width,propALE.propUser.y_Max] = computeStructureBoundary(fldMsh,propALE);
 
-% Initialize parameters
+% Initial accuracy containers
 djd1 = 1; % Initialize accuracy of parameter 1
-propALE.propUser.iterate_p1 = 0; % Initialize iteration step
+djdp1 = [];
+p1_hist = [];
+
+% Initialize iteration steps
+propALE.propUser.iterate_p1 = 0;
 
 switch samplingCall
     case 'Height'
-        djdp1 = [];
-        p1_hist = [];
         p1_0 = propALE.propUser.y_Max; % Initialize state values
         p1 = p1_0; % Initialize parameter states
         p2 = '';
         p3 = '';
-        p_IterateCall = [1,0,0];
-        u_flag = 1;
+        p_IterateCall = [1,0,0]; % Define perturbed parameters: [height,width,taper]
+        u_flag = 1; % Define mesh adjustment call
 end
 
 % Initialization of the solution
@@ -141,28 +144,31 @@ tic
 while (abs(djd1) > 1e-4 && i <= iterationLimit &&  p1 >= h_limit)     
     
     %% Solve the CFD problem at the nominal (updated) condition
-    [propALE, lift, drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,parameters,...
-        computeBodyForces,analysis,computeInitialConditions,...
-        VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-        i,propVTK_true,gaussInt,caseName, p1, p2, p3, postProc, propALE);
+    [propALE,lift,drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...
+        parameters,computeBodyForces,analysis,computeInitialConditions,...
+        VTKResultFile,propALE,solve_LinearSystem,propFldDynamics,...
+        propNLinearAnalysis,i,propVTK_true,gaussInt,caseName,p1,p2,p3,postProc);
     
     % Write nominal output vector
-    output_Nom(i,:) = [i, p1, lift, drag];  
-    referenceDrag_Nom = drag; % Define reference drag of nominal state for accuracy calculations
+    output_Nom(i,:) = [i,p1,lift,drag];
+    
+    % Define reference drag of nominal state for accuracy calculations
+    referenceDrag_Nom = drag;
     
     %% Solve the CFD problem with perturbed p1
     if (p_IterateCall(1) == 1)
+        
         % Set caculation flag
         p_flag = 1;
         
         % Solve perturbed solution
-        [p1, lift, drag] = perturbedSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,parameters,...
-            computeBodyForces,analysis,computeInitialConditions,...
-            VTKResultFile,valuesInhomDOFs,propALE,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-            i,propVTK_false,gaussInt,caseName, p_flag, postProc);
+        [p1,lift,drag] = perturbedSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...
+            parameters,computeBodyForces,analysis,computeInitialConditions,...
+            VTKResultFile,valuesInhomDOFs,propALE,solve_LinearSystem,propFldDynamics,...
+            propNLinearAnalysis,i,propVTK_false,gaussInt,caseName,p_flag,postProc);
         
         % Write output vector
-        output_p1(i,:) = [i, p1, lift, drag];
+        output_p1(i,:) = [i,p1,lift,drag];
         
         % Compute sensitivities via finite differencing
         drag_dp1 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p1;
@@ -181,7 +187,7 @@ while (abs(djd1) > 1e-4 && i <= iterationLimit &&  p1 >= h_limit)
     %% Update the mesh for the adjusted nominal state    
     fldMsh = correctionSolution(fldMsh,homDOFs,inhomDOFs,...
                 valuesInhomDOFs, propALE, solve_LinearSystem,...
-                propFldDynamics, i, u_flag);
+                propFldDynamics,i,u_flag);
                
     %% Increment iteration counter
     i = i+1;

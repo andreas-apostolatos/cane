@@ -1,7 +1,7 @@
-function [propALE, lift, drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,parameters,...
-        computeBodyForces,analysis,computeInitialConditions,...
-        VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-        i,propVTK_true,gaussInt,caseName, p1, p2, p3, postProc, propALE)
+function [propALE,lift,drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...
+        parameters,computeBodyForces,analysis,computeInitialConditions,...
+        VTKResultFile,propALE,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
+        i,propVTK_true,gaussInt,caseName,p1,p2,p3,postProc)
 %% Licensing
 %
 %  License:         BSD License
@@ -32,8 +32,6 @@ function [propALE, lift, drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,val
 %       VTKResultFile : The name of the result file in the output folder
 %                        where to get the initial conditions for the
 %                        transient simulation
-%     valuesInhomDOFs : The values of the inhomogeneous Dirichlet 
-%                       boundary conditions at each node
 %             propALE : Properties regarding the ALE boundary
 %                         .nodes : The sequence of the nodal coordinates
 %                                  on the ALE boundary
@@ -86,7 +84,7 @@ propALE.propUser.p3 = p3;
     i,propVTK_true,gaussInt,caseName,'outputEnabled');
 
 % Calculate drag and lift force from the nodal forces
-postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
+postProc_update = computePostProc(FComplete,analysis,parameters,postProc);
 
 % Retrieve Fx and Fy from post processing
 forcesOnDomain = postProc_update.valuePostProc{1};

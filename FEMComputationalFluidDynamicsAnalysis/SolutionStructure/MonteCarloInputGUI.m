@@ -1,4 +1,5 @@
-function [samplingCall, Umax, iterationLimit, design_penalization, learning_rate, delta_p1, delta_p2, delta_p3, h_limit, w_limit] = MonteCarloInputGUI()
+function [samplingCall,Umax,iterationLimit,design_penalization,...
+          learning_rate,delta_p1,delta_p2,delta_p3,h_limit,w_limit] = MonteCarloInputGUI()
 %% Licensing
 %
 %  License:         BSD License
@@ -26,6 +27,7 @@ function [samplingCall, Umax, iterationLimit, design_penalization, learning_rate
 % Request user sample call selection
 sample_list = {'Height','Width','Height and Width', 'Taper', 'Height and Taper'};
 [indx,tf] = listdlg('PromptString','Select a file:','SelectionMode','single','ListString',sample_list);
+
 % Call different functions depending on user's selection
 switch indx
     case 1
@@ -98,7 +100,6 @@ switch samplingCall
         h_limit = str2double(answer(3));
         w_limit = 0;
     otherwise
-        % Error
         error('Invalid input sampling method')
 end
 
@@ -108,8 +109,8 @@ dlgtitle = 'Input';
 dims = [1 35];
 definput = {'0.1','20','1e4', '0.01'};
 answer = inputdlg(prompt,dlgtitle,dims,definput);
-Umax = str2double(answer(1)); % Max input velocity defined in the reference paper
-iterationLimit = str2double(answer(2)); % Limit search iterations
-design_penalization = str2double(answer(3)); % Design penalty used in J calculations
+Umax = str2double(answer(1));
+iterationLimit = str2double(answer(2));
+design_penalization = str2double(answer(3));
 learning_rate = str2double(answer(4));
 end

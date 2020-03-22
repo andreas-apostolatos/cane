@@ -1,6 +1,6 @@
 function [fldMsh] = correctionSolution(fldMsh,homDOFs,inhomDOFs,...
-                    valuesInhomDOFs, propALE, solve_LinearSystem,...
-                    propFldDynamics, i, u_flag)
+                    valuesInhomDOFs,propALE,solve_LinearSystem,...
+                    propFldDynamics,i,u_flag)
 %% Licensing
 %
 %  License:         BSD License
@@ -21,8 +21,6 @@ function [fldMsh] = correctionSolution(fldMsh,homDOFs,inhomDOFs,...
 %                       applied
 %     valuesInhomDOFs : Prescribed values on the nodes where inhomogeneous
 %                       Dirichlet boundary conditions are applied
-%     valuesInhomDOFs : The values of the inhomogeneous Dirichlet 
-%                       boundary conditions at each node
 %             propALE : Properties regarding the ALE boundary
 %                         .nodes : The sequence of the nodal coordinates
 %                                  on the ALE boundary

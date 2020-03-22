@@ -7,12 +7,13 @@
 %
 %% Script documentation
 %
-% Task : Performs Multilevel Monte-Carlo for the 2D Navier-Stokes equations
-%        in 2D
+% Task : Performs steady-state fluid optimization for a rectangular tower
+%        in flow whose design parameters depend on the defined geometry. The
+%        sensitivities are computed using Finite Differencing whereas a
+%        gradient-based descend optimization algorithm is employed.
 %
-% Date : 29.12.2019
+% Date : 22.03.2020
 %
-
 %% Preamble
 clear;
 clc;
@@ -67,8 +68,9 @@ propNLinearAnalysis.maxIter = 10;
 propNLinearAnalysis.eps = 1e-5;
 
 %% GUI
-[samplingCall, Umax, iterationLimit, design_penalization, learning_rate, propALE.propUser.delta_p1, ...
-    propALE.propUser.delta_p2, propALE.propUser.delta_p3, h_limit, w_limit] = MonteCarloInputGUI();
+% Request user defined parameter input
+[samplingCall,Umax,iterationLimit,design_penalization,learning_rate,propALE.propUser.delta_p1, ...
+    propALE.propUser.delta_p2,propALE.propUser.delta_p3,h_limit,w_limit] = MonteCarloInputGUI();
 
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
@@ -105,8 +107,8 @@ valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesI
 i = 1; % Counter initialization for iteration tree search
 
 % Initialize boundary values of structure
-[propALE.propUser.x_Base_Min, propALE.propUser.x_Mid, propALE.propUser.x_Base_Width, ...
-    propALE.propUser.x_Top_Width, propALE.propUser.y_Max] = computeStructureBoundary(fldMsh,propALE);
+[propALE.propUser.x_Base_Min,propALE.propUser.x_Mid,propALE.propUser.x_Base_Width,...
+  propALE.propUser.x_Top_Width,propALE.propUser.y_Max] = computeStructureBoundary(fldMsh,propALE);
 
 % Initialize gamma
 gamma = 1e-4;
@@ -122,7 +124,7 @@ p1_hist = [];
 p2_hist = [];
 p3_hist = [];
 
-% Initial iteration steps
+% Initialize iteration steps
 propALE.propUser.iterate_p1 = 0;
 propALE.propUser.iterate_p2 = 0;
 propALE.propUser.iterate_p3 = 0;
@@ -133,29 +135,28 @@ switch samplingCall
         p1 = p1_0; % Initialize parameter states
         p2 = '';
         p3 = '';
-        p_IterateCall = [1,0,0];
-        u_flag = 1;
+        p_IterateCall = [1,0,0]; % Define perturbed parameters: [height,width,taper]
+        u_flag = 1; % Define mesh adjustment call
     case 'Width'
-        p2_0 = propALE.propUser.x_Base_Width; % Initialize state values
-        p2 = p2_0; % Initialize parameter states
+        p2_0 = propALE.propUser.x_Base_Width;
+        p2 = p2_0;
         p1 = '';
         p3 = '';
         p_IterateCall = [0,1,0];
         u_flag = 2;
     case 'Height and Width'
-        p1_0 = propALE.propUser.y_Max; % Initialize state values
+        p1_0 = propALE.propUser.y_Max;
         p2_0 = propALE.propUser.x_Base_Width;
-        p1 = p1_0; % Initialize parameter states
+        p1 = p1_0;
         p2 = p2_0;
         p3 = '';
         p_IterateCall = [1,1,0];
         u_flag = 3;
     case 'Taper'       
-        djd3 = 1; % Initial accuracy of parameter 3
         p_Base_0 = propALE.propUser.x_Base_Width;
         p_Top_0 = propALE.propUser.x_Top_Width;
-        p3_0 = p_Base_0 - p_Top_0; % Initialize state values
-        p3 = p3_0; % Initialize parameter states
+        p3_0 = p_Base_0 - p_Top_0;
+        p3 = p3_0;
         p1 = '';
         p2 = '';
         p_IterateCall = [0,0,1];
@@ -164,8 +165,8 @@ switch samplingCall
         p1_0 = propALE.propUser.y_Max;
         p_Base_0 = propALE.propUser.x_Base_Width;
         p_Top_0 = propALE.propUser.x_Top_Width;
-        p3_0 = p_Base_0 - p_Top_0; % Initialize state values
-        p1 = p1_0; % Initialize parameter states
+        p3_0 = p_Base_0 - p_Top_0;
+        p1 = p1_0;
         p3 = p3_0;
         p2 = '';
         p_IterateCall = [1,0,1];
@@ -192,30 +193,31 @@ tic
 while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  p1 >= h_limit &&  p2 >= w_limit)    
     
     %% Solve the CFD problem at the nominal (updated) condition
-    [propALE, lift,drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,parameters,...
-        computeBodyForces,analysis,computeInitialConditions,...
-        VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-        i,propVTK_true,gaussInt,caseName, p1, p2, p3, postProc, propALE);
+    [propALE,lift,drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...
+        parameters,computeBodyForces,analysis,computeInitialConditions,...
+        VTKResultFile,propALE,solve_LinearSystem,propFldDynamics,...
+        propNLinearAnalysis,i,propVTK_true,gaussInt,caseName,p1,p2,p3,postProc);
     
     % Write nominal output vector
-    output_Nom(i,:) = [i, p1, lift, drag];
+    output_Nom(i,:) = [i,p1,lift,drag];
     
     % Define reference drag of nominal state for accuracy calculations
     referenceDrag_Nom = drag;
     
     %% Solve the CFD problem with perturbed p1
     if (p_IterateCall(1) == 1)
+        
         % Set caculation flag
         p_flag = 1;
         
         % Solve perturbed solution
-        [p1, lift,drag] = perturbedSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,parameters,...
-            computeBodyForces,analysis,computeInitialConditions,...
-            VTKResultFile,valuesInhomDOFs,propALE,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-            i,propVTK_false,gaussInt,caseName, p_flag, postProc);
+        [p1,lift,drag] = perturbedSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...
+            parameters,computeBodyForces,analysis,computeInitialConditions,...
+            VTKResultFile,valuesInhomDOFs,propALE,solve_LinearSystem,propFldDynamics,...
+            propNLinearAnalysis,i,propVTK_false,gaussInt,caseName,p_flag,postProc);
 
         % Write output vector
-        output_p1(i,:) = [i, p1, lift, drag];
+        output_p1(i,:) = [i,p1,lift,drag];
         
         % Compute sensitivities via finite differencing
         drag_dp1 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p1;
@@ -229,12 +231,12 @@ while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  
         
         p_flag = 2;
         
-        [p2, lift,drag] = perturbedSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,parameters,...
-            computeBodyForces,analysis,computeInitialConditions,...
-            VTKResultFile,valuesInhomDOFs,propALE,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-            i,propVTK_false,gaussInt,caseName, p_flag, postProc);
+        [p2,lift,drag] = perturbedSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...
+            parameters,computeBodyForces,analysis,computeInitialConditions,...
+            VTKResultFile,valuesInhomDOFs,propALE,solve_LinearSystem,propFldDynamics,...
+            propNLinearAnalysis,i,propVTK_false,gaussInt,caseName,p_flag,postProc);
 
-        output_p2(i,:) = [i, p2, lift, drag];
+        output_p2(i,:) = [i,p2,lift,drag];
         
         drag_dp2 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p2;
         
@@ -245,12 +247,13 @@ while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  
     if (p_IterateCall(3) == 1)
 
         p_flag = 3;
-        [p3, lift,drag] = perturbedSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,parameters,...
-            computeBodyForces,analysis,computeInitialConditions,...
-            VTKResultFile,valuesInhomDOFs,propALE,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-            i,propVTK_false,gaussInt,caseName, p_flag, postProc);
+        
+        [p3,lift,drag] = perturbedSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...
+            parameters,computeBodyForces,analysis,computeInitialConditions,...
+            VTKResultFile,valuesInhomDOFs,propALE,solve_LinearSystem,propFldDynamics,...
+            propNLinearAnalysis,i,propVTK_false,gaussInt,caseName,p_flag,postProc);
 
-        output_p3(i,:) = [i, p3, lift, drag];
+        output_p3(i,:) = [i,p3,lift,drag];
         
         drag_dp3 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p3;
         
@@ -260,7 +263,8 @@ while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  
     
     %% Update step size - Barzilai-Borwein step length for gradient descent   
     if isempty(p1_hist) == 0
-        [denom, gamma] = gradientDescent(propALE,p1_hist,p2_hist,p3_hist,djd1,djd2,djd3,djdp1,djdp2,djdp3,u_flag);
+        [denom,gamma] = gradientDescent(propALE,p1_hist,p2_hist,p3_hist,...
+                        djd1,djd2,djd3,djdp1,djdp2,djdp3,u_flag);
     end
     
     %% Update parameter values for next iteration
@@ -270,24 +274,25 @@ while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  
         djdp1(i,:) = djd1;
     end
     if (p_IterateCall(2) == 1)
-        propALE.propUser.iterate_p2 = sign(djd2)*min(abs(gamma*djd2), (0.01*p2_0)); % Calculate gradient descent
-        p2_hist(i,:) = propALE.propUser.p2; % Update parameter history
+        propALE.propUser.iterate_p2 = sign(djd2)*min(abs(gamma*djd2), (0.01*p2_0));
+        p2_hist(i,:) = propALE.propUser.p2;
         djdp2(i,:) = djd2; 
     end
     if (p_IterateCall(3) == 1)
-        propALE.propUser.iterate_p3 = sign(djd3)*min(abs(gamma*djd3), (0.01*p3_0)); % Calculate gradient descent
-        p3_hist(i,:) = propALE.propUser.p3; % Update parameter history
+        propALE.propUser.iterate_p3 = sign(djd3)*min(abs(gamma*djd3), (0.01*p3_0));
+        p3_hist(i,:) = propALE.propUser.p3;
         djdp3(i,:) = djd3; 
     end
-      
-    p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1; % Gradient descent update
-    p2 = propALE.propUser.p2 -  propALE.propUser.iterate_p2; % Gradient descent update
-    p3 = propALE.propUser.p3 -  propALE.propUser.iterate_p3; % Gradient descent update
+    
+    % Gradient descent update
+    p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1;
+    p2 = propALE.propUser.p2 -  propALE.propUser.iterate_p2;
+    p3 = propALE.propUser.p3 -  propALE.propUser.iterate_p3;
     
     %% Update the mesh for the adjusted nominal state    
     fldMsh = correctionSolution(fldMsh,homDOFs,inhomDOFs,...
-                valuesInhomDOFs,propALE, solve_LinearSystem,...
-                propFldDynamics, i, u_flag);  
+                valuesInhomDOFs,propALE,solve_LinearSystem,...
+                propFldDynamics,i,u_flag);  
     
     %% Increment iteration counter
     i = i+1;
