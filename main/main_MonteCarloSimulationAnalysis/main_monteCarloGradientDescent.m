@@ -260,7 +260,6 @@ while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  
         djd3 = djdp3_(drag_dp3,propALE.propUser.p3);
     end
     
-    
     %% Update step size - Barzilai-Borwein step length for gradient descent   
     if isempty(p1_hist) == 0
         [denom,gamma] = gradientDescent(propALE,p1_hist,p2_hist,p3_hist,...

@@ -171,11 +171,10 @@ while (abs(djd1) > 1e-4 && i <= iterationLimit &&  p1 >= h_limit)
         output_p1(i,:) = [i,p1,lift,drag];
         
         % Compute sensitivities via finite differencing
-        drag_dp1 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p1;
-        
+        drag_dp1 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p1;       
     end
     
-    % Basic Gradient Descent
+    % Basic Gradient Descent - https://builtin.com/data-science/gradient-descent
     djd1 = drag_dp1;
     propALE.propUser.iterate_p1 = -(learning_rate*djd1);
     p1 = propALE.propUser.p1 + propALE.propUser.iterate_p1;
