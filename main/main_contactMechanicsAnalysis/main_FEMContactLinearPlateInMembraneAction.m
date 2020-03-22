@@ -88,7 +88,7 @@ graph.index = 1;
 
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
-main_convergenceStudyInfinitePlateWithHole
+
 %% Rigid wall- line  [(x0,y0) ; (x1,y1)]
 
 % different line segments for different cases
@@ -131,11 +131,11 @@ contactSegments = buildSegmentsData(contactSegments);
 
 %% Compute the load vector
 time = 0;
-F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'outputEnabled');
+F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,time,gaussInt,'outputEnabled');
 
 %% Plot the reference configuration
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,F,homDBC,contactSegments,graph,'outputEnabled');
+    (strMsh,analysis,F,homDBC,contactSegments,graph,'outputEnabled');
 
 %% Solve the system and get the displacement field
 [displacement,lagrange] = solveSignoriniLagrange_1...

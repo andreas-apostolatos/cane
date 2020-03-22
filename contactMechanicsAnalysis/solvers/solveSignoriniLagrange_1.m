@@ -130,7 +130,7 @@ propContact = computeGapFunction(strMsh,propContact,contactSegments);
 
 %% Compute force vector
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,NBC,t,gaussInt,outMsg);
+    (strMsh,analysis,NBC,t,gaussInt,outMsg);
 
 %% 2. Compute the master stiffness matrix of the structure
 if strcmp(outMsg,'outputEnabled')
