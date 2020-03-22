@@ -53,9 +53,8 @@ addpath('../../contactMechanicsAnalysis/plot',...
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
 caseName = 'example_01_bridge';
-%caseName = 'example_02_wedge';
-%caseName = 'example_03_hertz';
-
+% caseName = 'example_02_wedge';
+% caseName = 'example_03_hertz';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
@@ -105,11 +104,12 @@ if strcmp(caseName,'example_01_bridge')
     radius = 4;
     startAngle = 3*pi/4;
     endAngle = pi/4;
-    nSegments = 20;
+    nSegments = 20; % 20
     
     % Create circular segments
-%     segments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
-   
+    contactSegments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
+%     computeConstantVerticalLoad
+%     computeConstantHorizontalLoad
 elseif strcmp(caseName,'example_02_wedge')
     
     % define bottom contact line segment and add it to the segments
@@ -132,9 +132,6 @@ contactSegments = buildSegmentsData(contactSegments);
 %% Compute the load vector
 time = 0;
 F = computeLoadVctFEMPlateInMembraneAction(strMsh,NBC,time,gaussInt,'outputEnabled');
-
-%% Output data to a VTK format
-pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
 %% Plot the reference configuration
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
