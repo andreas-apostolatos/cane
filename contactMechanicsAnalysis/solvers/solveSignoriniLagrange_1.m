@@ -184,7 +184,7 @@ dHat_stiffMtx = zeros(noDOFs,1);
 counterContact = 1;
 
 % Initialize array of active nodes
-active_nodes = [];
+nodesActive = [];
 
 % Inialize convergence conditions
 isCnd_DOFs = false;
@@ -227,7 +227,7 @@ end
 
 %% 6. Create the expanded system of equations corresponding to the Lagrange Multipliers method
 if strcmp(outMsg,'outputEnabled')
-    fprintf('\t Creating the expanded system of equations... \n');
+    fprintf(strcat(tab,'>> Creating the expanded system of equations\n'));
 end
 C = buildConstraintMatrix(noDOFs, propContact, segmentsContact);
 stiffMtxLM = [K  C
@@ -238,15 +238,18 @@ resVecLM = [F
 clear gapFunction;
 
 %% 7. Loop over all contact iterations
+if strcmp(outMsg,'outputEnabled')
+    fprintf(strcat(tab,'>> Loop over all contact iterations\n'));
+end
 while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     %% 7i. Assign inactive DOFs to the ones from previous contact iteration
-    active_old_nodes = active_nodes;
+    nodesActiveSaved = nodesActive;
    
     %% 7ii. Determine active contact nodes
-    active_nodes = findActiveContactNodes2D(noDOFs,strMsh,propContact,dHat_stiffMtxLM,segmentsContact);
+    nodesActive = findActiveContactNodes2D(strMsh,noDOFs,dHat_stiffMtxLM,segmentsContact,propContact);
 
     %% 7iii. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
-    homDOFs_iterate = horzcat(homDOFs, active_nodes);
+    homDOFs_iterate = horzcat(homDOFs, nodesActive);
     
     %% 7iv. Collect all constrained DOFs into one array
     constrained_DOFs = unique(horzcat(homDOFs_iterate, inhomDOFs));
@@ -256,16 +259,18 @@ while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     freeDOFs_iterate(ismember(freeDOFs_iterate,constrained_DOFs)) = [];
     
     %% 7vi. Solve the equation system of the current contact iteration
-    [dHat_stiffMtxLM,FComplete,~,~] = solve_FEMLinearSystem(analysis,uSaved,...
-        uDotSaved,uDDotSaved,strMsh,forceVct,bodyForces,parameters,dHat_stiffMtxLM,uDot,uDDot,...
-        massMtx,dampMtx,stiffMtxLM,resVecLM,computeProblemMatricesSteadyState,...
-        DOFNumbering,freeDOFs_iterate,homDOFs_iterate,inhomDOFs,valuesInhomDOFs,uMeshALE,...
-        solve_LinearSystem,propStrDynamics,propNLinearAnalysis,propGaussInt,strcat(tab,'\t'),outMsg);
-           
+    [dHat_stiffMtxLM,FComplete,~,~] = solve_FEMLinearSystem ...
+        (analysis,uSaved,uDotSaved,uDDotSaved,strMsh,forceVct,bodyForces,...
+        parameters,dHat_stiffMtxLM,uDot,uDDot,massMtx,dampMtx,stiffMtxLM,...
+        resVecLM,computeProblemMatricesSteadyState,DOFNumbering,...
+        freeDOFs_iterate,homDOFs_iterate,inhomDOFs,valuesInhomDOFs,...
+        uMeshALE,solve_LinearSystem,propStrDynamics,propNLinearAnalysis,...
+        propGaussInt,strcat(tab,'\t'),outMsg);
+
     %% 7vii. Evaluate convergence conditions
     
     % Check whether the vector of active contact nodes has not changed
-    isCnd_DOFs = isequal(active_old_nodes,active_nodes);
+    isCnd_DOFs = isequal(nodesActiveSaved,nodesActive);
     
     % Check whether all Lagrange Multipliers DOFs are negative
     isCnd_LM = max(dHat_stiffMtxLM(noDOFs+1:length(resVecLM))) <= 0;

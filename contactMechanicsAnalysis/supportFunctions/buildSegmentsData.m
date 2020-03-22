@@ -52,7 +52,7 @@ for iSeg = 1:segments.number
     dy = segments.points(2,2,iSeg) - segments.points(1,2,iSeg);
     
     %% 1ii. Compute the not normalized outward normal to the segment vector
-    n_tilde = [-dy, dx];
+    n_tilde = [-dy dx];
     segments.normals(iSeg,:) = n_tilde/norm(n_tilde);
 end
 

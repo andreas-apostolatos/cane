@@ -49,6 +49,7 @@ function  propContact = computeGapFunction(mesh,propContact,segmentsContact)
 % <-
 %
 %% Function main body
+warning('This function is buggy, got to be fixed');
 
 %% 1. Loop over all segments
 for iSeg = 1:segmentsContact.number

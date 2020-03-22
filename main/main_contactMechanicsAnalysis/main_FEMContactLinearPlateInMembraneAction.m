@@ -52,9 +52,9 @@ addpath('../../contactMechanicsAnalysis/plot',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-caseName = 'example_01_bridge';
+% caseName = 'example_01_bridge';
 % caseName = 'example_02_wedge';
-% caseName = 'example_03_hertz';
+caseName = 'example_03_hertz';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
@@ -147,16 +147,17 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
 
 %% Postprocessing
 graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,contactSegments,dHat,graph);
-plot_activeNodes(strMsh,dHat,nodeIDs_active); 
+plot_activeNodes(strMsh,dHat,nodeIDs_active);
 
 % Get the length of the contact area and the reaction force on the contact
 if strcmp(caseName,'example_03_hertz')
     [contactLength,contactForce,maxContactPressure] = ...
-        computeContactResultants(strMsh,dHat,lambdaHat,nodeIDs_active,parameters);
+        computeContactResultants...
+        (strMsh, parameters, dHat, lambdaHat, nodeIDs_active);
     
     radius = 5;
     force = sum(F);
-    hertzContactLength = sqrt(4*(2*force)*radius*((1-parameters.nue^2)/parameters.E)/(pi*parameters.t));
+    hertzContactLength = sqrt(4*(2*force)*radius*((1 - parameters.nue^2)/parameters.E)/(pi*parameters.t));
     hertzPressure = 2*(2*force)/(parameters.t*pi*hertzContactLength);
 
     fprintf('\t The COMPUTED contact length is: %f \n',contactLength);
