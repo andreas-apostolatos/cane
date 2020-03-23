@@ -136,8 +136,6 @@ up = zeros(noDOFs,1);
 PlotFlag = 'False';
 
 %% Define abstract base functions and logging process
-%J_  = @(J_, p1, p2) J_ + design_penalization*0.5*((p1 - p1_0)^2.0 + (p2 - p2_0)^2.0);
-%djdp1_ = @(djdp1_, p1) djdp1_ + design_penalization*(p1 - p1_0);
 djdp1_ = @(djdp1_, p1) djdp1_;
 
 % Set up progress bar
@@ -147,7 +145,7 @@ fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
 tic
 
 %% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
-while (abs(djd1) > 1e-10 && i <= iterationLimit)
+while (abs(djd1) > 1e-4 && i <= iterationLimit)
     %% Update internal variables with updated values from previous iteration
     propALE.propUser.p1 = p1;
      
@@ -208,23 +206,6 @@ while (abs(djd1) > 1e-10 && i <= iterationLimit)
               
     %% Compute gradient
     djd1 = djdp1_(drag_dp1,propALE.propUser.p1); % Compute gradient for parameter 1
-
-    %% Update step size - Barzilai-Borwein step length for gradient descent
-%     if isempty(p1_hist) == 0      
-%         denom = (djd1 - djdp1(end))^2 + (djd2 - djdp2(end))^2;
-%         gamma = ((propALE.propUser.p1 - p1_hist(end)) * (djd1 - djdp1(end)) + (propALE.propUser.p2 - p2_hist(end)) * (djd2 - djdp2(end)))/denom;
-%     end
-    
-    %% Update parameter values for next iteration
-%     propALE.propUser.iterate_p1 = sign(djd1)*min(abs(gamma*djd1), (0.01*p1_0)); % Calculate gradient descent
-%     propALE.propUser.iterate_p2 = sign(djd2)*min(abs(gamma*djd2), (0.01*p2_0)); % Calculate gradient descent
-%     p1 = propALE.propUser.p1 + propALE.propUser.iterate_p1; % Gradient descent update
-%     p2 = propALE.propUser.p2 +  propALE.propUser.iterate_p2; % Gradient descent update
-%     p2 = max(p2, (0.5*p2_0)); % Width constraint
-    
-    % Update parameter history   
-%    p1_hist(i,:) = propALE.propUser.p1; 
-%    djdp1(i,:) = djd1;
 
     propALE.propUser.iterate_p1 = djd1*propALE.propUser.delta_p1;
     p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1;
