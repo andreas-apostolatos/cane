@@ -248,7 +248,7 @@ while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     nodesActiveSaved = nodesActive;
    
     %% 7ii. Determine active contact nodes
-    nodesActive = findActiveContactNodes2D(strMsh,noDOFs,dHat_stiffMtxLM,segmentsContact,propContact);
+    nodesActive = findInactiveLagrangeMultipliersContact2D(strMsh,noDOFs,dHat_stiffMtxLM,segmentsContact,propContact);
 
     %% 7iii. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
     homDOFs_iterate = horzcat(homDOFs, nodesActive);
