@@ -115,7 +115,7 @@ p1_hist = [];
 
 % Initialize accuracy parameters
 djd1 = 1; % Initial accuracy of parameter 1
-propALE.propUser.delta_p1 = .01; % Perturbation of parameter 1
+propALE.propUser.delta_p1 = .1; % Perturbation of parameter 1
 propALE.propUser.iterate_p1 = 0;
 gamma = 1e-4;
 
@@ -182,9 +182,7 @@ while (abs(djd1) > 1e-10 && i <= iterationLimit)
     [fldMsh_p1,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
         solve_LinearSystem,propFldDynamics, i);
-    
-    fldMsh_p1.initialNodes = fldMsh_p1.nodes;
-    
+    fldMsh_p1
     [~,FComplete,~,~] = solve_FEMVMSStabSteadyStateNSE2D...
         (fldMsh_p1,up,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
         computeBodyForces,analysis,computeInitialConditions,...
