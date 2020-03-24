@@ -17,7 +17,6 @@ function DOFsLMActive = findActiveLagrangeMultipliersContact2D...
 %
 %              Input :
 %             strMsh : Nodes and elements in the mesh
-%             noDOFs : Number of displacement DOFs
 %    dHat_stiffMtxLM : Vector of DOFs containing both displacement and
 %                      Lagrange Multipliers
 %    segmentsContact : Data sturcture containing information about the 
@@ -33,7 +32,7 @@ function DOFsLMActive = findActiveLagrangeMultipliersContact2D...
 %             Output :
 %     DOFsLMInactive : IDs of the inactive Lagrange Multipliers DOFs
 %
-% Function layout :
+%% Function layout :
 %
 % 0. Read input
 %
@@ -55,13 +54,11 @@ function DOFsLMActive = findActiveLagrangeMultipliersContact2D...
 %
 %        1i.7. Compute the penetration of the current node with respect to the current segment
 %
-%        1i.8 Compute non-penetration conditions (displacement)
+%        1i.8. Compute non-penetration conditions (displacement)
 %
-%        1i.9 Compute condition for Lagrange multipliers (non-compressive contact tractions)
+%        1i.9. Check whether the node is active depending on whether any of the above-defined conditions is valid
 %
-%        1i.10 Check whether the node is active depending on whether any of the above-defined conditions is valid
-%
-%        1i.11 Update counter
+%        1i.10. Update counter
 %    <-
 % <-
 %
@@ -108,18 +105,18 @@ for iSeg = 1:segmentsContact.number
         %% 1i.7. Compute the penetration of the current node with respect to the current segment
         penetration = segmentsContact.normals(iSeg,:)*(nodeDisp - nodeDisp_proj)';
         
-        %% 1i.8 Compute non-penetration conditions (displacement)
+        %% 1i.8. Compute non-penetration conditions (displacement)
         isCnd1 = penetration < tolerance;
         isCnd2 = lambda > tolerance;
         isCnd3 = lambda <= 1;
         
-        %% 1i.10 Check whether the node is active depending on whether any of the above-defined conditions is valid
+        %% 1i.9. Check whether the node is active depending on whether any of the above-defined conditions is valid
         if (isCnd1 && isCnd2 && isCnd3)
             DOFsLMActive(counterActiveNodes) = counterLM;
             counterActiveNodes = counterActiveNodes+1;
         end
         
-        %% 1i.11 Update counter
+        %% 1i.10 Update counter
         counterLM = counterLM + 1;
     end
 end

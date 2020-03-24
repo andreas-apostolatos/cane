@@ -79,25 +79,51 @@ function [dHat,lambdaHat,nodeIDs_active,FComplete,minElSize] = ...
 %              FComplete : The complete force vector
 %              minElSize : The minimum element area size in the mesh
 %
-% Function layout :
+%% Function layout
 %
-% 1. Remove fully constrained nodes and Compute the gap function
+% 0. Read input
 %
-% 2. Compute the master stiffness matrix of the structure
+% 1. Remove fully constrained nodes 
 %
-% 3. Reduce the system according to the given constraints
-%|->
-% 4. Solve the system according to Lagrange multipliers
-%   4.1 Assemble to the complete displacement vector
-%   4.2 Detect active nodes
-%   4.3 Rebuild system if new active nodes found
-%   4.4 Relax the system until ONLY valid Lagrange multipliers are computed
-%   |->
-%   4.4.1 Compute the displacement and Lagrange multipliers
-%   4.4.2 Detect and delete non-valid Lagrange multipliers and related rows
-%   <-|
-%<-|
-% 5. compute the complete load vector and verify the results
+% 2. Compute initial gap function
+%
+% 3. Compute external force vector
+%
+% 4. Compute the master stiffness matrix of the structure
+%
+% 5. Initialize the system
+%
+% 6. Reduce the initial system according to the given constraints
+%
+% 7. Loop over all contact iterations
+% ->
+%    7i. Assign active DOFs to the ones from previous contact iteration
+%
+%   7ii. Determine active contact nodes
+%
+%  7iii. Evaluate main convergence condition - compare active nodes
+%
+%   7iv. Rebuild the expanded system if new active nodes are found
+%
+%    7v. Relax the system until ONLY valid Lagrange multipliers are computed
+%       ->
+%       7v.1 Compute the displacement and Lagrange multipliers
+%
+%       7v.2 Detect and delete non-valid Lagrange multipliers and DOFs
+%
+%       7v.3. Update the iteration counter
+%       <-
+% <-
+%
+% 8. Get the displacement solution
+%
+% 9. Write out the results into a file if the case is not a unit test
+%
+% 10. Get the Lagrange Multipliers solution
+%
+% 11. Get the index of the active Lagrange Multipliers DOFs
+%
+% 12. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
@@ -147,11 +173,11 @@ DOF4Output = [1:2:noDOFs-1
 % Prescribed DOFs
 prescribedDOFs = sort(horzcat(homDOFs, inhomDOFs));
 
-% Tabulation for the output in the command window
-tab = '\t';
-
 % Initialize output array
 dHat_stiffMtx = zeros(noDOFs,1);
+
+% Tabulation for the output in the command window
+tab = '\t';
 
 % Initialize counter of contact iterations
 counterContact = 1;
@@ -159,14 +185,16 @@ counterContact = 1;
 % Initialize array of active nodes
 nodesActive = [];
 
+% Initialize the displacement vector
+dHat_stiffMtxLM = zeros(noDOFs,1);
+
 % Inialize convergence conditions
-isCnd_DOFs = false;
-isCnd_LM = false;
+isCnd_main = true;
 
 % Title for the output file
 title = 'Contact analysis for a plate in membrane action';
 
-%% 1. Remove fully constrained nodes and Compute the gap function
+%% 1. Remove fully constrained nodes 
 fullyConstrainedNodes = false(propContact.numberOfNodes,1);
 for i = 1:length(propContact.nodeIDs)
     DOFs = 2*propContact.nodeIDs(i,1)-1 : 2*propContact.nodeIDs(i,1);
@@ -177,14 +205,13 @@ end
 propContact.nodeIDs(fullyConstrainedNodes) = [];
 propContact.numberOfNodes = length(propContact.nodeIDs);
 
-%% 3. Compute initial gap function
+%% 2. Compute initial gap function
 propContact = computeGapFunction(strMsh,propContact,segmentsContact);
-gapFunction = reshape(propContact.gap,[],1);
 
-%% 4. Compute external force vector
+%% 3. Compute external force vector
 F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,propGaussInt,outMsg);
 
-%% 5. Compute the master stiffness matrix of the structure
+%% 4. Compute the master stiffness matrix of the structure
 if strcmp(outMsg,'outputEnabled')
     fprintf(strcat(tab,'>> Computing the stiffness matrix of the system\n'));
 end
@@ -194,89 +221,79 @@ end
 K = computeStiffnessMatrixPlateInMembraneActionLinear...
     (strMsh,parameters,analysis);
 
-%% 3. Reduce the system according to the given constraints
-if strcmp(outMsg,'outputEnabled')
-    fprintf('\t Reducing the system according to the constraints... \n');
-end
+%% 5. Initialize the system
 
+% Assign intial values for the stiffness matrix K and force vector F
 stiffMtxLM = K;
 resVecLM = F;
 
-freeDOFs = 1:noDOFs;
-% Remove constrained DOFs (homDBCs)
-freeDOFs_iterate = freeDOFs;
+% Total DOFs in initial expanded system
+noDOFsTotal = length(resVecLM);
+
+%% 6. Reduce the initial system according to the given constraints
+if strcmp(outMsg,'outputEnabled')
+    fprintf(strcat(tab,'>> Reducing the system according to the constraints\n'));
+end
+
+% Remove the prescribed DOFs from the set of free DOFs
 homDOFs_iterate = homDOFs;
 
+% Find the free DOFs of the current iteration
+freeDOFs_iterate = 1:noDOFs;
+freeDOFs_iterate(ismember(freeDOFs_iterate,prescribedDOFs)) = [];
 
-% Remove constrained DOFs (homDBCs)
-% stiffMtxLM(:,homDBC) = [];
-% stiffMtxLM(homDBC,:) = [];
-% resVecLM(homDBC) = [];
+%% 7. Loop over all contact iterations
+if strcmp(outMsg,'outputEnabled')
+    fprintf(strcat(tab,'>> Loop over all contact iterations\n'));
+end
+while(isCnd_main && counterContact <= propContact.maxIter) 
+    %% 7i. Assign active DOFs to the ones from previous contact iteration
+    nodesActiveSaved = nodesActive;
+    
+    %% 7ii. Determine active contact nodes
+    nodesActive = findActiveLagrangeMultipliersContact2D(strMsh,dHat_stiffMtxLM,segmentsContact,propContact);
 
-%% 4. Solve the system according to Lagrange multipliers
-
-% Initialize the displacement vector
-dHat_stiffMtxLM = zeros(noDOFs,1);
-
-% Initial values for the iteration
-isCndMain = true;
-nodesActive = [];
-numberOfActiveNodes = 0;
-it = 1;
-
-% Iterate until no more invalid Lagrange multipliers AND no new active nodes
-% are added in the pool AND max number of iterations in not reached
-while(isCndMain && it <= propContact.maxIter)    
-
-    %% 4.1 Build the expanded (complete) displacement vector
-    %displacement_exp = buildFullDisplacement(noDOFs,homDBC,dHat_stiffMtxLM);
-
-    %% 4.2 Detect active nodes
-    nodesActiveSaved = findActiveLagrangeMultipliersContact2D(strMsh,dHat_stiffMtxLM,segmentsContact,propContact);
-
-    % Evaluate convergence condition
-    if(isequaln(nodesActiveSaved,nodesActive) && it~=1)
-        isCndMain = false;
+    %% 7iii. Evaluate main convergence condition - compare active nodes
+    if(isequaln(nodesActive,nodesActiveSaved) && counterContact~=1)
+        isCnd_main = false;
     end
 
-    %% 4.3 Rebuild system if new active nodes found
-    if(~isempty(nodesActiveSaved) && isCndMain)
-
-        % Update the active nodes
-        nodesActive = nodesActiveSaved;
-        numberOfActiveNodes = length(nodesActive);
-
-        % Build constraint matrix C and force vector F
-        C = buildConstraintMatrix(noDOFs, propContact,nodesActive, segmentsContact);
-        resVecLM = buildRHS(F,propContact,nodesActive,segmentsContact);
-
-        % Build master system matrix
+    %% 7iv. Rebuild the expanded system if new active nodes are found
+    if(~isempty(nodesActive) && isCnd_main)
+        
+        % Create the Constraint matrix C and resulting force vector
+        C = buildConstraintMatrix(noDOFs,propContact,nodesActive,segmentsContact);
+        resVecLM = buildRightHandSide(F,propContact,nodesActive,segmentsContact);
+        
+        % Create the expanded system of equations corresponding
         stiffMtxLM = [K  C
                       C' zeros(size(C,2))];
         clear C;
+        
+        % Get total number of DOFs in expanded system
+        noDOFsTotal = length(resVecLM);
+        
+        % Initialize the displacement vector
+        dHat_stiffMtxLM = zeros(noDOFsTotal,1);
 
-        % Reduce the system according to the BCs
-        freeDOFs_iterate = 1:length(resVecLM);
+        % Assign homDOFs to current iteration
         homDOFs_iterate = homDOFs;
         
-        
-        % Reduce the system according to the BCs
-        %stiffMtxLM(:,homDBC) = [];
-        %stiffMtxLM(homDBC,:) = [];
-        %resVecLM(homDBC) = [];
-        
+        % Find the free DOFs of the current iteration
+        freeDOFs_iterate = 1:noDOFsTotal;
+        freeDOFs_iterate(ismember(freeDOFs_iterate,prescribedDOFs)) = [];
     end
     
-    %% 4.4 Relax the system until ONLY valid Lagrange multipliers are computed
+    %% 7v. Relax the system until ONLY valid Lagrange multipliers are computed
     
     % Initialize Lagrange condition
-    isCndLagrange = true;
+    isCnd_lagrange = true;
     
-    while(isCndLagrange && it <= propContact.maxIter)
+    while(isCnd_lagrange && counterContact <= propContact.maxIter)
 
-        isCndLagrange = false;
-
-        %% 4.4.1 Compute the displacement and Lagrange multipliers
+        isCnd_lagrange = false;
+        
+        %% 7v.1 Compute the displacement and Lagrange multipliers
         [dHat_stiffMtxLM,FComplete,~,~] = solve_FEMLinearSystem ...
             (analysis,uSaved,uDotSaved,uDDotSaved,strMsh,forceVct,bodyForces,...
             parameters,dHat_stiffMtxLM,uDot,uDDot,massMtx,dampMtx,stiffMtxLM,...
@@ -285,83 +302,74 @@ while(isCndMain && it <= propContact.maxIter)
             uMeshALE,solve_LinearSystem,propStrDynamics,propNLinearAnalysis,...
             propGaussInt,strcat(tab,'\t'),outMsg);
         
-        %% 4.4.2 Detect and delete non-valid Lagrange multipliers and related rows
-        
-        % Get the number of DOFs in reduced system
-        nDOFs_red = length(dHat_stiffMtxLM);
-        
-        % Lagrange multipliers indices
-        lmDOFsIndices = nDOFs_red-numberOfActiveNodes+1 : nDOFs_red;
-        
-        % Check if all Lagrange multipliers are valid
-        if max(dHat_stiffMtxLM(lmDOFsIndices)) > 0
-            isCndLagrange = true;
-            isCndMain = true;
+        %% 7v.2 Detect and delete non-valid Lagrange multipliers and DOFs
+        if(~isempty(nodesActive))
+            
+            % Lagrange multipliers indices
+            lmDOFsIndices = noDOFs+1 : noDOFsTotal;
+            
+            % Evaluate inner convergence condition - compare Lagrange Multipliers
+            if max(dHat_stiffMtxLM(lmDOFsIndices)) > 0
+                isCnd_lagrange = true;
+                isCnd_main = true;
+            end
+            
+            % Find the indices of only non-compressive Lagrange Multipliers
+            lmDOFsIndices = lmDOFsIndices(dHat_stiffMtxLM(lmDOFsIndices) >= 0);
+
+            % Collect the DOFs of the homDBC conditions and the active 
+            % lagrange multipliers in one array
+            homDOFs_iterate = horzcat(homDOFs, lmDOFsIndices);
+            
+            % Collect all constrained DOFs into one array
+            constrained_DOFs = unique(horzcat(homDOFs_iterate, inhomDOFs));
+
+            % Find the free DOFs of the current iteration
+            freeDOFs_iterate = 1:noDOFsTotal;
+            freeDOFs_iterate(ismember(freeDOFs_iterate,constrained_DOFs)) = [];
+            
         end
         
-        % Find the indices of only non-compressive Lagrange Multipliers
-        lmDOFsIndices = lmDOFsIndices(dHat_stiffMtxLM(lmDOFsIndices)>=0);
-       
+        %% 7v.3. Update the iteration counter
+        counterContact = counterContact + 1;
         
-        
-        homDOFs_iterate = horzcat(homDOFs, lmDOFsIndices);
-        constrained_DOFs = unique(horzcat(homDOFs_iterate, inhomDOFs));
-        
-        freeDOFs_iterate = 1:length(resVecLM);
-        freeDOFs_iterate(ismember(freeDOFs_iterate,constrained_DOFs)) = [];
-        
-        
-        
-        
-        
-        
-        
-        % Delete non-valid Lagrange multipliers and related rows
-        %stiffMtxLM(:,lmDOFsIndices) = [];
-        %stiffMtxLM(lmDOFsIndices,:) = [];
-        %resVecLM(lmDOFsIndices) = [];
-        
-        % Delete active nodes related to non-valid Lagrange multipliers
-        nodesActive(lmDOFsIndices - nDOFs_red+numberOfActiveNodes) = [];
-        
-        % Update the number of active nodes
-        numberOfActiveNodes = length(nodesActive);
-        
-        % update the iteration counter
-        it = it + 1;
+    end % End of inner while loop
 
-    end % end of inner while loop
+end % End of main while loop
 
-end % end of main while loop
+if (counterContact >= propContact.maxIter)
+    warning('\t Max number of iterations has been reached!\n');
+end
 
-%% 5. Get the values for the displacement and the Lagrange multipliers
-
-% Build full displacement vector
+%% 8. Get the displacement solution
 dHat = dHat_stiffMtxLM(1:noDOFs);
 
-% Create an 1D vector of all contact nodes
-allContactNodes = repmat(propContact.nodeIDs,segments.number,1);
-
-% Find the active nodes where lagrange multipliers apply
-lagrange.active_nodes = allContactNodes(nodesActive);
-
-% Keep only lagrange multipliers of the active nodes
-lagrange.multipliers = ...
-    dHat_stiffMtxLM(nDOFs_red-numberOfActiveNodes+1 : nDOFs_red);
-
-%% 6. Print info
-if strcmp(outMsg,'outputEnabled')
-    % energy of the structure
-    energy = displacement'*K*displacement;
-    % output
-    fprintf('\n');
-    fprintf('Output informations...\n');
-    fprintf('\t Constraints solved in %d iterations. A total of %d equations were solved. \n',it,equations_counter);
-    fprintf('\t %d active nodes found.\n',length(lagrange.active_nodes));
-    fprintf('\t #DOF: %d \n\t Energy norm of the structure: %4.2f\n',noDOFs,energy);
-    if it >= maxIteration
-        fprintf('\t Max number of iterations of has been reached !! Not Converged !!\n');
+%% 9. Write out the results into a file if the case is not a unit test
+if ~isUnitTest
+    if strcmp(outMsg,'outputEnabled')
+        fprintf('>> Writting out the results to "%s"\n',strcat(pathToOutput,caseName,'/'));
     end
+    writeOutputFEMPlateInMembraneActionToVTK(analysis,propNLinearAnalysis,...
+        propStrDynamics,strMsh,parameters,dHat,uDot,uDDot,DOF4Output,caseName,...
+        pathToOutput,title,noTimeStep);
+end
+
+%% 10. Get the Lagrange Multipliers solution
+lambdaHat = dHat_stiffMtxLM(noDOFs+1 : noDOFsTotal);
+
+%% 11. Get the index of the active Lagrange Multipliers DOFs
+allContactNodes = repmat(propContact.nodeIDs,segmentsContact.number,1);
+nodeIDs_active = allContactNodes(nodesActive);
+
+%% 12. Appendix
+if strcmp(outMsg,'outputEnabled')
+    % Save computational time
+    computationalTime = toc;
+
+    fprintf('\nContact analysis took %.2d seconds \n',computationalTime);
+    fprintf('Number of active (contact) nodes %d\n\n',length(nodeIDs_active));
+    fprintf('_____________________Linear Analysis Ended___________________\n');
+    fprintf('#############################################################\n\n\n');
 end
 
 end

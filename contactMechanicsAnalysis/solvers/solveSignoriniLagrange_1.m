@@ -79,11 +79,11 @@ function [dHat,lambdaHat,nodeIDs_active,FComplete,minElSize] = ...
 %              FComplete : The complete force vector
 %              minElSize : The minimum element area size in the mesh
 %
-% Function layout
+%% Function layout
 %
 % 0. Read input
 %
-% 1. Remove fully constrained nodes and Compute the gap function
+% 1. Remove fully constrained nodes
 %
 % 2. Get number of Lagrange Multipliers DOFs, total number of DOFs, total DOF numbering and initialize solution vector
 %
@@ -193,7 +193,7 @@ isCnd_LM = false;
 % Title for the output file
 title = 'Contact analysis for a plate in membrane action';
 
-%% 1. Remove fully constrained nodes and Compute the gap function
+%% 1. Remove fully constrained nodes
 fullyConstrainedNodes = false(propContact.numberOfNodes,1);
 for i = 1:length(propContact.nodeIDs)
     DOFs = 2*propContact.nodeIDs(i,1)-1 : 2*propContact.nodeIDs(i,1);

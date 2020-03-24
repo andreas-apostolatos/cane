@@ -57,11 +57,11 @@ function DOFsLMInactive = findInactiveLagrangeMultipliersContact2D...
 %
 %        1i.8 Compute non-penetration conditions (displacement)
 %
-%        1i.9 Compute condition for Lagrange multipliers (non-compressive contact tractions)
+%        1i.9. Compute condition for Lagrange multipliers (non-compressive contact tractions)
 %
-%        1i.10 Check whether the node is active depending on whether any of the above-defined conditions is valid
+%        1i.10. Check whether the node is active depending on whether any of the above-defined conditions is valid
 %
-%        1i.11 Update counter
+%        1i.11. Update counter
 %    <-
 % <-
 %
@@ -113,16 +113,16 @@ for iSeg = 1:segmentsContact.number
         isCnd2 = lambda < tolerance;
         isCnd3 = lambda >= 1;
         
-        %% 1i.9 Compute condition for Lagrange multipliers (non-compressive contact tractions)
+        %% 1i.9. Compute condition for Lagrange multipliers (non-compressive contact tractions)
         isCnd4 = dHat_stiffMtxLM(noDOFs+counterLM) > tolerance;
         
-        %% 1i.10 Check whether the node is active depending on whether any of the above-defined conditions is valid
+        %% 1i.10. Check whether the node is active depending on whether any of the above-defined conditions is valid
         if (isCnd1 || isCnd2 || isCnd3 || isCnd4)
             DOFsLMInactive(counterActiveNodes) = noDOFs + counterLM;
             counterActiveNodes = counterActiveNodes+1;
         end
         
-        %% 1i.11 Update counter
+        %% 1i.11. Update counter
         counterLM = counterLM + 1;
     end
 end
