@@ -231,7 +231,7 @@ K = computeStiffnessMatrixPlateInMembraneActionLinear...
 if strcmp(outMsg,'outputEnabled')
     fprintf(strcat(tab,'>> Creating the expanded system of equations\n'));
 end
-C = buildConstraintMatrix(noDOFs, propContact, segmentsContact);
+C = buildConstraintMatrix(noDOFs, propContact,[], segmentsContact);
 stiffMtxLM = [K  C
               C' zeros(size(C,2))];
 clear C;
