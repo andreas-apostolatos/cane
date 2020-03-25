@@ -51,11 +51,11 @@ if u_flag == 1
 elseif u_flag == 2
     propALE.propUser.Perturb_Flag = 'dx'; % Mesh motion call to adjust width
 elseif u_flag == 3
-    propALE.propUser.Perturb_Flag = 'dxdy'; % Mesh motion call to adjust taper ratio
+    propALE.propUser.Perturb_Flag = 'dxdy'; % Mesh motion call to adjust height and width
 elseif u_flag == 4
-    propALE.propUser.Perturb_Flag = 'dtaper'; % Mesh motion call to adjust width
+    propALE.propUser.Perturb_Flag = 'dtaper'; % Mesh motion call to adjust taper ratio
 elseif u_flag == 5
-    propALE.propUser.Perturb_Flag = 'dtaper_dy'; % Mesh motion call to adjust taper ratio
+    propALE.propUser.Perturb_Flag = 'dtaper_dy'; % Mesh motion call to adjust height and taper ratio
 end
 
 % Update the mesh for corrected state
@@ -65,8 +65,8 @@ end
 
 fldMsh.initialNodes = fldMsh.nodes;
 
-%     graph.index = 1;  
-%     graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-%     (fldMsh,'undefined',zeros(length(fldMsh.nodes(:,1)),1),[],graph,'');
-%     graph.index = graph.index + 1;
+% graph.index = 1;  
+% graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
+% (fldMsh,'undefined',zeros(length(fldMsh.nodes(:,1)),1),[],graph,'');
+% graph.index = graph.index + 1;
 end  

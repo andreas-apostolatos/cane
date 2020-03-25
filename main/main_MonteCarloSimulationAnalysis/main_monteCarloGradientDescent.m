@@ -69,8 +69,11 @@ propNLinearAnalysis.eps = 1e-5;
 
 %% GUI
 % Request user defined parameter input
-[samplingCall,Umax,iterationLimit,design_penalization,learning_rate,propALE.propUser.delta_p1, ...
-    propALE.propUser.delta_p2,propALE.propUser.delta_p3,h_limit,w_limit] = MonteCarloInputGUI();
+analysis_type = 'full_descent';
+
+[samplingCall,Umax,iterationLimit,design_penalization,propALE.propUser.delta_p1,...
+ propALE.propUser.delta_p2,propALE.propUser.delta_p3,convergenceLimit,...
+ h_limit,w_limit,t_limit] = MonteCarloInputGUI(analysis_type);
 
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
@@ -106,11 +109,13 @@ valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesI
 %% Variable initialization
 i = 1; % Counter initialization for iteration tree search
 
+limit_flag = false; % Initialize limit container
+
 % Initialize boundary values of structure
 [propALE.propUser.x_Base_Min,propALE.propUser.x_Mid,propALE.propUser.x_Base_Width,...
   propALE.propUser.x_Top_Width,propALE.propUser.y_Max] = computeStructureBoundary(fldMsh,propALE);
 
-% Initialize gamma
+% Initialize gamma for descent calculation
 gamma = 1e-4;
 
 % Initial accuracy containers
@@ -140,7 +145,7 @@ switch samplingCall
     case 'Width'
         p2_0 = propALE.propUser.x_Base_Width;
         p2 = p2_0;
-        p1 = '';
+        p1 = propALE.propUser.y_Max;
         p3 = '';
         p_IterateCall = [0,1,0];
         u_flag = 2;
@@ -153,19 +158,15 @@ switch samplingCall
         p_IterateCall = [1,1,0];
         u_flag = 3;
     case 'Taper'       
-        p_Base_0 = propALE.propUser.x_Base_Width;
-        p_Top_0 = propALE.propUser.x_Top_Width;
-        p3_0 = p_Base_0 - p_Top_0;
+        p3_0 = propALE.propUser.x_Top_Width;
         p3 = p3_0;
-        p1 = '';
+        p1 = propALE.propUser.y_Max;
         p2 = '';
         p_IterateCall = [0,0,1];
         u_flag = 4;
     case 'Height and Taper'
         p1_0 = propALE.propUser.y_Max;
-        p_Base_0 = propALE.propUser.x_Base_Width;
-        p_Top_0 = propALE.propUser.x_Top_Width;
-        p3_0 = p_Base_0 - p_Top_0;
+        p3_0 = propALE.propUser.x_Top_Width;
         p1 = p1_0;
         p3 = p3_0;
         p2 = '';
@@ -190,7 +191,9 @@ fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
 tic
 
 %% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
-while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  p1 >= h_limit &&  p2 >= w_limit)    
+while (min([abs(djd1), abs(djd2), abs(djd3)]) > convergenceLimit && i <= iterationLimit && limit_flag == false)    
+    %% Check limit conditions
+    limit_flag = limitCalculation(p1,p2,p3,h_limit,w_limit,t_limit,u_flag);
     
     %% Solve the CFD problem at the nominal (updated) condition
     [propALE,lift,drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...
@@ -199,7 +202,18 @@ while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  
         propNLinearAnalysis,i,propVTK_true,gaussInt,caseName,p1,p2,p3,postProc);
     
     % Write nominal output vector
-    output_Nom(i,:) = [i,p1,lift,drag];
+    % Set perturbed conditions depending on user input
+    if u_flag == 1
+        output_Nom(i,:) = [i,p1,lift,drag]; % Nominal output dependent on height
+    elseif u_flag == 2
+        output_Nom(i,:) = [i,p2,lift,drag]; % Nominal output dependent on height
+    elseif u_flag == 3
+        output_Nom(i,:) = [i,p1,p2,lift,drag]; % Nominal output dependent on height and width
+    elseif u_flag == 4
+        output_Nom(i,:) = [i,p3,lift,drag]; % Nominal output dependent on taper
+    elseif u_flag == 5
+        output_Nom(i,:) = [i,p1,p3,lift,drag]; % Nominal output dependent on height and taper
+    end
     
     % Define reference drag of nominal state for accuracy calculations
     referenceDrag_Nom = drag;
@@ -287,11 +301,11 @@ while (max([abs(djd1), abs(djd2), abs(djd3)]) > 1e-4 && i <= iterationLimit &&  
     p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1;
     p2 = propALE.propUser.p2 -  propALE.propUser.iterate_p2;
     p3 = propALE.propUser.p3 -  propALE.propUser.iterate_p3;
-    
+     
     %% Update the mesh for the adjusted nominal state    
     fldMsh = correctionSolution(fldMsh,homDOFs,inhomDOFs,...
                 valuesInhomDOFs,propALE,solve_LinearSystem,...
-                propFldDynamics,i,u_flag);  
+                propFldDynamics,i,u_flag); 
     
     %% Increment iteration counter
     i = i+1;

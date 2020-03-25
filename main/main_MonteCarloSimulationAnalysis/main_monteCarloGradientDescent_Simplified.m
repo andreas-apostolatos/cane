@@ -70,8 +70,11 @@ propNLinearAnalysis.eps = 1e-5;
 
 %% GUI - ONLY WORKS WITH HEIGHT
 % Request user defined parameter input
-[samplingCall,Umax,iterationLimit,design_penalization,learning_rate,propALE.propUser.delta_p1,...
- propALE.propUser.delta_p2,propALE.propUser.delta_p3,h_limit,w_limit] = MonteCarloInputGUI();
+analysis_type = 'simplified';
+
+[samplingCall,Umax,iterationLimit,design_penalization,propALE.propUser.delta_p1,...
+ propALE.propUser.delta_p2,propALE.propUser.delta_p3,convergenceLimit,...
+ h_limit,w_limit,t_limit] = MonteCarloInputGUI(analysis_type);
 
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
@@ -107,6 +110,8 @@ valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh,inhomDOFs,valuesInh
 %% Variable initialization
 i = 1; % Counter initialization for iteration tree search
 
+limit_flag = false; % Initialize limit container
+
 % Initialize boundary values of structure
 [propALE.propUser.x_Base_Min,propALE.propUser.x_Mid,propALE.propUser.x_Base_Width,...
  propALE.propUser.x_Top_Width,propALE.propUser.y_Max] = computeStructureBoundary(fldMsh,propALE);
@@ -141,7 +146,9 @@ fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
 tic
 
 %% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
-while (abs(djd1) > 1e-4 && i <= iterationLimit &&  p1 >= h_limit)     
+while (abs(djd1) > convergenceLimit && i <= iterationLimit && limit_flag == false)
+    %% Check limit conditions
+    limit_flag = limitCalculation(p1,p2,p3,h_limit,w_limit,t_limit,u_flag);
     
     %% Solve the CFD problem at the nominal (updated) condition
     [propALE,lift,drag] = nominalSolution(fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,...

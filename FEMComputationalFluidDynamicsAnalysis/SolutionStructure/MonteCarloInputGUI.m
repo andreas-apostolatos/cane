@@ -1,5 +1,5 @@
-function [samplingCall,Umax,iterationLimit,design_penalization,...
-          learning_rate,delta_p1,delta_p2,delta_p3,h_limit,w_limit] = MonteCarloInputGUI()
+function [samplingCall,Umax,iterationLimit,learning_rate,...
+          delta_p1,delta_p2,delta_p3,convergenceLimit,h_limit,w_limit,t_limit] = MonteCarloInputGUI(analysis_type)
 %% Licensing
 %
 %  License:         BSD License
@@ -20,7 +20,9 @@ function [samplingCall,Umax,iterationLimit,design_penalization,...
 %       learning_rate : Penalization of the gradient descent step:
 %                       - Basic descent
 %         delta_p1... : Perturbation of each design parameters
-%    h_limit, w_limit : Limit of structure height and width
+%    convergenceLimit : Criteria to exit optimization loop based on the 
+%                       minimum value of the djdp finite difference step
+%          h_limit... : Limit of structure height and width
 
 %% Function main body
 
@@ -55,6 +57,7 @@ switch samplingCall
         delta_p3 = 0;
         h_limit = str2double(answer(2));
         w_limit = 0;
+        t_limit = 0;
     case 'Width'
         prompt = {'Enter perturbation of width: ', 'Enter width limit: '};
         dlgtitle = 'Input';
@@ -66,6 +69,7 @@ switch samplingCall
         delta_p3 = 0;
         h_limit = 0;
         w_limit = str2double(answer(2));
+        t_limit = 0;
     case 'Height and Width'
         prompt = {'Enter perturbation of height: ', 'Enter perturbation of width: ', 'Enter height limit: ', 'Enter width limit: '};
         dlgtitle = 'Input';
@@ -77,40 +81,57 @@ switch samplingCall
         delta_p3 = 0;
         h_limit = str2double(answer(3));
         w_limit = str2double(answer(4));
+        t_limit = 0;
     case 'Taper'
-        prompt = {'Enter perturbation of taper: '};
+        prompt = {'Enter perturbation of upper boundary width: ', 'Enter upper boundary width limit: '};
         dlgtitle = 'Input';
         dims = [1 35];
-        definput = {'0.01'};
+        definput = {'2e-5', '0.01'};
         answer = inputdlg(prompt,dlgtitle,dims,definput);
         delta_p3 = str2double(answer(1));
         delta_p1 = 0;
         delta_p2 = 0;
         h_limit = 0;
         w_limit = 0;
+        t_limit = str2double(answer(2));
     case 'Height and Taper'
-        prompt = {'Enter perturbation of height: ', 'Enter perturbation of taper: ', 'Enter height limit: '};
+        prompt = {'Enter perturbation of height: ', 'Enter perturbation of upper boundary width: ', 'Enter height limit: ', 'Enter upper boundary width limit: '};
         dlgtitle = 'Input';
         dims = [1 35];
-        definput = {'3e-4', '0.01', '0.01'};
+        definput = {'3e-4', '2e-5', '0.01', '0.01'};
         answer = inputdlg(prompt,dlgtitle,dims,definput);
         delta_p1 = str2double(answer(1));
         delta_p3 = str2double(answer(2));
         delta_p2 = 0;
         h_limit = str2double(answer(3));
         w_limit = 0;
+        t_limit = str2double(answer(4));
     otherwise
         error('Invalid input sampling method')
 end
 
-% Request general input definitions from user
-prompt = {'Enter max input velocity: ','Enter iteration limit: ', 'Enter design penalization: ', 'Enter learning rate: '};
-dlgtitle = 'Input';
-dims = [1 35];
-definput = {'0.1','20','1e4', '0.01'};
-answer = inputdlg(prompt,dlgtitle,dims,definput);
-Umax = str2double(answer(1));
-iterationLimit = str2double(answer(2));
-design_penalization = str2double(answer(3));
-learning_rate = str2double(answer(4));
+if strcmp(analysis_type, 'simplified')
+    % Request general input definitions from user
+    prompt = {'Enter max input velocity: ','Enter iteration limit: ', 'Enter learning rate: ', 'Enter convergence limit: '};
+    dlgtitle = 'Input';
+    dims = [1 35];
+    definput = {'0.1','20', '0.01','1e-4'};
+    answer = inputdlg(prompt,dlgtitle,dims,definput);
+    Umax = str2double(answer(1));
+    iterationLimit = str2double(answer(2));
+    learning_rate = str2double(answer(3));
+    convergenceLimit = str2double(answer(4));
+    
+elseif strcmp(analysis_type, 'full_descent')
+    % Request general input definitions from user
+    prompt = {'Enter max input velocity: ','Enter iteration limit: ', 'Enter design penalization: ', 'Enter convergence limit: '};
+    dlgtitle = 'Input';
+    dims = [1 35];
+    definput = {'0.1','20','1e4','1e-4'};
+    answer = inputdlg(prompt,dlgtitle,dims,definput);
+    Umax = str2double(answer(1));
+    iterationLimit = str2double(answer(2));
+    learning_rate = str2double(answer(3));
+    convergenceLimit = str2double(answer(4));
+end    
 end
