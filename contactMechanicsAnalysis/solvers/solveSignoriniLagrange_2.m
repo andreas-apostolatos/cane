@@ -218,8 +218,24 @@ end
 % [K,F,minElSize] = computeStiffMtxLoadVct...
 %     (analysis,dHat_stiffMtx,uSaved,uDot,uDotSaved,DOFNumbering,strMsh,F,...
 %     loadFactor,bodyForces,propStrDynamics,parameters,propGaussInt);
+
+% K_new = K;
+
 K = computeStiffnessMatrixPlateInMembraneActionLinear...
     (strMsh,parameters,analysis);
+
+% difference_K = zeros(noDOFs*noDOFs, 1);
+% k = 1;
+% for n = 1:noDOFs
+%     for m = 1:noDOFs
+%         
+%         if abs(K(n,m)-K_new(n,m)) > 10e-9
+%             difference_K(k) = true;
+%             k = k+1;
+%         end
+%     end
+% end
+% difference_K = difference_K(1:k-1);
 
 %% 5. Initialize the system
 
