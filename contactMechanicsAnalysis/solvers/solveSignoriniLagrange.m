@@ -1,9 +1,9 @@
 function [dHat,lambdaHat,nodeIDs_active,FComplete,minElSize] = ...
-    solveSignoriniLagrange_2...
+    solveSignoriniLagrange...
     (analysis,strMsh,homDOFs,inhomDOFs,valuesInhomDOFs,NBC,bodyForces,...
     parameters,segmentsContact,computeStiffMtxLoadVct,solve_LinearSystem,...
     propNLinearAnalysis,propContact,propGaussInt,caseName,pathToOutput,...
-    isUnitTest,outMsg)
+    isUnitTest,outMsg,graph)
 %% Licensing
 %
 % License:         BSD License
@@ -83,36 +83,35 @@ function [dHat,lambdaHat,nodeIDs_active,FComplete,minElSize] = ...
 %
 % 0. Read input
 %
-% 1. Remove fully constrained nodes 
+% 1. Remove fully constrained nodes
 %
-% 2. Compute initial gap function
+% 2. Get number of Lagrange Multipliers DOFs, total number of DOFs, total DOF numbering and initialize solution vector
 %
-% 3. Compute external force vector
+% 3. Compute initial gap function
 %
-% 4. Compute the master stiffness matrix of the structure
+% 4. Compute external force vector
 %
-% 5. Initialize the system
+% 5. Compute the master stiffness matrix of the structure
 %
-% 6. Reduce the initial system according to the given constraints
+% 6. Create the expanded system of equations corresponding to the Lagrange Multipliers method
 %
 % 7. Loop over all contact iterations
 % ->
-%    7i. Assign active DOFs to the ones from previous contact iteration
+%    7i. Assign inactive DOFs to the ones from previous contact iteration
 %
 %   7ii. Determine active contact nodes
 %
-%  7iii. Evaluate main convergence condition - compare active nodes
+%  7iii. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
 %
-%   7iv. Rebuild the expanded system if new active nodes are found
+%   7iv. Collect all constrained DOFs into one array
 %
-%    7v. Relax the system until ONLY valid Lagrange multipliers are computed
-%       ->
-%       7v.1 Compute the displacement and Lagrange multipliers
+%    7v. Find the free DOFs of the current iteration
 %
-%       7v.2 Detect and delete non-valid Lagrange multipliers and DOFs
+%   7vi. Solve the equation system of the current contact iteration
 %
-%       7v.3. Update the iteration counter
-%       <-
+%  7vii. Evaluate convergence conditions
+%
+% 7viii. Update the iteration counter
 % <-
 %
 % 8. Get the displacement solution
@@ -123,7 +122,9 @@ function [dHat,lambdaHat,nodeIDs_active,FComplete,minElSize] = ...
 %
 % 11. Get the index of the active Lagrange Multipliers DOFs
 %
-% 12. Appendix
+% 12. Return only the negative Lagrange Multipliers
+%
+% 13. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
@@ -173,11 +174,11 @@ DOF4Output = [1:2:noDOFs-1
 % Prescribed DOFs
 prescribedDOFs = sort(horzcat(homDOFs, inhomDOFs));
 
-% Initialize output array
-dHat_stiffMtx = zeros(noDOFs,1);
-
 % Tabulation for the output in the command window
 tab = '\t';
+
+% Initialize output array
+dHat_stiffMtx = zeros(noDOFs,1);
 
 % Initialize counter of contact iterations
 counterContact = 1;
@@ -185,16 +186,14 @@ counterContact = 1;
 % Initialize array of active nodes
 nodesActive = [];
 
-% Initialize the displacement vector
-dHat_stiffMtxLM = zeros(noDOFs,1);
-
 % Inialize convergence conditions
-isCnd_main = true;
+isCnd_DOFs = false;
+isCnd_LM = false;
 
 % Title for the output file
 title = 'Contact analysis for a plate in membrane action';
 
-%% 1. Remove fully constrained nodes 
+%% 1. Remove fully constrained nodes
 fullyConstrainedNodes = false(propContact.numberOfNodes,1);
 for i = 1:length(propContact.nodeIDs)
     DOFs = 2*propContact.nodeIDs(i,1)-1 : 2*propContact.nodeIDs(i,1);
@@ -205,154 +204,102 @@ end
 propContact.nodeIDs(fullyConstrainedNodes) = [];
 propContact.numberOfNodes = length(propContact.nodeIDs);
 
-%% 2. Compute initial gap function
-propContact = computeGapFunction(strMsh,propContact,segmentsContact);
+%% 2. Get number of Lagrange Multipliers DOFs, total number of DOFs, total DOF numbering and initialize solution vector
+noDOFsLM = propContact.numberOfNodes*segmentsContact.number;
+noDOFsTotal = noDOFs + noDOFsLM;
+freeDOFs = 1:noDOFsTotal;
+dHat_stiffMtxLM = zeros(noDOFsTotal,1);
 
-%% 3. Compute external force vector
+%% 3. Compute initial gap function
+propContact = computeGapFunction(strMsh,propContact,segmentsContact);
+gapFunction = reshape(propContact.gap,[],1);
+
+%% 4. Compute external force vector
 F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,propGaussInt,outMsg);
 
-%% 4. Compute the master stiffness matrix of the structure
+%% 5. Compute the master stiffness matrix of the structure
 if strcmp(outMsg,'outputEnabled')
     fprintf(strcat(tab,'>> Computing the stiffness matrix of the system\n'));
 end
 [K,F,minElSize] = computeStiffMtxLoadVct...
     (analysis,dHat_stiffMtx,uSaved,uDot,uDotSaved,DOFNumbering,strMsh,F,...
     loadFactor,bodyForces,propStrDynamics,parameters,propGaussInt);
-
-% K_new = K;
-
 % K = computeStiffnessMatrixPlateInMembraneActionLinear...
 %     (strMsh,parameters,analysis);
 
-% difference_K = zeros(noDOFs*noDOFs, 1);
-% k = 1;
-% for n = 1:noDOFs
-%     for m = 1:noDOFs
-%         
-%         if abs(K(n,m)-K_new(n,m)) > 10e-9
-%             difference_K(k) = true;
-%             k = k+1;
-%         end
-%     end
-% end
-% difference_K = difference_K(1:k-1);
-
-%% 5. Initialize the system
-
-% Assign intial values for the stiffness matrix K and force vector F
-stiffMtxLM = K;
-resVecLM = F;
-
-% Total DOFs in initial expanded system
-noDOFsTotal = length(resVecLM);
-
-%% 6. Reduce the initial system according to the given constraints
+%% 6. Create the expanded system of equations corresponding to the Lagrange Multipliers method
 if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Reducing the system according to the constraints\n'));
+    fprintf(strcat(tab,'>> Creating the expanded system of equations\n'));
 end
+C = buildConstraintMatrix(noDOFs, propContact,[], segmentsContact);
+stiffMtxLM = [K  C
+              C' zeros(size(C,2))];
+clear C;
+resVecLM = [F
+            - gapFunction];
+clear gapFunction;
 
-% Remove the prescribed DOFs from the set of free DOFs
-homDOFs_iterate = homDOFs;
 
-% Find the free DOFs of the current iteration
-freeDOFs_iterate = 1:noDOFs;
-freeDOFs_iterate(ismember(freeDOFs_iterate,prescribedDOFs)) = [];
+%% Initialize
+
+% nodesActive = noDOFs + 1:noDOFsTotal;
+% homDOFs_iterate = horzcat(homDOFs, nodesActive);
+% constrained_DOFs = unique(horzcat(homDOFs_iterate, inhomDOFs));
+% freeDOFs_iterate = freeDOFs;
+% freeDOFs_iterate(ismember(freeDOFs_iterate,constrained_DOFs)) = [];
 
 %% 7. Loop over all contact iterations
 if strcmp(outMsg,'outputEnabled')
     fprintf(strcat(tab,'>> Loop over all contact iterations\n'));
 end
-while(isCnd_main && counterContact <= propContact.maxIter) 
-    %% 7i. Assign active DOFs to the ones from previous contact iteration
+while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
+   %% 7i. Assign inactive DOFs to the ones from previous contact iteration
     nodesActiveSaved = nodesActive;
-    
+   
     %% 7ii. Determine active contact nodes
-    nodesActive = findActiveLagrangeMultipliersContact2D(strMsh,dHat_stiffMtxLM,segmentsContact,propContact);
-
-    %% 7iii. Evaluate main convergence condition - compare active nodes
-    if(isequaln(nodesActive,nodesActiveSaved) && counterContact~=1)
-        isCnd_main = false;
-    end
-
-    %% 7iv. Rebuild the expanded system if new active nodes are found
-    if(~isempty(nodesActive) && isCnd_main)
-        
-        % Create the Constraint matrix C and resulting force vector
-        C = buildConstraintMatrix(noDOFs,propContact,nodesActive,segmentsContact);
-        resVecLM = buildRightHandSide(F,propContact,nodesActive,segmentsContact);
-        
-        % Create the expanded system of equations corresponding
-        stiffMtxLM = [K  C
-                      C' zeros(size(C,2))];
-        clear C;
-        
-        % Get total number of DOFs in expanded system
-        noDOFsTotal = length(resVecLM);
-        
-        % Initialize the displacement vector
-        dHat_stiffMtxLM = zeros(noDOFsTotal,1);
-
-        % Assign homDOFs to current iteration
-        homDOFs_iterate = homDOFs;
-        
-        % Find the free DOFs of the current iteration
-        freeDOFs_iterate = 1:noDOFsTotal;
-        freeDOFs_iterate(ismember(freeDOFs_iterate,prescribedDOFs)) = [];
-    end
+    [nodesActive, IDsActiveNodes] = findInactiveLagrangeMultipliersContact2D_andreas...
+        (strMsh,noDOFs,dHat_stiffMtxLM,segmentsContact,propContact);
     
-    %% 7v. Relax the system until ONLY valid Lagrange multipliers are computed
+    %% Debug
+    lambdaHat = dHat_stiffMtxLM(noDOFs + 1:noDOFsTotal);
+    allContactNodes = repmat(propContact.nodeIDs,segmentsContact.number,1);
+%     nodeIDs_active = allContactNodes(lambdaHat < 0);
+    nodeIDs_active = allContactNodes(IDsActiveNodes);
+
+    graph.index = plot_currentConfigurationFEMPlateInMembraneAction...
+        (strMsh,homDOFs,segmentsContact,dHat_stiffMtxLM,graph);
+    plot_activeNodes(strMsh,dHat_stiffMtxLM,nodeIDs_active);
+
+    %% 7iii. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
+    homDOFs_iterate = horzcat(homDOFs, nodesActive);
     
-    % Initialize Lagrange condition
-    isCnd_lagrange = true;
+    %% 7iv. Collect all constrained DOFs into one array
+    constrained_DOFs = unique(horzcat(homDOFs_iterate, inhomDOFs));
     
-    while(isCnd_lagrange && counterContact <= propContact.maxIter)
+    %% 7v. Find the free DOFs of the current iteration
+    freeDOFs_iterate = freeDOFs;
+    freeDOFs_iterate(ismember(freeDOFs_iterate,constrained_DOFs)) = [];
 
-        isCnd_lagrange = false;
-        
-        %% 7v.1 Compute the displacement and Lagrange multipliers
-        [dHat_stiffMtxLM,FComplete,~,~] = solve_FEMLinearSystem ...
-            (analysis,uSaved,uDotSaved,uDDotSaved,strMsh,forceVct,bodyForces,...
-            parameters,dHat_stiffMtxLM,uDot,uDDot,massMtx,dampMtx,stiffMtxLM,...
-            resVecLM,computeProblemMatricesSteadyState,DOFNumbering,...
-            freeDOFs_iterate,homDOFs_iterate,inhomDOFs,valuesInhomDOFs,...
-            uMeshALE,solve_LinearSystem,propStrDynamics,propNLinearAnalysis,...
-            propGaussInt,strcat(tab,'\t'),outMsg);
-        
-        %% 7v.2 Detect and delete non-valid Lagrange multipliers and DOFs
-        if(~isempty(nodesActive))
-            
-            % Lagrange multipliers indices
-            lmDOFsIndices = noDOFs+1 : noDOFsTotal;
-            
-            % Evaluate inner convergence condition - compare Lagrange Multipliers
-            if max(dHat_stiffMtxLM(lmDOFsIndices)) > 0
-                isCnd_lagrange = true;
-                isCnd_main = true;
-            end
-            
-            % Find the indices of only non-compressive Lagrange Multipliers
-            lmDOFsIndices = lmDOFsIndices(dHat_stiffMtxLM(lmDOFsIndices) >= 0);
+    %% 7vi. Solve the equation system of the current contact iteration
+    [dHat_stiffMtxLM,FComplete,~,~] = solve_FEMLinearSystem ...
+        (analysis,uSaved,uDotSaved,uDDotSaved,strMsh,forceVct,bodyForces,...
+        parameters,dHat_stiffMtxLM,uDot,uDDot,massMtx,dampMtx,stiffMtxLM,...
+        resVecLM,computeProblemMatricesSteadyState,DOFNumbering,...
+        freeDOFs_iterate,homDOFs_iterate,inhomDOFs,valuesInhomDOFs,...
+        uMeshALE,solve_LinearSystem,propStrDynamics,propNLinearAnalysis,...
+        propGaussInt,strcat(tab,'\t'),outMsg);
 
-            % Collect the DOFs of the homDBC conditions and the active 
-            % lagrange multipliers in one array
-            homDOFs_iterate = horzcat(homDOFs, lmDOFsIndices);
-            
-            % Collect all constrained DOFs into one array
-            constrained_DOFs = unique(horzcat(homDOFs_iterate, inhomDOFs));
-
-            % Find the free DOFs of the current iteration
-            freeDOFs_iterate = 1:noDOFsTotal;
-            freeDOFs_iterate(ismember(freeDOFs_iterate,constrained_DOFs)) = [];
-            
-        end
-        
-        %% 7v.3. Update the iteration counter
-        counterContact = counterContact + 1;
-        
-    end % End of inner while loop
-
-end % End of main while loop
-
+    %% 7vii. Evaluate convergence conditions
+    
+    % Check whether the vector of active contact nodes has not changed
+    isCnd_DOFs = isequal(nodesActiveSaved,nodesActive);
+    
+    % Check whether all Lagrange Multipliers DOFs are negative
+    isCnd_LM = max(dHat_stiffMtxLM(noDOFs+1:length(resVecLM))) <= 0;
+    
+    %% 7viii. Update the iteration counter
+    counterContact = counterContact + 1;
+end
 if (counterContact >= propContact.maxIter)
     warning('\t Max number of iterations has been reached!\n');
 end
@@ -371,13 +318,16 @@ if ~isUnitTest
 end
 
 %% 10. Get the Lagrange Multipliers solution
-lambdaHat = dHat_stiffMtxLM(noDOFs+1 : noDOFsTotal);
+lambdaHat = dHat_stiffMtxLM(noDOFs + 1:noDOFsTotal);
 
 %% 11. Get the index of the active Lagrange Multipliers DOFs
 allContactNodes = repmat(propContact.nodeIDs,segmentsContact.number,1);
-nodeIDs_active = allContactNodes(nodesActive);
+nodeIDs_active = allContactNodes(lambdaHat < 0);
 
-%% 12. Appendix
+%% 12. Return only the negative Lagrange Multipliers
+lambdaHat = lambdaHat(lambdaHat < 0);
+
+%% 13. Appendix
 if strcmp(outMsg,'outputEnabled')
     % Save computational time
     computationalTime = toc;

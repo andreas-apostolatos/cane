@@ -1,4 +1,4 @@
-function [x,haveIntersection] = computeIntersectionBetweenStraightLines(x1,x2,x3,x4)
+function [x,isIntersection] = computeIntersectionBetweenStraightLines(x1,x2,x3,x4)
 %% Licensing
 %
 % License:         BSD License
@@ -17,7 +17,7 @@ function [x,haveIntersection] = computeIntersectionBetweenStraightLines(x1,x2,x3
 %
 %           Output :
 %                x : The intersection point
-% haveIntersection : Boolean on whether the two line actually intersect
+%   isIntersection : Boolean on whether the two line actually intersect
 %
 %% Function main body
 
@@ -25,7 +25,7 @@ function [x,haveIntersection] = computeIntersectionBetweenStraightLines(x1,x2,x3
 eps = 1e-14;
 
 % Initialize the flag to true
-haveIntersection = 1;
+isIntersection = true;
 
 % Form matrix J
 J = [x2(1,1)-x1(1,1) x3(1,1)-x4(1,1)
@@ -48,12 +48,12 @@ if abs(det(J)) >= eps
     
     if condition
        x = 'The lines do not intersect';
-       haveIntersection = 0;
+       isIntersection = false;
     else
         x = xIntersection1;
     end
 else
     x = 'The lines do not intersect';
-    haveIntersection = 0;
+    isIntersection = false;
 end
 

@@ -31,22 +31,16 @@
 
 \subsection{Linear elasticity}\label{subsec:linear_elasticity}
 
-Given is a deformable body which is geometrically described by $\Omega \subset \mathbb{R}^d$ where $d = 2,3$ stands for the number of the problem's spatial dimensions. Its deformation due to the applied boundary conditions can be uniquely defined by a displacement field $\mathbf{u} = u_i \, \mathbf{e}_i$, $\mathbf{e}_i$ being the Cartesian basis, which maps each each material point of the reference configuration $\mathbf{X} \in \Omega$ to a material point in the current configuration $\mathbf{x} \in \Omega_t$, that is, $\mathbf{x} = \mathbf{X} + \mathbf{u}$.\\
+Given is a deformable body which is geometrically described by $\Omega \subset \mathbb{R}^d$ where $d = 2,3$ stands for the number of the problem's spatial dimensions. Its deformation due to the applied boundary conditions can be uniquely defined by a displacement field $\mathbf{u} = u_i \, \mathbf{e}_i$, $\mathbf{e}_i$ being the Cartesian basis, which maps each each material point of the reference configuration $\mathbf{X} \in \Omega$ to a material point in the current configuration $\mathbf{x} \in \Omega_t$, that is, $\mathbf{x} = \mathbf{X} + \mathbf{u}$. The Einstein's summation convention over the repeated indices is assumed in the sequel if not otherwise mentioned.\\
 
 The strain is described by means of the \textit{Green-Lagrange} (GL) strain second order tensor $\boldsymbol{\mathcal{E}} \in \mathfrak{S}^2$ given by,
 
-\begin{equation}
-	\boldsymbol{\mathcal{E}} = \frac{1}{2} \left( \boldsymbol{\nabla} \mathbf{u} + \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} +  \boldsymbol{\nabla} \mathbf{u} \cdot \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} \right) \;, \label{eq:GL_strain}
-\end{equation}
-
-where the underlying symbols are understood as follows,
-
 \begin{subequations}
 	\begin{alignat}{1}
-		\boldsymbol{\nabla} \mathbf{u} &= \sum_{i = 1}^d \sum_{j = 1}^d \frac{\partial u_i}{\partial X_j} \, \mathbf{e}_i \otimes \mathbf{e}_j \;, \label{eq:nabla_u} \\
-		\left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} &= \sum_{k = 1}^d \sum_{l = 1}^d \frac{\partial u_l}{\partial X_k} \, \mathbf{e}_k \otimes \mathbf{e}_l \;, \label{eq:nabla_u_t} \\
-		\boldsymbol{\nabla} \mathbf{u} \cdot \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} &= \sum_{i = 1}^d \sum_{j = 1}^d \sum_{k = 1}^d \frac{\partial u_i}{\partial X_j} \frac{\partial u_j}{\partial X_k} \, \mathbf{e}_i \otimes \mathbf{e}_k \;. \label{eq:nabla_u_times_u_t}
+		\boldsymbol{\mathcal{E}} &= \frac{1}{2} \left( \boldsymbol{\nabla} \mathbf{u} + \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} +  \boldsymbol{\nabla} \mathbf{u} \cdot \left( \boldsymbol{\nabla} \mathbf{u} \right)^{\text{t}} \right) \;, \label{eq:GL_strain_tensor} \\
+		\mathcal{E}_{ij} &= \frac{1}{2} \left( \frac{\partial u_i}{\partial X_j} + \frac{\partial u_j}{\partial X_i} + \frac{\partial u_i}{\partial X_k} \frac{\partial u_k}{\partial X_j} \right) \, \mathbf{e}_k \otimes \mathbf{e}_l \;, \label{eq:GL_strain_comp}
 	\end{alignat}
+	\label{eq:GL_strain}
 \end{subequations}
 
 Assumed is also a Saint-Venant material model which is governed by the material fourth order tensor $\boldsymbol{\mathcal{C}} \in \mathfrak{S}^2$
@@ -55,7 +49,7 @@ Assumed is also a Saint-Venant material model which is governed by the material 
 	\boldsymbol{\mathcal{C}} = \frac{E}{2 (1 + \nu)} \left( \delta_{ik} \delta_{jl} + \delta_{il} \delta_{jk} + \frac{2 \nu}{1 - 2 \nu} \delta_{ij} \delta_{kl} \right) \, \mathbf{e}_i \otimes \mathbf{e}_j \otimes \mathbf{e}_k \otimes \mathbf{e}_l \;, \label{eq:material_tensor}
 \end{equation}
 
-where $E$ and $\nu$ stand for the Young's modulus and Poisson ratio of the material, respectively. The stress state of the problem is described by means of the 2nd \textit{Piola-Kirchhoff} (PK2) stress second order ternsor $\boldsymbol{\mathcal{S}} \in \mathfrak{S}^2$ which is defined as and given by the linear elastic isotropic law as,
+where $E$ and $\nu$ stand for the Young's modulus and Poisson ratio of the material, respectively. The stress state of the problem is described by means of the 2nd \textit{Piola-Kirchhoff} (PK2) second order ternsor $\boldsymbol{\mathcal{S}} \in \mathfrak{S}^2$ which is given by the linear elastic isotropic law as,
 
 \begin{equation}
 	\boldsymbol{\mathcal{S}} = \boldsymbol{\mathcal{C}}  : \boldsymbol{\mathcal{E}} \:.
@@ -69,7 +63,7 @@ where $E$ and $\nu$ stand for the Young's modulus and Poisson ratio of the mater
 	\label{im:signorini_contact_problem}
 \end{figure}
 
-Given the Dirichlet boundary conditions along $\Gamma_{\text{d}}$ where the displacement is prescribed to a value $\bar{\mathbf{u}}$ which is assumed to be zero without loss of generality, the Neumann boundary conditions along $\Gamma_{\text{n}}$ where external traction $\bar{\mathbf{t}}$ is applied and applied body forces $\mathbf{b}$, see Fig.~\ref{im:signorini_contact_problem}, the strong form of the elasticity problem writes,
+Given the Dirichlet boundary conditions along $\Gamma_{\text{d}}$ where the displacement is prescribed to a value $\bar{\mathbf{u}}$ (assumed herein zero without loss of generality), the Neumann boundary conditions along $\Gamma_{\text{n}}$ where external tractions $\bar{\mathbf{t}}$ are applied and applied body forces $\mathbf{b}$ in $\Omega$ (e.g. gravitational forces), see Fig.~\ref{im:signorini_contact_problem}, the strong form of the elasticity problem writes,
 
 \begin{subequations}
 	\begin{alignat}{2}
@@ -84,35 +78,41 @@ where $\mathbf{n}$ stands for the unit outward normal vector to Neumann boundary
 
 \subsection{Contact conditions}\label{subsec:contact_conditions}
 
-Assumed is also that there is a boundary $\Gamma_{\text{c}} = \Gamma_{\text{c}} (\mathbf{u})$ along which body $\Omega$ is expected to come into contact with a rigid body $\mathfrak{F}$ along a portion of its surface $\mathbb{S} \subset \partial \mathfrak{F}$. Assumed is that for each material particle $\mathbf{X} \in \Gamma_{\text{c}}$ there exists a unique material particle $\mathbf{Z} \in \mathbb{S}$ which is closest to $\mathbf{X}$ in Euclidean sense,
+Assumed is also that there is a boundary $\Gamma_{\text{c}} = \Gamma_{\text{c}} (\mathbf{u})$ along which body $\Omega$ is expected to come into contact with a rigid body $\mathfrak{F}$ along a portion of its surface $\mathbb{S} \subset \partial \mathfrak{F}$ which is assumed to be piecewise linear. Assumed is that for each material particle $\mathbf{X} \in \Gamma_{\text{c}}$ there exists a unique material particle $\mathbf{Z} \in \mathbb{S}$ which is closest to $\mathbf{X}$ in Euclidean sense,
 
 \begin{equation}
-	\mathbf{Z} (\mathbf{X}) = \arg \min_{\mathbf{Y} \in \Gamma_{\text{c}}} \left\| \mathbf{X} - \mathbf{Y} \right\|_2 \;. \label{eq:euclidean_distance}
+	\mathbf{Z} = \arg \min_{\bar{\mathbf{Z}} \in \mathbb{S}} \left\| \mathbf{X} - \bar{\mathbf{Z}} \right\|_2 \;. \label{eq:euclidean_distance}
 \end{equation}
 
-The so-called gap function is then defined along $\Gamma_{\text{c}}$, namely $\mathbf{g}:\Gamma_{\text{c}} \rightarrow \mathbb{R}$ and measures the normal distance between the deformable and the rigid body $\Omega$ along $\Gamma_{\text{c}}$ and $\mathbb{S}$,
+The so-called gap function is then defined along $\Gamma_{\text{c}}$, namely $g:\Gamma_{\text{c}} \rightarrow \mathbb{R}$ and measures the normal distance between the deformed elastic body $\Omega_t$ and the rigid body $\mathfrak{F}$ along $\Gamma_{\text{c}}$ and $\mathbb{S}$, respectively, that is
 
 \begin{equation}
-	g = u_n - g_0 \quad \text{for all }\mathbf{X} \in \Gamma_{\text{c}} \:, \label{eq:gap_function}
+	g = g_0 - u_n \quad \text{for all }\mathbf{X} \in \Gamma_{\text{c}} \:, \label{eq:gap_function}
 \end{equation}
 
-where $u_n = \mathbf{u} \cdot\mathbf{n}$ is the normal component of the displacement field given the outward normal $\mathbf{n}$ to $\Gamma_{\text{c}}$ at $\mathbf{X} \in \Gamma_{\text{c}}$ and $g_0(\mathbf{X})$ is the initial gap given by,
+where $u_n = \mathbf{u} \cdot\mathbf{n}$ is the normal component of the displacement field given the outward normal $\mathbf{n}$ to $\Gamma_{\text{c}}$ at $\mathbf{X} \in \Gamma_{\text{c}}$ and $g_0$ is the initial gap given by,
 
 \begin{equation}
-	g_0(\mathbf{X}) = - (\mathbf{X} - \mathbf{Z}(\mathbf{X})) \cdot \mathbf{n}(\mathbf{X}) \quad \text{for all }\mathbf{X} \in \Gamma_{\text{c}} \;. \label{eq:initial_gap}
+	g_0 = \left( \mathbf{X} - \mathbf{Z} \right) \cdot \mathbf{n} \quad \text{for all }\mathbf{X} \in \Gamma_{\text{c}} \;. \label{eq:initial_gap}
 \end{equation}
 
-Herein it is assumed that neither the closest point $\mathbf{Z}$ nor the outward normal $\mathbf{z}$ depend on the displacement field $\mathbf{u}$ but solely on the point $\mathbf{X} \in \Gamma_{\text{c}}$ and that $\mathbf{k} (\mathbf{X}) = - \mathbf{n} (\mathbf{X})$, where $\mathbf{k} (\mathbf{X})$ stands for the outward normal to $\mathbb{S}$ at $\mathbf{Z} \in \mathbb{S}$. These assumptions are valid for sufficiently small gaps. Moreover, the following conditions are assumed,
+For small gaps it can be assumed that the neither $\mathbf{Z}$ nor the outward normal $\mathbf{k}$ of $\mathbb{S}$ at $\mathbf{Z}$ depend on the displacement field $\mathbf{u}$ but solely on $\mathbf{X} \in \Gamma_{\text{c}}$. Therefore, the following relation can be deduced,
+
+\begin{equation}
+	\mathbf{n} = - \mathbf{k} \;. \label{eq:outward_normals}
+\end{equation}
+
+The latter assumption comes handy for piecewise linear approximations of the elastic body for which a unit normal vector $\mathbf{n}$ can not be uniquely defined at the nodes. Moreover, the following conditions are also assumed for a frictionless contact,
 
 \begin{itemize}
 
-	\item[i.] No material particle can penetrate the body $\mathfrak{F}$, hence $g(\mathbf{X}) \le 0$ for all $\mathbf{X} \in \Gamma_{\text{c}}$,
+	\item[1.] no material particle can penetrate the body $\mathfrak{F}$, hence $g \le 0$ for all $\mathbf{X} \in \Gamma_{\text{c}}$,
 	
-	\item[ii.] Surface $\mathbb{S}$ is sufficiently lubricated such that no shear tractions develop, that is, $t_t = \mathbf{n} \cdot \boldsymbol{\mathcal{S}} \cdot \mathbf{t} = 0$ where $\mathbf{t}$ stands for the normal tangent vector to $\mathbb{S}$,
+	\item[2.] surface $\mathbb{S}$ is sufficiently lubricated such that no shear tractions develop, that is, $t_t = \mathbf{n} \cdot \boldsymbol{\mathcal{S}} \cdot \mathbf{t} = 0$ where $\mathbf{t}$ stands for the tangent unit vector to $\mathbb{S}$,
 	
-	\item[iii.] The normal tractions along $\Gamma_{\text{c}}$ are compressive, that is, $t_n = \mathbf{n} \cdot \boldsymbol{\mathcal{S}} \cdot \mathbf{n} \ge 0$,
+	\item[3.] the normal tractions along $\Gamma_{\text{c}}$ are compressive, that is, $t_n = \mathbf{n} \cdot \boldsymbol{\mathcal{S}} \cdot \mathbf{n} \ge 0$,
 	
-	\item[iv.] If there is contact along $\Gamma_{\text{c}}$ then $g = 0$ and $t_n \ge 0$ whereas is there is no contact along $\Gamma_{\text{c}}$ then $g \le 0$ and $t_n = 0$
+	\item[4.] $g = 0$ and $t_n \ge 0$ in case of contact along $\Gamma_{\text{c}}$ whereas $g \le 0$ and $t_n = 0$ otherwise.
 
 \end{itemize}
 
@@ -162,12 +162,12 @@ Assumed is that the displacement field is discretized with the standard linear \
 
 where the linear/bilinear basis functions $\boldsymbol{\varphi}_i$ are constructed as a dual product of the linear/bilinear shape functions $N_i$ at the element's parametric space and the Cartesian basis $\mathbf{e}_i$. Accordingly, $\hat{u}_i$ and $\delta\hat{u}_i$ stand for the \textit{Degrees of Freedom} (DOFs) of the unknown and the test fields, respectively, and $n \in \mathbb{N}$ is the number of nodes in the mesh. Subscript $h$ indicates then the smallest element length size within the employed mesh.\\
 
-Within the node-based contact method, the shape functions for the discretization of the Lagrange Multipliers fields $\lambda$ and $\delta \lambda$ are chosen the diract delta distributions supported on the finite element nodes $\mathbf{X}_i$, that is,
+Within the node-based contact method, the shape functions for the discretization of the Lagrange Multipliers fields $\lambda$ and $\delta \lambda$ are chosen the diract delta distributions supported on the contact nodes $\mathbf{X}_i$, $i = 1,\ldots,n_{\text{c}}$, that is,
 
 \begin{subequations}
 	\begin{alignat}{1}
-		\lambda_h &= \sum_{i = 1}^{n_{\text{c}}} \delta(\mathbf{X}_i) \hat{\lambda}_i \;, \label{eq:discretization_lambda} \\
-		\delta \lambda_h &= \sum_{i = 1}^{n_{\text{c}}} \delta(\mathbf{X}_i) \delta\hat{\lambda}_i \;, \label{eq:discretization_lambda_u}
+		\lambda_h &= \sum_{i = 1}^{n_{\text{c}}} \delta(\mathbf{X}_i) \, \hat{\lambda}_i \;, \label{eq:discretization_lambda} \\
+		\delta \lambda_h &= \sum_{i = 1}^{n_{\text{c}}} \delta(\mathbf{X}_i) \, \delta\hat{\lambda}_i \;, \label{eq:discretization_lambda_u}
 	\end{alignat}
 \end{subequations}
 
@@ -199,24 +199,27 @@ Substituting the latter expressions in Eq.~\eqref{eq:variational_problem_signori
 over the so-called active set of Lagrange Multipliers DOFs. The $i$-th component of the residual vector $\mathbf{R}$ derived from Eq.~\eqref{eq:variational_formulation_delta_u} is defined as follows,
 
 \begin{equation}
-	R_i ( \hat{\mathbf{u}}_{\hat{i}} , \hat{\boldsymbol{\lambda}}_{\hat{i}} ) = \int_{\Omega} \frac{\partial \boldsymbol{\mathcal{E}}}{\partial \hat{u}_i} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega + \sum_{j = 1}^{n_{\text{c}}} \bar{n} (\mathbf{X}_j) \, \hat{\lambda}_j - \int_{\Omega} \boldsymbol{\varphi}_i \cdot \mathbf{b} \: \text{d} \Omega - \int_{\Omega} \boldsymbol{\varphi}_i \cdot \bar{\mathbf{t}} \: \text{d} \Gamma \;. \label{eq:residual_form_domain}
+	\begin{split}
+	R_i ( \hat{\mathbf{u}}_{\hat{i}} , \hat{\boldsymbol{\lambda}}_{\hat{i}} ) = \int_{\Omega} \frac{\partial \boldsymbol{\mathcal{E}}}{\partial \hat{u}_i} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega + \sum_{i = 1}^{2 n_{\text{c}}} \sum_{j = 1}^{n_{\text{c}}} \, \boldsymbol{\varphi}_i (\mathbf{X}_j) \cdot \mathbf{n}(\mathbf{X}_j) \, \hat{\lambda}_j - \int_{\Omega} \boldsymbol{\varphi}_i \cdot \mathbf{b} \: \text{d} \Omega \\
+	- \int_{\Omega} \boldsymbol{\varphi}_i \cdot \bar{\mathbf{t}} \: \text{d} \Gamma \;.
+	\end{split} 
+	\label{eq:residual_form_domain}
 \end{equation}
 
 The second term in Eq.~\eqref{eq:residual_form_domain} is derived by inserting Eq.~\eqref{eq:discretization_lambda} in Eq.~\eqref{eq:variational_formulation_delta_u} and by using the well-known identity of the Dirac delta distribution, that is,
 
-\begin{align}
-	\int_{\Gamma_{\text{c}}} \delta u_n \, \lambda \: \text{d} \Gamma \approx \int_{\Gamma_{\text{c}}} \delta \mathbf{u}_h \cdot \mathbf{n} \, \lambda_h \: \text{d} \Gamma \nonumber = \sum_{i = 1}^{n} \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_i \int_{\Gamma_{\text{c}}} \boldsymbol{\varphi}_i \cdot \mathbf{n} \; \delta (\mathbf{X}_j) \hat{\lambda}_j  \, \text{d} \Gamma = \nonumber \\
-	\sum_{i = 1}^n \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_i \, \boldsymbol{\varphi}_i (\mathbf{X}_j) \cdot \mathbf{n} \, \hat{\lambda}_j = \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_j \, \mathbf{e}_{\text{mod} \left( \frac{j - 1}{2} \right) + 1} \cdot \mathbf{n}  \, \hat{\lambda}_j = \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_j \, \bar{n} (\mathbf{X}_j) \, \hat{\lambda}_j \nonumber \;,
-\end{align}
+\begin{equation}
+	\begin{split}
+	\int_{\Gamma_{\text{c}}} \delta u_n \, \lambda \: \text{d} \Gamma \approx \int_{\Gamma_{\text{c}}} \delta \mathbf{u}_h \cdot \mathbf{n} \, \lambda_h \: \text{d} \Gamma = \sum_{i = 1}^{2 n_{\text{c}}} \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_i \int_{\Gamma_{\text{c}}} \boldsymbol{\varphi}_i \cdot \mathbf{n} \; \delta (\mathbf{X}_j) \hat{\lambda}_j  \, \text{d} \Gamma = \\
+	\sum_{i = 1}^{2 n_{\text{c}}} \sum_{j = 1}^{n_{\text{c}}} \delta \hat{u}_i \, \boldsymbol{\varphi}_i (\mathbf{X}_j) \cdot \mathbf{n}(\mathbf{X}_j) \, \hat{\lambda}_j \;,
+	\end{split} 
+	\label{eq:discretization_complementarity}
+\end{equation}
 
-where $\bar{n} (\mathbf{X}_j) = n_1 (\mathbf{X}_j) + n_2 (\mathbf{X}_j)$ is nothing else but the sum of the components of the outward normal vector $\mathbf{n}$ to the boundary $\Gamma_{\text{c}}$ at node $\mathbf{X}_j \in \Gamma_{\text{c}}$.\\
-
-It is worth noting that within linear FEM, the boundary $\Gamma_{\text{c}}$ is only piecewise continuous which means that the the outward normal vector $\mathbf{n}$ to $\Gamma_{\text{c}}$ is not uniquely defined at the finite element nodes $\mathbf{X}_i$. Therefore, $\mathbf{n}(\mathbf{X}_i)$ is constructed by averaging the outward normal vectors from the neighbouring elements along $\Gamma_{\text{c}}$.\\
-
-The $i$-th component of the residual vector $\boldsymbol{\mathcal{R}}$ derived from Eq.~\eqref{eq:variational_formulation_delta_lambda} is defined as follows,
+where $\boldsymbol{\varphi}_i (\mathbf{X}_j) \cdot \mathbf{n}(\mathbf{X}_j)$ is nothing else but the $\text{mod}\left( (i + 1)/2 \right) + 1$-Cartesian component of the unit normal vector at node $\mathbf{X}_j$ provided that $\lceil i/2 \rceil = j$. The $i$-th component of the residual vector $\boldsymbol{\mathcal{R}}$ derived from Eq.~\eqref{eq:variational_formulation_delta_lambda} is defined as follows,
 
 \begin{equation}
-	\mathcal{R}_i ( \hat{u}_i ) = \bar{n} (\mathbf{X}_i) \, \hat{u}_i - g_0(\mathbf{X}_i) \;.
+	\mathcal{R}_i ( \hat{\mathbf{u}}_{\hat{i}} ) = g_0(\mathbf{X}_i) + \sum_{j = 1}^{2 n_{\text{c}}} \hat{u}_j \, \boldsymbol{\varphi}_j (\mathbf{X}_i) \cdot \mathbf{n}(\mathbf{X}_i) \;.
 \end{equation}
 
 Then, the tangent stiffness matrix $\mathbf{K}$ has components,
@@ -225,10 +228,10 @@ Then, the tangent stiffness matrix $\mathbf{K}$ has components,
 	K_{ij} ( \hat{\mathbf{u}}_{\hat{i}} ) = \frac{\partial R_i}{\partial \hat{u}_j} = \int_{\Omega} \frac{\partial \boldsymbol{\mathcal{E}}}{\partial \hat{u}_i} : \frac{\partial \boldsymbol{\mathcal{S}}}{\partial \hat{u}_j} + \frac{\partial^2 \boldsymbol{\mathcal{E}}}{\partial \hat{u}_i \partial \hat{u}_j} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega \:. \label{eq:tangent_stiffness_matrix}
 \end{equation}
 
-The Lagrange Multipliers matrix $\mathbf{C}$ is then a diagonal matrix due to the choice of the discretization for the Lagrange Multipliers field and has entries,
+The Lagrange Multipliers matrix $\mathbf{C}$ is then a quasi-diagonal matrix due to the choice of the discretization for the Lagrange Multipliers field and has entries,
 
 \begin{equation}
-	C_{ii} = \bar{n} (\mathbf{X}_i) \:,	\label{eq:lagrange_multipliers_matrix}
+	C_{ij} =  \boldsymbol{\varphi}_i (\mathbf{X}_j) \cdot \mathbf{n}(\mathbf{X}_j) \:,	\label{eq:lagrange_multipliers_matrix}
 \end{equation}
 
 at each active node $\mathbf{X}_i \in \Gamma_{\text{c}}$. Vectors $\hat{\mathbf{u}}$ and $\hat{\boldsymbol{\lambda}}$ stand for the collection of all the displacement and Lagrange Multipliers DOFs as follows,
@@ -236,7 +239,7 @@ at each active node $\mathbf{X}_i \in \Gamma_{\text{c}}$. Vectors $\hat{\mathbf{
 \begin{subequations}
 	\begin{alignat}{1}
 		\hat{\mathbf{u}} &= \left[ \begin{array}{ccc} \hat{u}_1 & \cdots & \hat{u}_n \end{array} \right] \;, \label{eq:vector_of_displacement_dofs} \\
-		\hat{\mathbf{u}} &= \left[ \begin{array}{ccc} \hat{\lambda}_1 & \cdots & \hat{\lambda}_{n_{\text{c}}} \end{array} \right] \;. \label{eq:vector_of_lagrange_multipliers_dofs}
+		\boldsymbol{\hat{\boldsymbol{\lambda}}} &= \left[ \begin{array}{ccc} \hat{\lambda}_1 & \cdots & \hat{\lambda}_{n_{\text{c}}} \end{array} \right] \;. \label{eq:vector_of_lagrange_multipliers_dofs}
 	\end{alignat}
 	\label{eq:vectors_of_dofs}
 \end{subequations}
