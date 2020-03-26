@@ -20,7 +20,7 @@ function load = computeConstantVerticalLoad(x,y,z,t)
 %
 %% Function main body
 
-loadAmplitude = -4e3;
+loadAmplitude = -5e3;
 load = zeros(3,1);
 load(2,1) = loadAmplitude;
 

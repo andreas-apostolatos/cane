@@ -1,4 +1,5 @@
-function [DOFsLMInactive, IDsActiveNodes] = findInactiveLagrangeMultipliersContact2D_andreas...
+function [DOFsLMInactive, IDsPenetration, IDsLagrange] = ...
+    findInactiveLagrangeMultipliersContact2D_debug...
     (mesh, noDOFs, dHat_stiffMtxLM, segmentsContact, propContact)
 %% Licensing
 %
@@ -74,7 +75,10 @@ function [DOFsLMInactive, IDsActiveNodes] = findInactiveLagrangeMultipliersConta
 % initialize output variable
 DOFsLMInactive = zeros(1, segmentsContact.number*propContact.numberOfNodes);
 
-IDsActiveNodes = [];
+
+% For debuging
+IDsPenetration = zeros(1, segmentsContact.number*propContact.numberOfNodes);
+IDsLagrange = zeros(1, segmentsContact.number*propContact.numberOfNodes);
 
 % Set contact tolerance
 tolerance = sqrt(eps);
@@ -82,6 +86,9 @@ tolerance = sqrt(eps);
 % Initialize counters
 counterLM = 1;
 counterActiveNodes = 1;
+
+m = 1;
+n = 1;
 
 %% 1. Loop over all rigid segments
 for iSeg = 1:segmentsContact.number
@@ -103,15 +110,6 @@ for iSeg = 1:segmentsContact.number
         vertexA = segmentsContact.points(1,:,iSeg);
         vertexB = segmentsContact.points(2,:,iSeg);
         
-        %% Check if penetration has occured
-        
-%         [~,isIntersection] = computeIntersectionBetweenStraightLines...
-%             (node,nodeDisp,vertexA,vertexB);
-%         if ~isIntersection
-%             counterLM = counterLM + 1;
-%             continue;
-%         end
-        
         %% 1i.6. Project the current displaced node on the rigid segment
         lambda = ((vertexA - vertexB)*(nodeDisp - vertexA)')/((vertexA - vertexB)*(vertexB - vertexA)');
         nodeDisp_proj = (1 - lambda)*vertexA + lambda*vertexB;
@@ -124,15 +122,34 @@ for iSeg = 1:segmentsContact.number
         isCnd2 = lambda < tolerance;
         isCnd3 = lambda >= 1;
         
+        %% Debug - Check if penetration has occured
+        [~,isIntersection] = computeIntersectionBetweenStraightLines...
+            (node,nodeDisp,vertexA,vertexB);
+        
         %% 1i.9. Compute condition for Lagrange multipliers (non-compressive contact tractions)
-        isCnd4 = dHat_stiffMtxLM(noDOFs+counterLM) > tolerance;
+        isCnd4 = dHat_stiffMtxLM(noDOFs+counterLM) > 0;
+        
+        if(isIntersection)
+            IDsPenetration(n) = propContact.nodeIDs(iCN);
+            n = n+1;
+        end
+        
+        if dHat_stiffMtxLM(noDOFs+counterLM) < 0
+            IDsLagrange(m) = propContact.nodeIDs(iCN);
+            m = m+1;
+        end
         
         %% 1i.10. Check whether the node is active depending on whether any of the above-defined conditions is valid
         if (isCnd1 || isCnd2 || isCnd3 || isCnd4)
+        %if (~isIntersection || isCnd4)
             DOFsLMInactive(counterActiveNodes) = noDOFs + counterLM;
             
-            IDsActiveNodes(counterActiveNodes) = propContact.nodeIDs(iCN);
             
+            % For debuging
+            %IDsActiveNodes(counterActiveNodes) = propContact.nodeIDs(iCN);
+            
+            
+            % Update counter
             counterActiveNodes = counterActiveNodes + 1;
         end
         
@@ -143,5 +160,10 @@ end
 
 %% 2. Keep only non-zero entries of the inactive_nodes
 DOFsLMInactive = DOFsLMInactive(1:counterActiveNodes - 1);
+
+
+% For debug
+IDsPenetration = IDsPenetration(1:n - 1);
+IDsLagrange = IDsLagrange(1:m - 1);
 
 end

@@ -257,18 +257,20 @@ while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     nodesActiveSaved = nodesActive;
    
     %% 7ii. Determine active contact nodes
-    [nodesActive, IDsActiveNodes] = findInactiveLagrangeMultipliersContact2D_andreas...
+    [nodesActive, IDsPenetration, IDsLagrange] = findInactiveLagrangeMultipliersContact2D_debug...
         (strMsh,noDOFs,dHat_stiffMtxLM,segmentsContact,propContact);
     
-    %% Debug
-    lambdaHat = dHat_stiffMtxLM(noDOFs + 1:noDOFsTotal);
-    allContactNodes = repmat(propContact.nodeIDs,segmentsContact.number,1);
-%     nodeIDs_active = allContactNodes(lambdaHat < 0);
-    nodeIDs_active = allContactNodes(IDsActiveNodes);
-
+    %% For Debuging
+    IDsPenetration = unique(IDsPenetration);
+    IDsLagrange = unique(IDsLagrange);
     graph.index = plot_currentConfigurationFEMPlateInMembraneAction...
         (strMsh,homDOFs,segmentsContact,dHat_stiffMtxLM,graph);
-    plot_activeNodes(strMsh,dHat_stiffMtxLM,nodeIDs_active);
+    
+    % plot penetrating nodes in RED
+    plot_activeNodes(strMsh,dHat_stiffMtxLM,IDsPenetration);
+    
+    % plot nodes with valid multipliers in BLUE
+    plot_activeNodes_debug(strMsh,dHat_stiffMtxLM,IDsLagrange);
 
     %% 7iii. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
     homDOFs_iterate = horzcat(homDOFs, nodesActive);

@@ -95,9 +95,15 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 if strcmp(caseName,'example_01_bridge')
    
     % Either define bottom contact line segment and add it to the segments
-    contactSegments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
-    contactSegments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
-    contactSegments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
+%     contactSegments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
+%     contactSegments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
+%     contactSegments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
+    
+%     contactSegments.points(:,:,1) = [0.5, -0.5; 2,-0.1];
+%     contactSegments.points(:,:,2) = [2, -0.1; 3.5,-0.5];
+    
+    contactSegments.points(:,:,1) = [0.5, -0.5; 3.5,-0.5];
+    
     
     % ...or define a circular contact boundary
     center = [2,-4.1];
@@ -107,7 +113,7 @@ if strcmp(caseName,'example_01_bridge')
     nSegments = 17; %17
     
     % Create circular segments
-    contactSegments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
+%     contactSegments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
 %     computeConstantVerticalLoad
 %     computeConstantHorizontalLoad
 elseif strcmp(caseName,'example_02_wedge')
@@ -138,7 +144,7 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
     (strMsh,analysis,F,homDBC,contactSegments,graph,'outputEnabled');
 
 %% Solve the system and get the displacement field
-[dHat,lambdaHat,nodeIDs_active] = solveSignoriniLagrange...
+[dHat,lambdaHat,nodeIDs_active] = solveSignoriniLagrange_1_debug...
     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,parameters,...
     contactSegments,computeStiffMtxLoadVct,solve_LinearSystem,...
     propNLinearAnalysis,propContact,gaussInt,caseName,pathToOutput,...
@@ -154,8 +160,8 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
 %     propNLinearAnalysis,propContact,gaussInt,caseName,pathToOutput,...
 %     isUnitTest,'outputEnabled'); 
 %% Postprocessing
-graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,contactSegments,dHat,graph);
-plot_activeNodes(strMsh,dHat,nodeIDs_active);
+% graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,contactSegments,dHat,graph);
+% plot_activeNodes(strMsh,dHat,nodeIDs_active);
 
 % Get the length of the contact area and the reaction force on the contact
 if strcmp(caseName,'example_03_hertz')
