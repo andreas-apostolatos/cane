@@ -290,10 +290,10 @@ end
 if ~isempty(out)
     out = out{1};
     propContact.nodeIDs = cell2mat(out(:,1));
-    propContact.numberOfNodes = length(propContact.nodeIDs);
+    propContact.numNodes = length(propContact.nodeIDs);
 else
     propContact.nodeIDs = [];
-    propContact.numberOfNodes = 0;
+    propContact.numNodes = 0;
 end
 
 %% 12. Get edge connectivity arrays for the Neumann edges

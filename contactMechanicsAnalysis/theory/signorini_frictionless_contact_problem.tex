@@ -87,7 +87,7 @@ Assumed is also that there is a boundary $\Gamma_{\text{c}} = \Gamma_{\text{c}} 
 The so-called gap function is then defined along $\Gamma_{\text{c}}$, namely $g:\Gamma_{\text{c}} \rightarrow \mathbb{R}$ and measures the normal distance between the deformed elastic body $\Omega_t$ and the rigid body $\mathfrak{F}$ along $\Gamma_{\text{c}}$ and $\mathbb{S}$, respectively, that is
 
 \begin{equation}
-	g = g_0 - u_n \quad \text{for all }\mathbf{X} \in \Gamma_{\text{c}} \:, \label{eq:gap_function}
+	g =  u_n + g_0 \quad \text{for all }\mathbf{X} \in \Gamma_{\text{c}} \:, \label{eq:gap_function}
 \end{equation}
 
 where $u_n = \mathbf{u} \cdot\mathbf{n}$ is the normal component of the displacement field given the outward normal $\mathbf{n}$ to $\Gamma_{\text{c}}$ at $\mathbf{X} \in \Gamma_{\text{c}}$ and $g_0$ is the initial gap given by,
@@ -136,7 +136,7 @@ The weak formulation of the problem in Eq.~\eqref{eq:strong_formulation} subject
 \begin{subequations}
 	\begin{alignat}{1}
 		\int_{\Omega} \delta \boldsymbol{\mathcal{E}} : \boldsymbol{\mathcal{S}} \: \text{d} \Omega + \int_{\Gamma_{\text{c}}} \delta u_n \, \lambda \: \text{d} \Gamma &= \int_{\Omega} \delta \mathbf{u} \cdot \mathbf{b} \: \text{d} \Omega + \int_{\Gamma_{\text{n}}} \bar{\mathbf{t}} \cdot \mathbf{u} \: \text{d} \Gamma \label{eq:variational_formulation_delta_u} \\
-		\int_{\Gamma_{\text{c}}} \delta \lambda \, u_n \: \text{d} \Gamma &= \int_{\Gamma_{\text{c}}} \delta \lambda \, g_0 \: \text{d} \Gamma \;, \label{eq:variational_formulation_delta_lambda}
+		\int_{\Gamma_{\text{c}}} \delta \lambda \, u_n \: \text{d} \Gamma + \int_{\Gamma_{\text{c}}} \delta \lambda \, g_0 \: \text{d} \Gamma &= 0 \;, \label{eq:variational_formulation_delta_lambda}
 	\end{alignat}
 	\label{eq:variational_problem_signorini}
 \end{subequations}
@@ -219,7 +219,7 @@ The second term in Eq.~\eqref{eq:residual_form_domain} is derived by inserting E
 where $\boldsymbol{\varphi}_i (\mathbf{X}_j) \cdot \mathbf{n}(\mathbf{X}_j)$ is nothing else but the $\text{mod}\left( (i + 1)/2 \right) + 1$-Cartesian component of the unit normal vector at node $\mathbf{X}_j$ provided that $\lceil i/2 \rceil = j$. The $i$-th component of the residual vector $\boldsymbol{\mathcal{R}}$ derived from Eq.~\eqref{eq:variational_formulation_delta_lambda} is defined as follows,
 
 \begin{equation}
-	\mathcal{R}_i ( \hat{\mathbf{u}}_{\hat{i}} ) = g_0(\mathbf{X}_i) + \sum_{j = 1}^{2 n_{\text{c}}} \hat{u}_j \, \boldsymbol{\varphi}_j (\mathbf{X}_i) \cdot \mathbf{n}(\mathbf{X}_i) \;.
+	\mathcal{R}_i ( \hat{\mathbf{u}}_{\hat{i}} ) = \sum_{j = 1}^{2 n_{\text{c}}} \hat{u}_j \, \boldsymbol{\varphi}_j (\mathbf{X}_i) \cdot \mathbf{n}(\mathbf{X}_i) + g_0(\mathbf{X}_i) \;.
 \end{equation}
 
 Then, the tangent stiffness matrix $\mathbf{K}$ has components,

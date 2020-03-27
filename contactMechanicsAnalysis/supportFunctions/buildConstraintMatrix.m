@@ -1,4 +1,4 @@
-function C = buildConstraintMatrix(noDOFs,propContact,nodesActive,segmentsContact)
+function C = buildConstraintMatrix(mesh,propContact,segmentsContact)
 %% Licensing
 %
 % License:         BSD License
@@ -20,9 +20,6 @@ function C = buildConstraintMatrix(noDOFs,propContact,nodesActive,segmentsContac
 %       propContact : Data structure containing the contact properties,
 %                           .nodeIds : global numbering of contact nodes
 %                     .numberOfNodes : number of nodes
-%       nodesActive : List of indices of the nodes for which the matrix 
-%                     should be built (e.g. the set of all currently active
-%                     nodes)
 %   segmentsContact : Data sturcture containing information about the 
 %                     boundaries of the rigid wall :
 %                           .points : a list of 2x2 matrices containing
@@ -58,41 +55,32 @@ function C = buildConstraintMatrix(noDOFs,propContact,nodesActive,segmentsContac
 
 %% 0. Read input
 
+% Number of primal DOFs
+noDOFs = 2*length(mesh.nodes(:,1));
+
 % Number of Lagrange Multipliers DOFs
-noDOFsLM = propContact.numberOfNodes * segmentsContact.number;
-
-% Number of active nodes
-noActiveDOFs = length(nodesActive);
-
-% Initialize activeNodes conditions
-isCnd_empty = isempty(nodesActive);
+noDOFsLM = numel(propContact.isActive);
 
 % Initialize coupling matrix
-if(~isCnd_empty)
-    C = zeros(noDOFs, noActiveDOFs);
-else
-    C = zeros(noDOFs, noDOFsLM);
-end
+C = zeros(noDOFs, noDOFsLM);
 
 % Initialize counter
 counterLM = 1;
 counterNodes = 1;
 
 %% 1. Loop over all rigid segments
-for iSeg = 1:segmentsContact.number
+for iSeg = 1:segmentsContact.numSegments
     %% 1i. Loop over all potential contact nodes
-    for iCN = 1:propContact.numberOfNodes
-        %% 1i.1. Check if the current DOFs is a member of active nodes
-        if isCnd_empty || max(ismember(nodesActive,counterNodes))
-            %% 1i.2. Find the DOFs of the node
-            DOF = 2*propContact.nodeIDs(iCN) - 1 : 2*propContact.nodeIDs(iCN);
+    for iNode = 1:propContact.numNodes
+        %% 1i.2. Find the DOF ids at the node
+        DOFs = 2*propContact.nodeIDs(iNode) - 1 : 2*propContact.nodeIDs(iNode);
 
-            %% 1i.3. Assemble the entry to the coupling matrix
-            C(DOF,counterLM) = segmentsContact.normals(iSeg,:);
+        %% 1i.3. Assemble the entry to the coupling matrix
+        C(DOFs,counterLM) = segmentsContact.normals(iSeg,:);
 
-            %% 1i.4. Update counter which counts the Lagrange Multipliers DOFs
-            counterLM = counterLM + 1;
-        end
+        %% 1i.4. Update counter which counts the Lagrange Multipliers DOFs
+        counterLM = counterLM + 1;
+
         %% 1i.5. Update counter which counts total number of nodes
         counterNodes = counterNodes + 1;
     end 

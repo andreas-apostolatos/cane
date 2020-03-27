@@ -52,9 +52,10 @@ addpath('../../contactMechanicsAnalysis/plot',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-caseName = 'example_01_bridge';
+% caseName = 'example_01_bridge';
 % caseName = 'example_02_wedge';
-%caseName = 'example_03_hertz';
+% caseName = 'example_03_hertz';
+caseName = 'example_04_cantilever_beam_contact';
 
 % Parse the data from the GiD input file
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
@@ -92,7 +93,7 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 %% Rigid wall- line  [(x0,y0) ; (x1,y1)]
 
 % different line segments for different cases
-if strcmp(caseName,'example_01_bridge')
+if strcmp(caseName,'example_01_bridge') || strcmp(caseName,'example_04_cantilever_beam_contact')
    
     % Either define bottom contact line segment and add it to the segments
 %     contactSegments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
@@ -102,7 +103,9 @@ if strcmp(caseName,'example_01_bridge')
 %     contactSegments.points(:,:,1) = [0.5, -0.5; 2,-0.1];
 %     contactSegments.points(:,:,2) = [2, -0.1; 3.5,-0.5];
     
-    contactSegments.points(:,:,1) = [0.5, -0.5; 3.5,-0.5];
+%     contactSegments.points(:,:,1) = [0.5, -0.5; 3.5,-0.5];
+
+    contactSegments.points(:,:,1) = [1.0, 0.4; 10, 0.4];
     
     
     % ...or define a circular contact boundary
@@ -110,7 +113,7 @@ if strcmp(caseName,'example_01_bridge')
     radius = 4;
     startAngle = 3*pi/4;
     endAngle = pi/4;
-    nSegments = 17; %17
+    nSegments = 2; %17
     
     % Create circular segments
 %     contactSegments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
@@ -144,11 +147,18 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
     (strMsh,analysis,F,homDBC,contactSegments,graph,'outputEnabled');
 
 %% Solve the system and get the displacement field
-[dHat,lambdaHat,nodeIDs_active] = solveSignoriniLagrange_1_debug...
+
+[dHat,lambdaHat,nodeIDs_active] = solveSignoriniLagrange...
     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,parameters,...
     contactSegments,computeStiffMtxLoadVct,solve_LinearSystem,...
     propNLinearAnalysis,propContact,gaussInt,caseName,pathToOutput,...
     isUnitTest,'outputEnabled',graph);
+
+% [dHat,lambdaHat,nodeIDs_active] = solveSignoriniLagrange_1_debug...
+%     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,parameters,...
+%     contactSegments,computeStiffMtxLoadVct,solve_LinearSystem,...
+%     propNLinearAnalysis,propContact,gaussInt,caseName,pathToOutput,...
+%     isUnitTest,'outputEnabled',graph);
 % [dHat,lambdaHat,nodeIDs_active] = solveSignoriniLagrange_1...
 %     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,parameters,...
 %     contactSegments,computeStiffMtxLoadVct,solve_LinearSystem,...
@@ -160,8 +170,8 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
 %     propNLinearAnalysis,propContact,gaussInt,caseName,pathToOutput,...
 %     isUnitTest,'outputEnabled'); 
 %% Postprocessing
-% graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,contactSegments,dHat,graph);
-% plot_activeNodes(strMsh,dHat,nodeIDs_active);
+graph.index = plot_currentConfigurationFEMPlateInMembraneAction(strMsh,homDBC,contactSegments,dHat,graph);
+plot_activeNodes(strMsh,dHat,nodeIDs_active);
 
 % Get the length of the contact area and the reaction force on the contact
 if strcmp(caseName,'example_03_hertz')

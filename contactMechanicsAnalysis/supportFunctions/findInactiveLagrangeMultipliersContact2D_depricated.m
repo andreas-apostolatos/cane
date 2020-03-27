@@ -1,5 +1,4 @@
-function [DOFsLMInactive, IDsPenetration, IDsLagrange] = ...
-    findInactiveLagrangeMultipliersContact2D_debug...
+function DOFsLMInactive = findInactiveLagrangeMultipliersContact2D...
     (mesh, noDOFs, dHat_stiffMtxLM, segmentsContact, propContact)
 %% Licensing
 %
@@ -75,20 +74,12 @@ function [DOFsLMInactive, IDsPenetration, IDsLagrange] = ...
 % initialize output variable
 DOFsLMInactive = zeros(1, segmentsContact.number*propContact.numberOfNodes);
 
-
-% For debuging
-IDsPenetration = zeros(1, segmentsContact.number*propContact.numberOfNodes);
-IDsLagrange = zeros(1, segmentsContact.number*propContact.numberOfNodes);
-
 % Set contact tolerance
 tolerance = sqrt(eps);
 
 % Initialize counters
 counterLM = 1;
 counterActiveNodes = 1;
-
-m = 1;
-n = 1;
 
 %% 1. Loop over all rigid segments
 for iSeg = 1:segmentsContact.number
@@ -122,35 +113,13 @@ for iSeg = 1:segmentsContact.number
         isCnd2 = lambda < tolerance;
         isCnd3 = lambda >= 1;
         
-        %% Debug - Check if penetration has occured
-        [~,isIntersection] = computeIntersectionBetweenStraightLines...
-            (node,nodeDisp,vertexA,vertexB);
-        
         %% 1i.9. Compute condition for Lagrange multipliers (non-compressive contact tractions)
-        isCnd4 = dHat_stiffMtxLM(noDOFs+counterLM) > 0;
-        
-        if(isIntersection)
-            IDsPenetration(n) = propContact.nodeIDs(iCN);
-            n = n+1;
-        end
-        
-        if dHat_stiffMtxLM(noDOFs+counterLM) < 0
-            IDsLagrange(m) = propContact.nodeIDs(iCN);
-            m = m+1;
-        end
+        isCnd4 = dHat_stiffMtxLM(noDOFs+counterLM) > tolerance;
         
         %% 1i.10. Check whether the node is active depending on whether any of the above-defined conditions is valid
         if (isCnd1 || isCnd2 || isCnd3 || isCnd4)
-        %if (~isIntersection || isCnd4)
             DOFsLMInactive(counterActiveNodes) = noDOFs + counterLM;
-            
-            
-            % For debuging
-            %IDsActiveNodes(counterActiveNodes) = propContact.nodeIDs(iCN);
-            
-            
-            % Update counter
-            counterActiveNodes = counterActiveNodes + 1;
+            counterActiveNodes = counterActiveNodes+1;
         end
         
         %% 1i.11. Update counter
@@ -160,10 +129,5 @@ end
 
 %% 2. Keep only non-zero entries of the inactive_nodes
 DOFsLMInactive = DOFsLMInactive(1:counterActiveNodes - 1);
-
-
-% For debug
-IDsPenetration = IDsPenetration(1:n - 1);
-IDsLagrange = IDsLagrange(1:m - 1);
 
 end

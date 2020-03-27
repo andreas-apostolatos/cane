@@ -1,5 +1,6 @@
-function DOFsLMInactive = findInactiveLagrangeMultipliersContact2D...
-    (mesh, noDOFs, dHat_stiffMtxLM, segmentsContact, propContact)
+function homDOFsLM = findInactiveLagrangeMultipliersContact2D...
+    (homDOFsLM, mesh, noDOFs, dHat_stiffMtxLM, gapFunctionInitial, ...
+    segmentsContact, propContact)
 %% Licensing
 %
 % License:         BSD License
@@ -12,14 +13,26 @@ function DOFsLMInactive = findInactiveLagrangeMultipliersContact2D...
 %
 %% Function documentation
 %
-% Detects the nodes which are not penetrating the rigid segments and stores
-% the IDs of the corresponding Lagrange Multipliers DOFs into an array
+% Returns the updated array of constrained Lagrange Multipliers DOFs based
+% on the complementary contact conditions. For each inactive nodes it is
+% computed the gap function and if it is positive then the node is 
+% deactivated, i.e. its corresponding Lagrange Multiplier is removed from 
+% the array of the constrained Lagrange Multipliers.
+%
+% Alternatively, for each active node it is found whether the corresponding 
+% Lagrange Multiplier is valid, that is negative, and if not, meaning it is 
+% positive, the Lagrange Multipliers is added to the array of the
+% constrained Lagrange Multipliers.
 %
 %              Input :
+%          homDOFsLM : array containing the IDs of the inactive 
+%                      Lagrange Multipliers DOFs
 %             strMsh : Nodes and elements in the mesh
-%             noDOFs : Number of displacement DOFs
+%             noDOFs : Number of primal DOFs
 %    dHat_stiffMtxLM : Vector of DOFs containing both displacement and
 %                      Lagrange Multipliers
+% gapFunctionInitial : Array containing the intial gap function between the
+%                      potentially contact nodes and the rigid segments
 %    segmentsContact : Data sturcture containing information about the 
 %                      boundaries of the rigid wall :
 %                        .points : a list of 2x2 matrices containing end 
@@ -31,7 +44,8 @@ function DOFsLMInactive = findInactiveLagrangeMultipliersContact2D...
 %                    .numberOfNodes : number of nodes
 %
 %             Output :
-%     DOFsLMInactive : IDs of the inactive Lagrange Multipliers DOFs
+%          homDOFsLM : Updated array containing the IDs of the inactive 
+%                      Lagrange Multipliers DOFs
 %
 % Function layout :
 %
@@ -41,38 +55,20 @@ function DOFsLMInactive = findInactiveLagrangeMultipliersContact2D...
 % ->
 %    1i. Loop over all potential contact nodes
 %    ->
-%        1i.1 Get the DOF numbering of the current node
+%        1i.1. Get the id of the corresponding Lagrange Multiplier DOF
 %
-%        1i.2. Get the displacement of the current node
+%        1i.2. Get the index of the Lagrange Multiplier DOF in the array of prescribed Lagrange Multipliers DOFs
 %
-%        1i.3. Get the coordinates of the current node
+%        1i.3. Check if the potential contact node is active or inactive using the corresponding Lagrange Multipliers DOF
 %
-%        1i.4. Compute the displaced coordinates of the current node
-%
-%        1i.5. Get the end vertices of the current rigid segment
-%
-%        1i.6. Project the current displaced node on the rigid segment
-%
-%        1i.7. Compute the penetration of the current node with respect to the current segment
-%
-%        1i.8 Compute non-penetration conditions (displacement)
-%
-%        1i.9. Compute condition for Lagrange multipliers (non-compressive contact tractions)
-%
-%        1i.10. Check whether the node is active depending on whether any of the above-defined conditions is valid
-%
-%        1i.11. Update counter
+%        1i.4. Update the Lagrange Multipliers DOF counter
 %    <-
 % <-
 %
-% 2. Keep only non-zero entries of the inactive_nodes
 %
 %% Function main body
 
 %% 0. Read input
-
-% initialize output variable
-DOFsLMInactive = zeros(1, segmentsContact.number*propContact.numberOfNodes);
 
 % Set contact tolerance
 tolerance = sqrt(eps);
@@ -82,52 +78,59 @@ counterLM = 1;
 counterActiveNodes = 1;
 
 %% 1. Loop over all rigid segments
-for iSeg = 1:segmentsContact.number
+for iSeg = 1:segmentsContact.numSegments
     %% 1i. Loop over all potential contact nodes
-    for iCN = 1:propContact.numberOfNodes
-        %% 1i.1 Get the DOF numbering of the current node
-        DOF = 2*propContact.nodeIDs(iCN) - 1 : 2*propContact.nodeIDs(iCN);
+    for iNode = 1:propContact.numNodes
+        %% 1i.1. Get the id of the corresponding Lagrange Multiplier DOF
+        idLM = noDOFs + counterLM;
         
-        %% 1i.2. Get the displacement of the current node
-        u = dHat_stiffMtxLM(DOF);
+        %% 1i.2. Get the index of the Lagrange Multiplier DOF in the array of prescribed Lagrange Multipliers DOFs
+        indexDOFLM = find(idLM == homDOFsLM, 1);
         
-        %% 1i.3. Get the coordinates of the current node
-        node = mesh.nodes(propContact.nodeIDs(iCN),1:2);
-        
-        %% 1i.4. Compute the displaced coordinates of the current node
-        nodeDisp = node + u';
-        
-        %% 1i.5. Get the end vertices of the current rigid segment
-        vertexA = segmentsContact.points(1,:,iSeg);
-        vertexB = segmentsContact.points(2,:,iSeg);
-        
-        %% 1i.6. Project the current displaced node on the rigid segment
-        lambda = ((vertexA - vertexB)*(nodeDisp - vertexA)')/((vertexA - vertexB)*(vertexB - vertexA)');
-        nodeDisp_proj = (1 - lambda)*vertexA + lambda*vertexB;
-        
-        %% 1i.7. Compute the penetration of the current node with respect to the current segment
-        penetration = segmentsContact.normals(iSeg,:)*(nodeDisp - nodeDisp_proj)';
-        
-        %% 1i.8 Compute non-penetration conditions (displacement)
-        isCnd1 = penetration > tolerance;
-        isCnd2 = lambda < tolerance;
-        isCnd3 = lambda >= 1;
-        
-        %% 1i.9. Compute condition for Lagrange multipliers (non-compressive contact tractions)
-        isCnd4 = dHat_stiffMtxLM(noDOFs+counterLM) > tolerance;
-        
-        %% 1i.10. Check whether the node is active depending on whether any of the above-defined conditions is valid
-        if (isCnd1 || isCnd2 || isCnd3 || isCnd4)
-            DOFsLMInactive(counterActiveNodes) = noDOFs + counterLM;
-            counterActiveNodes = counterActiveNodes+1;
+        %% 1i.3. Check if the potential contact node is active or inactive using the corresponding Lagrange Multipliers DOF
+        if dHat_stiffMtxLM(idLM) == 0
+            % Get the DOF numbering of the current node
+            DOF = 2*propContact.nodeIDs(iNode) - 1 : 2*propContact.nodeIDs(iNode);
+
+            % Get the displacement of the current node
+            u = dHat_stiffMtxLM(DOF);
+
+            % Get the coordinates of the current node
+            node = mesh.nodes(propContact.nodeIDs(iNode),1:2);
+
+            % Compute the displaced coordinates of the current node
+            nodeDisp = node + u';
+
+            % Get the end vertices of the current rigid segment
+            vertexA = segmentsContact.points(1,:,iSeg);
+            vertexB = segmentsContact.points(2,:,iSeg);
+
+            % Compute the gap function
+            penetration = gapFunctionInitial(counterLM,1) - segmentsContact.normals(iSeg,:)*u;
+
+            % Find out if penetration did occur
+            [~,isIntersection] = computeIntersectionBetweenStraightLines...
+                (node,nodeDisp,vertexA,vertexB);
+
+            % Decide whether the node is active upon the different conditions
+            if isIntersection && penetration > tolerance
+                homDOFsLM(indexDOFLM) = [];
+            else
+                homDOFsLM(counterActiveNodes) = noDOFs + counterLM;
+                counterActiveNodes = counterActiveNodes + 1;
+            end
+        else
+            % Deactivate the Lagrange Multipliers DOF if its value is
+            % positive
+            if dHat_stiffMtxLM(idLM) > 0
+                homDOFsLM(counterActiveNodes) = noDOFs + counterLM;
+                counterActiveNodes = counterActiveNodes + 1;
+            end
         end
         
-        %% 1i.11. Update counter
+        %% 1i.4. Update the Lagrange Multipliers DOF counter
         counterLM = counterLM + 1;
     end
 end
-
-%% 2. Keep only non-zero entries of the inactive_nodes
-DOFsLMInactive = DOFsLMInactive(1:counterActiveNodes - 1);
 
 end

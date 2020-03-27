@@ -40,13 +40,13 @@ function segments = buildSegmentsData(segments)
 %% 0. Read input
 
 % assign the number of segments
-segments.number = size(segments.points,3);
+segments.numSegments = size(segments.points,3);
 
 % prealocate vector of normals and directors
-segments.normals = zeros(segments.number,2);
+segments.normals = zeros(segments.numSegments,2);
 
 %% 1. loop over all the segments
-for iSeg = 1:segments.number    
+for iSeg = 1:segments.numSegments    
     %% 1i. Compute size of the segment along x- and y- Cartesian coordinates
     dx = segments.points(2,1,iSeg) - segments.points(1,1,iSeg);
     dy = segments.points(2,2,iSeg) - segments.points(1,2,iSeg);
