@@ -14,7 +14,7 @@ function homDOFsLM = findInactiveLagrangeMultipliersContact2D...
 %% Function documentation
 %
 % Returns the updated array of constrained Lagrange Multipliers DOFs based
-% on the complementary contact conditions. For each inactive nodes it is
+% on the complementary contact conditions. For each inactive node it is
 % computed the gap function and if it is positive then the node is 
 % deactivated, i.e. its corresponding Lagrange Multiplier is removed from 
 % the array of the constrained Lagrange Multipliers.
