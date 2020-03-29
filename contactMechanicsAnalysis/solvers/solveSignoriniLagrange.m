@@ -194,6 +194,11 @@ isCnd_LM = false;
 % Title for the output file
 title = 'Contact analysis for a plate in membrane action';
 
+% Initialize array containing information about which potentially contact
+% nodes are enabled for each rigid segment
+propContact.activeNodesToSegment = ...
+    false(propContact.numNodes, segmentsContact.numSegments);
+
 %% 1. Remove fully constrained nodes
 fullyConstrainedNodes = false(propContact.numNodes, 1);
 for i = 1:length(propContact.nodeIDs)
@@ -215,9 +220,9 @@ freeDOFs = 1:noDOFsTotal;
 dHat_stiffMtxLM = zeros(noDOFsTotal, 1);
 
 %% 3. Compute initial gap function
-propContact = computeInitialGapFunction...
+gapFunctionInitial = computeInitialGapFunction...
     (strMsh, propContact, segmentsContact);
-gapFunctionInitial = reshape(propContact.gap, [], 1);
+gapFunctionInitial = reshape(gapFunctionInitial, [], 1);
 
 %% 4. Compute external force vector
 F = computeLoadVctFEMPlateInMembraneAction...
@@ -247,14 +252,6 @@ if strcmp(outMsg, 'outputEnabled')
     fprintf(strcat(tab, '>> Loop over all contact iterations\n'));
 end
 while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
-    %% 7i. Assign inactive DOFs to the ones from previous contact iteration
-    homDOFsLM_saved = homDOFsLM;
-    
-    %% 7ii. Determine active contact nodes
-    homDOFsLM = findInactiveLagrangeMultipliersContact2D...
-        (homDOFsLM, strMsh, noDOFs, dHat_stiffMtxLM, gapFunctionInitial, ...
-        segmentsContact, propContact);
-    
     %% Debuging
 % %     IDsPenetration = unique(IDsPenetration);
 % %     IDsLagrange = unique(IDsLagrange);
@@ -266,6 +263,14 @@ while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
 %     
 %     % plot nodes with valid multipliers in BLUE
 % %     plot_activeNodes_debug(strMsh,dHat_stiffMtxLM,IDsLagrange);
+
+    %% 7i. Assign inactive DOFs to the ones from previous contact iteration
+    homDOFsLM_saved = homDOFsLM;
+    
+    %% 7ii. Determine active contact nodes
+    homDOFsLM = findInactiveLagrangeMultipliersContact2D...
+        (homDOFsLM, strMsh, noDOFs, dHat_stiffMtxLM, gapFunctionInitial, ...
+        segmentsContact, propContact);
     
     %% 7iii. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
     homDOFs_iterate = horzcat(homDOFs, homDOFsLM);

@@ -1,4 +1,4 @@
-function  propContact = computeInitialGapFunction...
+function  gapFunctionInitial = computeInitialGapFunction...
     (mesh, propContact, segmentsContact)
 %% Licensing
 %
@@ -16,24 +16,25 @@ function  propContact = computeInitialGapFunction...
 % between the nodes of the deformable structure and the points on the 
 % segments defining the boundary of the rigid wall.
 %
-%             Input :
-%              mesh : Finite element mesh of the deformable body
-%                       .nodes : Nodes of the mesh
-%                    .elements : Elements of the mesh
-%       propContact : Data structure containing the contact properties,
-%                          .nodeIds : global numbering of contact nodes
-%                         .numNodes : number of nodes 
-%   segmentsContact : Data sturcture containing information about the 
-%                     boundaries of the rigid wall :
-%                           .points : a list of 2x2 matrices containing
-%                                      end points of the rigid segments
-%                      .numSegments : total number of segments
-%                          .normals : normal vector of each segment
-%            Output :
-%       propContact : Updated data structure of the contact properties with
-%                      .gap : Normal distance of every node to each segment
+%              Input :
+%               mesh : Finite element mesh of the deformable body
+%                        .nodes : Nodes of the mesh
+%                     .elements : Elements of the mesh
+%        propContact : Data structure containing the contact properties,
+%                           .nodeIds : global numbering of contact nodes
+%                          .numNodes : number of nodes 
+%    segmentsContact : Data sturcture containing information about the 
+%                      boundaries of the rigid wall :
+%                            .points : a list of 2x2 matrices containing
+%                                       end points of the rigid segments
+%                       .numSegments : total number of segments
+%                           .normals : normal vector of each segment
+%             Output :
+% gapFunctionInitial : Normal distance of every node to each segment
 %
 % Function layout :
+%
+% 0. Initialize gap function for each node to segment combination
 %
 % 1. Loop over all rigid segments
 % ->
@@ -51,6 +52,10 @@ function  propContact = computeInitialGapFunction...
 %
 %% Function main body
 
+%% 0. Initialize gap function for each node to segment combination
+gapFunctionInitial = ...
+    zeros(propContact.numNodes, segmentsContact.numSegments);
+
 %% 1. Loop over all rigid segments
 for iSeg = 1:segmentsContact.numSegments
     %% 1i. Loop over all contact nodes
@@ -63,11 +68,12 @@ for iSeg = 1:segmentsContact.numSegments
         vertexB = segmentsContact.points(2,:,iSeg);
         
         %% 1i.3. Project the node on the segment
-        lambda = ((vertexA - vertexB)*(vertexA - nodeContact)')/norm(vertexA - vertexB)^2;
-        nodeContact_proj = (1 - lambda)*vertexA + lambda*vertexB;
+        [nodeContact_proj, ~] = computePointProjectionOnLine2D...
+            (nodeContact, vertexA, vertexB);
         
         %% 1i.4. Compute the normal distance of the node to the segment
-        propContact.gap(iNodes,iSeg) = - segmentsContact.normals(iSeg,:)*(nodeContact - nodeContact_proj)';
+        gapFunctionInitial(iNodes,iSeg) = ...
+            - segmentsContact.normals(iSeg,:)*(nodeContact - nodeContact_proj)';
     end
 end
 

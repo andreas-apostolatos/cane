@@ -60,8 +60,6 @@ function homDOFsLM = findInactiveLagrangeMultipliersContact2D...
 %        1i.2. Get the index of the Lagrange Multiplier DOF in the array of prescribed Lagrange Multipliers DOFs
 %
 %        1i.3. Check if the potential contact node is active or inactive using the corresponding Lagrange Multipliers DOF
-%
-%        1i.4. Update the Lagrange Multipliers DOF counter
 %    <-
 % <-
 %
@@ -70,19 +68,19 @@ function homDOFsLM = findInactiveLagrangeMultipliersContact2D...
 
 %% 0. Read input
 
+% warning('Make sure that no two Lagrange Multipliers for a candidate contact node are enabled at the same time');
+
 % Set contact tolerance
 tolerance = sqrt(eps);
 
-% Initialize counters
-counterLM = 1;
-counterActiveNodes = 1;
+idLM_to_be_removed = [];
 
 %% 1. Loop over all rigid segments
 for iSeg = 1:segmentsContact.numSegments
     %% 1i. Loop over all potential contact nodes
     for iNode = 1:propContact.numNodes
         %% 1i.1. Get the id of the corresponding Lagrange Multiplier DOF
-        idLM = noDOFs + counterLM;
+        idLM = noDOFs + (iSeg - 1)*propContact.numNodes + iNode;
         
         %% 1i.2. Get the index of the Lagrange Multiplier DOF in the array of prescribed Lagrange Multipliers DOFs
         indexDOFLM = find(idLM == homDOFsLM, 1);
@@ -106,7 +104,7 @@ for iSeg = 1:segmentsContact.numSegments
             vertexB = segmentsContact.points(2,:,iSeg);
 
             % Compute the gap function
-            penetration = gapFunctionInitial(counterLM,1) - segmentsContact.normals(iSeg,:)*u;
+            penetration = gapFunctionInitial(idLM - noDOFs,1) - segmentsContact.normals(iSeg,:)*u;
 
             % Find out if penetration did occur
             [~,isIntersection] = computeIntersectionBetweenStraightLines...
@@ -120,21 +118,85 @@ for iSeg = 1:segmentsContact.numSegments
             if isIntersection && penetration > tolerance
                 homDOFsLM(indexDOFLM) = [];
             else
-                homDOFsLM(counterActiveNodes) = noDOFs + counterLM;
-                counterActiveNodes = counterActiveNodes + 1;
+                homDOFsLM = [homDOFsLM idLM];
             end
         else
             % Deactivate the Lagrange Multipliers DOF if its value is
             % positive
             if dHat_stiffMtxLM(idLM) < tolerance
-                homDOFsLM(counterActiveNodes) = noDOFs + counterLM;
-                counterActiveNodes = counterActiveNodes + 1;
+                homDOFsLM = [homDOFsLM idLM];
+            else
+                % Get the DOF numbering of the current node
+                DOF = 2*propContact.nodeIDs(iNode) - 1 : 2*propContact.nodeIDs(iNode);
+
+                % Get the displacement of the current node
+                u = dHat_stiffMtxLM(DOF);
+                
+                % Get the coordinates of the current node
+                node = mesh.nodes(propContact.nodeIDs(iNode),1:2); 
+                
+                % Compute the displaced coordinates of the current node
+                nodeDisp = node + u';
+                
+                % Get the end vertices of the current rigid segment
+                vertexA = segmentsContact.points(1,:,iSeg);
+                vertexB = segmentsContact.points(2,:,iSeg);
+                
+                % Compute the projection of the displaced node onto the
+                % segment with respect to which it is constrained
+                [~, lineParameter] = computePointProjectionOnLine2D...
+                    (nodeDisp, vertexA, vertexB);
+                
+                % Check if the node comes into contact with the segment
+                if lineParameter < 0 - tolerance || lineParameter > 1 + tolerance
+                    % Disable the node
+                    homDOFsLM = [homDOFsLM idLM];
+                    
+                    % Loop over all segments to find onto which one the
+                    % node has a projection
+                    for iSeg2 = 1:segmentsContact.numSegments
+                        % Get the end vertices of the current rigid segment
+                        vertexA = segmentsContact.points(1,:,iSeg2);
+                        vertexB = segmentsContact.points(2,:,iSeg2);
+                        
+                        % Project the displaced node onto the segment
+                        [~, lineParameter] = computePointProjectionOnLine2D ...
+                            (nodeDisp, vertexA, vertexB);
+                        
+                        % Check if the projection is valid
+                        if lineParameter > 0 - tolerance && lineParameter < 1 + tolerance
+                            % Get the index of the corresponding Lagrange
+                            % Multiplier
+                            idLM = noDOFs + (iSeg2 - 1)*propContact.numNodes + iNode;
+                            
+                            % Save the value to remove it at the end
+                            idLM_to_be_removed = [idLM_to_be_removed idLM];
+                            
+%                             indexDOFLM = find(idLM == homDOFsLM, 1);
+%                             
+%                             % Activate the correspoding Lagrange
+%                             % Multipliers
+%                             homDOFsLM(indexDOFLM) = [];
+                        end
+                    end
+                    
+                end
             end
         end
         
-        %% 1i.4. Update the Lagrange Multipliers DOF counter
-        counterLM = counterLM + 1;
     end
 end
+
+idLM_to_be_removed = unique(idLM_to_be_removed);
+
+
+homDOFsLM = unique(homDOFsLM);
+
+for i = 1:length(idLM_to_be_removed)
+    homDOFsLM(idLM_to_be_removed(1, i) == homDOFsLM) = [];
+end
+
+
+
 
 end

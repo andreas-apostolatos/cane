@@ -52,11 +52,11 @@ addpath('../../contactMechanicsAnalysis/plot',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-% caseName = 'example_01_bridge';
+caseName = 'example_01_bridge';
 % caseName = 'example_02_wedge';
 % caseName = 'example_03_hertz';
 % caseName = 'example_04_cantilever_beam_contact';
-caseName = 'example_05_rectangle_contact_debug';
+% caseName = 'example_05_rectangle_contact_debug';
 
 % Parse the data from the GiD input file
 [strMsh, homDBC, inhomDBC, valuesInhomDBC, NBC, analysis, parameters, ...
@@ -121,7 +121,7 @@ if strcmp(caseName,'example_01_bridge') || strcmp(caseName,'example_04_cantileve
     radius = 4;
     startAngle = 3*pi/4;
     endAngle = pi/4;
-    nSegments = 3; %17
+    nSegments = 17; %17
     
     % Create circular segments
     contactSegments = createCircleSegments(center,radius,startAngle,endAngle,nSegments);
