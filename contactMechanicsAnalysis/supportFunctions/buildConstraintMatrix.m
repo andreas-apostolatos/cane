@@ -68,9 +68,9 @@ C = zeros(noDOFs, noDOFsLM);
 counterLM = 1;
 counterNodes = 1;
 
-%% 1. Loop over all rigid segments
+%% 1. Loop over all potential contact nodes
 for iSeg = 1:segmentsContact.numSegments
-    %% 1i. Loop over all potential contact nodes
+    %% 1i. Loop over all rigid segments
     for iNode = 1:propContact.numNodes
         %% 1i.2. Find the DOF ids at the node
         DOFs = 2*propContact.nodeIDs(iNode) - 1 : 2*propContact.nodeIDs(iNode);

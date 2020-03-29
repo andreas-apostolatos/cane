@@ -35,9 +35,9 @@ function  propContact = computeInitialGapFunction...
 %
 % Function layout :
 %
-% 1.Loop over all contact nodes
+% 1. Loop over all rigid segments
 % ->
-%   1i. Loop over all segments
+%   1i. Loop over all contact nodes
 %   ->
 %       1i.1. Get the nodal coordinates
 %
@@ -51,9 +51,9 @@ function  propContact = computeInitialGapFunction...
 %
 %% Function main body
 
-%% 1.Loop over all contact nodes
+%% 1. Loop over all rigid segments
 for iSeg = 1:segmentsContact.numSegments
-    %% 1i. Loop over all segments
+    %% 1i. Loop over all contact nodes
     for iNodes = 1:propContact.numNodes
         %% 1i.1. Get the nodal coordinates
         nodeContact = mesh.nodes(propContact.nodeIDs(iNodes),1:2);

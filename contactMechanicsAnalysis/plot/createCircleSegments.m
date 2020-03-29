@@ -23,6 +23,9 @@ function segments = createCircleSegments(center,radius,startAngle,endAngle,nSegm
 %
 %% Function main body
 
+x_translation = 0;
+y_translation = 0;
+
 % Initialize coordinates
 coordinates = zeros(nSegments+1,2);
 
@@ -35,10 +38,10 @@ coordinates(:,2) = radius * sin(angles) + center(2);
 for i=1:nSegments
     
     % get rotated coordinates
-    x0 = coordinates(i,1);
-    y0 = coordinates(i,2);
-    x1 = coordinates(i+1,1);
-    y1 = coordinates(i+1,2);
+    x0 = coordinates(i,1) + x_translation;
+    y0 = coordinates(i,2) + y_translation;
+    x1 = coordinates(i+1,1) + x_translation;
+    y1 = coordinates(i+1,2) + y_translation;
     
     % add each segment to .points
     segments.points(:,:,i) = [x0, y0; x1,y1];
