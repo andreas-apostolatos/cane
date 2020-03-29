@@ -111,6 +111,10 @@ for iSeg = 1:segmentsContact.numSegments
             % Find out if penetration did occur
             [~,isIntersection] = computeIntersectionBetweenStraightLines...
                 (node,nodeDisp,vertexA,vertexB);
+            if isIntersection && penetration < tolerance
+                error('Node (%d,%d) with displacement (%d,%d) intersects segment with vertices (%d,%d) and (%d,%d) but the penetration is found to be %d',...
+                    node(1,1), node(1,2), u(1,1), u(2,1), vertexA(1,1), vertexA(1,2), vertexB(1,1), vertexB(1,2), penetration);
+            end
 
             % Decide whether the node is active upon the different conditions
             if isIntersection && penetration > tolerance
@@ -122,7 +126,7 @@ for iSeg = 1:segmentsContact.numSegments
         else
             % Deactivate the Lagrange Multipliers DOF if its value is
             % positive
-            if dHat_stiffMtxLM(idLM) > 0
+            if dHat_stiffMtxLM(idLM) < tolerance
                 homDOFsLM(counterActiveNodes) = noDOFs + counterLM;
                 counterActiveNodes = counterActiveNodes + 1;
             end

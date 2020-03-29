@@ -76,7 +76,7 @@ for iSeg = 1:segmentsContact.numSegments
         DOFs = 2*propContact.nodeIDs(iNode) - 1 : 2*propContact.nodeIDs(iNode);
 
         %% 1i.3. Assemble the entry to the coupling matrix
-        C(DOFs,counterLM) = segmentsContact.normals(iSeg,:);
+        C(DOFs,counterLM) = - segmentsContact.normals(iSeg,:);
 
         %% 1i.4. Update counter which counts the Lagrange Multipliers DOFs
         counterLM = counterLM + 1;

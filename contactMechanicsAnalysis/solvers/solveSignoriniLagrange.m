@@ -1,4 +1,4 @@
-function [dHat,lambdaHat,nodeIDs_active,FComplete,minElSize] = ...
+function [dHat, lambdaHat, nodeIDs_active, FComplete, minElSize] = ...
     solveSignoriniLagrange...
     (analysis, strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, NBC, bodyForces, ...
     parameters, segmentsContact, computeStiffMtxLoadVct, solve_LinearSystem, ...
@@ -176,7 +176,7 @@ DOF4Output = [1:2:noDOFs-1
 prescribedDOFs = sort(horzcat(homDOFs, inhomDOFs));
 
 % Tabulation for the output in the command window
-tab = '\t';
+tab = '';
 
 % Initialize output array
 dHat_stiffMtx = zeros(noDOFs, 1);
@@ -221,7 +221,7 @@ gapFunctionInitial = reshape(propContact.gap, [], 1);
 
 %% 4. Compute external force vector
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh, analysis, NBC, t, propGaussInt, outMsg);
+    (strMsh, analysis, NBC, t, propGaussInt, '');
 
 %% 5. Compute the master stiffness matrix of the structure
 if strcmp(outMsg, 'outputEnabled')
@@ -240,7 +240,7 @@ stiffMtxLM = [K  C
               C' zeros(size(C,2))];
 clear C;
 resVecLM = [F
-            gapFunctionInitial];
+            - gapFunctionInitial];
 
 %% 7. Loop over all contact iterations
 if strcmp(outMsg, 'outputEnabled')
@@ -252,17 +252,17 @@ while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     
     %% 7ii. Determine active contact nodes
     homDOFsLM = findInactiveLagrangeMultipliersContact2D...
-        (homDOFsLM, strMsh, noDOFs, dHat_stiffMtxLM, gapFunctionInitial,...
+        (homDOFsLM, strMsh, noDOFs, dHat_stiffMtxLM, gapFunctionInitial, ...
         segmentsContact, propContact);
     
     %% Debuging
-%     IDsPenetration = unique(IDsPenetration);
+% %     IDsPenetration = unique(IDsPenetration);
 % %     IDsLagrange = unique(IDsLagrange);
 %     graph.index = plot_currentConfigurationFEMPlateInMembraneAction...
 %         (strMsh,homDOFs,segmentsContact,dHat_stiffMtxLM,graph);
 %     
 %     % plot penetrating nodes in RED
-%     plot_activeNodes(strMsh,dHat_stiffMtxLM,IDsPenetration);
+% %     plot_activeNodes(strMsh,dHat_stiffMtxLM,IDsPenetration);
 %     
 %     % plot nodes with valid multipliers in BLUE
 % %     plot_activeNodes_debug(strMsh,dHat_stiffMtxLM,IDsLagrange);
@@ -292,7 +292,7 @@ while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     isCnd_DOFs = isequal(homDOFsLM_saved, homDOFsLM);
     
     % Check whether all Lagrange Multipliers DOFs are negative
-    isCnd_LM = min(dHat_stiffMtxLM(noDOFs + 1:length(resVecLM))) <= 0;
+    isCnd_LM = min(dHat_stiffMtxLM(noDOFs + 1:length(resVecLM))) >= 0;
     
     %% 7viii. Update the iteration counter
     counterContact = counterContact + 1;
@@ -320,10 +320,10 @@ lambdaHat = dHat_stiffMtxLM(noDOFs + 1:noDOFsTotal);
 
 %% 11. Get the index of the active Lagrange Multipliers DOFs
 allContactNodes = repmat(propContact.nodeIDs, segmentsContact.numSegments,1);
-nodeIDs_active = allContactNodes(lambdaHat < 0);
+nodeIDs_active = allContactNodes(lambdaHat > 0);
 
 %% 12. Return only the negative Lagrange Multipliers
-lambdaHat = lambdaHat(lambdaHat < 0);
+lambdaHat = lambdaHat(lambdaHat > 0);
 
 %% 13. Appendix
 if strcmp(outMsg, 'outputEnabled')

@@ -63,7 +63,7 @@ for iSeg = 1:segmentsContact.numSegments
         vertexB = segmentsContact.points(2,:,iSeg);
         
         %% 1i.3. Project the node on the segment
-        lambda = ((vertexA - vertexB)*(nodeContact-vertexA)')/((vertexA - vertexB)*(vertexB - vertexA)');
+        lambda = ((vertexA - vertexB)*(vertexA - nodeContact)')/norm(vertexA - vertexB)^2;
         nodeContact_proj = (1 - lambda)*vertexA + lambda*vertexB;
         
         %% 1i.4. Compute the normal distance of the node to the segment

@@ -108,8 +108,9 @@ if ~isempty(contactSegments)
 end
 
 %% 5. Assign figure properties
-axis equal off;
+axis equal;
 axis on;
+grid on;
 title('The current configuration of the mesh');
 hold off;
 
