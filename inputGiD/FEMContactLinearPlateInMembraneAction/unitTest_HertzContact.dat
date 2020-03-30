@@ -33,7 +33,7 @@ STRUCTURE_MATERIAL_PROPERTIES
  THICKNESS,1.0
 
 STRUCTURE_NLINEAR_SCHEME
- NLINEAR_SCHEME,NEWTON_RAPHSON
+ NLINEAR_SCHEME,UNDEFINED
  NO_LOAD_STEPS,1
  TOLERANCE,1e-9
  MAX_ITERATIONS,100
@@ -2243,64 +2243,64 @@ STRUCTURE_DIRICHLET_NODES
      758 NaN  0.0  NaN  
      774 NaN  0.0  NaN  
 STRUCTURE_FORCE_NODES
-       1 boundaryLoad unitTest_2_computeConstantLoad
-       2 boundaryLoad unitTest_2_computeConstantLoad
-       5 boundaryLoad unitTest_2_computeConstantLoad
-       9 boundaryLoad unitTest_2_computeConstantLoad
-      14 boundaryLoad unitTest_2_computeConstantLoad
-      17 boundaryLoad unitTest_2_computeConstantLoad
-      23 boundaryLoad unitTest_2_computeConstantLoad
-      28 boundaryLoad unitTest_2_computeConstantLoad
-      34 boundaryLoad unitTest_2_computeConstantLoad
-      39 boundaryLoad unitTest_2_computeConstantLoad
-      46 boundaryLoad unitTest_2_computeConstantLoad
-      52 boundaryLoad unitTest_2_computeConstantLoad
-      58 boundaryLoad unitTest_2_computeConstantLoad
-      65 boundaryLoad unitTest_2_computeConstantLoad
-      71 boundaryLoad unitTest_2_computeConstantLoad
-      78 boundaryLoad unitTest_2_computeConstantLoad
-      86 boundaryLoad unitTest_2_computeConstantLoad
-      93 boundaryLoad unitTest_2_computeConstantLoad
-     102 boundaryLoad unitTest_2_computeConstantLoad
-     111 boundaryLoad unitTest_2_computeConstantLoad
-     121 boundaryLoad unitTest_2_computeConstantLoad
-     127 boundaryLoad unitTest_2_computeConstantLoad
-     138 boundaryLoad unitTest_2_computeConstantLoad
-     144 boundaryLoad unitTest_2_computeConstantLoad
-     153 boundaryLoad unitTest_2_computeConstantLoad
-     163 boundaryLoad unitTest_2_computeConstantLoad
-     173 boundaryLoad unitTest_2_computeConstantLoad
-     183 boundaryLoad unitTest_2_computeConstantLoad
-     194 boundaryLoad unitTest_2_computeConstantLoad
-     202 boundaryLoad unitTest_2_computeConstantLoad
-     216 boundaryLoad unitTest_2_computeConstantLoad
-     223 boundaryLoad unitTest_2_computeConstantLoad
-     232 boundaryLoad unitTest_2_computeConstantLoad
-     243 boundaryLoad unitTest_2_computeConstantLoad
-     252 boundaryLoad unitTest_2_computeConstantLoad
-     262 boundaryLoad unitTest_2_computeConstantLoad
-     268 boundaryLoad unitTest_2_computeConstantLoad
-     282 boundaryLoad unitTest_2_computeConstantLoad
-     290 boundaryLoad unitTest_2_computeConstantLoad
-     302 boundaryLoad unitTest_2_computeConstantLoad
-     310 boundaryLoad unitTest_2_computeConstantLoad
-     317 boundaryLoad unitTest_2_computeConstantLoad
-     322 boundaryLoad unitTest_2_computeConstantLoad
-     335 boundaryLoad unitTest_2_computeConstantLoad
-     340 boundaryLoad unitTest_2_computeConstantLoad
-     351 boundaryLoad unitTest_2_computeConstantLoad
-     360 boundaryLoad unitTest_2_computeConstantLoad
-     368 boundaryLoad unitTest_2_computeConstantLoad
-     378 boundaryLoad unitTest_2_computeConstantLoad
-     386 boundaryLoad unitTest_2_computeConstantLoad
-     393 boundaryLoad unitTest_2_computeConstantLoad
-     402 boundaryLoad unitTest_2_computeConstantLoad
-     409 boundaryLoad unitTest_2_computeConstantLoad
-     418 boundaryLoad unitTest_2_computeConstantLoad
-     424 boundaryLoad unitTest_2_computeConstantLoad
-     433 boundaryLoad unitTest_2_computeConstantLoad
-     438 boundaryLoad unitTest_2_computeConstantLoad
-     445 boundaryLoad unitTest_2_computeConstantLoad
+       1 boundaryLoad computeConstantLoad
+       2 boundaryLoad computeConstantLoad
+       5 boundaryLoad computeConstantLoad
+       9 boundaryLoad computeConstantLoad
+      14 boundaryLoad computeConstantLoad
+      17 boundaryLoad computeConstantLoad
+      23 boundaryLoad computeConstantLoad
+      28 boundaryLoad computeConstantLoad
+      34 boundaryLoad computeConstantLoad
+      39 boundaryLoad computeConstantLoad
+      46 boundaryLoad computeConstantLoad
+      52 boundaryLoad computeConstantLoad
+      58 boundaryLoad computeConstantLoad
+      65 boundaryLoad computeConstantLoad
+      71 boundaryLoad computeConstantLoad
+      78 boundaryLoad computeConstantLoad
+      86 boundaryLoad computeConstantLoad
+      93 boundaryLoad computeConstantLoad
+     102 boundaryLoad computeConstantLoad
+     111 boundaryLoad computeConstantLoad
+     121 boundaryLoad computeConstantLoad
+     127 boundaryLoad computeConstantLoad
+     138 boundaryLoad computeConstantLoad
+     144 boundaryLoad computeConstantLoad
+     153 boundaryLoad computeConstantLoad
+     163 boundaryLoad computeConstantLoad
+     173 boundaryLoad computeConstantLoad
+     183 boundaryLoad computeConstantLoad
+     194 boundaryLoad computeConstantLoad
+     202 boundaryLoad computeConstantLoad
+     216 boundaryLoad computeConstantLoad
+     223 boundaryLoad computeConstantLoad
+     232 boundaryLoad computeConstantLoad
+     243 boundaryLoad computeConstantLoad
+     252 boundaryLoad computeConstantLoad
+     262 boundaryLoad computeConstantLoad
+     268 boundaryLoad computeConstantLoad
+     282 boundaryLoad computeConstantLoad
+     290 boundaryLoad computeConstantLoad
+     302 boundaryLoad computeConstantLoad
+     310 boundaryLoad computeConstantLoad
+     317 boundaryLoad computeConstantLoad
+     322 boundaryLoad computeConstantLoad
+     335 boundaryLoad computeConstantLoad
+     340 boundaryLoad computeConstantLoad
+     351 boundaryLoad computeConstantLoad
+     360 boundaryLoad computeConstantLoad
+     368 boundaryLoad computeConstantLoad
+     378 boundaryLoad computeConstantLoad
+     386 boundaryLoad computeConstantLoad
+     393 boundaryLoad computeConstantLoad
+     402 boundaryLoad computeConstantLoad
+     409 boundaryLoad computeConstantLoad
+     418 boundaryLoad computeConstantLoad
+     424 boundaryLoad computeConstantLoad
+     433 boundaryLoad computeConstantLoad
+     438 boundaryLoad computeConstantLoad
+     445 boundaryLoad computeConstantLoad
 STRUCTURE_CONTACT_NODES
      445 
      452 

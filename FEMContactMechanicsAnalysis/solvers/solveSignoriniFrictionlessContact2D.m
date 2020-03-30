@@ -1,4 +1,4 @@
-function [dHat, lambdaHat, nodeIDs_active, FComplete, minElSize] = ...
+function [dHat, lambdaHat, nodeIDs_active, numInter, FComplete, minElSize] = ...
     solveSignoriniFrictionlessContact2D...
     (analysis, strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, NBC, bodyForces, ...
     parameters, segmentsContact, computeStiffMtxLoadVct, solve_LinearSystem, ...
@@ -75,6 +75,7 @@ function [dHat, lambdaHat, nodeIDs_active, FComplete, minElSize] = ...
 %                   dHat : The nodal displacement field
 %              lambdaHat : The valid (negative) Lagrange Multipliers
 %         nodeIDs_active : The IDs of the active (contact) nodes
+%               numInter : Number of contact iterations
 %              FComplete : The complete force vector
 %              minElSize : The minimum element area size in the mesh
 %
@@ -96,21 +97,25 @@ function [dHat, lambdaHat, nodeIDs_active, FComplete, minElSize] = ...
 %
 % 7. Loop over all contact iterations
 % ->
-%    7i. Assign inactive DOFs to the ones from previous contact iteration
+%    7i. Print progress message on the contact iterations
 %
-%   7ii. Determine active contact nodes
+%   7ii. Assign inactive DOFs to the ones from previous contact iteration
 %
-%  7iii. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
+%  7iii. Determine active contact nodes
 %
-%   7iv. Collect all constrained DOFs into one array
+%   7iv. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
 %
-%    7v. Find the free DOFs of the current iteration
+%    7v. Collect all constrained DOFs into one array
 %
-%   7vi. Solve the equation system of the current contact iteration
+%   7vi. Find the free DOFs of the current iteration
 %
-%  7vii. Evaluate convergence conditions
+%  7vii. Solve the equation system of the current contact iteration
 %
-% 7viii. Update the iteration counter
+% 7viii. Evaluate convergence conditions
+%
+%   7ix. Print progress message on the contact conditions
+%
+%    7x. Update the iteration counter
 % <-
 %
 % 8. Get the displacement solution
@@ -209,6 +214,9 @@ title = 'Contact analysis for a plate in membrane action';
 propContact.activeNodesToSegment = ...
     false(propContact.numNodes, segmentsContact.numSegments);
 
+% Array of logical strings
+LogicalStr = {'false', 'true'};
+
 %% 1. Remove fully constrained nodes
 fullyConstrainedNodes = false(propContact.numNodes, 1);
 for i = 1:length(propContact.nodeIDs)
@@ -256,35 +264,40 @@ resVecLM = [F
 
 %% 7. Loop over all contact iterations
 if strcmp(outMsg, 'outputEnabled')
-    fprintf(strcat(tab, '>> Loop over all contact iterations\n'));
+    fprintf(strcat(tab, '>> Loop over all contact iterations\n\n'));
 end
-while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
+while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)    
     %% Debugging
 %     graph.index = 1;
 %     graph.visualization.geometry = 'current';
 %     graph.index = plot_currentConfigurationFEMPlateInMembraneAction...
 %         (strMsh,homDOFs,segmentsContact,dHat_stiffMtxLM,graph);
 %     close(1);
-
-    %% 7i. Assign inactive DOFs to the ones from previous contact iteration
+    %% 7i. Print progress message on the contact iterations
+    if strcmp(outMsg,'outputEnabled')
+        fprintf(strcat(strcat(tab, '\t'),'>> Contact iteration %d\n'), ...
+            counterContact);
+    end
+    
+    %% 7ii. Assign inactive DOFs to the ones from previous contact iteration
     homDOFsLM_saved = homDOFsLM;
     
-    %% 7ii. Determine active contact nodes
+    %% 7iii. Determine active contact nodes
     homDOFsLM = findInactiveLagrangeMultipliersContact2D...
         (homDOFsLM, strMsh, noDOFs, dHat_stiffMtxLM, gapFunctionInitial, ...
         segmentsContact, propContact);
     
-    %% 7iii. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
+    %% 7iv. Collect the DOFs of the homogeneous Dirichlet boundary conditions and the active contact nodes of the current contact iteration in one array
     homDOFs_iterate = horzcat(homDOFs, homDOFsLM);
       
-    %% 7iv. Collect all constrained DOFs into one array
+    %% 7v. Collect all constrained DOFs into one array
     constrained_DOFs = unique(horzcat(homDOFs_iterate, inhomDOFs));
     
-    %% 7v. Find the free DOFs of the current iteration
+    %% 7vi. Find the free DOFs of the current iteration
     freeDOFs_iterate = freeDOFs;
     freeDOFs_iterate(ismember(freeDOFs_iterate, constrained_DOFs)) = [];
     
-    %% 7vi. Solve the equation system of the current contact iteration
+    %% 7vii. Solve the equation system of the current contact iteration
     [dHat_stiffMtxLM, FComplete, ~, ~] = solve_FEMLinearSystem ...
         (analysis, uSaved, uDotSaved, uDDotSaved, strMsh, forceVct, bodyForces, ...
         parameters, dHat_stiffMtxLM, uDot, uDDot, massMtx, dampMtx, stiffMtxLM, ...
@@ -293,7 +306,7 @@ while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
         uMeshALE, solve_LinearSystem, propStrDynamics, propNLinearAnalysis, ...
         propGaussInt, strcat(tab, '\t'), outMsg);
     
-    %% 7vii. Evaluate convergence conditions
+    %% 7viii. Evaluate convergence conditions
 
     % Check whether the vector of active contact nodes has not changed
     isCnd_DOFs = isequal(homDOFsLM_saved, homDOFsLM);
@@ -301,11 +314,18 @@ while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     % Check whether all Lagrange Multipliers DOFs are negative
     isCnd_LM = min(dHat_stiffMtxLM(noDOFs + 1:length(resVecLM))) >= 0;
     
-    %% 7viii. Update the iteration counter
+    %% 7ix. Print progress message on the contact conditions
+    if strcmp(outMsg,'outputEnabled')
+        fprintf(strcat(strcat(tab, '\t'),'>> Convergence criteria isCnd_DOFs(%s) and isCnd_LM(%s)\n\n'), ...
+            LogicalStr{isCnd_DOFs + 1}, LogicalStr{isCnd_LM + 1});
+    end
+    
+    %% 7x. Update the iteration counter
     counterContact = counterContact + 1;
 end
-if (counterContact >= propContact.maxIter)
-    warning('\t Max number of iterations has been reached!\n');
+numInter = counterContact - 1;
+if (numInter >= propContact.maxIter)
+    warning('\t Max number of contact iterations has been reached!\n');
 end
 
 %% 8. Get the displacement solution

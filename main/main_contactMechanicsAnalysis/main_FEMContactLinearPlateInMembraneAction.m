@@ -92,7 +92,7 @@ graph.index = 1;
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
-%% Define segments defining the boundaries of the contact rigid wall
+%% Define boundary segments of the rigid contact wall
 if strcmp(caseName,'bridge')
     % Amplitude of the externally applied boundary traction
     propNBC.tractionLoadVct = [0; - 1e4; 0];
@@ -199,8 +199,9 @@ F = computeLoadVctFEMPlateInMembraneAction...
 graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
     (strMsh, analysis, F, homDBC, contactSegments, graph, 'outputEnabled');
 
-%% Solve the system and get the displacement field
-[dHat, lambdaHat, nodeIDs_active] = solveSignoriniFrictionlessContact2D...
+%% Solve the system for the displacement field and the Lagrange Multipliers fields
+[dHat, lambdaHat, nodeIDs_active, numIter, FComplete, minElSize] = ...
+    solveSignoriniFrictionlessContact2D...
     (analysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC,bodyForces, ...
     parameters, contactSegments, computeStiffMtxLoadVct, solve_LinearSystem, ...
     propNLinearAnalysis, propContact , propGaussInt, caseName, pathToOutput,...
@@ -224,11 +225,11 @@ if strcmp(caseName,'hertz')
     hertzContactLength = sqrt(4*(2*force)*radius*((1 - parameters.nue^2)/parameters.E)/(pi*parameters.t));
     hertzPressure = 2*(2*force)/(parameters.t*pi*hertzContactLength);
 
-    fprintf('\t The COMPUTED contact length is: %f \n',contactLength);
-    fprintf('\t The (HERTZ)  contact length is: %f \n\n',hertzContactLength);
+    fprintf('\t The numerical contact length is: %f \n', contactLength);
+    fprintf('\t The analytical (Hertz) contact length is: %f \n\n', hertzContactLength);
 
-    fprintf('\t The maximal COMPUTED pressure is: %f \n',maxContactPressure);
-    fprintf('\t The maximal (HERTZ)  pressure is: %f \n',hertzPressure);
+    fprintf('\t The maximum numerical pressure is: %f \n', maxContactPressure);
+    fprintf('\t The maximum analytical (Hertz)  pressure is: %f \n', hertzPressure);
 end
 
 %% End of the script

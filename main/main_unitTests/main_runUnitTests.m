@@ -90,9 +90,11 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
         '../../FEMPlateInMembraneActionAnalysis/errorComputation/');
 
 % Add all functions related to Signorini frictionless contact problem
-addpath('../../contactMechanicsAnalysis/plot',...
-        '../../contactMechanicsAnalysis/solvers',...
-        '../../contactMechanicsAnalysis/supportFunctions');
+addpath('../../FEMContactMechanicsAnalysis/graphics/',...
+        '../../FEMContactMechanicsAnalysis/solvers',...
+        '../../FEMContactMechanicsAnalysis/auxiliary/',...
+        '../../FEMContactMechanicsAnalysis/contactSegments/',...
+        '../../FEMContactMechanicsAnalysis/postprocessing/');
     
 % Add all functions related to the Finite Element Methods for Computational
 % Fluid Dynamics problems
@@ -157,15 +159,22 @@ if isLight
 end
 resultIGAKLShell = run(suiteClassIGAKLShell);
 
-%% Run the unit test cases for the finite element formulation for plate in membrane action analysis
+%% Run the unit test cases for the finite element formulation of the plate in membrane action analysis
 suiteClassFEMPlateInMembraneAction = TestSuite.fromClass(?testFEMPlateInMembraneActionAnalysis);
 if isLight
     suiteClassFEMPlateInMembraneAction = suiteClassFEMPlateInMembraneAction.selectIf...
         (HasName('testFEMPlateInMembraneActionAnalysis/testCurvedPlateInMambraneActionSteadyStateLinear') | ...
-        HasName('testFEMPlateInMembraneActionAnalysis/testCantileverBeamTransient') | ...
-        HasName('testFEMPlateInMembraneActionAnalysis/testSignoriniContactProblem'));
+        HasName('testFEMPlateInMembraneActionAnalysis/testCantileverBeamTransient'));
 end
 resultFEMPlateInMembraneAction = run(suiteClassFEMPlateInMembraneAction);
+
+%% Run the unit test cases for the finite element formulation of the contact mechanics analysis
+suiteClassFEMContactMechanics = TestSuite.fromClass(?testFEMContactMechanicsAnalysis);
+if isLight
+    suiteClassFEMContactMechanics = suiteClassFEMContactMechanics.selectIf...
+        (HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactHerz2D'));
+end
+resultContactMechanicsAnalysis = run(suiteClassFEMContactMechanics);
 
 %% Run the unit test cases for stabilized finite element formulation for the Navier-Stokes problem
 suiteClassFEM4CFD = TestSuite.fromClass(?testFEMComputationalFluidDynamicsAnalysis);
