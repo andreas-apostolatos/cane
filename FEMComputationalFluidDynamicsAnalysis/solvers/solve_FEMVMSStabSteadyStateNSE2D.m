@@ -120,7 +120,6 @@ uDotSaved = 'undefined';
 uDDotSaved = 'undefined';
 uDot = 'undefined';
 uDDot = 'undefined';
-uMeshALE = 'undefined';
 massMtx = 'undefined';
 dampMtx = 'undefined';
 t = 'undefined';
@@ -159,12 +158,12 @@ freeDOFs = DOFNumbering;
 freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
 
 %% 2. Solve the mesh motion problem and update the mesh node locations and velocities
-if ~ischar(nodesALE)
+if ~ischar(nodesALE) && ~isempty(nodesALE)
     [fldMsh,uMeshALE,inhomDOFs,valuesInhomDOFs] = ...
         computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
         solve_LinearSystem,propFldDynamics,t);
-elseif strcmp(nodesALE,'undefined')
+else
     uMeshALE = 'undefined';
 end
 

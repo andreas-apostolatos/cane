@@ -119,7 +119,7 @@ if strcmp(caseName,'bridge')
         radius = 4;
         startAngle = 3*pi/4;
         endAngle = pi/4;
-        numSegments = 300; %17
+        numSegments = 300;
         contactSegments = createCircleSegments ...
             (center, radius, startAngle, endAngle, numSegments);
     else
@@ -179,7 +179,7 @@ elseif strcmp(caseName,'wedge')
     contactSegments.points(3,:) = [-1-x_extension -2+y_translation -0.33333+x_extension -2+y_translation];
 elseif strcmp(caseName,'hertz')
     % Amplitude of the externally applied boundary traction
-    propNBC.tractionLoadVct = [1e4; 0; 0];
+    propNBC.tractionLoadVct = [1e3; 0; 0];
     
     % Define the contact segments
     contactSegments.numSegments = 1;
@@ -216,7 +216,7 @@ hold off;
 
 % Get the length of the contact area and the reaction force on the contact
 if strcmp(caseName,'hertz')
-    [contactLength,contactForce,maxContactPressure] = ...
+    [contactLength, contactForce, maxContactPressure] = ...
         computePostprocResultantsSignoriniFrictionlessContact2D...
         (strMsh, parameters, dHat, lambdaHat, nodeIDs_active);
     
@@ -225,11 +225,11 @@ if strcmp(caseName,'hertz')
     hertzContactLength = sqrt(4*(2*force)*radius*((1 - parameters.nue^2)/parameters.E)/(pi*parameters.t));
     hertzPressure = 2*(2*force)/(parameters.t*pi*hertzContactLength);
 
-    fprintf('\t The numerical contact length is: %f \n', contactLength);
-    fprintf('\t The analytical (Hertz) contact length is: %f \n\n', hertzContactLength);
+    fprintf('\t The numerical contact length is: %.15d \n', contactLength);
+    fprintf('\t The analytical (Hertz) contact length is: %.15d \n\n', hertzContactLength);
 
-    fprintf('\t The maximum numerical pressure is: %f \n', maxContactPressure);
-    fprintf('\t The maximum analytical (Hertz)  pressure is: %f \n', hertzPressure);
+    fprintf('\t The maximum numerical pressure is: %.15d \n', maxContactPressure);
+    fprintf('\t The maximum analytical (Hertz)  pressure is: %.15d \n', hertzPressure);
 end
 
 %% End of the script

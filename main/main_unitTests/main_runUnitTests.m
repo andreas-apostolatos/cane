@@ -172,7 +172,7 @@ resultFEMPlateInMembraneAction = run(suiteClassFEMPlateInMembraneAction);
 suiteClassFEMContactMechanics = TestSuite.fromClass(?testFEMContactMechanicsAnalysis);
 if isLight
     suiteClassFEMContactMechanics = suiteClassFEMContactMechanics.selectIf...
-        (HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactHerz2D'));
+        (HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactHertz2D'));
 end
 resultContactMechanicsAnalysis = run(suiteClassFEMContactMechanics);
 

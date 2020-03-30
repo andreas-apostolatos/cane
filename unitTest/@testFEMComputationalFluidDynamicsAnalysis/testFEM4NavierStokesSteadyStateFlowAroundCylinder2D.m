@@ -99,7 +99,6 @@ Umax = 0.3;
 % change the input velocity to have the parabolic distribution
 valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC, valuesInhomDBC, Umax);
 
-
 %% 6. Initialize the solution with zero
 up = zeros(3*length(fldMsh.nodes(:,1)),1);
 

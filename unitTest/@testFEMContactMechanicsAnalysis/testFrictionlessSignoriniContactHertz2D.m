@@ -35,7 +35,8 @@ function testFrictionlessSignoriniContactHertz2D(testCase)
 %% 0. Read input
 
 % Define tolerances for both cases
-absTol = 1e-13;
+absTol = 1e-15;
+absTol4 = 1e-15*1e4;
 
 %% 1. Parse data from GiD input file
 
@@ -109,9 +110,9 @@ expNumIter = 8;
 expMinElSize = 0.080014541178463;
 
 %% 7. Verify the results
-testCase.verifyEqual(contactLength,expContactLength,'AbsTol',absTol);
-testCase.verifyEqual(maxContactPressure,expMaxContactPressure,'AbsTol',absTol);
-testCase.verifyEqual(numIter,expNumIter,'AbsTol',absTol);
-testCase.verifyEqual(minElSize,expMinElSize,'AbsTol',absTol);
+testCase.verifyEqual(contactLength, expContactLength, 'AbsTol', absTol);
+testCase.verifyEqual(maxContactPressure, expMaxContactPressure, 'AbsTol', absTol4);
+testCase.verifyEqual(numIter, expNumIter, 'AbsTol', absTol);
+testCase.verifyEqual(minElSize, expMinElSize, 'AbsTol', absTol);
 
 end
