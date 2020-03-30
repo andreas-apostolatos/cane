@@ -13,6 +13,7 @@ classdef testFEMContactMechanicsAnalysis < matlab.unittest.TestCase
     %
     %% Method definitions
     methods (Test)
+        testFrictionlessSignoriniContactBridge2D(testCase)
         testFrictionlessSignoriniContactHertz2D(testCase)
         
     end

@@ -54,10 +54,10 @@ addpath('../../FEMContactMechanicsAnalysis/graphics/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-% caseName = 'bridge';
+caseName = 'bridge';
 % caseName = 'cantilever_beam';
 % caseName = 'wedge';
-caseName = 'hertz';
+% caseName = 'hertz';
 
 % Parse the data from the GiD input file
 [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, analysis, parameters, ...
@@ -98,7 +98,7 @@ if strcmp(caseName,'bridge')
     propNBC.tractionLoadVct = [0; - 1e4; 0];
     
     % Define the contact segments
-    typeSegment = 'one'; % 'one', 'two', 'three', 'tessellation_circle'
+    typeSegment = 'tessellation_circle'; % 'one', 'two', 'three', 'tessellation_circle'
     if strcmp(typeSegment, 'one')
         contactSegments.numSegments = 1;
         contactSegments.points = zeros(contactSegments.numSegments, 4);
@@ -119,7 +119,7 @@ if strcmp(caseName,'bridge')
         radius = 4;
         startAngle = 3*pi/4;
         endAngle = pi/4;
-        numSegments = 300;
+        numSegments = 30;
         contactSegments = createCircleSegments ...
             (center, radius, startAngle, endAngle, numSegments);
     else
@@ -155,7 +155,7 @@ elseif strcmp(caseName,'cantilever_beam')
         radius = 4;
         startAngle = 3*pi/4;
         endAngle = pi/4;
-        numSegments = 30; %17
+        numSegments = 30;
         contactSegments = createCircleSegments ...
             (center, radius, startAngle, endAngle, numSegments);
     else
@@ -179,7 +179,7 @@ elseif strcmp(caseName,'wedge')
     contactSegments.points(3,:) = [-1-x_extension -2+y_translation -0.33333+x_extension -2+y_translation];
 elseif strcmp(caseName,'hertz')
     % Amplitude of the externally applied boundary traction
-    propNBC.tractionLoadVct = [1e3; 0; 0];
+    propNBC.tractionLoadVct = [1e4; 0; 0];
     
     % Define the contact segments
     contactSegments.numSegments = 1;
@@ -208,18 +208,22 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
     isUnitTest, 'outputEnabled');
 
 %% Postprocessing
+
+% Plot the current configuration
 graph.index = plot_currentConfigurationFEMPlateInMembraneAction...
     (strMsh, homDBC, contactSegments, dHat, graph);
 hold on;
 plot_activeNodes(strMsh, dHat, nodeIDs_active);
 hold off;
 
+% Compute the contact length, the contact force and the maximum contact
+% pressure
+[contactLength, contactForce, maxContactPressure] = ...
+    computePostprocResultantsSignoriniFrictionlessContact2D...
+    (strMsh, parameters, dHat, lambdaHat, nodeIDs_active);
+
 % Get the length of the contact area and the reaction force on the contact
-if strcmp(caseName,'hertz')
-    [contactLength, contactForce, maxContactPressure] = ...
-        computePostprocResultantsSignoriniFrictionlessContact2D...
-        (strMsh, parameters, dHat, lambdaHat, nodeIDs_active);
-    
+if strcmp(caseName,'hertz')    
     radius = 5;
     force = sum(F);
     hertzContactLength = sqrt(4*(2*force)*radius*((1 - parameters.nue^2)/parameters.E)/(pi*parameters.t));
