@@ -1,4 +1,4 @@
-function testFrictionlessSignoriniContactHertz2D(testCase)
+function testFrictionlessSignoriniContactWedge2D(testCase)
 %% Licensing
 %
 % License:         BSD License
@@ -9,10 +9,10 @@ function testFrictionlessSignoriniContactHertz2D(testCase)
 %
 %% Script documentation
 %
-% Task : Signorini frictionless contact analysis for the Hertzian contact
-%        problem in 2D.
+% Task : Signorini frictionless contact analysis for the case of 2D
+%        wedge which is compressed inside a rigid support.
 %
-% Date : 03.03.2020
+% Date : 30.03.2020
 %
 %% Function layout
 %
@@ -26,25 +26,24 @@ function testFrictionlessSignoriniContactHertz2D(testCase)
 %
 % 4. Compute normals to segments
 %
-% 5. Solve the system for the displacement and the Lagrange Multipliers fields
+% 5. Compute the numerical solution in terms of the contact length and maximum contact pressure
 %
-% 6. Compute the numerical solution for the Herzian contact problem in 2D
+% 6. Define the expected solution
 %
-% 7. Define the expected solution
-%
-% 8. Verify the results
+% 7. Verify the results
 %
 %% 0. Read input
 
 % Define tolerances for both cases
 absTol = 1e-15;
-absTol4 = 1e-15*1e4;
+absTol0 = absTol*0;
+absTol5 = 1e-15*1e5;
 
 %% 1. Parse data from GiD input file
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-caseName = 'unitTest_Hertz';
+caseName = 'unitTest_wedge';
 
 % Parse the data from the GiD input file
 [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, analysis, parameters, ...
@@ -57,7 +56,7 @@ caseName = 'unitTest_Hertz';
 bodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Amplitude of the externally applied boundary traction
-propNBC.tractionLoadVct = [1e3; 0; 0];
+propNBC.tractionLoadVct = [0; - 1e5; 0];
 
 % Choose equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
@@ -77,14 +76,24 @@ isUnitTest = true;
 pathToOutput = 'undefined';
 
 %% 3. Define boundary segments of the rigid contact wall
-contactSegments.numSegments = 1;
+
+% Geometric parameters for extending the rigid walls and render the
+% contact algorithm stable
+x_translation = 1e-3;
+y_translation = .1;
+x_extension = 1;
+
+% Define the contact segments
+contactSegments.numSegments = 3;
 contactSegments.points = zeros(contactSegments.numSegments, 4);
-contactSegments.points(1,:) = [5 -1 5 5]; 
+contactSegments.points(1,:) = [-1 3.75 -1 -3];
+contactSegments.points(2,:) = [-0.33333+x_translation -2 1.2+x_translation 3.75];
+contactSegments.points(3,:) = [-1-x_extension -2+y_translation -0.33333+x_extension -2+y_translation];
 
 %% 4. Compute normals to segments
 contactSegments = computeUnitNormalVctsToSegments(contactSegments);
 
-%% 5. Solve the system for the displacement and the Lagrange Multipliers fields
+%% 3. Solve the system and get the displacement field
 [dHat, lambdaHat, nodeIDs_active, numIter, ~, minElSize] = ...
     solveSignoriniFrictionlessContact2D...
     (analysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC,bodyForces, ...
@@ -92,28 +101,32 @@ contactSegments = computeUnitNormalVctsToSegments(contactSegments);
     propNLinearAnalysis, propContact , propGaussInt, caseName, pathToOutput, ...
     isUnitTest, '');
 
-%% 6. Compute the numerical solution for the Herzian contact problem in 2D
-[contactLength, ~, maxContactPressure] = ...
+%% 5. Compute the numerical solution in terms of the contact length and maximum contact pressure
+[contactLength, contactForce, maxContactPressure] = ...
     computePostprocResultantsSignoriniFrictionlessContact2D ...
     (strMsh, parameters, dHat, lambdaHat, nodeIDs_active);
 
-%% 7. Define the expected solution
-
-% Expected solution in terms of the maximum contact pressure
-expMaxContactPressure = 1.072632519035329e+04;
+%% 6. Define the expected solution
 
 % Expected solution in terms of the contact length
-expContactLength = 0.876276913636778;
+expContactLength = 2.484417940196065;
+
+% Expected total contact force
+expContactForce = 6.391759601518371e+05;
+
+% Expected solution in terms of the maximum contact pressure
+expMaxContactPressure = Inf;
 
 % Expected number of contact interations
-expNumIter = 8;
+expNumIter = 14;
 
 % Expected minimum element area size
-expMinElSize = 0.080014541178463;
+expMinElSize = 0.079594036208751;
 
 %% 7. Verify the results
 testCase.verifyEqual(contactLength, expContactLength, 'AbsTol', absTol);
-testCase.verifyEqual(maxContactPressure, expMaxContactPressure, 'AbsTol', absTol4);
+testCase.verifyEqual(contactForce, expContactForce, 'AbsTol', absTol5);
+testCase.verifyEqual(maxContactPressure, expMaxContactPressure, 'AbsTol', absTol0);
 testCase.verifyEqual(numIter, expNumIter, 'AbsTol', absTol);
 testCase.verifyEqual(minElSize, expMinElSize, 'AbsTol', absTol);
 

@@ -98,7 +98,7 @@ for i = 1:length(nodeIDs_active)
                 contactLength_el = norm(nodeJ_disp - nodeI_disp);
                 
                 % Compute the contact pressure acting on each node using the Langrange Multipliers solution
-                contactPressure_el = (lambdaHat(i, 1) + lambdaHat(j, 1))/2/parameters.t/contactLength_el;
+                contactPressure_el = (lambdaHat(i, 1) + lambdaHat(j, 1))/2/parameters.t/contactLength_el; 
                 contactPressure = [contactPressure; contactPressure_el];
 
                 % Update the contact length
