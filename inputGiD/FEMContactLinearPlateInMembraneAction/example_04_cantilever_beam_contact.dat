@@ -1516,13 +1516,13 @@ STRUCTURE_DIRICHLET_NODES
       17 0.0  0.0  NaN  
       24 0.0  0.0  NaN  
 STRUCTURE_FORCE_NODES
-     209 boundaryLoad computeConstantVerticalLoad
-     215 boundaryLoad computeConstantVerticalLoad
-     221 boundaryLoad computeConstantVerticalLoad
-     227 boundaryLoad computeConstantVerticalLoad
-     233 boundaryLoad computeConstantVerticalLoad
-     238 boundaryLoad computeConstantVerticalLoad
-     244 boundaryLoad computeConstantVerticalLoad
+     209 boundaryLoad computeConstantLoad
+     215 boundaryLoad computeConstantLoad
+     221 boundaryLoad computeConstantLoad
+     227 boundaryLoad computeConstantLoad
+     233 boundaryLoad computeConstantLoad
+     238 boundaryLoad computeConstantLoad
+     244 boundaryLoad computeConstantLoad
 STRUCTURE_CONTACT_NODES
        1 
        3 

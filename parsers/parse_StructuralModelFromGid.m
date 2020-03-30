@@ -1,7 +1,7 @@
-function [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,propGaussInt,propContact] = ...
-    parse_StructuralModelFromGid(pathToCase,caseName,outMsg)
-%% Licensing
+function [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, analysis, parameters, ...
+    propNLinearAnalysis, propStrDynamics, propGaussInt, propContact] = ...
+    parse_StructuralModelFromGid(pathToCase, caseName, outMsg)
+%% Licensingprop
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
@@ -29,7 +29,7 @@ function [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
 %                       applied
 %      valuesInhomDBC : The prescribed values for the inhomogeneous 
 %                       Dirichlet boundary conditions
-%                 NBC :     .nodes : The nodes where Neumann boundary 
+%             propNBC :     .nodes : The nodes where Neumann boundary 
 %                                    conditions are applied
 %                        .loadType : The type of the load for each Neumann 
 %                                    node
@@ -274,11 +274,11 @@ for k = 1:numel(block)
     out{k} = textscan(block{k},'%f %s %s','delimiter',' ','MultipleDelimsAsOne', 1);
 end
 out = out{1};
-NBC.nodes = cell2mat(out(:,1));
+propNBC.nodes = cell2mat(out(:,1));
 outLoadType = out(:,2);
-NBC.loadType = cell2mat(outLoadType{1});
+propNBC.loadType = cell2mat(outLoadType{1});
 outFctHandle = out(:,3);
-NBC.fctHandle = cell2mat(outFctHandle{1});
+propNBC.fctHandle = cell2mat(outFctHandle{1});
 
 %% 11. Load the nodes that are candidates for contact
 block = regexp(fstring,'STRUCTURE_CONTACT_NODES','split'); 
@@ -298,23 +298,23 @@ end
 
 %% 12. Get edge connectivity arrays for the Neumann edges
 if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Neumann boundary edges: %d \n',length(NBC.nodes) - 1);
+    fprintf('>> Neumann boundary edges: %d \n',length(propNBC.nodes) - 1);
 end
 
 % Initialize the Neumann boundary lines
-NBC.lines = zeros(length(unique(NBC.nodes)) - 1,3);
+propNBC.lines = zeros(length(unique(propNBC.nodes)) - 1,3);
 
 % Initialize line counter
 counterLines = 1;
 
 % Loop over each node pair
-for i = 1:length(NBC.nodes)
-    for j = i:length(NBC.nodes)
+for i = 1:length(propNBC.nodes)
+    for j = i:length(propNBC.nodes)
         % If we are not in the same node
         if i ~= j
             % Get the node index in the element array
-            nodeI = NBC.nodes(i);
-            nodeJ = NBC.nodes(j);
+            nodeI = propNBC.nodes(i);
+            nodeJ = propNBC.nodes(j);
             
             
             % Find the element indices to which the nodes belong
@@ -327,17 +327,17 @@ for i = 1:length(NBC.nodes)
                 commonElmnts = find(indexJ(k) == indexI);
                 
                 % If there are commont elements to which the nodes belong
-                if norm(commonElmnts) ~= 0 && strcmp(NBC.fctHandle(i,:),NBC.fctHandle(j,:))
+                if norm(commonElmnts) ~= 0 && strcmp(propNBC.fctHandle(i,:),propNBC.fctHandle(j,:))
                     % Get the common element index
                     elementIndex = indexI(commonElmnts);
                     
                     % Store the line into the NBC.line array with the same
                     % ordering as the are stored in the element array
-                    NBC.lines(counterLines,:) = ...
-                        [NBC.nodes(i) NBC.nodes(j) elementIndex];
+                    propNBC.lines(counterLines,:) = ...
+                        [propNBC.nodes(i) propNBC.nodes(j) elementIndex];
                     
                     % Get the appropriate function handle for the line
-                    fctHandle(counterLines,:) = NBC.fctHandle(i,:);
+                    fctHandle(counterLines,:) = propNBC.fctHandle(i,:);
                     
                     % Update counter
                     counterLines = counterLines + 1;
@@ -346,7 +346,7 @@ for i = 1:length(NBC.nodes)
         end
     end
 end
-NBC.fctHandle = fctHandle;
+propNBC.fctHandle = fctHandle;
 
 %% 13. Appendix
 if strcmp(outMsg,'outputEnabled')

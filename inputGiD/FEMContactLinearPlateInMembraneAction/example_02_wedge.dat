@@ -1699,27 +1699,27 @@ STRUCTURE_ELEMENTS
     1063      3     2       4
 STRUCTURE_DIRICHLET_NODES
 STRUCTURE_FORCE_NODES
-       1 boundaryLoad computeConstantVerticalLoad
-       2 boundaryLoad computeConstantVerticalLoad
-       5 boundaryLoad computeConstantVerticalLoad
-       8 boundaryLoad computeConstantVerticalLoad
-      14 boundaryLoad computeConstantVerticalLoad
-      22 boundaryLoad computeConstantVerticalLoad
-      30 boundaryLoad computeConstantVerticalLoad
-      40 boundaryLoad computeConstantVerticalLoad
-      52 boundaryLoad computeConstantVerticalLoad
-      64 boundaryLoad computeConstantVerticalLoad
-      78 boundaryLoad computeConstantVerticalLoad
-      96 boundaryLoad computeConstantVerticalLoad
-     114 boundaryLoad computeConstantVerticalLoad
-     132 boundaryLoad computeConstantVerticalLoad
-     153 boundaryLoad computeConstantVerticalLoad
-     176 boundaryLoad computeConstantVerticalLoad
-     198 boundaryLoad computeConstantVerticalLoad
-     225 boundaryLoad computeConstantVerticalLoad
-     253 boundaryLoad computeConstantVerticalLoad
-     281 boundaryLoad computeConstantVerticalLoad
-     309 boundaryLoad computeConstantVerticalLoad
+       1 boundaryLoad computeConstantLoad
+       2 boundaryLoad computeConstantLoad
+       5 boundaryLoad computeConstantLoad
+       8 boundaryLoad computeConstantLoad
+      14 boundaryLoad computeConstantLoad
+      22 boundaryLoad computeConstantLoad
+      30 boundaryLoad computeConstantLoad
+      40 boundaryLoad computeConstantLoad
+      52 boundaryLoad computeConstantLoad
+      64 boundaryLoad computeConstantLoad
+      78 boundaryLoad computeConstantLoad
+      96 boundaryLoad computeConstantLoad
+     114 boundaryLoad computeConstantLoad
+     132 boundaryLoad computeConstantLoad
+     153 boundaryLoad computeConstantLoad
+     176 boundaryLoad computeConstantLoad
+     198 boundaryLoad computeConstantLoad
+     225 boundaryLoad computeConstantLoad
+     253 boundaryLoad computeConstantLoad
+     281 boundaryLoad computeConstantLoad
+     309 boundaryLoad computeConstantLoad
 STRUCTURE_CONTACT_NODES
        1 
        2 

@@ -65,8 +65,8 @@ STRUCTURE_DIRICHLET_NODES
        3 0.0  0.0  NaN  
        4 0.0  0.0  NaN  
 STRUCTURE_FORCE_NODES
-       2 boundaryLoad computeConstantVerticalLoad
-       4 boundaryLoad computeConstantVerticalLoad
+       2 boundaryLoad computeConstantLoad
+       4 boundaryLoad computeConstantLoad
 STRUCTURE_CONTACT_NODES
        1 
        2 
