@@ -54,9 +54,9 @@ addpath('../../FEMContactMechanicsAnalysis/graphics/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-% caseName = 'bridge';
+caseName = 'bridge';
 % caseName = 'cantilever_beam';
-caseName = 'wedge';
+% caseName = 'wedge';
 % caseName = 'hertz';
 
 % Parse the data from the GiD input file

@@ -163,7 +163,7 @@ if ~ischar(nodesALE) && ~isempty(nodesALE)
         computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
         (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,...
         solve_LinearSystem,propFldDynamics,t);
-elseif strcmp(nodesALE,'undefined')
+else
     uMeshALE = 'undefined';
 end
 
