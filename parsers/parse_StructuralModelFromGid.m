@@ -241,7 +241,7 @@ counterInhomDBC = 1;
 % Find the number of nodes where Dirichlet boundary conditions are applied
 nDBCNodes = length(out)/(nDOFsPerNodeFromGiD+1);
 
-for i=1:nDBCNodes
+for i = 1:nDBCNodes
     % Get the Dirichlet node ID
     nodeID = out((nDOFsPerNodeFromGiD+1)*i-nDOFsPerNodeFromGiD);
     
@@ -326,7 +326,7 @@ for i = 1:length(propNBC.nodes)
                 % Find the common elements to which both nodes belong to
                 commonElmnts = find(indexJ(k) == indexI);
                 
-                % If there are commont elements to which the nodes belong
+                % If there are common elements to which the nodes belong
                 if norm(commonElmnts) ~= 0 && strcmp(propNBC.fctHandle(i,:),propNBC.fctHandle(j,:))
                     % Get the common element index
                     elementIndex = indexI(commonElmnts);

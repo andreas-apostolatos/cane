@@ -46,8 +46,6 @@ nodes_X = mesh.nodes(nodeIDs_active, 1) + dHat(2*nodeIDs_active - 1);
 nodes_Y = mesh.nodes(nodeIDs_active, 2) + dHat(2*nodeIDs_active);
 
 %% 2. Plot active nodes
-hold on;
-scatter(nodes_X,nodes_Y,'ro','b','LineWidth',3);
-hold off;
+scatter(nodes_X,nodes_Y,'magentao','b','LineWidth',3);
 
 end

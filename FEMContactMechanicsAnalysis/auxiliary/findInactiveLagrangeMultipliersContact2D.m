@@ -114,6 +114,7 @@ for iSeg = 1:segmentsContact.numSegments
 %             end
 
             % Decide whether the node is active upon the different conditions
+%             if (isIntersection && penetration > tolerance) || abs(penetration) < tolerance
             if (isIntersection && penetration > tolerance) || abs(penetration) < tolerance
                 homDOFsLM(indexDOFLM) = [];
             else

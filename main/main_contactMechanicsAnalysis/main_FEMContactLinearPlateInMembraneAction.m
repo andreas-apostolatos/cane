@@ -55,18 +55,14 @@ addpath('../../FEMContactMechanicsAnalysis/graphics/',...
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
 % caseName = 'bridge';
+% caseName = 'cantilever_beam';
 % caseName = 'wedge';
-% caseName = 'hertz';
-caseName = 'cantilever_beam';
-% caseName = 'example_05_rectangle_contact_debug';
-% caseName = 'example_06_wedge_contact_debug';
+caseName = 'hertz';
 
 % Parse the data from the GiD input file
 [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, analysis, parameters, ...
     propNLinearAnalysis, propStrDynamics, propGaussInt, propContact] = ...
     parse_StructuralModelFromGid(pathToCase, caseName, 'outputEnabled');
-%     computeConstantVerticalLoad
-%     computeConstantHorizontalLoad
 
 %% UI
 
@@ -130,29 +126,19 @@ if strcmp(caseName,'bridge')
         error('Segment type %s not existent');
     end
 elseif strcmp(caseName,'cantilever_beam')
-   
     % Amplitude of the externally applied boundary traction
     propNBC.tractionLoadVct = [0; - 1e3; 0];
     
-    % Either define bottom contact line segment and add it to the segments
-%     contactSegments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
-%     contactSegments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
-%     contactSegments.points(:,:,3) = [2, -0.1; 4.5,-0.5];
-    
-%     contactSegments.points(:,:,1) = [0.5, -0.5; 2,-0.1];
-%     contactSegments.points(:,:,2) = [2, -0.1; 3.5,-0.5];
-    
-%     contactSegments.points(:,:,1) = [0.5, -0.5; 3.5,-0.5];
-
-% For the cantilever case
-%     
+    % Geometric parameters for extending the rigid walls and render the
+    % contact algorithm stable
+    x_translation = 1e-0;  
     
     % Define the contact segments
     typeSegment = 'two'; % 'one', 'two', 'three', 'tessellation_circle'
     if strcmp(typeSegment, 'one')
         contactSegments.numSegments = 1;
         contactSegments.points = zeros(contactSegments.numSegments, 4);
-        contactSegments.points(1,:) = [1.0 0.4 10 0.4];
+        contactSegments.points(1,:) = [1.0+x_translation 0.4 10+x_translation 0.4];
     elseif strcmp(typeSegment, 'two')
         contactSegments.numSegments = 2;
         contactSegments.points = zeros(contactSegments.numSegments, 4);
@@ -169,7 +155,7 @@ elseif strcmp(caseName,'cantilever_beam')
         radius = 4;
         startAngle = 3*pi/4;
         endAngle = pi/4;
-        numSegments = 300; %17
+        numSegments = 30; %17
         contactSegments = createCircleSegments ...
             (center, radius, startAngle, endAngle, numSegments);
     else
@@ -214,7 +200,7 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
     (strMsh, analysis, F, homDBC, contactSegments, graph, 'outputEnabled');
 
 %% Solve the system and get the displacement field
-[dHat, lambdaHat, nodeIDs_active] = solveSignoriniFrictionlessContactProblem2D...
+[dHat, lambdaHat, nodeIDs_active] = solveSignoriniFrictionlessContact2D...
     (analysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC,bodyForces, ...
     parameters, contactSegments, computeStiffMtxLoadVct, solve_LinearSystem, ...
     propNLinearAnalysis, propContact , propGaussInt, caseName, pathToOutput,...
@@ -228,9 +214,9 @@ plot_activeNodes(strMsh, dHat, nodeIDs_active);
 hold off;
 
 % Get the length of the contact area and the reaction force on the contact
-if strcmp(caseName,'example_03_hertz')
+if strcmp(caseName,'hertz')
     [contactLength,contactForce,maxContactPressure] = ...
-        computeContactResultants...
+        computePostprocResultantsSignoriniFrictionlessContact2D...
         (strMsh, parameters, dHat, lambdaHat, nodeIDs_active);
     
     radius = 5;
