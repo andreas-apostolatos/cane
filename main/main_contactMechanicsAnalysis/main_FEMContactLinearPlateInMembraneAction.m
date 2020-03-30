@@ -47,16 +47,17 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 addpath('../../FEMContactMechanicsAnalysis/graphics/',...
         '../../FEMContactMechanicsAnalysis/solvers',...
         '../../FEMContactMechanicsAnalysis/auxiliary/',...
+        '../../FEMContactMechanicsAnalysis/contactSegments/',...
         '../../FEMContactMechanicsAnalysis/postprocessing/');
 
 %% Parse data from GiD input file
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-% caseName = 'example_01_bridge';
-caseName = 'example_02_wedge';
-% caseName = 'example_03_hertz';
-% caseName = 'example_04_cantilever_beam_contact';
+% caseName = 'bridge';
+% caseName = 'wedge';
+% caseName = 'hertz';
+caseName = 'cantilever_beam';
 % caseName = 'example_05_rectangle_contact_debug';
 % caseName = 'example_06_wedge_contact_debug';
 
@@ -72,9 +73,6 @@ caseName = 'example_02_wedge';
 % On the body forces
 bodyForces = @computeConstantVerticalStructureBodyForceVct;
 
-% Amplitude of the externally applied boundary traction
-propNBC.tractionLoadVct = [0; - 1e5; 0];
-
 % Choose equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = solve_LinearSystemGMResWithIncompleteLUPreconditioning;
@@ -83,8 +81,8 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
 % computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
 
-% Update the contact properties
-propContact.maxIter = 30;
+% Maximum number of contact iterations
+propContact.maxIter = 50;
 
 % On whether the case is a unit test
 isUnitTest = false;
@@ -98,12 +96,44 @@ graph.index = 1;
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
-%% Rigid wall- line  [(x0,y0) ; (x1,y1)]
-
-% different line segments for different cases
-if strcmp(caseName,'example_01_bridge') || strcmp(caseName,'example_04_cantilever_beam_contact') || ...
-        strcmp(caseName,'example_05_rectangle_contact_debug')
+%% Define segments defining the boundaries of the contact rigid wall
+if strcmp(caseName,'bridge')
+    % Amplitude of the externally applied boundary traction
+    propNBC.tractionLoadVct = [0; - 1e4; 0];
+    
+    % Define the contact segments
+    typeSegment = 'one'; % 'one', 'two', 'three', 'tessellation_circle'
+    if strcmp(typeSegment, 'one')
+        contactSegments.numSegments = 1;
+        contactSegments.points = zeros(contactSegments.numSegments, 4);
+        contactSegments.points(1,:) = [0.5 -0.5 3.5 -0.5];
+    elseif strcmp(typeSegment, 'two')
+        contactSegments.numSegments = 2;
+        contactSegments.points = zeros(contactSegments.numSegments, 4);
+        contactSegments.points(1,:) = [0.5 -0.5 2 -0.1];
+        contactSegments.points(2,:) = [2 -0.1 3.5 -0.5];
+    elseif strcmp(typeSegment, 'three')
+        contactSegments.numSegments = 3;
+        contactSegments.points = zeros(contactSegments.numSegments, 4);
+        contactSegments.points(1,:) = [-0.5 -0.5 1.2 -0.1];
+        contactSegments.points(2,:) = [1.2 -0.1 2 -0.1];
+        contactSegments.points(3,:) = [2 -0.1 4.5 -0.5];
+    elseif strcmp(typeSegment, 'tessellation_circle')
+        center = [2,-4.1];
+        radius = 4;
+        startAngle = 3*pi/4;
+        endAngle = pi/4;
+        numSegments = 300; %17
+        contactSegments = createCircleSegments ...
+            (center, radius, startAngle, endAngle, numSegments);
+    else
+        error('Segment type %s not existent');
+    end
+elseif strcmp(caseName,'cantilever_beam')
    
+    % Amplitude of the externally applied boundary traction
+    propNBC.tractionLoadVct = [0; - 1e3; 0];
+    
     % Either define bottom contact line segment and add it to the segments
 %     contactSegments.points(:,:,1) = [-0.5, -0.5; 1.2,-0.1];
 %     contactSegments.points(:,:,2) = [1.2, -0.1; 2,-0.1];
@@ -115,42 +145,60 @@ if strcmp(caseName,'example_01_bridge') || strcmp(caseName,'example_04_cantileve
 %     contactSegments.points(:,:,1) = [0.5, -0.5; 3.5,-0.5];
 
 % For the cantilever case
-%     contactSegments.points(:,:,1) = [1.0, 0.4; 10, 0.4];
+%     
+    
+    % Define the contact segments
+    typeSegment = 'two'; % 'one', 'two', 'three', 'tessellation_circle'
+    if strcmp(typeSegment, 'one')
+        contactSegments.numSegments = 1;
+        contactSegments.points = zeros(contactSegments.numSegments, 4);
+        contactSegments.points(1,:) = [1.0 0.4 10 0.4];
+    elseif strcmp(typeSegment, 'two')
+        contactSegments.numSegments = 2;
+        contactSegments.points = zeros(contactSegments.numSegments, 4);
+        contactSegments.points(1,:) = [0.5 -0.5 2 -0.1];
+        contactSegments.points(2,:) = [2 -0.1 3.5 -0.5];
+    elseif strcmp(typeSegment, 'three')
+        contactSegments.numSegments = 3;
+        contactSegments.points = zeros(contactSegments.numSegments, 4);
+        contactSegments.points(1,:) = [-0.5 -0.5 1.2 -0.1];
+        contactSegments.points(2,:) = [1.2 -0.1 2 -0.1];
+        contactSegments.points(3,:) = [2 -0.1 4.5 -0.5];
+    elseif strcmp(typeSegment, 'tessellation_circle')
+        center = [2,-4.1];
+        radius = 4;
+        startAngle = 3*pi/4;
+        endAngle = pi/4;
+        numSegments = 300; %17
+        contactSegments = createCircleSegments ...
+            (center, radius, startAngle, endAngle, numSegments);
+    else
+        error('Segment type %s not existent');
+    end
+elseif strcmp(caseName,'wedge')
+    % Amplitude of the externally applied boundary traction
+    propNBC.tractionLoadVct = [0; - 1e5; 0];
 
-% For the debug case
-%     contactSegments.points(:,:,1) = [-10.0, 0; 10, 0];
-    
-    
-    % ...or define a circular contact boundary
-    center = [2,-4.1];
-    radius = 4;
-    startAngle = 3*pi/4;
-    endAngle = pi/4;
-    numSegments = 30; %17
-    
-    % Create circular segments
-    contactSegments = createCircleSegments(center,radius,startAngle,endAngle,numSegments);
-elseif strcmp(caseName,'example_02_wedge') || strcmp(caseName,'example_06_wedge_contact_debug')
+    % Geometric parameters for extending the rigid walls and render the
+    % contact algorithm stable
     x_translation = 1e-3;
-     
     y_translation = .1;
-     
     x_extension = 1;
     
-    % define bottom contact line segment and add it to the segments
+    % Define the contact segments
     contactSegments.numSegments = 3;
     contactSegments.points = zeros(contactSegments.numSegments, 4);
     contactSegments.points(1,:) = [-1 3.75 -1 -3];
     contactSegments.points(2,:) = [-0.33333+x_translation -2 1.2+x_translation 3.75];
     contactSegments.points(3,:) = [-1-x_extension -2+y_translation -0.33333+x_extension -2+y_translation];
-
-elseif strcmp(caseName,'example_03_hertz')
-    % define bottom contact line segment
-    wall_1 = [5, -1; 5, 5];
+elseif strcmp(caseName,'hertz')
+    % Amplitude of the externally applied boundary traction
+    propNBC.tractionLoadVct = [1e4; 0; 0];
     
-    % add a wall to the segments of points
-    contactSegments.points(:,:,1) = wall_1;    
-
+    % Define the contact segments
+    contactSegments.numSegments = 1;
+    contactSegments.points = zeros(contactSegments.numSegments, 4);
+    contactSegments.points(1,:) = [5 -1 5 5];
 end
 
 %% Compute normals to segments

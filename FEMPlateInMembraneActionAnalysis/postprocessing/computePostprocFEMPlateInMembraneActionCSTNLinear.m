@@ -64,11 +64,13 @@ if strcmp(analysis.type,'planeStress')
     C = preFactor*[1             parameters.nue  0
                    parameters.nue 1              0
                    0              0             (1-parameters.nue)/2];
-elseif strcmp(analysis.physics,'planeStrain')
-    preFactor = materialProperties.E*(1-parameters.nue)/(1+parameters.nue)/(1-2*parameters.nue);
+elseif strcmp(analysis.type,'planeStrain')
+    preFactor = parameters.E*(1-parameters.nue)/(1+parameters.nue)/(1-2*parameters.nue);
     C = preFactor*[1                                 parameters.nue/(1-parameters.nue) 0
                    parameters.nue/(1-parameters.nue) 1                                 0
                    0                                 0                                 (1-2*parameters.nue)/2/(1-parameters.nue)];
+else
+    error('Define variable analysis.type to be either planeStress or planeStrain');
 end
 
 % Initialize output arrays

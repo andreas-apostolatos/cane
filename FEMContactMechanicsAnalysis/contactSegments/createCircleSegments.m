@@ -1,4 +1,5 @@
-function segments = createCircleSegments(center,radius,startAngle,endAngle,nSegments)
+function contactSegments = createCircleSegments(center, radius, startAngle, ...
+    endAngle, numSegments)
 %% Licensing
 %
 % License:         BSD License
@@ -18,7 +19,7 @@ function segments = createCircleSegments(center,radius,startAngle,endAngle,nSegm
 %             center : vector in form of [x0,y0]
 %
 %             Output :
-%           segments : data stucture containing informations about segments
+%    contactSegments : data stucture containing informations about segments
 %                      points and normal vector
 %
 %% Function main body
@@ -26,24 +27,26 @@ function segments = createCircleSegments(center,radius,startAngle,endAngle,nSegm
 x_translation = 0;
 y_translation = 0;
 
+contactSegments.numSegments = numSegments;
+
 % Initialize coordinates
-coordinates = zeros(nSegments+1,2);
+coordinates = zeros(numSegments+1,2);
 
 % Create points on the circle
-angles = linspace(startAngle,endAngle,nSegments+1); 
+angles = linspace(startAngle,endAngle,numSegments+1); 
 coordinates(:,1) = radius * cos(angles) + center(1); 
 coordinates(:,2) = radius * sin(angles) + center(2);
 
 % Create segments from points
-for i=1:nSegments
+for iSeg = 1:numSegments
     
     % get rotated coordinates
-    x0 = coordinates(i,1) + x_translation;
-    y0 = coordinates(i,2) + y_translation;
-    x1 = coordinates(i+1,1) + x_translation;
-    y1 = coordinates(i+1,2) + y_translation;
+    x0 = coordinates(iSeg,1) + x_translation;
+    y0 = coordinates(iSeg,2) + y_translation;
+    x1 = coordinates(iSeg+1,1) + x_translation;
+    y1 = coordinates(iSeg+1,2) + y_translation;
     
     % add each segment to .points
-    segments.points(:,:,i) = [x0, y0; x1,y1];
+    contactSegments.points(iSeg,:) = [x0 y0 x1 y1];
 
 end

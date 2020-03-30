@@ -78,7 +78,7 @@ function [dHat, lambdaHat, nodeIDs_active, FComplete, minElSize] = ...
 %              FComplete : The complete force vector
 %              minElSize : The minimum element area size in the mesh
 %
-%% Function layout
+% Function layout
 %
 % 0. Read input
 %
@@ -142,7 +142,7 @@ if strcmp(outMsg,'outputEnabled')
             error('Variable segmentsContact.numSegments needs to be defined and be an integer');
         end
     end
-    fprintf('Number of rigid contact segments : %d\n\n', segmentsContact.numSegments);
+    fprintf('Number of rigid contact segments : %d\n', segmentsContact.numSegments);
     fprintf('_____________________________________________________________\n\n');
 
     % start measuring computational time
@@ -315,7 +315,7 @@ if ~isUnitTest
         fprintf('>> Writting out the results to "%s"\n',strcat(pathToOutput, caseName, '/'));
     end
     writeOutputFEMPlateInMembraneActionToVTK...
-        (analysis,propNLinearAnalysis, propStrDynamics, strMsh, parameters, ...
+        (analysis, propNLinearAnalysis, propStrDynamics, strMsh, parameters, ...
         dHat, uDot, uDDot, DOF4Output, caseName, pathToOutput, title, ...
         noTimeStep);
 end

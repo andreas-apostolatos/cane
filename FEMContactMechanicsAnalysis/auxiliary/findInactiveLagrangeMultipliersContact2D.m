@@ -63,7 +63,6 @@ function homDOFsLM = findInactiveLagrangeMultipliersContact2D...
 %    <-
 % <-
 %
-%
 %% Function main body
 
 %% 0. Read input
@@ -140,7 +139,7 @@ for iSeg = 1:segmentsContact.numSegments
                 
                 % Get the end vertices of the current rigid segment
                 vertexA = segmentsContact.points(iSeg,1:2);
-                vertexB = segmentsContact.points(iSeg,1:2);
+                vertexB = segmentsContact.points(iSeg,3:4);
                 
                 % Compute the projection of the displaced node onto the
                 % segment with respect to which it is constrained
