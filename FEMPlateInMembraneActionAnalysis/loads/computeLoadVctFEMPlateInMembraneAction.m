@@ -1,5 +1,5 @@
 function F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,analysis,NBC,t,gaussInt,outMsg)
+    (strMsh,analysis,propNBC,t,gaussInt,outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -15,7 +15,7 @@ function F = computeLoadVctFEMPlateInMembraneAction...
 %           Input :
 %          strMsh : Nodes and elements in the mesh
 %        analysis : .type : The analysis type
-%             NBC :    .nodes : The nodes where Neumann boundary 
+%         propNBC :    .nodes : The nodes where Neumann boundary 
 %                                conditions are applied
 %                    .loadType : The type of the load for each Neumann node
 %                   .fctHandle : The function handle for each Neumann node
@@ -90,7 +90,7 @@ newtonRapshon.eps = 1e-9;
 noNodes = length(strMsh.nodes(:,1));
 
 % Number of DOFs
-if strcmp(analysis.type,'planeStress')
+if strcmp(analysis.type,'planeStress') || strcmp(analysis.type,'planeStrain')
     noDOFs = 2*noNodes;
 end
 
@@ -108,14 +108,14 @@ end
 [GP,GW] = getGaussPointsAndWeightsOverUnitDomain(noGP);
 
 %% 2. Loop over all elements on the Neumann boundary
-for iElmnt = 1:length(NBC.lines(:,1))
+for iElmnt = 1:length(propNBC.lines(:,1))
     %% 2i. Get the nodes which are on the Neumann boundary
-    nodeIDs = NBC.lines(iElmnt,1:2);
+    nodeIDs = propNBC.lines(iElmnt,1:2);
     x1 = strMsh.nodes(nodeIDs(1),:);
     x2 = strMsh.nodes(nodeIDs(2),:);
     
     %% 2ii. Get the nodes of the element on the Neumann boundary
-    elementID = NBC.lines(iElmnt,3);
+    elementID = propNBC.lines(iElmnt,3);
     element = strMsh.elements(elementID,:);
     index = isnan(element);
     element(index) = [];
@@ -131,10 +131,10 @@ for iElmnt = 1:length(NBC.lines(:,1))
     nodes = strMsh.nodes(element,:);
     
     %% 2iii. Get the function handle for this type of loading
-    if ischar(NBC.fctHandle(iElmnt,:))
-        loadFctHandle = str2func(NBC.fctHandle(iElmnt,:));
-    elseif isa(NBC.fctHandle{iElmnt},'function_handle')
-        loadFctHandle = NBC.fctHandle{iElmnt};
+    if ischar(propNBC.fctHandle(iElmnt,:))
+        loadFctHandle = str2func(propNBC.fctHandle(iElmnt,:));
+    elseif isa(propNBC.fctHandle{iElmnt},'function_handle')
+        loadFctHandle = propNBC.fctHandle{iElmnt};
     else
         error('Variable stored in NBC.fctHandle(%d,:) is neither a string nor it defines a function handle',iElmnt);
     end
@@ -178,7 +178,7 @@ for iElmnt = 1:length(NBC.lines(:,1))
         end
         
         %% 2v.4. Compute the applied load onto the Gauss Point
-        tractionOnGP = squeeze(loadFctHandle(xGP(1,1),xGP(1,2),xGP(1,3),t));
+        tractionOnGP = squeeze(loadFctHandle(xGP(1,1),xGP(1,2),xGP(1,3),t,propNBC));
         tractionOnGP2D = tractionOnGP(1:2,1);
         
         %% 2v.5. Compute the determinant of the transformation from the physical space to the parameter space

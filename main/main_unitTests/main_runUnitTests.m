@@ -12,6 +12,7 @@
 %        - Isogeometric membrane analysis
 %        - Isogeometric Kichhoff-Love shell analysis
 %        - Finite element formulation for plate in membrane action analysis
+%               -> including Signorini contact problem
 %        - Stabilized finite element analysis for the Navier-Stokes problem
 %
 % Date : 12.02.2015
@@ -85,7 +86,15 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
         '../../FEMPlateInMembraneActionAnalysis/graphics/',...
         '../../FEMPlateInMembraneActionAnalysis/output/',...
         '../../FEMPlateInMembraneActionAnalysis/postprocessing/',...
-        '../../FEMPlateInMembraneActionAnalysis/initialConditions/');
+        '../../FEMPlateInMembraneActionAnalysis/initialConditions/',...
+        '../../FEMPlateInMembraneActionAnalysis/errorComputation/');
+
+% Add all functions related to Signorini frictionless contact problem
+addpath('../../FEMContactMechanicsAnalysis/graphics/',...
+        '../../FEMContactMechanicsAnalysis/solvers',...
+        '../../FEMContactMechanicsAnalysis/auxiliary/',...
+        '../../FEMContactMechanicsAnalysis/contactSegments/',...
+        '../../FEMContactMechanicsAnalysis/postprocessing/');
     
 % Add all functions related to the Finite Element Methods for Computational
 % Fluid Dynamics problems
@@ -150,7 +159,7 @@ if isLight
 end
 resultIGAKLShell = run(suiteClassIGAKLShell);
 
-%% Run the unit test cases for the finite element formulation for plate in membrane action analysis
+%% Run the unit test cases for the finite element formulation of the plate in membrane action analysis
 suiteClassFEMPlateInMembraneAction = TestSuite.fromClass(?testFEMPlateInMembraneActionAnalysis);
 if isLight
     suiteClassFEMPlateInMembraneAction = suiteClassFEMPlateInMembraneAction.selectIf...
@@ -158,6 +167,17 @@ if isLight
         HasName('testFEMPlateInMembraneActionAnalysis/testCantileverBeamTransient'));
 end
 resultFEMPlateInMembraneAction = run(suiteClassFEMPlateInMembraneAction);
+
+%% Run the unit test cases for the finite element formulation of the contact mechanics analysis
+suiteClassFEMContactMechanics = TestSuite.fromClass(?testFEMContactMechanicsAnalysis);
+if isLight
+    suiteClassFEMContactMechanics = suiteClassFEMContactMechanics.selectIf...
+        (HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactBridge2D') | ...
+        HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactCantileverBeam2D') | ...
+        HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactWedge2D') | ...
+        HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactHertz2D'));
+end
+resultContactMechanicsAnalysis = run(suiteClassFEMContactMechanics);
 
 %% Run the unit test cases for stabilized finite element formulation for the Navier-Stokes problem
 suiteClassFEM4CFD = TestSuite.fromClass(?testFEMComputationalFluidDynamicsAnalysis);

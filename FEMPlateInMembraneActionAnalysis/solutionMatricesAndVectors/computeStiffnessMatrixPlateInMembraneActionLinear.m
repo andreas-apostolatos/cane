@@ -10,7 +10,7 @@ function K = computeStiffnessMatrixPlateInMembraneActionLinear...
 %% Function documentation
 %
 % Computes the stiffness matrix needed for linear analysis of a plate in
-% membrane action
+% membrane action for constant strain triangle (CST)
 %
 %              Input :
 %               mesh : The mesh of the structure
@@ -36,9 +36,8 @@ function K = computeStiffnessMatrixPlateInMembraneActionLinear...
 no_nodes_global = length(mesh.nodes);
 
 % Number of degrees of freedom for the global system
-if strcmp(analysis.dimension,'2d')&&strcmp(analysis.dofs,'displacements')
-    no_dofs_global = 2*no_nodes_global;
-end
+% for 2D displacement based analysis
+no_dofs_global = 2*no_nodes_global;
 
 % Number of DoFs at the element level (depends on the element type)
 no_nodes_element = 3;
@@ -51,16 +50,16 @@ K = zeros(no_dofs_global,no_dofs_global);
 for i=1:length(mesh.elements)
     
     % Get the current element in the mesh
-    element = mesh.elements(i,:);
+    element = mesh.elements(i,1:no_nodes_element);
     
     % Get the nodes of the triangle in a counterclockwise fashion
     nodes = mesh.nodes(element,:);
     
     % Compute element stiffness matrix for the CST
-    K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST(nodes,materialProperties,analysis);
+    K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST...
+                                       (nodes,materialProperties,analysis);
     
     % Assemble to the global stiffness matrix via element freedom tables
-    
     % Element freedom table
     EFT = zeros(1,no_dofs_element);
     

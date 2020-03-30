@@ -62,14 +62,14 @@ z = 0;
 nodeCoord = [x y z];
 
 % Function handle to the body force vector computation
-bodyForces = @computeConstantVecrticalBodyForceVct;
+bodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Function handle to the linear equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % Function handle to the computation of the linear stiffness matrix
-% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
-computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
+computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
+% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
 
 % Geometry characteristics for the case
 internalRadius = 4;
