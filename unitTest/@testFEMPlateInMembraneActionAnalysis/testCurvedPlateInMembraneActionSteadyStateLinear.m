@@ -36,7 +36,7 @@ absTol = 1e-15;
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 caseName = 'unitTest_curvedPlateTipShearPlaneStress';
 [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics] = ...
+    propNLinearAnalysis, ~] = ...
     parse_StructuralModelFromGid(pathToCase,caseName,'');
 
 %% 2. GUI
@@ -45,7 +45,7 @@ caseName = 'unitTest_curvedPlateTipShearPlaneStress';
 analysis.type = 'planeStress';
 
 % On the body forces
-bodyForces = @computeConstantVecrticalBodyForceVct;
+bodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Choose equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
@@ -69,7 +69,7 @@ pathToOutput = 'undefined';
 [dHat,FComplete,minElSize] = solve_FEMPlateInMembraneAction...
     (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
     parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-    propNLinearAnalysis,propStrDynamics,gaussInt,caseName,pathToOutput,...
+    propNLinearAnalysis,gaussInt,caseName,pathToOutput,...
     isUnitTest,'');
 
 %% 4. Define the expected solution

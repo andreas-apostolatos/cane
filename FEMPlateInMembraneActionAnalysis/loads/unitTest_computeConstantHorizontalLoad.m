@@ -1,4 +1,4 @@
-function load = unitTest_computeConstantHorizontalLoad(x,y,z,t)
+function load = unitTest_computeConstantHorizontalLoad(x,y,z,t, propNBC)
 %% Licensing
 %
 % License:         BSD License
