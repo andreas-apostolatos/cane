@@ -36,10 +36,15 @@ function testFEM4NavierStokesTransientBossak3D(testCase)
 absTol = 1e-15;
 absTol3 = 1e-13;
 
-%% 1. GUI
+%% 1. UI
 
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
+
+% On the writing the output function
+propVTK.isOutput = false;
+propVTK.writeOutputToFile = 'undefined';
+propVTK.VTKResultFile = 'undefined';
 
 % Define the initial condition function
 computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
@@ -47,26 +52,22 @@ computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
 % Choose the linear equation solver
 solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 
-% Write output to file
-writeOutputToFile = 'undefined';
+%% 2. Parse the data from the GiD input file
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = 'unitTest_semisphere';
 
-% Define the VTK output file from which to read in the data
-VTKResultFile = 'undefined';
-
-%% 2. Parse the data from the GiD input file
-[fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,~,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,gaussInt,~] = ...
+% Parse the data
+[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ~, propAnalysis, ...
+    parameters, propNLinearAnalysis, propFldDynamics, propGaussInt, ~] = ...
     parse_FluidModelFromGid...
-    (pathToCase,caseName,'');
+    (pathToCase, caseName,'');
 
 %% 3. GUI
 
 % On the transient analysis properties
-if strcmp(propFldDynamics.method,'BOSSAK')
+if strcmp(propFldDynamics.method, 'BOSSAK')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;
     propFldDynamics.computeUpdatedVct = ...
@@ -74,18 +75,18 @@ if strcmp(propFldDynamics.method,'BOSSAK')
 end
 
 %% 4. Solve the CFD problem
-[upHistory,minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D...
-    (fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,parameters,...
-    computeBodyForces,analysis,computeInitialConditions,...
-    VTKResultFile,solve_LinearSystem,propFldDynamics,...
-    propNLinearAnalysis,writeOutputToFile,gaussInt,caseName,'');
+[upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D ...
+    (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, parameters, ...
+    computeBodyForces, propAnalysis, computeInitialConditions, ...
+    solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
+    propGaussInt, propVTK, caseName,'');
 
 %% 5. Define the expected solution
 
 % Compute the number of DOFs for the problem
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
+if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
     noDOFs = 3*length(fldMsh.nodes(:,1));
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+elseif strcmp(propAnalysis.type,'NAVIER_STOKES_3D')
     noDOFs = 4*length(fldMsh.nodes(:,1));
 else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen')

@@ -1,5 +1,6 @@
-function [upDot,upDDot] = computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D...
-    (up,upSaved,upDotSaved,upDDotSaved,transientAnalysis)
+function [upDot, upDDot] = ...
+    computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D ...
+    (up, upSaved, upDotSaved, upDDotSaved, propFldDynamics)
 %% Licensing
 %
 % License:         BSD License
@@ -25,7 +26,8 @@ function [upDot,upDDot] = computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D...
 %       upDDotSaved : The updated discrete second order time derivative of 
 %                     the solution from the previous iteration step (dummny 
 %                     variable for this function)
-% transientAnalysis : Transient analysis parameters:
+%   propFldDynamics : Structure containing information on the time
+%                     integration of the fluid dynamics analysis,
 %                               .method : Time integration method
 %                            .alphaBeta : Bossak parameter
 %                                .gamma : Bossak parameter
@@ -42,11 +44,10 @@ function [upDot,upDDot] = computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D...
 %% Function main body
 
 % Discrete acceleration field
-upDot = 1/transientAnalysis.gamma/transientAnalysis.dt*(up - upSaved) - ...
-            (1-transientAnalysis.gamma)/transientAnalysis.gamma*upDotSaved;
+upDot = 1/propFldDynamics.gamma/propFldDynamics.dt*(up - upSaved) - ...
+            (1-propFldDynamics.gamma)/propFldDynamics.gamma*upDotSaved;
         
 % Second order time derivative of the velocity field
 upDDot = 'undefined';
 
 end
-

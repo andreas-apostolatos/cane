@@ -1,6 +1,7 @@
-function [up,upDot,upDDot,noTimeStep] = computeNullInitialConditionsFEM4NSE...
-    (analysis,fldMsh,DOF4Output,parameters,fldDynamics,VTKResultFile,...
-    caseName,pathToFile)
+function [up, upDot, upDDot, numTimeStep] = ...
+    computeNullInitialConditionsFEM4NSE...
+    (propAnalysis, fldMsh, DOF4Output, parameters, fldDynamics, VTKResultFile, ...
+    caseName, pathToFile)
 %% Licensing
 %
 % License:         BSD License
@@ -15,8 +16,9 @@ function [up,upDot,upDDot,noTimeStep] = computeNullInitialConditionsFEM4NSE...
 % in 2D.
 %
 %             Input :
-%          analysis : On the anylsis:
-%                       .type : Analysis type
+%      propAnalysis : Structure containing general information about the 
+%                     analysis,
+%                        .type : The analysis type
 %            fldMsh : Nodes and elements of the fluid mesh
 %        DOF4Output : Array containing the arrangment of the DOFs for 
 %                     printing them out
@@ -36,7 +38,7 @@ function [up,upDot,upDDot,noTimeStep] = computeNullInitialConditionsFEM4NSE...
 %                     for the acceleration and the pressure rate field
 %            upDDot : Dummny variable needed only for computational 
 %                     structural dynamics
-%        noTimeStep : The number of the time step when the simulation
+%       numTimeStep : The number of the time step when the simulation
 %                     starts
 %
 % Function layout :
@@ -50,12 +52,12 @@ function [up,upDot,upDDot,noTimeStep] = computeNullInitialConditionsFEM4NSE...
 %% 0. Read input
 
 % Get starting time of the simulation
-noTimeStep = 0;
+numTimeStep = 0;
 
 % Number of DOFs per node
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
+if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
     noDOFsNode = 3;
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     noDOFsNode = 4;
 end
 
@@ -68,9 +70,8 @@ noNodes = length(fldMsh.nodes(:,1));
 noDOFs = noDOFsNode*noNodes;
 
 % Initialize output arrays
-up = zeros(noDOFs,1);
-upDot = zeros(noDOFs,1);
+up = zeros(noDOFs, 1);
+upDot = zeros(noDOFs, 1);
 upDDot = 'undefined';
 
 end
-

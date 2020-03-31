@@ -21,15 +21,13 @@ function testFEM4NavierStokesSteadyState2D(testCase)
 %
 % 3. Choose the equation system solver
 %
-% 4. Define the name of the vtk file from where to resume the simulation
+% 4. Initialize the solution with zero
 %
-% 5. Initialize the solution with zero
+% 5. Solve the CFD problem
 %
-% 6. Solve the CFD problem
+% 6. Define the expected solutions
 %
-% 7. Define the expected solutions
-%
-% 8. Verify the results
+% 7. Verify the results
 %
 %% Function main body
 
@@ -42,29 +40,26 @@ absTol = 1e-15;
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = 'unitTest_flowAroundCylinderAdaptiveSteadyState';
 
-% Properties for the VTK visualization
-propVTK.isOutput = false;
-
-% Define dummy variables
-noIterStep = 'undefined';
-
 %% 1. Parse the data from the GiD input file
-[fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,~,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,propGaussInt,~] = ...
+[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ~, propAnalysis, ...
+    parameters, propNLinearAnalysis, propFldDynamics, propGaussInt, ~] = ...
     parse_FluidModelFromGid...
-    (pathToCase,caseName,'');
+    (pathToCase, caseName, '');
 
 %% 2. GUI
 
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
 
+% Properties for the VTK visualization
+propVTK.isOutput = false;
+
 % On the initial conditions
 % computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE2D;
-computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
+computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
 
 % On the transient analysis properties
-if strcmp(propFldDynamics.method,'BOSSAK')
+if strcmp(propFldDynamics.method, 'bossak')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;
     propFldDynamics.computeUpdatedVct = ...
@@ -72,28 +67,26 @@ if strcmp(propFldDynamics.method,'BOSSAK')
 end
 
 %% 3. Choose the equation system solver
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
+if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
 end
 
-%% 4. Define the name of the vtk file from where to resume the simulation
-VTKResultFile = 'undefined';
+%% 4. Initialize the solution with zero
+[up, ~, ~, numIterStep] = computeInitialConditions...
+    (propAnalysis, fldMsh, 'undefined', 'undefined', 'undefined', ...
+    'undefined', 'undefined', 'undefined');
 
-%% 5. Initialize the solution with zero
-up = zeros(3*length(fldMsh.nodes(:,1)),1);
+%% 5. Solve the CFD problem
+[up, ~, hasConverged, minElSize] = solve_FEMVMSStabSteadyStateNSE2D ...
+    (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, parameters, ...
+    computeBodyForces, propAnalysis, solve_LinearSystem, propFldDynamics, ...
+    propNLinearAnalysis, numIterStep, propGaussInt, propVTK, caseName, '');
 
-%% 6. Solve the CFD problem
-[up,~,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2D...
-    (fldMsh,up,homDBC,inhomDBC,valuesInhomDBC,propALE,parameters,...
-    computeBodyForces,analysis,computeInitialConditions,...
-    VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-    noIterStep,propVTK,propGaussInt,caseName,'');
-
-%% 7. Define the expected solutions
+%% 6. Define the expected solutions
 
 % Define the expected solution in terms of the nodal solution values
 expSolUP = [                   0
@@ -5095,9 +5088,9 @@ expSolHasConverged = true;
 % Define the expected solution in terms of the minimum element size
 expSolMinElEdgeSize = 0.009999779997580;
 
-%% 8. Verify the results
-testCase.verifyEqual(up,expSolUP,'AbsTol',absTol);
-testCase.verifyEqual(hasConverged,expSolHasConverged,'AbsTol',absTol);
-testCase.verifyEqual(minElSize,expSolMinElEdgeSize,'AbsTol',absTol);
+%% 7. Verify the results
+testCase.verifyEqual(up, expSolUP, 'AbsTol', absTol);
+testCase.verifyEqual(hasConverged, expSolHasConverged, 'AbsTol', absTol);
+testCase.verifyEqual(minElSize, expSolMinElEdgeSize, 'AbsTol', absTol);
 
 end

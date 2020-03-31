@@ -1,4 +1,5 @@
-function F = computeSigmaHoriztalEdgeForInfinitePlateWithHole(x,y,z,t)
+function F = computeSigmaHoriztalEdgeForInfinitePlateWithHole ...
+    (x, y, z, t, propNBC)
 %% Licensing
 %
 % License:         BSD License
@@ -16,6 +17,8 @@ function F = computeSigmaHoriztalEdgeForInfinitePlateWithHole(x,y,z,t)
 %   x,y,z : The Cartesian coordinates on where to evaluate the stress
 %           component sigma_xx
 %       t : The time instance where to compute the load
+% propNBC : Structure defining properties for the Neumann boundary
+%           conditions
 %
 %  Output :
 %       F : The magnitude of the nessecary force at (x,y)

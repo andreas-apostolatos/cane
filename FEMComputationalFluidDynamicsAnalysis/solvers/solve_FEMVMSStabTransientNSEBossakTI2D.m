@@ -1,8 +1,8 @@
-function [upHistory,minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D...
-    (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,nodesALE,parameters,...
-    computeBodyForces,analysis,computeInitCnds,VTKResultFile,...
-    solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-    writeOutputToFile,gaussInt,caseName,outMsg)
+function [upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D ...
+    (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, parameters, ...
+    computeBodyForces, propAnalysis, computeInitCnds, solve_LinearSystem, ...
+    propFldDynamics, propNLinearAnalysis, propGaussInt, propVTK, caseName, ...
+    outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -32,7 +32,8 @@ function [upHistory,minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D...
 %                        applied
 %      valuesInhomDOFs : Prescribed values on the nodes where inhomogeneous
 %                        Dirichlet boundary conditions are applied
-%             nodesALE : The nodes on the ALE boundary:
+%              propALE : Structure containing information on the nodes
+%                        along the ALE boundary,
 %                            .nodes : The sequence of the nodal coordinates
 %                                     on the ALE boundary
 %                        .fcthandle : Function handle to the computation of
@@ -40,12 +41,11 @@ function [upHistory,minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D...
 %           parameters : Flow parameters
 %    computeBodyForces : Function handle to the computation of the body
 %                        force vector
-%             analysis : .type : The analysis type
+%         propAnalysis : Structure containing general information about the 
+%                        analysis,
+%                           .type : The analysis type
 %      computeInitCnds : Function handle to the initial boundary conditions 
 %                        computation
-%        VTKResultFile : The name of the result file in the output folder
-%                         where to get the initial conditions for the
-%                         transient simulation
 %   solve_LinearSystem : Function handle to the solver for the linear 
 %                        equation system
 %      propFldDynamics : On the transient analysis :
@@ -61,13 +61,27 @@ function [upHistory,minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D...
 %                                   .eps : The residual tolerance
 %                               .maxIter : The maximum number of nonlinear
 %                                          iterations
-%    writeOutputToFile : Function handle to writting the output into a file
-%             gaussInt : On the Gauss Point integration
+%         propGaussInt : On the Gauss Point integration
 %                              .type : 'default', 'user'
 %                        .domainNoGP : Number of Gauss Points for the domain
 %                                      integration
 %                      .boundaryNoGP : Number of Gauss Points for the
 %                                      boundary integration
+%              propVTK : Structure containing information on writting the
+%                        results in VTK format to be postprocessed in
+%                        ParaView,
+%                                  .isOutput : Flag on whether the results 
+%                                              to be written out
+%                         .writeOutputToFile : Function handle to the
+%                                              writting out of the results
+%                                              in a VTK format
+%                             .VTKResultFile : Specifies the name of the
+%                                              VTK result file from which
+%                                              the simulation to be
+%                                              restarted. If it is
+%                                              specified as 'undefined'
+%                                              the simulation starts from
+%                                              time TStart
 %             caseName : String defining the case name
 %               outMsg : On printing information during analysis in the
 %                        command window
@@ -106,18 +120,16 @@ if strcmp(outMsg,'outputEnabled')
         fprintf('Constant time step: %d (seconds) \n',propFldDynamics.dt);
     end
     fprintf('___________________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
 %% 0. Read input
 
 % Find the dimensionality of the problem
-if strcmp(analysis.type,'NAVIER_STOKES_3D')
+if strcmp(propAnalysis.type,'NAVIER_STOKES_3D')
     isAnalysis3D = true;
     noDOFsNode = 4;
-elseif strcmp(analysis.type,'NAVIER_STOKES_2D')
+elseif strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
     isAnalysis3D = false;
     noDOFsNode = 3;
 else
@@ -129,9 +141,8 @@ pathToOutput = '../../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
 
 % Dummy variables
 computeConstantMatrices = 'undefined';
-NBC = 'undefined';
+propNBC = 'undefined';
 computeLoadVct = 'undefined';
-computeUpdatedMeshAndVelocities = 'undefined';
 
 % Define tabulation for the output in the command window
 tab = '\t';
@@ -168,21 +179,19 @@ freeDOFs = DOFNumbering;
 freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
 
 %% 2. Solve the transient nonlinear Navier-Stokes stabilized finite element equation system using the Bossak time integration scheme
-[upHistory,minElSize] = solve_FEMTransientAnalysis...
-    (analysis,fldMsh,DOFNumbering,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
-    nodesALE,computeInitCnds,VTKResultFile,computeBodyForces,NBC,...
-    computeLoadVct,parameters,@solve_FEMNLinearSystem,...
-    computeConstantMatrices,@computeMassMtx4FEMVMSStabNSE2D,...
-    @computeFEMVMSStabMtxAndVct4NLinear4NSE,...
-    computeUpdatedMeshAndVelocities,solve_LinearSystem,...
-    propFldDynamics,propNLinearAnalysis,gaussInt,caseName,pathToOutput,...
-    title,DOF4Output,writeOutputToFile,tab,outMsg);
+[upHistory, minElSize] = solve_FEMTransientAnalysis ...
+    (propAnalysis, fldMsh, DOFNumbering, freeDOFs, homDOFs, inhomDOFs, ...
+    valuesInhomDOFs, propALE, computeInitCnds, computeBodyForces, propNBC,...
+    computeLoadVct, parameters, @solve_FEMNLinearSystem, ...
+    computeConstantMatrices, @computeMassMtx4FEMVMSStabNSE2D, ...
+    @computeFEMVMSStabMtxAndVct4NLinear4NSE, ...
+    @computeUpdatedMeshAndVelocitiesPseudoStrALE2D, solve_LinearSystem, ...
+    propFldDynamics, propNLinearAnalysis, propGaussInt, propVTK, caseName, ...
+    pathToOutput, title, DOF4Output, tab, outMsg);
 
 %% 3. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
     fprintf('Transient nonlinear analysis took %.2d seconds \n\n',computationalTime);
     fprintf('________________Transient Nonlinear Analysis Ended_________________\n');
     fprintf('###################################################################\n\n\n');

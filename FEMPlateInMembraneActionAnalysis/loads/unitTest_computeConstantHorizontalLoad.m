@@ -1,4 +1,4 @@
-function load = unitTest_computeConstantHorizontalLoad(x,y,z,t, propNBC)
+function load = unitTest_computeConstantHorizontalLoad(x, y, z, t, propNBC)
 %% Licensing
 %
 % License:         BSD License
@@ -16,6 +16,8 @@ function load = unitTest_computeConstantHorizontalLoad(x,y,z,t, propNBC)
 %       Input :
 %       x,y,z : The physical location where the load is applied
 %           t : The time instance
+%     propNBC : Structure containing information on the Neumann boundary
+%               conditions
 %
 %      Output :
 %        load :  The load vector [loadx; loady; loadz]

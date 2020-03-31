@@ -1,7 +1,9 @@
 function [dHat,FComplete,minElSize] = ...
-    solve_FEMPlateInMembraneActionNLinear(analysis,strMsh,homDOFs,inhomDOFs,...
-    valuesInhomDOFs,NBC,computeBodyForces,parameters,solve_LinearSystem,...
-    propNLinearAnalysis,propGaussInt,caseName,pathToOutput,outMsg)
+    solve_FEMPlateInMembraneActionNLinear ...
+    (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    propNBC, computeBodyForces, parameters, solve_LinearSystem, ...
+    propNLinearAnalysis, propGaussInt, propOutput, caseName, pathToOutput, ...
+    outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -16,8 +18,10 @@ function [dHat,FComplete,minElSize] = ...
 % classical Finite Element Method for the nonlinear case.
 %
 %              Input :
-%           analysis : .type : The analysis type
+%       propAnalysis : Structure containing information about the analysis
+%                           .type : The analysis type
 %             strMsh : Nodes and elements in the mesh
+%               dHat : Initial conditions
 %            homDOFs : The global numbering of the nodes where homogeneous
 %                      Dirichlet boundary conditions are applied 
 %          inhomDOFs : The global numbering of the nodes where 
@@ -25,7 +29,9 @@ function [dHat,FComplete,minElSize] = ...
 %                      applied
 %    valuesInhomDOFs : Prescribed values on the nodes where inhomogeneous
 %                      Dirichlet boundary conditions are applied
-%                NBC :    .nodes : The nodes where Neumann boundary 
+%            propNBC : Structure containing information on the Neumann
+%                      boundary conditions
+%                         .nodes : The nodes where Neumann boundary 
 %                                  conditions are applied
 %                      .loadType : The type of the load for each Neumann 
 %                                  node
@@ -43,6 +49,18 @@ function [dHat,FComplete,minElSize] = ...
 %       propGaussInt : On the numerical integration (quadrature)
 %                       .type : 'default', 'manual'
 %                       .noGP : Number of Gauss Points
+%         propOutput : Structure containing information on writting the
+%                      results for postprocessing,
+%                                .isOutput : Flag on whether the results 
+%                                            to be written out
+%                       .writeOutputToFile : Function handle to the
+%                                            writting out of the results
+%                           .VTKResultFile : Specifies the name of the
+%                                            VTK result file from which
+%                                            the simulation to be restarted
+%                                            If it is specified as 
+%                                            'undefined' the simulation 
+%                                            starts from time TStart
 %           caseName : The name of the case in the inputGiD case folder
 %       pathToOutput : Define the path to where to write out the results
 %             outMsg : On outputting information
@@ -81,13 +99,13 @@ end
 %% 0. Read input
 
 % Number of nodes in the mesh
-noNodes = length(strMsh.nodes(:,1));
+numNodes = length(strMsh.nodes(:,1));
 
 % Number of DOFs in the mesh
-nDOFs = 2*noNodes;
+numDOFs = 2*numNodes;
 
 % GLobal DOF numbering
-DOFNumbering = 1:nDOFs;
+DOFNumbering = 1:numDOFs;
 
 % Assign dummy variables
 uSaved = 'undefined';
@@ -95,16 +113,13 @@ uDot = 'undefined';
 uDDot = 'undefined';
 uDotSaved = 'undefined';
 uDDotSaved = 'undefined';
-propTransientAnalysis = 'undefined';
+propStrDynamics = 'undefined';
 uMeshALE = 'undefined';
 dDot = 'undefined';
 dDDot = 'undefined';
 massMtx = 'undefined';
 dampMtx = 'undefined';
-timeStepNo = 0;
-
-% Initialize output array
-dHat = zeros(nDOFs,1);
+numTimeStep = 0;
 
 % Title for the output file
 title = 'geometrically linear steady-state plane stress analysis';
@@ -114,17 +129,6 @@ t = 0;
 
 % Define tabulation for the output in the command window
 tab = '\t';
-
-% Get the DOF numbering for each component of the displacement field and
-% the pressure seperately
-DOF4Output = [1:2:nDOFs-1
-              2:2:nDOFs];
-
-% Make directory to write out the results of the analysis
-isExistent = exist(strcat('../../outputVTK/FEMPlateInMembraneActionAnalysis/',caseName),'dir');
-if ~isExistent
-    mkdir(strcat('../../outputVTK/FEMPlateInMembraneActionAnalysis/',caseName));
-end
 
 %% 1. Find the prescribed and the free DOFs of the system
 
@@ -139,23 +143,41 @@ freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
 
 %% 2. Compute load vector corresponding to a conservative load
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,analysis,NBC,t,propGaussInt,'');
+    (strMsh,propAnalysis,propNBC,t,propGaussInt,'');
 
 %% 3. Solve the linear equation system
 [dHat,~,FComplete,minElSize] = solve_FEMNLinearSystem...
-    (analysis,uSaved,uDotSaved,uDDotSaved,strMsh,F,...
+    (propAnalysis,uSaved,uDotSaved,uDDotSaved,strMsh,F,...
         computeBodyForces,parameters,dHat,uDot,uDDot,massMtx,dampMtx,...
         @computeTangentStiffMtxResVctFEMPlateInMembraneAction,...
         DOFNumbering,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
-        uMeshALE,solve_LinearSystem,propTransientAnalysis,t,...
+        uMeshALE,solve_LinearSystem,propStrDynamics,t,...
         propNLinearAnalysis,propGaussInt,tab,outMsg);
 
 %% 4. Write out the results into a file
-fprintf('>> Writting out the results to "%s"\n',strcat(pathToOutput,caseName,'/'));
-writeOutputFEMPlateInMembraneActionToVTK(analysis,...
-    propNLinearAnalysis,propTransientAnalysis,strMsh,parameters,...
-    dHat,dDot,dDDot,DOF4Output,caseName,pathToOutput,...
-    title,timeStepNo);
+if isfield(propOutput, 'isOutput')
+    if isa(propOutput.isOutput, 'logical')
+        if propOutput.isOutput
+            if isfield(propOutput, 'writeOutputToFile')
+                if isa(propOutput.writeOutputToFile, 'function_handle')
+                    fprintf('>> Writting out the results to "%s"\n',strcat(pathToOutput, caseName,'/'));
+                    DOF4Output = [1:2:numDOFs - 1
+                                  2:2:numDOFs];
+                    writeOutputFEMPlateInMembraneActionToVTK(propAnalysis, ...
+                        propNLinearAnalysis, propStrDynamics, strMsh, ...
+                        parameters, dHat, dDot, dDDot, DOF4Output, ...
+                        caseName, pathToOutput, title, numTimeStep);
+                    else
+                    error('Variable propVTK.writeOutputToFile should define a function handle');
+                end
+            else
+                error('Structure propVTK should define variable writeOutputToFile');
+            end
+        end
+    else
+        error('Structure propVTK should define boolean isOutput');
+    end
+end
 
 %% 5. Appendix
 if strcmp(outMsg,'outputEnabled')

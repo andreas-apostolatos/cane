@@ -1,4 +1,4 @@
-function load = computeConstantHorizontalLoad(x, y, z, t, propNBC)
+function load = computeConstantLoad(x, y, z, t, propNBC)
 %% Licensing
 %
 % License:         BSD License
@@ -9,21 +9,19 @@ function load = computeConstantHorizontalLoad(x, y, z, t, propNBC)
 %% Function documentation
 %
 % Returns the applied load vector at the physical location x,y,z and at
-% time t. The load is assumed to be constant and horizontal (x-direction).
+% time t. The load is assumed to be constant and vertical (y-direction).
 %
 %       Input :
 %       x,y,z : The physical location where the load is applied
 %           t : The time instance
-%     propNBC : Structure defining properties regarding the Neumann
-%               boundary conditions
+%     propNBC : User-defined parameters for the load,
+%                  .tractionLoadVct : Externally applied traction vector
 %
 %      Output :
 %        load :  The load vector [loadx; loady; loadz]
 %
 %% Function main body
-
-loadAmplitude = 1e3;
-load = zeros(3,1);
-load(1,1) = loadAmplitude;
+load = propNBC.tractionLoadVct;
 
 end
+

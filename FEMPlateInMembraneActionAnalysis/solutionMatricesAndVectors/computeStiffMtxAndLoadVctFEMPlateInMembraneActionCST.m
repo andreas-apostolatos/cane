@@ -1,6 +1,8 @@
-function [K,F,minElEdgeSize] = computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST...
-    (analysis,u,uSaved,uDot,uDotSaved,precompStiffMtx,precomResVct,DOFNumbering,strMsh,F,loadFactor,...
-    computeBodyForces,strDynamics,parameters,int)
+function [K, F, minElEdgeSize] = ...
+    computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST ...
+    (propAnalysis, u, uSaved, uDot, uDotSaved, precompStiffMtx, ...
+    precomResVct, DOFNumbering, strMsh, F, loadFactor, computeBodyForces, ...
+    propStrDynamics, parameters, propInt)
 %% Licensing
 %
 % License:         BSD License
@@ -15,23 +17,30 @@ function [K,F,minElEdgeSize] = computeStiffMtxAndLoadVctFEMPlateInMembraneAction
 % (CST) for the displacement field discretization.
 %
 %             Input :
-%          analysis : .type : Analysis type
-%            uSaved : The discrete solution field of the previous 
-%                     time step
-%         uDotSaved : The time derivative of the discrete solution 
-%                     field of the previous time step
-%        uDDotSaved : The second order time derivative of the 
-%                     discrete solution field of the previous time (dummy 
-%                     variable for this function)
+%      propAnalysis : Structure containing general information about the 
+%                     analysis,
+%                           .type : The analysis type
+%                 u : The discrete solution field of the previous nonlinear
+%                     iteration
+%            uSaved : The discrete solution field of the previous time step
+%              uDot : The time derivative of the discrete solution field of 
+%                     the previous nonlinear iteration
+%         uDotSaved : The time derivative of the discrete solution field of 
+%                     the previous time step
+%   precompStiffMtx : constant part of the stiffness matrix which can be
+%                     precomputed
+%      precomResVct : Constant part of the residual vector which can be
+%                     precomputed
 %            strMsh : Nodes and elements in the mesh
-%          analysis : .type : The analysis type
 %                 F : The global load vector corresponding to surface
 %                     tractions
 %        loadFactor : Load factor, nessecary for nonlinear computations 
 %                     (dummy variable for this function)
 % computeBodyForces : Function handle to body force vector computation
+%   propStrDynamics : Structure containing information on the time
+%                     integration regarding the structural dynamics
 %        parameters : Problem specific technical parameters
-%               int : On the quadrature (numnerical integration)
+%           propInt : Structure containing information on the quadrature
 %
 %            Output :
 %                 K : The master stiffness matrix of the system
@@ -128,21 +137,21 @@ h = min( [ euclideanNorm(nodes1-nodes2) euclideanNorm(nodes1-nodes3) ...
 minElEdgeSize = min(h);
 
 %% 4. Numnerical quadrature
-if strcmp(int.type,'default')
+if strcmp(propInt.type,'default')
     noGP = 1;
-elseif strcmp(int.type,'user')
-    noGP = int.nGP;
+elseif strcmp(propInt.type,'user')
+    noGP = propInt.nGP;
 end
 [GP,GW] = getGaussRuleOnCanonicalTriangle(noGP);
 
 %% 5. Compute the material matrices for each element
 C = zeros(noElmnts,3,3);
-if strcmp(analysis.type,'planeStress')
+if strcmp(propAnalysis.type,'planeStress')
     preFactor = parameters.E/(1-parameters.nue^2);
     CEl = preFactor*[1              parameters.nue 0
                      parameters.nue 1              0
                      0              0             (1-parameters.nue)/2];
-elseif strcmp(analysis.type,'planeStrain')
+elseif strcmp(propAnalysis.type,'planeStrain')
     preFactor = parameters.E*(1-parameters.nue)/(1+parameters.nue)/(1-2*parameters.nue);
     CEl = preFactor*[1                                 parameters.nue/(1-parameters.nue) 0
                      parameters.nue/(1-parameters.nue) 1                                 0

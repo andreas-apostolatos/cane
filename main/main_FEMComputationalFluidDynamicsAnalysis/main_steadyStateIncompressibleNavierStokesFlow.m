@@ -51,14 +51,7 @@ addpath('../../parsers/');
 % Add all functions related to the efficient computation functions
 addpath('../../efficientComputation/');
 
-%% GUI
-
-% On the body forces
-computeBodyForces = @computeConstantVerticalBodyForceVct;
-
-% On the initial conditions
-% computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE2D;
-computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
+%% Parse the data from the GiD input file
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
@@ -66,49 +59,45 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 % caseName = 'NACA2412_AoA5_CFD';
 caseName = 'unitTest_flowAroundCylinderAdaptiveSteadyState';
 
-% Number of solution step
-noIterStep = 1;
-
-% VTK properties
-propVTK.isOutput = true;
-
-%% Parse the data from the GiD input file
-[fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,propGaussInt,~] = ...
+% Parse the data from the GiD input file
+[fldMsh, homDBC, inhomDBC, valuesInhomDBC, nodesALE, propNBC, propAnalysis, ...
+    parameters, propNLinearAnalysis, propFldDynamics, propGaussInt, ~] = ...
     parse_FluidModelFromGid...
-    (pathToCase,caseName,'outputEnabled');
+    (pathToCase, caseName, 'outputEnabled');
 
-%% GUI
+%% UI
 
-% On the transient analysis properties
-if strcmp(propFldDynamics.method,'bossak')
-    propFldDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsBossakFEM4NSE;
-    propFldDynamics.computeUpdatedVct = ...
-        @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
-end 
+% On the body forces
+computeBodyForces = @computeConstantVerticalBodyForceVct;
+
+% On the initial conditions
+% computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE2D;
+computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
+
+% Output properties
+propVTK.isOutput = true;
+propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+propVTK.VTKResultFile = 'undefined';
 
 %% Choose the equation system solver
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
+if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
 end
 
-%% Define the name of the vtk file from where to resume the simulation
-% VTKResultFile = '_contourPlots_75';
-VTKResultFile = 'undefined';
-
 %% Initialize solution
-up = zeros(3*length(fldMsh.nodes(:,1)),1);
+[up, ~, ~, numIterStep] = computeInitialConditions...
+    (propAnalysis, fldMsh, 'undefined', 'undefined', 'undefined', ...
+    'undefined', 'undefined', 'undefined');
 
 %% Solve the CFD problem
-[up,FComplete,hasConverged,minElSize] = solve_FEMVMSStabSteadyStateNSE2D...
-    (fldMsh,up,homDBC,inhomDBC,valuesInhomDBC,nodesALE,parameters,...
-    computeBodyForces,analysis,computeInitialConditions,...
-    VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-    noIterStep,propVTK,propGaussInt,caseName,'outputEnabled');
+[up, FComplete, isConverged, minElSize] = solve_FEMVMSStabSteadyStateNSE2D ...
+    (fldMsh, up, homDBC, inhomDBC, valuesInhomDBC, nodesALE, parameters, ...
+    computeBodyForces, propAnalysis, solve_LinearSystem, propFldDynamics, ...
+    propNLinearAnalysis, numIterStep, propGaussInt, propVTK, caseName, ...
+    'outputEnabled');
 
 %% END OF THE SCRIPT

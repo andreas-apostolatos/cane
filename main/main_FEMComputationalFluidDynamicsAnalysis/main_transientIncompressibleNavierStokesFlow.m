@@ -54,13 +54,7 @@ addpath('../../parsers/');
 % Add all functions related to the efficient computation functions
 addpath('../../efficientComputation/');
 
-%% GUI
-
-% On the body forces
-computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
-
-% On the writing the output function
-writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+%% Parse the data from the GiD input file
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
@@ -79,28 +73,38 @@ caseName = 'flowAroundCylinderAdaptiveALE';
 % caseName = 'squareObstacleInFlow';
 % caseName = 'flowAroundSquareObjectBoundaryLayerPowerLaw'; % problemZero, needs then ALE module
 
-%% Parse the data from the GiD input file
-[fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,NBC,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,gaussInt] = ...
-    parse_FluidModelFromGid...
-    (pathToCase,caseName,'outputEnabled');
+% Parse the data
+[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesALE, propNBC, ...
+    propAnalysis, parameters, propNLinearAnalysis, propFldDynamics, ...
+    propGaussInt] = parse_FluidModelFromGid...
+    (pathToCase, caseName, 'outputEnabled');
+
+%% UI
+
+% On the computation of the body forces
+computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
+
+% On the writing the output function
+propVTK.isOutput = true;
+propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
 %% Apply a non-constant inlet
-if strcmp(caseName,'flowAroundSquareObjectBoundaryLayerPowerLaw')
+if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw')
     % Define number of DOFs per node
     noDOFsPerNode = 3;
 
     % Define the corresponding law
     u_max = 10;
-    law = @(x,y,z) [u_max*y^(1/7)
-                    0
-                    0
-                    0];
+    computeOneSeventhPowerLaw = @(x,y,z) [u_max*y^(1/7)
+                                          0
+                                          0
+                                          0];
 
     % Loop over all inlet DOFs
-    for i = 1:length(inhomDBC)
+    for i = 1:length(inhomDOFs)
         % Find the inlet DOF
-        indexDOF = inhomDBC(1,i);
+        indexDOF = inhomDOFs(1,i);
 
         % Find the corresponding node
         indexNode = ceil(indexDOF/noDOFsPerNode);
@@ -109,19 +113,20 @@ if strcmp(caseName,'flowAroundSquareObjectBoundaryLayerPowerLaw')
         coordsNode = fldMsh.nodes(indexNode,:);
 
         % Compute the value according to the law
-        presValue = law(coordsNode(1,1),coordsNode(1,2),coordsNode(1,3));
+        presValue = computeOneSeventhPowerLaw ...
+            (coordsNode(1,1), coordsNode(1,2), coordsNode(1,3));
 
         % Cartesian direction
         cartDir = indexDOF - (noDOFsPerNode*ceil(indexDOF/noDOFsPerNode) - noDOFsPerNode);
 
         if cartDir == 1
-            valuesInhomDBC(1,i) = presValue(1,1);
+            valuesInhomDOFs(1,i) = presValue(1,1);
         end
     end
 end
 
 %% GUI
-if strcmp(propFldDynamics.method,'BOSSAK')
+if strcmp(propFldDynamics.method, 'BOSSAK')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;
     propFldDynamics.computeUpdatedVct = ...
@@ -129,9 +134,9 @@ if strcmp(propFldDynamics.method,'BOSSAK')
 end
 
 %% Choose the equation system solver
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
+if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+elseif strcmp(propAnalysis.type,'NAVIER_STOKES_3D')
     solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen')
@@ -139,17 +144,13 @@ end
    
 %% Define the initial condition function
 computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
-
-%% Define the name of the vtk file from where to resume the simulation
-% VTKResultFile = '_contourPlots_75';
-VTKResultFile = 'undefined';
+% computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE;
 
 %% Solve the CFD problem
-[upHistory,minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D...
-    (fldMsh,homDBC,inhomDBC,valuesInhomDBC,nodesALE,parameters,...
-    computeBodyForces,analysis,computeInitialConditions,...
-    VTKResultFile,solve_LinearSystem,propFldDynamics,...
-    propNLinearAnalysis,writeOutputToFile,gaussInt,caseName,...
-    'outputEnabled');
+[upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D ...
+    (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesALE, parameters, ...
+    computeBodyForces, propAnalysis, computeInitialConditions, ...
+    solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
+    propGaussInt, propVTK, caseName, 'outputEnabled');
 
 %% END OF THE SCRIPT

@@ -1,6 +1,6 @@
 function errorL2 = computeRelErrorL2CurvedBeamTipShearFEMPlateInMembraneAction...
-    (strMsh,dHat,parameters,internalRadius,externalRadius,forceAmplitude,propError,...
-    int,outMsg)
+    (strMsh, dHat, parameters, internalRadius, externalRadius, forceAmplitude, ...
+    propError, propInt, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -29,7 +29,8 @@ function errorL2 = computeRelErrorL2CurvedBeamTipShearFEMPlateInMembraneAction..
 %                                       the relative error
 %                          .component : The component of the resultant on 
 %                                       which to compute the relative error
-%                 int : On the integration
+%             propInt : Structure containing properties on the numerical
+%                       integration,
 %                           .type : 'default' or 'user'
 %                           .noGP : Number of Gauss points in case 'user'
 %                                   defined quadrature is selected
@@ -117,7 +118,7 @@ if strcmp(outMsg,'outputEnabled')
             fprintf('stress tensor sigma\n');
         end
     end
-    fprintf('Number of Gauss Points : %d\n',int.noGP);
+    fprintf('\nNumber of Gauss Points : %d\n',propInt.noGP);
     fprintf('__________________________________________________________________\n\n');
 
     % start measuring computational time
@@ -156,10 +157,10 @@ for counterElmnts = 1:noElmnts
 end
 
 %% 1. Get integration rule for the computation of the relative error
-if strcmp(int.type,'default')
+if strcmp(propInt.type,'default')
     noGP = 1;
-elseif strcmp(int.type,'user')
-    noGP = int.noGP;
+elseif strcmp(propInt.type,'user')
+    noGP = propInt.noGP;
 end
 [GP,GW] = getGaussRuleOnCanonicalTriangle(noGP);
 

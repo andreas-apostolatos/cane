@@ -60,18 +60,23 @@ caseName = 'cantileverBeamPlaneStress';
 % caseName = 'NACA2412_AoA5_CSD';
 
 % Parse the data from the GiD input file
-[strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,~,propGaussInt] = ...
-    parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
+[strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
+    parameters, propNLinearAnalysis, ~, propGaussInt] = ...
+    parse_StructuralModelFromGid(pathToCase, caseName, 'outputEnabled');
 
 %% GUI
 
 % On the body forces
-bodyForces = @computeConstantVerticalBodyForceVct;
+computeBodyForces = @computeConstantVerticalBodyForceVct;
 
 % Choose equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = solve_LinearSystemGMResWithIncompleteLUPreconditioning;
+
+% Output properties
+propOutput.isOutput = true;
+propOutput.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
+propOutput.VTKResultFile = 'undefined';
 
 % Choose computation of the stiffness matrix
 % computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
@@ -89,9 +94,6 @@ intError.noGP = 4;
 % Linear analysis
 propStrDynamics = 'undefined';
 
-% On whether the case is a unit test
-isUnitTest = false;
-
 % Initialize graphics index
 graph.index = 1;
 
@@ -100,18 +102,24 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
 %% Compute the load vector
 t = 0;
-F = computeLoadVctFEMPlateInMembraneAction(strMsh,analysis,NBC,t,propGaussInt,'outputEnabled');
+F = computeLoadVctFEMPlateInMembraneAction ...
+    (strMsh, propAnalysis, propNBC, t, propGaussInt, 'outputEnabled');
 
 %% Visualization of the configuration
-graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,analysis,F,homDBC,[],graph,'outputEnabled');
+graph.index = plot_referenceConfigurationFEMPlateInMembraneAction ...
+    (strMsh, propAnalysis, F, homDOFs, [], graph, 'outputEnabled');
+
+%% Initialize solution
+numNodes = length(strMsh.nodes(:,1));
+numDOFs = 2*numNodes;
+dHat = zeros(numDOFs,1);
 
 %% Solve the plate in membrane action problem
-[dHat,FComplete,minElSize] = solve_FEMPlateInMembraneAction...
-    (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
-    parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-    propNLinearAnalysis,propIntDomain,caseName,pathToOutput,...
-    isUnitTest,'outputEnabled');
+[dHat, FComplete, minElSize] = solve_FEMPlateInMembraneAction ...
+    (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    propNBC, computeBodyForces, parameters, computeStiffMtxLoadVct, ...
+    solve_LinearSystem, propNLinearAnalysis, propIntDomain, propOutput, ...
+    caseName, pathToOutput, 'outputEnabled');
 
 %% Postprocessing
 % graph.visualization.geometry = 'reference_and_current';
@@ -122,16 +130,16 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
 % Compute the error in the L2-norm for the case of the plane stress
 % analysis over a quarter annulus plate subject to tip shear force
 if strcmp(caseName,'unitTest_curvedPlateTipShearPlaneStress')
-    nodeNeumann = strMsh.nodes(NBC.nodes(1,1),:);
-    funHandle = str2func(NBC.fctHandle(1,:));
-    forceAmplitude = norm(funHandle(nodeNeumann(1,1),nodeNeumann(1,2),nodeNeumann(1,3),0));
+    nodeNeumann = strMsh.nodes(propNBC.nodes(1, 1), :);
+    funHandle = str2func(propNBC.fctHandle(1, :));
+    forceAmplitude = norm(funHandle(nodeNeumann(1, 1),nodeNeumann(1, 2),nodeNeumann(1, 3), 0));
     internalRadius = 4;
     externalRadius = 5;
-    propError.resultant = 'displacement';
-    propError.component = '2norm';
-    errorL2 = computeRelErrorL2CurvedBeamTipShearFEMPlateInMembraneAction...
-        (strMsh,dHat,parameters,internalRadius,externalRadius,forceAmplitude,...
-        propError,intError,'outputEnabled');
+    propError.resultant = 'stress';
+    propError.component = 'tensor';
+    errorL2 = computeRelErrorL2CurvedBeamTipShearFEMPlateInMembraneAction ...
+        (strMsh, dHat, parameters, internalRadius, externalRadius, ...
+        forceAmplitude, propError, intError, 'outputEnabled');
 end
 
 %% END OF THE SCRIPT

@@ -59,18 +59,26 @@ pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 % caseName = 'curvedPlateTipShearPlaneStress';
 caseName = 'cantileverBeamPlaneStressTransientNLinear';
 
-% Not a unit test case
-isUnitTest = false;
-
 % Parse the data from the GiD input file
-[strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,propGaussInt] = ...
-    parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
+[strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, propAnalysis, ...
+    parameters, propNLinearAnalysis, propStrDynamics, propGaussInt] = ...
+    parse_StructuralModelFromGid(pathToCase, caseName, 'outputEnabled');
 
-%% GUI
+%% UI
+
+% On the computation of the body forces
+computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
+
+% On the writing the output function
+propVTK.isOutput = true;
+propVTK.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
+propVTK.VTKResultFile = 'undefined';
 
 % Equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
+
+% Not a unit test case
+isUnitTest = false;
 
 % Choose the matric computation corresponding to the chosen time
 % integration scheme
@@ -102,11 +110,11 @@ graph.index = 1;
 % graph.index = plot_referenceConfigurationFEMPlateInMembraneAction(strMsh,analysis,F,homDBC,graph,'outputEnabled');
 
 %% Solve the plate in membrane action problem
-minElSize = solve_FEMPlateInMembraneActionNLinearTransient...
-    (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,...
-    @computeLoadVctFEMPlateInMembraneAction,...
-    parameters,propNLinearAnalysis,propStrDynamics,solve_LinearSystem,...
-    propGaussInt,caseName,isUnitTest,'outputEnabled');
+[~, minElSize] = solve_FEMPlateInMembraneActionNLinearTransient...
+    (propAnalysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC,...
+    @computeLoadVctFEMPlateInMembraneAction, parameters, computeBodyForces, ...
+    propNLinearAnalysis, propStrDynamics, solve_LinearSystem, propGaussInt, ...
+    propVTK, caseName, 'outputEnabled');
 
 %% Postprocessing
 % graph.visualization.geometry = 'reference_and_current';

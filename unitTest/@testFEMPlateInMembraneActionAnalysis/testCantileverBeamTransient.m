@@ -72,33 +72,38 @@ pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 caseName = 'unitTest_cantileverBeamPlaneStressTransientNLinear';
 
 % Parse the data from the GiD input file
-[strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,gaussInt] = ...
-    parse_StructuralModelFromGid(pathToCase,caseName,'');
+[strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
+    parameters, propNLinearAnalysis, propStrDynamics, propGaussInt] = ...
+    parse_StructuralModelFromGid(pathToCase, caseName, '');
 
 %% 2. GUI
+
+% On the computation of the body forces
+computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
+
+% On the writing the output function
+propOutput.isOutput = false;
+propOutput.writeOutputToFile = 'undefined';
+propOutput.VTKResultFile = 'undefined';
 
 % Choose equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % Choose the matric computation corresponding to the chosen time
 % integration scheme
-if strcmp(propStrDynamics.method,'EXPLICIT_EULER')
+if strcmp(propStrDynamics.method, 'EXPLICIT_EULER')
     propStrDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsExplicitEuler;
     propStrDynamics.computeUpdatedVct = ...
         @computeBETITransientUpdatedVctAccelerationField;
 end
 
-% Define the case as a unit test case
-isUnitTest = true;
-
 %% 3. Solve the plate in membrane action problem
-[dHistory,minElSize] = solve_FEMPlateInMembraneActionNLinearTransient...
-    (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,...
-    @computeLoadVctFEMPlateInMembraneAction,...
-    parameters,propNLinearAnalysis,propStrDynamics,solve_LinearSystem,...
-    gaussInt,caseName,isUnitTest,'');
+[dHistory, minElSize] = solve_FEMPlateInMembraneActionNLinearTransient...
+    (propAnalysis, strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC,...
+    @computeLoadVctFEMPlateInMembraneAction, parameters, computeBodyForces, ...
+    propNLinearAnalysis, propStrDynamics, solve_LinearSystem, propGaussInt, ...
+    propOutput, caseName,'');
 
 %% 4. Define the expected solutions
 
@@ -1332,18 +1337,18 @@ expSolminElSize = 0.031250000000000;
 
 %% 5. Verify the results
 if isunix
-    testCase.verifyEqual(dHistory,expSoldHistory,'AbsTol',absTol);
+    testCase.verifyEqual(dHistory, expSoldHistory, 'AbsTol', absTol);
 else
     dHistoryUnix = dHistory;
     expSoldHistoryUnix = expSoldHistory;
     for i = 1:noWinEntries
-        dHistoryUnix(indexI(1,i),indexJ(1,i)) = 0;
-        expSoldHistoryUnix(indexI(1,i),indexJ(1,i)) = 0;
-        testCase.verifyEqual(dHistory(indexI(1,i),indexJ(1,i)),...
-            expSoldHistory(indexI(1,i),indexJ(1,i)),'AbsTol',absTolWin);
+        dHistoryUnix(indexI(1, i), indexJ(1, i)) = 0;
+        expSoldHistoryUnix(indexI(1, i), indexJ(1, i)) = 0;
+        testCase.verifyEqual(dHistory(indexI(1, i), indexJ(1, i)), ...
+            expSoldHistory(indexI(1, i), indexJ(1, i)), 'AbsTol', absTolWin);
     end
-	testCase.verifyEqual(dHistoryUnix,expSoldHistoryUnix,'AbsTol',absTol);
+	testCase.verifyEqual(dHistoryUnix, expSoldHistoryUnix, 'AbsTol', absTol);
 end
-testCase.verifyEqual(minElSize,expSolminElSize,'AbsTol',absTol);
+testCase.verifyEqual(minElSize, expSolminElSize, 'AbsTol', absTol);
 
 end

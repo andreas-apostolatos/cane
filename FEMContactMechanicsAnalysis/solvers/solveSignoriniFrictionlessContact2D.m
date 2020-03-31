@@ -178,6 +178,8 @@ forceVct = 'undefined';
 loadFactor = 'undefined';
 propStrDynamics = 'undefined';
 computeProblemMatricesSteadyState = 'undefined';
+precompStiffMtx = 'undefined';
+precomResVct = 'undefined';
 
 % Steady-state analysis
 t = 0;
@@ -247,8 +249,9 @@ if strcmp(outMsg, 'outputEnabled')
     fprintf(strcat(tab, '>> Computing the stiffness matrix of the system\n'));
 end
 [K, F, minElSize] = computeStiffMtxLoadVct ...
-    (analysis, dHat_stiffMtx, uSaved, uDot, uDotSaved, DOFNumbering, strMsh, ...
-    F, loadFactor, bodyForces, propStrDynamics, parameters, propGaussInt);
+    (analysis, dHat_stiffMtx, uSaved, uDot, uDotSaved, precompStiffMtx, ...
+    precomResVct, DOFNumbering, strMsh, F, loadFactor, bodyForces, ...
+    propStrDynamics, parameters, propGaussInt);
 
 %% 6. Create the expanded system of equations corresponding to the Lagrange Multipliers method
 if strcmp(outMsg, 'outputEnabled')

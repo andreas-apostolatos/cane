@@ -24,25 +24,24 @@ function testFEM4NavierStokesSteadyStateFlowAroundCylinder2D(testCase)
 %
 % 3. Choose the equation system solver
 %
-% 4. Define the name of the vtk file from where to resume the simulation
+% 4. Change the input velocity to match the reference paper - parabolic input
 %
-% 5. Change the input velocity to match the reference paper - parabolic input
+% 5. Initialize the solution with zero
 %
-% 6. Initialize the solution with zero
+% 6. Solve the CFD problem
 %
-% 7. Solve the CFD problem
+% 7. Calculate drag and lift force from the nodal forces
 %
-% 8. Calculate drag and lift force from the nodal forces
+% 8. Calculate drag and lift coefficient based on drag and lift force
 %
-% 9. Calculate drag and lift coefficient based on drag and lift force
+% 9. Define the expected solutions
 %
-% 10. Define the expected solutions
-%
-% 11. Verify the results
+% 10. Verify the results
 %
 %% Function main body
 
 %% 0. Read input
+
 % Define absolute tolerance
 absTol = 0.04; % tolerance w.r.t the reference paper
 absTol2 = 1e-10; % tolerance w.r.t our value
@@ -51,28 +50,25 @@ absTol2 = 1e-10; % tolerance w.r.t our value
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = 'unitTest_testFEM4NavierStokesSteadyStateFlowAroundCylinder2D';
 
-% Iteration step
-noIterStep = 1;
-
-% Properties for the VTK visualization
-propVTK.isOutput = false;
-
 %% 1. Parse the data from the GiD input file
-[fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,~,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,propGaussInt,postProc] = ...
+[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ~, propAnalysis, ...
+    parameters, propNLinearAnalysis, propFldDynamics, propGaussInt, postProc] = ...
     parse_FluidModelFromGid...
-    (pathToCase,caseName,'');
+    (pathToCase, caseName, '');
 
 %% 2. GUI
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
 
+% Properties for the VTK visualization
+propVTK.isOutput = false;
+
 % On the initial conditions
 % computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE2D;
-computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
+computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
 
 % On the transient analysis properties
-if strcmp(propFldDynamics.method,'bossak')
+if strcmp(propFldDynamics.method, 'bossak')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;
     propFldDynamics.computeUpdatedVct = ...
@@ -80,39 +76,39 @@ if strcmp(propFldDynamics.method,'bossak')
 end
 
 %% 3. Choose the equation system solver
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
+if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
 end
 
-%% 4. Define the name of the vtk file from where to resume the simulation
-VTKResultFile = 'undefined';
-
-%% 5. Change the input velocity to match the reference paper - parabolic input
+%% 4. Change the input velocity to match the reference paper - parabolic input
 
 % max input velocity defined in the reference paper
 Umax = 0.3;
 
 % change the input velocity to have the parabolic distribution
-valuesInhomDBCModified = computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC, valuesInhomDBC, Umax);
+valuesInhomDBCModified = computeInletVelocityParabolic_unitTest...
+    (fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
 
-%% 6. Initialize the solution with zero
-up = zeros(3*length(fldMsh.nodes(:,1)),1);
+%% 5. Initialize the solution with zero
+[up, ~, ~, numIterStep] = computeInitialConditions...
+    (propAnalysis, fldMsh, 'undefined', 'undefined', 'undefined', ...
+    'undefined', 'undefined', 'undefined');
 
-%% 7. Solve the CFD problem
-[~,FComplete,hasConverged,~] = solve_FEMVMSStabSteadyStateNSE2D...
-    (fldMsh,up,homDBC,inhomDBC,valuesInhomDBCModified,propALE,parameters,...
-    computeBodyForces,analysis,computeInitialConditions,...
-    VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-    noIterStep,propVTK,propGaussInt,caseName,'');
+%% 6. Solve the CFD problem
+[~,FComplete, isConverged, ~] = solve_FEMVMSStabSteadyStateNSE2D ...
+    (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDBCModified, propALE, ...
+    parameters, computeBodyForces, propAnalysis, solve_LinearSystem, ...
+    propFldDynamics, propNLinearAnalysis, numIterStep, propGaussInt, ...
+    propVTK, caseName,'');
 
-%% 8. Calculate drag and lift force from the nodal forces
-postProc = computePostProc(FComplete, analysis, parameters, postProc);
+%% 7. Calculate drag and lift force from the nodal forces
+postProc = computePostProc(FComplete, propAnalysis, parameters, postProc);
 
-%% 9. Calculate drag and lift coefficient based on drag and lift force
+%% 8. Calculate drag and lift coefficient based on drag and lift force
 
 % define parameters used in reference paper and simualiton
 Ubar = 0.2; % mid velocity 
@@ -131,7 +127,7 @@ liftCoefficient = (2 * Fy)/(rho * Ubar * Ubar * D);
 % find absolute value so we don't get negative coefficients
 liftCoefficient = abs(liftCoefficient);
 
-%% 10. Define the expected solutions
+%% 9. Define the expected solutions
 
 % 5.5700 - 5.5900 (upper and lower bound in the paper, 2D case)
 expSolDragCoefficientFromLiterature = 5.58;
@@ -143,13 +139,13 @@ expSolLiftCoefficientFromLiterature = 0.0107;
 expSolLiftCoefficient = 0.00224889649350511;
 
 % Define the expected solution in terms of the convergence flag
-expSolHasConverged = true;
+expSolIsConverged = true;
 
-%% 11. Verify the results
-testCase.verifyEqual(dragCoefficient,expSolDragCoefficientFromLiterature,'AbsTol',absTol);
-testCase.verifyEqual(liftCoefficient,expSolLiftCoefficientFromLiterature,'AbsTol',absTol);
-testCase.verifyEqual(dragCoefficient,expSolDragCoefficient,'AbsTol',absTol2);
-testCase.verifyEqual(liftCoefficient,expSolLiftCoefficient,'AbsTol',absTol2);
-testCase.verifyEqual(hasConverged,expSolHasConverged,'AbsTol',absTol);
+%% 10. Verify the results
+testCase.verifyEqual(dragCoefficient, expSolDragCoefficientFromLiterature, 'AbsTol', absTol);
+testCase.verifyEqual(liftCoefficient, expSolLiftCoefficientFromLiterature, 'AbsTol', absTol);
+testCase.verifyEqual(dragCoefficient, expSolDragCoefficient, 'AbsTol', absTol2);
+testCase.verifyEqual(liftCoefficient, expSolLiftCoefficient, 'AbsTol', absTol2);
+testCase.verifyEqual(isConverged ,expSolIsConverged , 'AbsTol', absTol);
 
 end

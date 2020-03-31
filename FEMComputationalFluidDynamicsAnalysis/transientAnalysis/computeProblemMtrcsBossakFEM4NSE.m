@@ -1,6 +1,6 @@
-function [tanMtx,resVct] = computeProblemMtrcsBossakFEM4NSE...
-    (u,uSaved,uDot,uDotSaved,uDDot,uDDotSaved,massMtx,damMtx,tanMtx,...
-    resVct,propTransientAnalysis)
+function [tanMtx, resVct] = computeProblemMtrcsBossakFEM4NSE ...
+    (u, uSaved, uDot, uDotSaved, uDDot, uDDotSaved, massMtx, damMtx, tanMtx, ...
+    resVct, propFldDynamics)
 %% Licensing
 %
 % License:         BSD License
@@ -33,7 +33,9 @@ function [tanMtx,resVct] = computeProblemMtrcsBossakFEM4NSE...
 %                         problem
 %             resVctRHS : Right-hand side (RHS)/residual vector 
 %                         corresponding to the steady-state problem
-% propTransientAnalysis : Transient analysis parameters:
+%       propFldDynamics : Structure containing information on the time
+%                         integration for the transient fluid dynamics
+%                         analysis,
 %                                   .method : Time integration method
 %                                   .alphaB : Bossak parameter
 %                                    .betaB : Bossak parameter

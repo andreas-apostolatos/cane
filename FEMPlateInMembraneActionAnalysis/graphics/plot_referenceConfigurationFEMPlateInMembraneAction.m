@@ -1,5 +1,5 @@
 function index = plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh, analysis, F, homDBC, segmentsContact, graph, outMsg)
+    (strMsh, propAnalysis, F, homDOFs, segmentsContact, graph, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -15,9 +15,10 @@ function index = plot_referenceConfigurationFEMPlateInMembraneAction...
 %   
 %           Input :
 %          strMsh : Nodes and elements in the mesh
-%        analysis : .type : The analysis type
+%    propAnalysis : Structure defining general properties of the analysis,
+%                   .type : The analysis type
 %               F : The global load vector
-%          homDBC : The global numbering of the nodes where homogeneous
+%         homDOFs : The global numbering of the nodes where homogeneous
 %                   Dirichlet boundary conditions are applied
 % segmentsContact : Containts the coordinates of the vertices of the 
 %                   straight segments which form the rigid body's boundary:
@@ -74,7 +75,7 @@ plot(2);
 hold on;
 trimesh(strMsh.elements, strMsh.nodes(:,1), strMsh.nodes(:,2), strMsh.nodes(:,3), ...
     'edgecolor', edgeColor, 'facecolor', faceColor);
-plot_boundaryConditionsOnMesh(strMsh, homDBC, F);
+plot_boundaryConditionsOnMesh(strMsh, homDOFs, F);
 
 %% 2. Loop over all rigid contact segments to plot the boundary of the rigid body
 if ~isempty(segmentsContact)

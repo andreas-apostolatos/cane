@@ -1,5 +1,6 @@
-function [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, analysis, parameters, ...
-    propNLinearAnalysis, propStrDynamics, propGaussInt, propContact] = ...
+function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
+    propAnalysis, parameters, propNLinearAnalysis, propStrDynamics, ...
+    propGaussInt, propContact] = ...
     parse_StructuralModelFromGid(pathToCase, caseName, outMsg)
 %% Licensingprop
 %
@@ -22,12 +23,12 @@ function [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, analysis, parameter
 %              strMsh : On the structural mesh   
 %                           .nodes : The nodes in the FE mesh
 %                        .elements : The elements in the FE mesh
-%              homDBC : The global numbering of the nodes where homogeneous
+%             homDOFs : The global numbering of the nodes where homogeneous
 %                       Dirichlet boundary conditions are applied
-%            inhomDBC : The global numbering of the nodes where 
+%           inhomDOFs : The global numbering of the nodes where 
 %                       inhomogeneous Dirichlet boundary conditions are 
 %                       applied
-%      valuesInhomDBC : The prescribed values for the inhomogeneous 
+%     valuesInhomDOFs : The prescribed values for the inhomogeneous 
 %                       Dirichlet boundary conditions
 %             propNBC :     .nodes : The nodes where Neumann boundary 
 %                                    conditions are applied
@@ -37,7 +38,8 @@ function [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, analysis, parameter
 %                                    node for the computation of the load 
 %                                    vector (these functions are under the 
 %                                    folder load)
-%            analysis : On the analysis type
+%        propAnalysis : Structure defining general properties of the
+%                       analysis,
 %                             .type : The analysis type
 %          parameters : Problem specific technical (physical) parameters
 %                       (.rho,.E,.nue,.t)
@@ -102,9 +104,9 @@ end
 %% 0. Read input
 
 % Initialize output arrays
-homDBC = [];
-inhomDBC = [];
-valuesInhomDBC = [];
+homDOFs = [];
+inhomDOFs = [];
+valuesInhomDOFs = [];
 
 %% 1. Load the input file from GiD
 fstring = fileread([pathToCase caseName '.dat']); 
@@ -113,9 +115,9 @@ fstring = fileread([pathToCase caseName '.dat']);
 block = regexp(fstring,'STRUCTURE_ANALYSIS','split');
 block(1) = [];
 out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
-analysis.type = out{1}{2};
+propAnalysis.type = out{1}{2};
 if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Analysis type: %s \n',analysis.type);
+    fprintf('>> Analysis type: %s \n',propAnalysis.type);
 end
 
 %% 3. Load the material properties
@@ -230,7 +232,7 @@ out = cell2mat(out);
 
 % Filter out the actual DOFs
 nDOFsPerNodeFromGiD = 3;
-if strcmp(analysis.type,'planeStress')||strcmp(analysis.type,'planeStrain')
+if strcmp(propAnalysis.type,'planeStress')||strcmp(propAnalysis.type,'planeStrain')
     nDOFsPerNode = 2;
 end
 
@@ -250,11 +252,11 @@ for i = 1:nDBCNodes
         presValue = out((nDOFsPerNodeFromGiD+1)*i-nDOFsPerNodeFromGiD+j);
         if ~isnan(presValue)
             if presValue == 0
-                homDBC(counterHomDBC) = nDOFsPerNode*nodeID-nDOFsPerNode+j;
+                homDOFs(counterHomDBC) = nDOFsPerNode*nodeID-nDOFsPerNode+j;
                 counterHomDBC = counterHomDBC + 1;
             else
-                inhomDBC(counterInhomDBC) = nDOFsPerNode*nodeID-nDOFsPerNode+j;
-                valuesInhomDBC(counterInhomDBC) = presValue;
+                inhomDOFs(counterInhomDBC) = nDOFsPerNode*nodeID-nDOFsPerNode+j;
+                valuesInhomDOFs(counterInhomDBC) = presValue;
                 counterInhomDBC = counterInhomDBC + 1;
             end
         end
@@ -262,9 +264,9 @@ for i = 1:nDBCNodes
 end
 
 % Sort out the vectors
-homDBC = sort(homDBC);
-[inhomDBC,indexSorting] = sort(inhomDBC);
-valuesInhomDBC = valuesInhomDBC(indexSorting);
+homDOFs = sort(homDOFs);
+[inhomDOFs,indexSorting] = sort(inhomDOFs);
+valuesInhomDOFs = valuesInhomDOFs(indexSorting);
 
 %% 10. Load the nodes on the Neumann boundary together with the load application information
 block = regexp(fstring,'STRUCTURE_FORCE_NODES','split'); 
