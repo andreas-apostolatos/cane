@@ -1,4 +1,4 @@
-function [upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D ...
+function [upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI ...
     (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, parameters, ...
     computeBodyForces, propAnalysis, computeInitCnds, solve_LinearSystem, ...
     propFldDynamics, propNLinearAnalysis, propGaussInt, propVTK, caseName, ...
@@ -12,7 +12,7 @@ function [upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI2D ...
 %
 %% Function documentation
 %
-% Solve the transient nonlinear Navier-Stokes problem in 2D using the 
+% Solve the transient nonlinear Navier-Stokes problem in 2D/3D using the 
 % Bossak time integration scheme for the temporal discretization and the 
 % classical triangular basis functions for the spatial discretization.
 %
@@ -126,10 +126,10 @@ end
 %% 0. Read input
 
 % Find the dimensionality of the problem
-if strcmp(propAnalysis.type,'NAVIER_STOKES_3D')
+if strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     isAnalysis3D = true;
     noDOFsNode = 4;
-elseif strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
+elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
     isAnalysis3D = false;
     noDOFsNode = 3;
 else
@@ -148,7 +148,7 @@ computeLoadVct = 'undefined';
 tab = '\t';
 
 % Compute the number of nodes in the fluid mesh
-noNodes = length(fldMsh.nodes(:,1));
+noNodes = length(fldMsh.nodes(:, 1));
 
 % Compute the number of degrees of freedom
 noDOFs = noDOFsNode*noNodes;
@@ -159,9 +159,9 @@ DOFNumbering = 1:noDOFs;
 % Get the DOF numbering for each component of the displacement field and
 % the pressure seperately
 if isAnalysis3D
-    DOF4Output = [1:4:noDOFs-3; 2:4:noDOFs-2; 3:4:noDOFs-1; 4:4:noDOFs];
+    DOF4Output = [1:4:noDOFs - 3; 2:4:noDOFs - 2; 3:4:noDOFs - 1; 4:4:noDOFs];
 else
-    DOF4Output = [1:3:noDOFs-2; 2:3:noDOFs-1; 3:3:noDOFs];
+    DOF4Output = [1:3:noDOFs - 2; 2:3:noDOFs - 1; 3:3:noDOFs];
 end
 
 % Title for the VTK files
@@ -171,12 +171,12 @@ title = 'Stabilized finite element formulation for the 2D incopmpressible Navier
 
 % Prescribed DOFs (DOFs on which either homogeneous or inhomogeneous 
 % Dirichlet boundary conditions are prescribed)
-prescribedDoFs = mergesorted(homDOFs,inhomDOFs);
+prescribedDoFs = mergesorted(homDOFs, inhomDOFs);
 prescribedDoFs = unique(prescribedDoFs);
 
 % Free DOFs of the system (actual DOFs over which the solution is computed)
 freeDOFs = DOFNumbering;
-freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
+freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 
 %% 2. Solve the transient nonlinear Navier-Stokes stabilized finite element equation system using the Bossak time integration scheme
 [upHistory, minElSize] = solve_FEMTransientAnalysis ...
@@ -190,9 +190,9 @@ freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
     pathToOutput, title, DOF4Output, tab, outMsg);
 
 %% 3. Appendix
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-    fprintf('Transient nonlinear analysis took %.2d seconds \n\n',computationalTime);
+    fprintf('Transient nonlinear analysis took %.2d seconds \n\n', computationalTime);
     fprintf('________________Transient Nonlinear Analysis Ended_________________\n');
     fprintf('###################################################################\n\n\n');
 end

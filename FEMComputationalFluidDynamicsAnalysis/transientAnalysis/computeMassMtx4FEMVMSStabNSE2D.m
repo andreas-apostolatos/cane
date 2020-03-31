@@ -1,5 +1,5 @@
 function massMtx = computeMassMtx4FEMVMSStabNSE2D...
-    (analysis,fldMsh,parameters,gaussInt)
+    (propAnalysis, fldMsh, parameters, propGaussInt)
 %% Licensing
 %
 % License:         BSD License
@@ -13,20 +13,18 @@ function massMtx = computeMassMtx4FEMVMSStabNSE2D...
 % the 2D Navier-Stokes problem.
 %
 %             Input :
-%          analysis : Information on the analysis
+%      propAnalysis : Structure containing general information on the
+%                     analysis,
 %                           .type : Analysis type
 %            fldMsh : Nodes and elements of the fluid mesh
 %        parameters : Flow parameters
-%          gaussInt : Structure responsible for the integration
+%      propGaussInt : Structure containing information on the numerical
+%                     quadrature
 %
 %            Output :
 %           massMtx : The mass matrix of the Navier-Stokes problem
 %
-% Function layout :
-%
 %% Function main body
-
-%% 0. Read input
 
 % Initialize arrays
 massMtx = 'undefined';

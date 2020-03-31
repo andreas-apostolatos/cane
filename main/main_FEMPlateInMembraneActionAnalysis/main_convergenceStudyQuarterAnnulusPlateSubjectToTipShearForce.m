@@ -67,6 +67,11 @@ computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 % Function handle to the linear equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
+% Output properties
+propOutput.isOutput = false;
+propOutput.writeOutputToFile = 'undefined';
+propOutput.VTKResultFile = 'undefined';
+
 % Function handle to the computation of the linear stiffness matrix
 computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
 % computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
@@ -90,9 +95,6 @@ intError.noGP = 8;
 propError.resultant = 'stress';
 propError.component = 'tensor';
 
-% Flag on whether the case is a unit test
-isUnitTest = true;
-
 % Initialize graphics index
 graph.index = 1;
 
@@ -103,7 +105,7 @@ caseName = strcat('refinementStudyCurvedBeamTipShear/', 'curvedBeamTipShear_over
 
 % Parse the case
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
-    parameters, propNLinearAnalysis, ~, ~] = ...
+    parameters, propNLinearAnalysis, ~, ~, ~] = ...
     parse_StructuralModelFromGid...
     (pathToCase, caseName, 'outputEnabled');
 
@@ -119,13 +121,18 @@ if ~exist('nodeID','var')
     error('The node over which to compute the displacement field was not found');
 end
 
+% Initialize solution
+numNodes = length(strMsh.nodes(:,1));
+numDOFs = 2*numNodes;
+dHat = zeros(numDOFs,1);
+
 % Solve for the discrete displacement field of the overkill solution
 [dHat, FComplete, minElEdgeSizeOverkill] = ...
     solve_FEMPlateInMembraneAction...
-    (propAnalysis, strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
-    computeBodyForces, parameters, computeStiffMtxLoadVct, ...
-    solve_LinearSystem, propNLinearAnalysis, intDomain, caseName, ...
-    'undefined', isUnitTest, 'outputEnabled');
+    (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    propNBC, computeBodyForces, parameters, computeStiffMtxLoadVct, ...
+    solve_LinearSystem, propNLinearAnalysis, intDomain, propOutput, ...
+    caseName, 'undefined', 'outputEnabled');
 
 % Compute the displacement field of the selected for postprocessing node
 displacementOverkill = sqrt(dHat(2*nodeID - 1)^2 + dHat(2*nodeID)^2);
@@ -174,32 +181,38 @@ for counterRefStep = 1:noRef
         error('The node over which to compute the displacement field was not found');
     end
     
+    % Initialize solution
+    numNodes = length(strMsh.nodes(:,1));
+    numDOFs = 2*numNodes;
+    dHat = zeros(numDOFs,1);
+    
     % Solve the plane stress problem for the current refinement step
     [dHat, FComplete, minElEdgeSize(counterRefStep,1)] = ...
         solve_FEMPlateInMembraneAction...
-        (propAnalysis, strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
-        computeBodyForces, parameters, computeStiffMtxLoadVct, ...
-        solve_LinearSystem, propNLinearAnalysis, intDomain, caseName, ...
-        'undefined', isUnitTest, 'outputEnabled');
+        (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+        propNBC, computeBodyForces, parameters, computeStiffMtxLoadVct, ...
+        solve_LinearSystem, propNLinearAnalysis, intDomain, propOutput, ...
+        caseName, 'undefined', 'outputEnabled');
     
     % Compute the displacement field for the slected for postprocessing node
-    displacement(counterRefStep,1) = sqrt(dHat(2*nodeID - 1)^2 + dHat(2*nodeID)^2);
+    displacement(counterRefStep, 1) = sqrt(dHat(2*nodeID - 1)^2 + dHat(2*nodeID)^2);
     
     % Compute the relative error for the selected for postprocessing node
     % in the displacement field
-    relErrorDisplacement(counterRefStep,1) = ...
-        norm(displacement(counterRefStep,1) - displacementOverkill)/...
+    relErrorDisplacement(counterRefStep, 1) = ...
+        norm(displacement(counterRefStep, 1) - displacementOverkill)/...
         norm(displacementOverkill);
     
     % Get a node on the Neumann boundary
-    nodeNeumann = strMsh.nodes(propNBC.nodes(1, 1),:);
+    nodeNeumann = strMsh.nodes(propNBC.nodes(1, 1), :);
     
     % Get the corresponding function handle for the computation of the load
     funHandle = str2func(propNBC.fctHandle(1, :));
     
     % Compute the force amplitude for the selected node on the Neumann
     % boundary
-    forceAmplitude = norm(funHandle(nodeNeumann(1, 1),nodeNeumann(1, 2),nodeNeumann(1, 3), 0, propNBC));
+    forceAmplitude = norm(funHandle(nodeNeumann(1, 1), nodeNeumann(1, 2), ...
+        nodeNeumann(1, 3), 0, propNBC));
     
     % Compute the error in the L2-norm over the domain for the selected
     % resultant component
