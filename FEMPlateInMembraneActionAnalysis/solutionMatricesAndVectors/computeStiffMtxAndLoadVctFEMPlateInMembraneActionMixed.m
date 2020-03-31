@@ -1,6 +1,8 @@
-function [K,F,minElEdgeSize] = computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed...
-    (analysis,u,uSaved,uDot,uDotSaved,DOFNumbering,strMsh,F,loadFactor,bodyForces,...
-    strDynamics,parameters,int)
+function [K,F,minElEdgeSize] = ...
+    computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed...
+    (analysis, u, uSaved, uDot, uDotSaved, precompStiffMtx, precomResVct, ...
+    DOFNumbering, strMsh, F, loadFactor, bodyForces, strDynamics, ...
+    parameters, int)
 %% Licensing
 %
 % License:         BSD License
@@ -20,6 +22,10 @@ function [K,F,minElEdgeSize] = computeStiffMtxAndLoadVctFEMPlateInMembraneAction
 %                   time step
 %       uDotSaved : The time derivative of the discrete solution 
 %                   field of the previous time step
+% precompStiffMtx : Constant part of the stiffness matrix which can be
+%                   precomputed
+%    precomResVct : Constant part of the residual vector which can be
+%                   precomputed
 %      uDDotSaved : The second order time derivative of the 
 %                   discrete solution field of the previous time (dummy 
 %                   variable for this function)

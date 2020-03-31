@@ -1,9 +1,10 @@
-function [u,FComplete,hasConverged,minElSize] = solve_FEMLinearSystem...
-    (analysis,uSaved,uDotSaved,uDDotSaved,mesh,F,bodyForces,parameters,u,...
-    uDot,uDDot,massMtx,dampMtx,precompStiffMtx,precomResVct,...
-    computeProblemMatricesSteadyState,DOFNumbering,freeDOFs,homDOFs,...
-    inhomDOFs,valuesInhomDOFs,uMeshALE,solve_LinearSystem,...
-    propTransientAnalysis,propNLinearAnalysis,int,tab,outMsg)
+function [u, FComplete, hasConverged, minElSize] = solve_FEMLinearSystem...
+    (analysis, uSaved, uDotSaved, uDDotSaved, mesh, F, bodyForces, ...
+    parameters, u, uDot, uDDot, massMtx, dampMtx, precompStiffMtx, ...
+    precomResVct, computeProblemMatricesSteadyState, DOFNumbering, ...
+    freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
+    solve_LinearSystem, propTransientAnalysis, propNLinearAnalysis, int, ...
+    tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -137,11 +138,12 @@ hasConverged = 'undefined';
 %% 1. Compute the linear matrices of the steady-state problem
 if isa(computeProblemMatricesSteadyState, 'function_handle')
     if strcmp(outMsg,'outputEnabled')
-        fprintf(strcat(tab,'>> Computing the stiffness matrix of the system\n'));
+        fprintf(strcat(tab, '>> Computing the stiffness matrix of the system\n'));
     end
-    [stiffMtx,resVct,minElSize] = computeProblemMatricesSteadyState...
-        (analysis,u,uSaved,uDot,uDotSaved,precompStiffMtx,precomResVct, ...
-        DOFNumbering,mesh,F,loadFactor,bodyForces,propTransientAnalysis,parameters,int);
+    [stiffMtx, resVct, minElSize] = computeProblemMatricesSteadyState...
+        (analysis, u, uSaved, uDot, uDotSaved, precompStiffMtx, ...
+        precomResVct, DOFNumbering, mesh, F, loadFactor, bodyForces, ...
+        propTransientAnalysis, parameters, int);
     if ~ischar(precompStiffMtx)
         stiffMtx = stiffMtx + precompStiffMtx;
     end
@@ -159,15 +161,16 @@ else
 end
 
 %% 2. Compute the stiffness matrix and the residual vector for the transient problem
-if isfield(propTransientAnalysis,'timeDependence')
-    if ~strcmp(propTransientAnalysis.timeDependence,'steadyState')
-        if isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
+if isfield(propTransientAnalysis, 'timeDependence')
+    if ~strcmp(propTransientAnalysis.timeDependence, 'steadyState')
+        if isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle') && ...
             ~propTransientAnalysis.isStaticStep
-            [stiffMtx,resVct] = propTransientAnalysis.computeProblemMtrcsTransient...
-                (u,uSaved,uDot,uDotSaved,uDDot,uDDotSaved,massMtx,dampMtx,...
-                stiffMtx,resVct,propTransientAnalysis);
-        elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
-                ~(strcmp(propTransientAnalysis.timeDependence,'steadyState') || strcmp(propTransientAnalysis.timeDependence,'pseudotransient'))
+            [stiffMtx, resVct] = ...
+                propTransientAnalysis.computeProblemMtrcsTransient...
+                (u, uSaved, uDot, uDotSaved, uDDot, uDDotSaved, massMtx, ...
+                dampMtx, stiffMtx, resVct, propTransientAnalysis);
+        elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle') && ...
+                ~(strcmp(propTransientAnalysis.timeDependence, 'steadyState') || strcmp(propTransientAnalysis.timeDependence, 'pseudotransient'))
             error('Variable propTransientAnalysis.computeProblemMtrcsTransient is undefined but the simulation is transient')
         end
     end
@@ -175,15 +178,15 @@ end
 
 %% 3. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
 if norm(valuesInhomDOFs) ~= 0
-    resVct = resVct - stiffMtx(:,inhomDOFs)*valuesInhomDOFs';
+    resVct = resVct - stiffMtx(:, inhomDOFs)*valuesInhomDOFs';
 end
 
 %% 4. Solve the linear equation system
 if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Solving the linear system of %d equations\n'),length(freeDOFs));
+    fprintf(strcat(tab, '>> Solving the linear system of %d equations\n'), length(freeDOFs));
 end
-[uRed,hasLinearSystemConverged] = ...
-    solve_LinearSystem(stiffMtx(freeDOFs,freeDOFs),resVct(freeDOFs),u(freeDOFs));
+[uRed, hasLinearSystemConverged] = ...
+    solve_LinearSystem(stiffMtx(freeDOFs, freeDOFs),resVct(freeDOFs), u(freeDOFs));
 if ~hasLinearSystemConverged
     error('Linear equation solver has not converged');
 end
@@ -194,8 +197,8 @@ u(homDOFs) = 0;
 u(inhomDOFs) = valuesInhomDOFs;
 
 %% 6. Compute the complete flux vector
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Computing the complete force vector\n'));
+if strcmp(outMsg, 'outputEnabled')
+    fprintf(strcat(tab, '>> Computing the complete force vector\n'));
 end
 FComplete = stiffMtx*u;
 

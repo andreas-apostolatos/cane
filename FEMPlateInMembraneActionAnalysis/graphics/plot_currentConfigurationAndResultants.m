@@ -1,5 +1,6 @@
 function [index,minComp,maxComp] = plot_currentConfigurationAndResultants...
-    (mesh,homDBC,displacement,parameters,analysis,resultant,component,graph)
+    (analysis, mesh, homDBC, dHat, nodeIDs_active, contactSegments, ...
+    parameters, resultant, component, graph)
 %% Licensing
 %
 % License:         BSD License
@@ -14,13 +15,21 @@ function [index,minComp,maxComp] = plot_currentConfigurationAndResultants...
 % over the initial configuration of the plate
 %
 %              input :
+%           analysis : Analysis type (plane stress or plane strain)
 %               mesh : Elements and nodes of the mesh
 %             homDBC : Vector of the Dirichlet boundary conditions with their
 %                      global numbering
-%       displacement : The displacement field sorted in a vector according to its
+%               dHat : The displacement field sorted in a vector according to its
 %                      global numbering
+%     nodeIDs_active : IDs of the active (contact nodes)
+%    contactSegments : Containts the coordinates of the vertices of the 
+%                      straight segments which form the rigid body's 
+%                      boundary,
+%                  .numSegments : Number of rigid segments
+%                       .points : Array containing the coordinates of the 
+%                                 vertices of each line segment XA - XB in 
+%                                 the form [xA, yA, xB, yB]
 %         parameters : The material properties of the structure
-%           analysis : Analysis type (plane stress or plane strain)
 %          resultant : Resultant to be visualized
 %          component : component of the resultant to be visualized
 %              graph : Structure on the graphics (indices etc.)
@@ -42,53 +51,57 @@ function [index,minComp,maxComp] = plot_currentConfigurationAndResultants...
 %
 % 3. Plot the reference configuration
 %
-% 4. Plot the Current configuration
+% 4. Loop over all rigid contact segments to plot the boundary of the rigid body
 %
-% 5. Plot the Dirichlet boundary conditions on the mesh
+% 5. Plot active contact nodes
 %
-% 6. Assign the graph properties
+% 6. Plot the Current configuration
 %
-% 7. In the 1st window plot the chosen resultant over the domain
+% 7. Plot the Dirichlet boundary conditions on the mesh
 %
-% 8. Plot the mesh edges
+% 8. Assign the graph properties
 %
-% 9. Loop over all elements in the mesh
-% ->
-%    9i. Initialize the array of the grid points and the tensorial quantity to be visualized
+% 9. In the 1st window plot the chosen resultant over the domain
 %
-%   9ii. Initialize local coordinates
+% 10. Plot the mesh edges
 %
-%  9iii. Get element from the mesh
+% 11. Loop over all elements in the mesh
+%  ->
+%    11i. Initialize the array of the grid points and the tensorial quantity to be visualized
 %
-%   9iv. Get coordinates of the element vertices
+%   11ii. Initialize local coordinates
 %
-%    9v. Get the vertices of the current element
+%  11iii. Get element from the mesh
 %
-%   9vi. Create the element freedom table
+%   11iv. Get coordinates of the element vertices
 %
-%  9vii. Get the element displacement vector
+%    11v. Get the vertices of the current element
 %
-% 9viii. Get the moving vertices
+%   11vi. Create the element freedom table
 %
-%   9ix. Loop over all the sampling points
-%   ->
-%        9ix.1. Initialize the displacement components
+%  11vii. Get the element displacement vector
 %
-%        9ix.2. Get the point in the interior of the line defined from Pi and Pj
+% 11viii. Get the moving vertices
 %
-%        9ix.3. Evaluate the CST basis functions at the evaluation point
+%  11ix. Loop over all the sampling points
+%  ->
+%       11ix.1. Initialize the displacement components
 %
-%        9ix.4. Evaluate the tensorial field value on P by looping over all the products of the basis functions with the nodal solution
+%       11ix.2. Get the point in the interior of the line defined from Pi and Pj
 %
-%        9ix.5. Update local coordinate by the step size
+%       11ix.3. Evaluate the CST basis functions at the evaluation point
+%
+%       11ix.4. Evaluate the tensorial field value on P by looping over all the products of the basis functions with the nodal solution
+%
+%       11ix.5. Update local coordinate by the step size
 %   <-
 %
-%    9x. Plot the tensorial quantity over the element
-% <-
+%   11x. Plot the tensorial quantity over the element
+%  <-
 %
-% 10. Assign the graphics options
+% 12. Assign the graphics options
 %
-% 11. Update graph index
+% 13. Update graph index
 %
 %% Function main body
 
@@ -112,10 +125,11 @@ else
 end
 
 % Number of nodes per element
-if length(mesh.elements(1,:)) == 3
+element1 = mesh.elements(1,:);
+if length(element1(~isnan(element1))) == 3
     noNodesElement = 3;
     elementType = 'triangle';
-elseif length(mesh.elements(1,:)) == 4
+elseif length(element1(~isnan(element1))) == 4
     noNodesElement = 4;
     elementType = 'quadrilateral';
 else
@@ -176,15 +190,11 @@ minComp = inf;
 maxComp = -inf;
 
 % Define colors
-if isAnalysis3d
-    colorDomain = [217 218 219]/255;
-else
-    colorDomain = 'g';
-end
+colorDomain = [217 218 219]/255;
 % colorDomain = 'none';
-% colorEdge = 'black';
+colorEdge = 'black';
 % colorEdge = 'red';
-colorEdge = 'none';
+% colorEdge = 'none';
 
 % Grid at each triangular element
 gridXi = 1; % 5, 48
@@ -196,12 +206,8 @@ stepEta = 1/(gridEta + 1);
 
 %% 1. Compute the displaced locations for the vertices of the triangles in the mesh
 
-% Initialize the array of the displaced nodes
-if ~isAnalysis3d
-    nodesCurrent = zeros(length(mesh.nodes),2);
-else
-    nodesCurrent = zeros(length(mesh.nodes),3);
-end
+% Initialize array of the displaced nodal coordinates
+nodesCurrent = zeros(length(mesh.nodes),3);
 
 % Initialize pseudocounter
 counter = 1;
@@ -209,12 +215,12 @@ counter = 1;
 for iXi = 1:length(mesh.nodes)
     % Add the x and y components of the displacement field
     if ~isAnalysis3d
-        nodesCurrent(iXi,1) = mesh.nodes(iXi,1) + displacement(2*counter - 1);
-        nodesCurrent(iXi,2) = mesh.nodes(iXi,2) + displacement(2*counter);
+        nodesCurrent(iXi,1) = mesh.nodes(iXi,1) + dHat(2*counter - 1);
+        nodesCurrent(iXi,2) = mesh.nodes(iXi,2) + dHat(2*counter);
     else
-        nodesCurrent(iXi,1) = mesh.nodes(iXi,1) + displacement(3*counter - 2);
-        nodesCurrent(iXi,2) = mesh.nodes(iXi,2) + displacement(3*counter - 1);
-        nodesCurrent(iXi,3) = mesh.nodes(iXi,3) + displacement(3*counter);
+        nodesCurrent(iXi,1) = mesh.nodes(iXi,1) + dHat(3*counter - 2);
+        nodesCurrent(iXi,2) = mesh.nodes(iXi,2) + dHat(3*counter - 1);
+        nodesCurrent(iXi,3) = mesh.nodes(iXi,3) + dHat(3*counter);
     end
     
     % Update counter
@@ -227,93 +233,122 @@ if isPlotting
 end
 
 %% 2. In the 1st window plot the deformed and the undeformed geometry
-% if isPlotting
-%     subplot(2,1,1);
-% end
+if isPlotting
+    subplot(2,1,1);
+end
  
 %% 3. Plot the Current configuration
-% if isPlotting
-%     if strcmp(graph.visualization.geometry,'reference_and_current') || strcmp(graph.visualization.geometry,'current');
-%         patch('faces',mesh.elements,'vertices',nodesCurrent,'facecolor',colorDomain,'edgecolor',colorEdge,'LineWidth',0.01);
-%         hold on;
-%     end
-% end
+if isPlotting
+    if strcmp(graph.visualization.geometry,'reference_and_current') || strcmp(graph.visualization.geometry,'current');
+        patch('faces',mesh.elements,'vertices',nodesCurrent,'facecolor',colorDomain,'edgecolor',colorEdge,'LineWidth',0.01);
+        hold on;
+    end
+end
 
-%% 4. Plot the reference configuration
-% if isPlotting
-%     if strcmp(graph.visualization.geometry,'reference_and_current') || strcmp(graph.visualization.geometry,'reference');
-%         patch('faces',mesh.elements,'vertices',mesh.nodes,'facecolor',colorDomain,'edgecolor',colorEdge);
-%     end
-%     axis equal;
-%     axis on;
-% end
+%% 4. Loop over all rigid contact segments to plot the boundary of the rigid body
+if ~isempty(contactSegments)
+    if isfield(contactSegments,'points')
+        if ~isempty(contactSegments.points)
+            for iSeg = 1:contactSegments.numSegments
+                %% 4i. Plot the rigid segment
+                xCoord = contactSegments.points(iSeg, [1 3]);
+                yCoord = contactSegments.points(iSeg, [2 4]);
+                plot(xCoord, yCoord, '-', 'Linewidth', 2, 'Color', 'black');
+
+                %% 4ii. Plot a dashed segment indicating the side where the rigid body lies
+                segmentOffset = createSegmentOffset(contactSegments.points(iSeg, :), ...
+                    contactSegments.normals(iSeg, :));
+                plot(segmentOffset(:, 1),segmentOffset(:, 2), ':', 'LineWidth', ...
+                    2, 'Color', 'black');
+            end
+        end
+    end
+end
+
+%% 5. Plot active contact nodes
+if isPlotting
+    if ~isempty(nodeIDs_active)
+        if isnumeric(nodeIDs_active)
+            plot_activeNodes(mesh, dHat, nodeIDs_active);
+        end
+    end
+end
+
+%% 6. Plot the reference configuration
+if isPlotting
+    if strcmp(graph.visualization.geometry,'reference_and_current') || strcmp(graph.visualization.geometry,'reference');
+        patch('faces',mesh.elements,'vertices',mesh.nodes,'facecolor',colorDomain,'edgecolor',colorEdge);
+    end
+    axis equal;
+    axis on;
+end
  
-%% 5. Plot the Dirichlet boundary conditions on the mesh
-% if isPlotting
-%     if ~isempty(rb)
-%         [xs,ys,zs] = createSupports(nodes_displaced,rb);
-%     end
-%     if ~isempty(rb)
-%         hold on;
-%         for k =1:length(xs(:,1))
-%             plot3(xs(k,:),ys(k,:),zs(k,:),'Linewidth',2,'Color','black');
-%         end
-%         hold off;
-%     end
-% end
+%% 7. Plot the Dirichlet boundary conditions on the mesh
+if isPlotting
+    if ~isempty(homDBC)
+        [xs,ys,zs] = createSupports(nodesCurrent,homDBC);
+    end
+    if ~isempty(homDBC)
+        hold on;
+        for k =1:length(xs(:,1))
+            plot3(xs(k,:),ys(k,:),zs(k,:),'Linewidth',2,'Color','black');
+        end
+        hold off;
+    end
+end
 
-%% 6. Assign the graph properties
-% if isPlotting
-%     if ~isAnalysis3d
-%         view (2);
-%     end
-%     camlight right;
-%     lighting phong;
-%     axis equal;
-%     axis on;
-%     xlabel('x','FontSize',14);
-%     ylabel('y','FontSize',14);
-%     if isAnalysis3d
-%         zlabel('z','FontSize',14);
-%     end
-% 
-%     % Title
-%     if ~isAnalysis3d
-%         if ~isempty(analysis)
-%             if strcmp(analysis.type,'PLANE_STESS')
-%                 title('Deformed configuration corresponding to plain stress analysis');
-%             elseif strcmp(analysis.type,'PLANE_STRAIN')
-%                 title('Deformed configuration corresponding to plain strain analysis');
-%             end
-%         end
-%     end
-% end
+%% 8. Assign the graph properties
+if isPlotting
+    if ~isAnalysis3d
+        view (2);
+    end
+    camlight right;
+    lighting phong;
+    axis equal;
+    axis on;
+    xlabel('x','FontSize',14);
+    ylabel('y','FontSize',14);
+    if isAnalysis3d
+        zlabel('z','FontSize',14);
+    end
 
-%% 7. In the 1st window plot the chosen resultant over the domain
-% if isPlotting
-%     subplot(2,1,2);
-% end
+    % Title
+    if ~isAnalysis3d
+        if ~isempty(analysis)
+            if strcmp(analysis.type,'PLANE_STESS')
+                title('Deformed configuration corresponding to plain stress analysis');
+            elseif strcmp(analysis.type,'PLANE_STRAIN')
+                title('Deformed configuration corresponding to plain strain analysis');
+            end
+        end
+    end
+end
 
-%% 8. Plot the mesh edges
+%% 9. In the 1st window plot the chosen resultant over the domain
+if isPlotting
+    subplot(2,1,2);
+end
+
+%% 10. Plot the mesh edges
 if isPlotting
     plot_EdgesTriangularMesh2D(mesh);
     hold on;
 end
 
-%% 9. Loop over all elements in the mesh
+%% 11. Loop over all elements in the mesh
 for iElmnts = 1:size(mesh.elements(:,1))
-    %% 9i. Initialize the array of the grid points and the tensorial quantity to be visualized
+    %% 11i. Initialize the array of the grid points and the tensorial quantity to be visualized
     P = zeros(gridXi + 2,gridEta + 2,3);
     tensorialQuantityOverDomain = zeros(gridXi + 2,gridEta + 2);
 
-    %% 9ii. Initialize local coordinates
+    %% 11ii. Initialize local coordinates
     xi = 0;
     eta = 0;
     
-    %% 9iii. Get element from the mesh
+    %% 11iii. Get element from the mesh
     element = mesh.elements(iElmnts,:);
     
-    %% 9iv. Get coordinates of the element vertices
+    %% 11iv. Get coordinates of the element vertices
     if strcmp(elementType,'triangle')
         nodeI = element(1,1);
         nodeJ = element(1,2);
@@ -325,7 +360,7 @@ for iElmnts = 1:size(mesh.elements(:,1))
         nodeL = element(1,4);
     end
     
-    %% 9v. Get the vertices of the current element
+    %% 11v. Get the vertices of the current element
     if strcmp(elementType,'triangle') || strcmp(elementType,'quadrilateral')
         Pi = mesh.nodes(nodeI,:);
         Pj = mesh.nodes(nodeJ,:);
@@ -339,7 +374,7 @@ for iElmnts = 1:size(mesh.elements(:,1))
         pl = nodesCurrent(nodeL,:);
     end
     
-    %% 9vi. Create the element freedom table
+    %% 11vi. Create the element freedom table
     if ~isAnalysis3d
         EFT = zeros(noDoFsElement,1);
         for iEta = 1:noNodesElement
@@ -355,10 +390,10 @@ for iElmnts = 1:size(mesh.elements(:,1))
         end
     end
     
-    %% 9vii. Get the element displacement vector
-    displacementElement = displacement(EFT);
+    %% 11vii. Get the element displacement vector
+    displacementElement = dHat(EFT);
 
-    %% 9viii. Get the moving vertices
+    %% 11viii. Get the moving vertices
     if strcmp(elementType,'triangle')
         Pi_eta = Pi;
         Pj_eta = Pj;
@@ -367,10 +402,10 @@ for iElmnts = 1:size(mesh.elements(:,1))
         [GPEta,~] = getGaussPointsAndWeightsOverUnitDomain(gridEta + 2);
     end
     
-    %% 9ix. Loop over all the sampling points
+    %% 11ix. Loop over all the sampling points
     for iEta = 1:gridEta + 2
         for iXi = 1:gridXi + 2
-            %% 9ix.1. Initialize the displacement components
+            %% 11ix.1. Initialize the displacement components
             if ~isAnalysis3d
                 ux = 0;
                 uy = 0;
@@ -380,7 +415,7 @@ for iElmnts = 1:size(mesh.elements(:,1))
                 uz = 0;
             end
             
-            %% 9ix.2. Get the point in the interior of the line defined from Pi and Pj
+            %% 11ix.2. Get the point in the interior of the line defined from Pi and Pj
             if strcmp(elementType,'triangle')
                 P(iXi,iEta,:) = xi*Pi_eta + (1 - xi)*Pj_eta;
             elseif strcmp(elementType,'quadrilateral')
@@ -399,7 +434,7 @@ for iElmnts = 1:size(mesh.elements(:,1))
                 error('The base element can either be triangle or quadrilateral');
             end
         
-            %% 9ix.3. Evaluate the CST basis functions at the evaluation point
+            %% 11ix.3. Evaluate the CST basis functions at the evaluation point
             if strcmp(elementType,'triangle')
                 if strcmp(resultant,'displacement')
                     N = computeCST2DBasisFunctions(Pi,Pj,Pk,P(iXi,iEta,1),P(iXi,iEta,2));
@@ -408,7 +443,7 @@ for iElmnts = 1:size(mesh.elements(:,1))
                 end
             end
             
-            %% 9ix.4. Evaluate the tensorial field value on P by looping over all the products of the basis functions with the nodal solution
+            %% 11ix.4. Evaluate the tensorial field value on P by looping over all the products of the basis functions with the nodal solution
             if strcmp(resultant,'displacement')
                 % Compute the displacement field
                 for k = 1:noNodesElement
@@ -800,7 +835,7 @@ for iElmnts = 1:size(mesh.elements(:,1))
                 end
             end
                   
-            %% 9ix.5. Update local coordinate by the step size
+            %% 11ix.5. Update local coordinate by the step size
             xi = xi + stepXi;
         end
         xi = 0;
@@ -809,14 +844,14 @@ for iElmnts = 1:size(mesh.elements(:,1))
         Pj_eta = eta*Pk + (1-eta)*Pj;
     end
 
-    %% 9x. Plot the tensorial quantity over the element
+    %% 11x. Plot the tensorial quantity over the element
     if isPlotting
         surf(P(:,:,1),P(:,:,2),P(:,:,3),tensorialQuantityOverDomain(:,:,1),'EdgeColor','none');
         hold on;
     end
 end
 
-%% 10. Assign the graphics options
+%% 12. Assign the graphics options
 if isPlotting
     colormap('jet');
     colorbar;
@@ -865,7 +900,7 @@ if isPlotting
     hold off;
 end
 
-%% 11. Update graph index
+%% 13. Update graph index
 if isPlotting
     index = graph.index + 1;
 else

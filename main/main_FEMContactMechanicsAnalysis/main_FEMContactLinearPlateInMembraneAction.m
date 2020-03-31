@@ -210,11 +210,11 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
 %% Postprocessing
 
 % Plot the current configuration
-graph.index = plot_currentConfigurationFEMPlateInMembraneAction...
-    (strMsh, homDBC, contactSegments, dHat, graph);
-hold on;
-plot_activeNodes(strMsh, dHat, nodeIDs_active);
-hold off;
+resultant = 'stress';
+component = '2Principal';
+[graph.index, ~, ~] = plot_currentConfigurationAndResultants...
+    (analysis, strMsh, homDBC, dHat, nodeIDs_active, contactSegments, ...
+    parameters, resultant, component, graph);
 
 % Compute the contact length, the contact force and the maximum contact
 % pressure
