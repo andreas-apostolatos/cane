@@ -54,8 +54,8 @@ addpath('../../FEMContactMechanicsAnalysis/graphics/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/';
-caseName = 'bridge';
-% caseName = 'cantilever_beam';
+% caseName = 'bridge';
+caseName = 'cantilever_beam';
 % caseName = 'wedge';
 % caseName = 'hertz';
 
@@ -213,7 +213,7 @@ graph.index = plot_referenceConfigurationFEMPlateInMembraneAction...
 
 % Plot the current configuration
 resultant = 'stress';
-component = '2Principal';
+component = '1Principal';
 [graph.index, ~, ~] = plot_currentConfigurationAndResultants...
     (propAnalysis, strMsh, homDBC, dHat, nodeIDs_active, contactSegments, ...
     parameters, resultant, component, graph);
