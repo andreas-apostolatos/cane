@@ -109,7 +109,7 @@ radius = 5;
 contactSegments = computeUnitNormalVctsToSegments(contactSegments);
 
 %% Amplitude of the externally applied boundary traction
-tractionLoadVct = [1e1; 0; 0];
+tractionLoadVct = [1e2; 0; 0];
 
 %% Parse data from GiD input file
 
@@ -117,11 +117,11 @@ tractionLoadVct = [1e1; 0; 0];
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/refinementStudyHertz/';
 
 % Collect all case names into an array of case names
-% Cases with uniform mesh size (0.7-0.1 element size)
+% Cases with uniform mesh size (0.7-0.1 uniform element size)
 %caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_0%d'));
 
-% Cases with refined mesh around contact tip (0.07 - 0.01 element size)
-caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_00%d'));
+% Cases with refined mesh around contact tip (0.0075 - 0.03 element size at the tip)
+caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_1%d'));
 
 %% Preform a FEM calculation for each case
 for n = 1:numberOfCases
