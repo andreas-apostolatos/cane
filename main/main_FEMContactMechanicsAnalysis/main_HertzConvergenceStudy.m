@@ -79,7 +79,7 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 %% Initialize variables for convergence study
 
 % Number of cases defined in GiD input folder
-numberOfCases = 7;
+numberOfCases = 9;
 zeroVector = zeros(numberOfCases,1);
 
 % Array of Hertz (reference) contact lengths and pressures
@@ -117,11 +117,8 @@ tractionLoadVct = [1e2; 0; 0];
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/refinementStudyHertz/';
 
 % Collect all case names into an array of case names
-% Cases with uniform mesh size (0.7-0.1 uniform element size)
-%caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_0%d'));
-
-% Cases with refined mesh around contact tip (0.0075 - 0.03 element size at the tip)
-caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_1%d'));
+% refined mesh -> 0.001 - 0.009 element size at the tip
+caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_00%d'));
 
 %% Preform a FEM calculation for each case
 for n = 1:numberOfCases
@@ -178,7 +175,7 @@ grid on
 plot(numberOfElements,contactLength,'r-o','LineWidth',2);
 plot(numberOfElements,hertzContactLength,'b--d','LineWidth',2);
 hold off
-set(gca,'xscale','log')
+%set(gca,'xscale','log')
 legend('FEM','reference','location','southeast')
 xlabel('number of mesh elements')
 ylabel('contact length [m]')
@@ -190,7 +187,7 @@ grid on
 plot(numberOfElements,maxContactPressure,'r-o','LineWidth',2);
 plot(numberOfElements,hertzPressure,'b--d','LineWidth',2);
 hold off
-set(gca,'xscale','log')
+%set(gca,'xscale','log')
 legend('FEM','reference','location','southeast')
 xlabel('number of mesh elements')
 ylabel('max contact pressure [Pa]')
