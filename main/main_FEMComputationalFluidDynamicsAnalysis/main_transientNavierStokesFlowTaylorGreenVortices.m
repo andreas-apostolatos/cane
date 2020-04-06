@@ -1,0 +1,138 @@
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
+%
+%% Script documentation
+%
+% Task : Solves the transient incompressible Navier-Stokes equations
+%
+% Date : 06.04.2020
+%
+%% Preamble
+clear;
+clc;
+close all;
+
+%% Includes
+
+% Add transient analysis functions
+addpath('../../transientAnalysis/');
+
+% Add functions related to equation system solvers
+addpath('../../equationSystemSolvers/');
+
+% Add general math functions
+addpath('../../generalMath/');
+
+% Add the classical finite element basis functions
+addpath('../../basisFunctions/');
+
+% Add all functions related to plate in membrane action analysis
+addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
+        '../../FEMPlateInMembraneActionAnalysis/solutionMatricesAndVectors/',...
+        '../../FEMPlateInMembraneActionAnalysis/loads/',...
+        '../../FEMPlateInMembraneActionAnalysis/graphics/',...
+        '../../FEMPlateInMembraneActionAnalysis/output/',...
+        '../../FEMPlateInMembraneActionAnalysis/postprocessing/');
+
+% Add all functions related to the Finite Element Methods for Computational
+% Fluid Dynamics problems
+addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/initialConditions',...
+        '../../FEMComputationalFluidDynamicsAnalysis/solvers/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/output/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/transientAnalysis/');
+
+% Add all functions related to parsing
+addpath('../../parsers/');
+
+% Add all functions related to the efficient computation functions
+addpath('../../efficientComputation/');
+
+%% Parse the data from the GiD input file
+
+% Define the path to the case
+pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
+caseName = 'TaylorGreenVortices';
+
+% THERE COULD BE AN ERROR HERE !!!
+% Parse the data
+[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesALE, propNBC, ...
+    propAnalysis, parameters, propNLinearAnalysis, propFldDynamics, ...
+    propGaussInt] = parse_FluidModelFromGid...
+    (pathToCase, caseName, 'outputEnabled');
+
+%% UI
+
+% On the computation of the body forces
+computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
+
+% On the writing the output function
+propVTK.isOutput = true;
+propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
+
+%% GUI
+if strcmp(propFldDynamics.method, 'BOSSAK')
+    propFldDynamics.computeProblemMtrcsTransient = ...
+        @computeProblemMtrcsBossakFEM4NSE;
+    propFldDynamics.computeUpdatedVct = ...
+        @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE;
+end
+
+%% On transient inhomogeneous Dirichlet boundary conditions
+
+% Total number of DOFs in the system
+noDOFs = size(fldMsh.nodes,1)*propAnalysis.noFields;
+
+% The prescribed values by function pointers
+propIDBC.prescribedValue = ...
+    {@computeXVelocityComponentForTaylorGreenVortices2D,...
+    @computeYVelocityComponentForTaylorGreenVortices2D,...
+    @computePressureFieldForTaylorGreenVortices2D};
+
+% Anonymous function for updating Taylor-Green boundary conditions
+updateTaylorGreenBCs = @(propIDBC,t) [propIDBC.u0*exp(-2*t*nue)
+                                      propIDBC.v0*exp(-2*t*nue)
+                                      propIDBC.p0*exp(-4*t*nue)];
+                                  
+updateInhomDOFs = updateTaylorGreenBCs;
+
+%% Apply Taylor-Green boundary conditions
+
+% Function that changes the inhomDBCs values
+computeTaylorGreenBCs = @(propIDBC,t) [-cos(x)*sin(y)*exp(-2*t*nue)
+                                        sin(x)*cos(y)*exp(-2*t*nue)
+                                       -0.25*(cos(2*x) + cos(2*y))*exp(-4*t*nue)];
+
+
+
+
+%% Choose the equation system solver
+if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
+    solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
+elseif strcmp(propAnalysis.type,'NAVIER_STOKES_3D')
+    solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
+else
+    error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen')
+end
+   
+%% Define the initial condition function
+computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
+% computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE;
+
+%% Solve the CFD problem
+[upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI ...
+    (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, updateInhomDOFs, ...
+    nodesALE, parameters, computeBodyForces, propAnalysis, ...
+    computeInitialConditions, solve_LinearSystem, propFldDynamics, ...
+    propNLinearAnalysis, propIDBC, propGaussInt, propVTK, caseName, ...
+    'outputEnabled');
+
+%% END OF THE SCRIPT
