@@ -63,8 +63,8 @@ function [upHistory, resHistory, minElSize] = ...
 %     solve_IGAEquationSystem : Function handle to the solution of the
 %                               equation system resulting out of the
 %                               isogeometric discretization
-%                    propIDBC : On the inhomogeneous Dirichlet boundary 
-%                               conditions,
+%                    propIDBC : Structure containing information on the 
+%                               inhomogeneous Dirichlet boundary conditions
 %                                  .noCnd : Number of segements where those
 %                                           conditions are applied
 %                                 .xiSpan : .noConditions x 2 array 

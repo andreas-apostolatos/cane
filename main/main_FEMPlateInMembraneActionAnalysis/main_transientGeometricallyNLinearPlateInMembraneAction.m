@@ -77,6 +77,10 @@ propVTK.VTKResultFile = 'undefined';
 % Equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
+% On transient inhomogeneous Dirichlet boundary conditions
+updateInhomDOFs = 'undefined';
+propIDBC = [];
+
 % Not a unit test case
 isUnitTest = false;
 
@@ -111,10 +115,11 @@ graph.index = 1;
 
 %% Solve the plate in membrane action problem
 [~, minElSize] = solve_FEMPlateInMembraneActionNLinearTransient...
-    (propAnalysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC,...
-    @computeLoadVctFEMPlateInMembraneAction, parameters, computeBodyForces, ...
-    propNLinearAnalysis, propStrDynamics, solve_LinearSystem, propGaussInt, ...
-    propVTK, caseName, 'outputEnabled');
+    (propAnalysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, ...
+    updateInhomDOFs, propNBC, @computeLoadVctFEMPlateInMembraneAction, ...
+    parameters, computeBodyForces, propNLinearAnalysis, propIDBC, ...
+    propStrDynamics, solve_LinearSystem, propGaussInt, propVTK, ...
+    caseName, 'outputEnabled');
 
 %% Postprocessing
 % graph.visualization.geometry = 'reference_and_current';

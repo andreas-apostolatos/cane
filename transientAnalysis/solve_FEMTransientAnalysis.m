@@ -1,12 +1,12 @@
 function [uHistory,minElSize] = solve_FEMTransientAnalysis ...
     (propAnalysis, msh, DOFNumbering, freeDOFs, homDOFs, inhomDOFs, ...
-    valuesInhomDOFs, propALE, computeInitCnds, computeBodyForceVct, ...
-    propNBC, computeLoadVct, parameters, solve_FEMEquationSystem, ...
-    computeConstantProblemMatrices, computeMassMtx, ...
-    computeProblemMatricesSteadyState, computeUpdatedMesh, ...
+    valuesInhomDOFs, updateInhomDOFs, propALE, computeInitCnds, ...
+    computeBodyForceVct, propNBC, computeLoadVct, parameters, ...
+    solve_FEMEquationSystem, computeConstantProblemMatrices, ...
+    computeMassMtx, computeProblemMatricesSteadyState, computeUpdatedMesh, ...
     solve_LinearSystem, propTransientAnalysis, propNLinearAnalysis, ...
-    propGaussInt, propOutput, caseName, pathToOutput, title, DOF4Output, ...
-    tab, outMsg)
+    propIDBC, propGaussInt, propOutput, caseName, pathToOutput, title, ...
+    DOF4Output, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -37,6 +37,9 @@ function [uHistory,minElSize] = solve_FEMTransientAnalysis ...
 %                  valuesInhomDOFs : Prescribed values on the nodes where 
 %                                    inhomogeneous boundary conditions are 
 %                                    applied
+%                  updateInhomDOFs : Function handle to the update of the 
+%                                    inhomogeneous Dirichlet boundary 
+%                                    conditions
 %                          propALE : Structure containing information on 
 %                                    the nodes along the ALE boundary,
 %                                        .nodes : The sequence of the nodal 
@@ -85,6 +88,8 @@ function [uHistory,minElSize] = solve_FEMTransientAnalysis ...
 %                                    velocities at the nodes
 %               solve_LinearSystem : Function handle to the solver for the 
 %                                    linear equation system
+%             propIDBC : Structure containing information on the 
+%                        inhomogeneous Dirichlet boundary conditions
 %            propTransientAnalysis : On the transient analysis :
 %                                 .method : The time integration method
 %                              .alphaBeta : (parameter for the Bossak 
@@ -100,6 +105,9 @@ function [uHistory,minElSize] = solve_FEMTransientAnalysis ...
 %                                    .eps : The residual tolerance
 %                                .maxIter : The maximum number of nonlinear
 %                                           iterations
+%                         propIDBC : Structure containing information on 
+%                                    the inhomogeneous Dirichlet boundary 
+%                                    conditions
 %                     propGaussInt : On the spatial integration
 %                                         .type : 'default', 'user'
 %                                   .domainNoGP : Number of Gauss Points 
@@ -164,19 +172,20 @@ function [uHistory,minElSize] = solve_FEMTransientAnalysis ...
 %
 %  7iii. Preamble of the time stepping iterations
 %
-%   7iv. Solve the mesh motion problem and update the mesh node locations and velocities
+%   7iv. Update the values of the inhomogeneous Dirichlet boundary conditions
 %
-%    7v. Compute the load vector at the current time step
+%    7v. Solve the mesh motion problem and update the mesh node locations and velocities
 %
-%   7vi. Save the discrete primary field and its first and second time derivatives
+%   7vi. Compute the load vector at the current time step
 %
-%  7vii. Solve the equation system
+%  7vii. Save the discrete primary field and its first and second time derivatives
 %
-% 7viii. Update the time derivatives of the field
+% 7viii. Solve the equation system
 %
-%   7ix. Write out the results into a VTK file or save them into an output variable
+%   7ix. Update the time derivatives of the field
+%
+%    7x. Write out the results into a VTK file or save them into an output variable
 % <-
-% 
 %
 %% Function main body
 if ~isfield(propTransientAnalysis, 'method')
@@ -347,7 +356,12 @@ while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTi
         fprintf(msgTS);
     end
     
-    %% 7iv. Solve the mesh motion problem and update the mesh node locations and velocities
+    %% 7iv. Update the values of the inhomogeneous Dirichlet boundary conditions
+    if isa(updateInhomDOFs, 'function_handle')
+        valuesInhomDOFs = updateInhomDOFs(valuesInhomDOFs, propIDBC);
+    end
+    
+    %% 7v. Solve the mesh motion problem and update the mesh node locations and velocities
     nodesSaved = msh.nodes;
     if ~ischar(propALE) && ~isempty(propALE)
         [msh, uMeshALE, inhomDOFs, valuesInhomDOFs] = ...
@@ -358,7 +372,7 @@ while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTi
         uMeshALE = 'undefined';
     end
     
-    %% 7v. Compute the load vector at the current time step
+    %% 7vi. Compute the load vector at the current time step
     if ~ischar(computeLoadVct)
         FHistory(:, numTimeStep) = computeLoadVct ... 
             (msh, propAnalysis, propNBC, t, propGaussInt, '');
@@ -366,12 +380,12 @@ while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTi
         FHistory(:, numTimeStep) = zeros(noDOFs, 1);
     end
         
-    %% 7vi. Save the discrete primary field and its first and second time derivatives
+    %% 7vii. Save the discrete primary field and its first and second time derivatives
     uSaved = u;
     uDotSaved = uDot;
     uDDotSaved = uDDot;
     
-    %% 7vii. Solve the equation system
+    %% 7viii. Solve the equation system
     [u, ~, isConverged, minElSize] = solve_FEMEquationSystem...
         (propAnalysis, uSaved, uDotSaved, uDDotSaved, msh, ...
         FHistory(:, numTimeStep), computeBodyForceVct, parameters, u, ...
@@ -380,7 +394,7 @@ while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTi
         uMeshALE, solve_LinearSystem, propTransientAnalysis, t, ...
         propNLinearAnalysis, propGaussInt, strcat(tab,'\t'), outMsg);
     
-    %% 7viii. Update the time derivatives of the field
+    %% 7ix. Update the time derivatives of the field
     if isConverged
         if isa(propTransientAnalysis.computeUpdatedVct, 'function_handle')
             [uDot, uDDot] = propTransientAnalysis.computeUpdatedVct ...
@@ -390,7 +404,7 @@ while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTi
         end
     end
     
-    %% 7ix. Write out the results into a VTK file or save them into an output variable
+    %% 7x. Write out the results into a VTK file or save them into an output variable
     if isa(propOutput.writeOutputToFile, 'function_handle')
         propOutput.writeOutputToFile...
             (propAnalysis, propNLinearAnalysis, propTransientAnalysis, ...

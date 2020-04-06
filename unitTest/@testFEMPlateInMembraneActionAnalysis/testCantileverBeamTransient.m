@@ -89,6 +89,10 @@ propOutput.VTKResultFile = 'undefined';
 % Choose equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
+% On transient inhomogeneous Dirichlet boundary conditions
+updateInhomDOFs = 'undefined';
+propIDBC = [];
+
 % Choose the matric computation corresponding to the chosen time
 % integration scheme
 if strcmp(propStrDynamics.method, 'EXPLICIT_EULER')
@@ -100,10 +104,11 @@ end
 
 %% 3. Solve the plate in membrane action problem
 [dHistory, minElSize] = solve_FEMPlateInMembraneActionNLinearTransient...
-    (propAnalysis, strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC,...
-    @computeLoadVctFEMPlateInMembraneAction, parameters, computeBodyForces, ...
-    propNLinearAnalysis, propStrDynamics, solve_LinearSystem, propGaussInt, ...
-    propOutput, caseName,'');
+    (propAnalysis, strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    updateInhomDOFs, propNBC, @computeLoadVctFEMPlateInMembraneAction, ...
+    parameters, computeBodyForces, propNLinearAnalysis, propIDBC, ...
+    propStrDynamics, solve_LinearSystem, propGaussInt, propOutput, ...
+    caseName,'');
 
 %% 4. Define the expected solutions
 

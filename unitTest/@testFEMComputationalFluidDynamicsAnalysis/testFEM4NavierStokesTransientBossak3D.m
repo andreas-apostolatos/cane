@@ -41,6 +41,10 @@ absTol3 = 1e-13;
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
 
+% On transient inhomogeneous Dirichlet boundary conditions
+updateInhomDOFs = 'undefined';
+propIDBC = [];
+
 % On the writing the output function
 propVTK.isOutput = false;
 propVTK.writeOutputToFile = 'undefined';
@@ -76,9 +80,9 @@ end
 
 %% 4. Solve the CFD problem
 [upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI ...
-    (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, parameters, ...
-    computeBodyForces, propAnalysis, computeInitialConditions, ...
-    solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
+    (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, updateInhomDOFs, propALE, ...
+    parameters, computeBodyForces, propAnalysis, computeInitialConditions, ...
+    solve_LinearSystem, propFldDynamics, propNLinearAnalysis, propIDBC, ...
     propGaussInt, propVTK, caseName,'');
 
 %% 5. Define the expected solution
