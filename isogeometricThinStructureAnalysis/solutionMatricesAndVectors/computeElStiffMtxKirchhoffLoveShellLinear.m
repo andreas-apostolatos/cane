@@ -1,4 +1,5 @@
-function Ke = computeElStiffMtxKirchhoffLoveShellLinear(p,q,dR,GCovariant,dGCovariant,G3Tilde,Dm,Db)
+function Ke = computeElStiffMtxKirchhoffLoveShellLinear ...
+    (p, q, dR, GCovariant, dGCovariant, G3Tilde, Dm, Db)
 %% Licensing
 %
 % License:         BSD License
@@ -50,12 +51,12 @@ function Ke = computeElStiffMtxKirchhoffLoveShellLinear(p,q,dR,GCovariant,dGCova
 %% 0. Read input
 
 % The number of DOFs
-noCPsEl = (p + 1)*(q + 1);
-nDOFsEl = 3*noCPsEl;
+numCPsEl = (p + 1)*(q + 1);
+numDOFsEl = 3*numCPsEl;
 
 % Initialize auxiliary arrays
-BOperatorMatrixMembraneCurvilinear = zeros(3,nDOFsEl);
-BOperatorMatrixBendingCurvilinear = zeros(3,nDOFsEl);
+BOperatorMatrixMembraneCurvilinear = zeros(3,numDOFsEl);
+BOperatorMatrixBendingCurvilinear = zeros(3,numDOFsEl);
 
 %% 1. Compute the covariant metric coefficient tensor
 GabCov = GCovariant'*GCovariant;
@@ -64,36 +65,40 @@ GabCov = GCovariant'*GCovariant;
 GContravariant = (GabCov\GCovariant')';
 
 %% 3. Compute the local Cartesian basis
-eLC = computeLocalCartesianBasis4BSplineSurface(GCovariant,GContravariant);
+eLC = computeLocalCartesianBasis4BSplineSurface ...
+    (GCovariant, GContravariant);
 
 %% 4. Compute the transformation matrix from the contravariant to the local Cartesian basis
-TContra2LC = computeTFromContra2LocalCartesian4VoigtStrainIGAKLShell(eLC,GContravariant);
+TContra2LC = computeTFromContra2LocalCartesian4VoigtStrainIGAKLShell ...
+    (eLC, GContravariant);
 
 %% 5. Compute the B-operator matrices for the mebrane and bending part of the stiffnesses in the curvilinear system
 
 % Loop over all the degrees of freedom
-for r = 1:nDOFsEl
+for iDOFs = 1:numDOFsEl
     % Compute local node number k and dof direction dir
-    k = ceil(r/3);
-    dir = r-3*(k-1);
-    dg = zeros(3,2);
-    dg(dir,1) = dR(k,2);
-    dg(dir,2) = dR(k,4);
+    k = ceil(iDOFs/3);
+    dir = iDOFs - 3*(k - 1);
+    dg = zeros(3, 2);
+    dg(dir, 1) = dR(k, 2);
+    dg(dir, 2) = dR(k, 4);
 
     % Compute the B-operator matrix for the membrane part in the
     % curvilinear space
-    BOperatorMatrixMembraneCurvilinear(1,r) = dR(k,2)*GCovariant(dir,1);
-    BOperatorMatrixMembraneCurvilinear(2,r) = dR(k,4)*GCovariant(dir,2);
-    BOperatorMatrixMembraneCurvilinear(3,r) = 1/2*(dR(k,2)*GCovariant(dir,2) + GCovariant(dir,1)*dR(k,4));
+    BOperatorMatrixMembraneCurvilinear(1, iDOFs) = dR(k, 2)*GCovariant(dir, 1);
+    BOperatorMatrixMembraneCurvilinear(2, iDOFs) = dR(k, 4)*GCovariant(dir, 2);
+    BOperatorMatrixMembraneCurvilinear(3, iDOFs) = 1/2*(dR(k, 2)*GCovariant(dir, 2) + ...
+        GCovariant(dir, 1)*dR(k, 4));
 
     % Compute the curvature constituents
-    dg3 = cross(dg(:,1),GCovariant(:,2)) + cross(GCovariant(:,1),dg(:,2));
+    dg3 = cross(dg(:, 1), GCovariant(:, 2)) + cross(GCovariant(:, 1), dg(:, 2));
     g3dg3lg3_3 = G3Tilde'*dg3/norm(G3Tilde)^3;
     dn = dg3/norm(G3Tilde) - G3Tilde*g3dg3lg3_3;
 
     % Compute the B-operator matrix for the bending part in the curvilinear 
     % space
-    BOperatorMatrixBendingCurvilinear(:,r) = - (dR(k,[3 6 5])'*G3Tilde(dir)/norm(G3Tilde) + dGCovariant'*dn);
+    BOperatorMatrixBendingCurvilinear(:, iDOFs) = ...
+        -(dR(k, [3 6 5])'*G3Tilde(dir)/norm(G3Tilde) + dGCovariant'*dn);
 end
 
 %% 6. Compute the B-operator matrices for the mebrane and bending part of the stiffnesses in the local Cartesian system

@@ -1,7 +1,8 @@
-function [BSplinePatches,CPHistoryMultipatch,propCoupling,resHistory,...
-    hasConverged,noIter] = ...
-    solve_DDMFormFindingIGAMembrane(BSplinePatches,connections,...
-    propCoupling,propFormFinding,solve_LinearSystem,outMsg)
+function [BSplinePatches, CPHistoryMultipatch, propCoupling, resHistory, ...
+    isConverged, noIter] = ...
+    solve_DDMFormFindingIGAMembrane ...
+    (BSplinePatches, connections, propCoupling, propFormFinding, ...
+    solve_LinearSystem, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -63,7 +64,7 @@ function [BSplinePatches,CPHistoryMultipatch,propCoupling,resHistory,...
 %                              Dirichlet boundary conditions is enabled
 %                 resHistory : The history of the error for each form
 %                              finding iteration
-%               hasConverged : Flag on whether the form-finding iterations
+%                isConverged : Flag on whether the form-finding iterations
 %                              have converged
 %                     noIter : Number of iterations
 %
@@ -130,17 +131,17 @@ function [BSplinePatches,CPHistoryMultipatch,propCoupling,resHistory,...
 % 18. Appendix
 %
 %% Function main body
-if ~strcmp(propCoupling.method,'penalty') && ~strcmp(propCoupling.method,'lagrangeMultipliers') && ...
-        ~strcmp(propCoupling.method,'mortar') && ~strcmp(propCoupling.method,'nitsche')
+if ~strcmp(propCoupling.method, 'penalty') && ~strcmp(propCoupling.method, 'lagrangeMultipliers') && ...
+        ~strcmp(propCoupling.method, 'mortar') && ~strcmp(propCoupling.method, 'nitsche')
     error('Wrong coupling method for the multipatch structure in propCoupling.method was selected');
 end
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('______________________________________________________________\n');
     fprintf('##############################################################\n');
     fprintf('Form-finding analysis for the domain decomposition of the\n');
     fprintf('isogeometric membrane using the ');
-    if strcmp(propCoupling.method,'lagrangeMultipliers')
-        if isfield(propCoupling,'alphaD')
+    if strcmp(propCoupling.method, 'lagrangeMultipliers')
+        if isfield(propCoupling, 'alphaD')
             if propCoupling.alphaD ~= 0
                 fprintf('augmented Lagrange Multipliers\n');
                 fprintf('method has been initiated\n\n');
@@ -149,13 +150,13 @@ if strcmp(outMsg,'outputEnabled')
                 fprintf('has been initiated\n\n');
             end
         end
-    elseif strcmp(propCoupling.method,'mortar')
+    elseif strcmp(propCoupling.method, 'mortar')
         fprintf('mortar method has been \n');
         fprintf('initiated\n\n');
-    elseif strcmp(propCoupling.method,'penalty')
+    elseif strcmp(propCoupling.method, 'penalty')
         fprintf('Penalty method has been \n');
         fprintf('initiated\n\n');
-    elseif strcmp(propCoupling.method,'nitsche')
+    elseif strcmp(propCoupling.method, 'nitsche')
         fprintf('Nitsche method has been \n');
         fprintf('initiated\n\n');
     else
@@ -164,50 +165,52 @@ if strcmp(outMsg,'outputEnabled')
     end
     fprintf('Form-finding properties \n');
     fprintf('----------------------- \n\n');
-    if isfield(propFormFinding,'tolerance')
-        fprintf('Tolerance = %d\n',propFormFinding.tolerance);
+    if isfield(propFormFinding, 'tolerance')
+        fprintf('Tolerance = %d\n', propFormFinding.tolerance);
     else
         error('Define form-finding tolerance in propFormFinding.tolerance');
     end
-    if isfield(propFormFinding,'minNoIter')
-        fprintf('Minimum number of iterations = %d\n',propFormFinding.minNoIter);
+    if isfield(propFormFinding, 'minNoIter')
+        fprintf('Minimum number of iterations = %d\n', propFormFinding.minNoIter);
     else
         error('Define the minimum number of form-finding iterations in propFormFinding.minNoIter');
     end
-    if isfield(propFormFinding,'maxNoIter')
-        fprintf('Maximum number of iterations = %d\n',propFormFinding.maxNoIter);
+    if isfield(propFormFinding, 'maxNoIter')
+        fprintf('Maximum number of iterations = %d\n', propFormFinding.maxNoIter);
     else
         error('Define the maximum number of form-finding iterations in propFormFinding.maxNoIter');
     end
     fprintf('\n\n');
     fprintf('Coupling properties \n');
     fprintf('------------------- \n\n');
-    if strcmp(propCoupling.method,'penalty')
-        if ~isfield(propCoupling,'alphaD')
+    if strcmp(propCoupling.method, 'penalty')
+        if ~isfield(propCoupling, 'alphaD')
             error('Choose penalty factors for the displacement field in propCoupling.alphaD');
         end
         if size(propCoupling.alphaD) ~= connections.No
             error('The number of the penalty factors in propCoupling.alphaD must be the same as for the number of connections connections.No');
         end
         for iPatches = 1:connections.No
-            fprintf('Displacement penalty factor for patch %d equal to alpha = %d \n',iPatches,propCoupling.alphaD(iPatches,1));
+            fprintf('Displacement penalty factor for patch %d equal to alpha = %d \n', ...
+                iPatches, propCoupling.alphaD(iPatches, 1));
         end
     elseif strcmp(propCoupling.method,'lagrangeMultipliers')
-        if ~isfield(propCoupling,'alphaD')
+        if ~isfield(propCoupling, 'alphaD')
             error('Choose penalty factors for the displacement field in propCoupling.alphaD');
         end
         if size(propCoupling.alphaD) ~= connections.No
             error('The number of the penalty factors in propCoupling.alphaD must be the same as for the number of connections connections.No');
         end
         for iPatches = 1:connections.No
-            fprintf('Displacement penalty factor for patch %d equal to alpha = %d \n',iPatches,propCoupling.alphaD(iPatches,1));
+            fprintf('Displacement penalty factor for patch %d equal to alpha = %d \n', ...
+                iPatches, propCoupling.alphaD(iPatches, 1));
         end
-        if ~isfield(connections,'lambda')
+        if ~isfield(connections, 'lambda')
             fprintf('\n');
             fprintf('Choose a discretization for the Lagrange Multipliers field in connections.lambda');
         end
-    elseif strcmp(propCoupling.method,'mortar')
-        if ~isfield(propCoupling,'isSlaveSideCoarser')
+    elseif strcmp(propCoupling.method, 'mortar')
+        if ~isfield(propCoupling, 'isSlaveSideCoarser')
             error('Define if the coarse side is the slave in propCoupling.isSlaveSideCoarser by true or false');
         else
             if propCoupling.isSlaveSideCoarser
@@ -219,21 +222,23 @@ if strcmp(outMsg,'outputEnabled')
         if ~isfield(propCoupling,'computeRearrangedProblemMtrcs')
             error('Define the function handle to the computation of the re-arranged system corresponding to the mortar method in propCoupling.computeRearrangedProblemMtrcs');
         else
-            fprintf('The function handle to the computation of the re-arranged system is \n%s\n',func2str(propCoupling.computeRearrangedProblemMtrcs));
+            fprintf('The function handle to the computation of the re-arranged system is \n%s\n', ...
+                func2str(propCoupling.computeRearrangedProblemMtrcs));
         end
-    elseif strcmp(propCoupling.method,'nitsche')
-        if propCoupling.estimationStabilPrm == true;
+    elseif strcmp(propCoupling.method, 'nitsche')
+        if propCoupling.estimationStabilPrm == true
             fprintf('Automatic estimation of the stabilization is enabled\n');
         else
-            if isfield(propCoupling,'alphaD')
-                fprintf('Stabilization factor is chosen as %d\n',propCoupling.alphaD);
+            if isfield(propCoupling, 'alphaD')
+                fprintf('Stabilization factor is chosen as %d\n', propCoupling.alphaD);
             else
                  fprintf('\n');
                  error('Choose stabilization parameter in propCoupling.alphaD');
             end
         end
-        if isfield(propCoupling,'gammaTilde')
-            fprintf('Linear combination factor for the interface tractions is chosen as %d',propCoupling.gammaTilde);
+        if isfield(propCoupling, 'gammaTilde')
+            fprintf('Linear combination factor for the interface tractions is chosen as %d', ...
+                propCoupling.gammaTilde);
         else
             fprintf('\n');
             error('Choose linear combination factor for the interface tractions in propCoupling.gammaTilde');
@@ -242,8 +247,8 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('\n\n');
     isWeakDBC = false;
     for iPatches = 1:length(BSplinePatches)
-        if isfield(BSplinePatches{iPatches},'weakDBC')
-            if isfield(BSplinePatches{iPatches}.weakDBC,'noCnd')
+        if isfield(BSplinePatches{iPatches}, 'weakDBC')
+            if isfield(BSplinePatches{iPatches}.weakDBC, 'noCnd')
                 if BSplinePatches{iPatches}.weakDBC.noCnd > 0
                     isWeakDBC = true;
                     break;
@@ -256,25 +261,25 @@ if strcmp(outMsg,'outputEnabled')
         fprintf('---------------------------------- \n\n');
         for iPatches = 1:length(BSplinePatches)
             BSplinePatch = BSplinePatches{iPatches};
-            if isfield(BSplinePatch,'weakDBC')
-                if isfield(BSplinePatch.weakDBC,'noCnd')
+            if isfield(BSplinePatch, 'weakDBC')
+                if isfield(BSplinePatch.weakDBC, 'noCnd')
                     if BSplinePatch.weakDBC.noCnd > 0
-                        fprintf('Weak boundary conditions using the %s method are applied \n',BSplinePatch.weakDBC.method);
-                        fprintf('over %d boundaries of the B-Spline patch %d: \n',BSplinePatch.weakDBC.noCnd,iPatches);
-                        if strcmp(BSplinePatch.weakDBC.method,'Nitsche')
+                        fprintf('Weak boundary conditions using the %s method are applied \n', BSplinePatch.weakDBC.method);
+                        fprintf('over %d boundaries of the B-Spline patch %d: \n', BSplinePatch.weakDBC.noCnd, iPatches);
+                        if strcmp(BSplinePatch.weakDBC.method, 'Nitsche')
                             if BSplinePatch.weakDBC.estimationStabilPrm == true
                                 fprintf('Automatic estimation of the stabilization parameter is enabled \n');
                             end
-                            if isfield(BSplinePatch.weakDBC,'computeConstMtx')
+                            if isfield(BSplinePatch.weakDBC, 'computeConstMtx')
                                 if isfield(BSplinePatch.weakDBC.alpha)
-                                    fprintf('Manual stabilization parameter chosen as %d\n',BSplinePatch.weakDBC.alpha)
+                                    fprintf('Manual stabilization parameter chosen as %d\n', BSplinePatch.weakDBC.alpha)
                                 else
                                     error('Manual stabilization parameter weakDBC.alpha needs to be assigned\n');
                                 end
                             end
-                        elseif strcmp(BSplinePatch.weakDBC.method,'Penalty')
+                        elseif strcmp(BSplinePatch.weakDBC.method, 'Penalty')
                             if isfield(BSplinePatch.weakDBC.alpha)
-                                fprintf('The penalty parameter is chosen as %d',BSplinePatch.weakDBC.alpha);
+                                fprintf('The penalty parameter is chosen as %d', BSplinePatch.weakDBC.alpha);
                             else
                                 error('The penalty parameter needs to be assigned');
                             end
@@ -288,8 +293,6 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('\n');
     fprintf('______________________________________________________________\n');
     fprintf('\n');
-    
-    % start measuring computational time
     tic;
 end
 
@@ -306,11 +309,11 @@ noPatches = length(BSplinePatches);
 
 % Check input
 for iPatches = 1:noPatches
-    if isfield(BSplinePatches{iPatches}.weakDBC,'computeTangMtxResVct') && ...
-            (strcmp(BSplinePatches{iPatches}.weakDBC.method,'penalty') || ...
-            strcmp(BSplinePatches{iPatches}.weakDBC.method,'lagrangeMultipliers'))
+    if isfield(BSplinePatches{iPatches}.weakDBC, 'computeTangMtxResVct') && ...
+            (strcmp(BSplinePatches{iPatches}.weakDBC.method, 'penalty') || ...
+            strcmp(BSplinePatches{iPatches}.weakDBC.method, 'lagrangeMultipliers'))
         error('No field weakDBC.%s needs to be defined for the method %s corresponding to the application of weak Dirichlet boundary conditions', ...
-            BSplinePatches{iPatches}.weakDBC.computeTangMtxResVct,BSplinePatches{iPatches}.weakDBC.method);
+            BSplinePatches{iPatches}.weakDBC.computeTangMtxResVct, BSplinePatches{iPatches}.weakDBC.method);
     end
 end
 
@@ -323,21 +326,21 @@ isFollowerFF = true;
 % Check if Lagrange Multipliers field for the displacement coupling is
 % enforced
 isLagrangeMultipliersDisplacementsEnabled = false;
-if (isfield(connections,'lambda') && strcmp(propCoupling.method,'lagrangeMultipliers') ) || strcmp(propCoupling.method,'mortar')
+if (isfield(connections, 'lambda') && strcmp(propCoupling.method, 'lagrangeMultipliers') ) || strcmp(propCoupling.method, 'mortar')
     isLagrangeMultipliersDisplacementsEnabled = true;
-    if isfield(connections,'lambda')
-        if isempty(connections.lambda) && strcmp(propCoupling.method,'lagrangeMultipliers')
+    if isfield(connections, 'lambda')
+        if isempty(connections.lambda) && strcmp(propCoupling.method, 'lagrangeMultipliers')
             error('Lagrange multipliers discretization for the displacement coupling exists but its empty');
         end
     end
-elseif ~isfield(connections,'lambda') && strcmp(propCoupling.method,'lagrangeMultipliers') 
+elseif ~isfield(connections, 'lambda') && strcmp(propCoupling.method, 'lagrangeMultipliers')
     error('Lagrange Multipliers method for the coupling is chosen but field connections.lambda is undefined');
 end
 
 % Check if Lagrange Multipliers field for the rotational coupling is
 % enforced
 isLagrangeMultipliersRotationsEnabled = false;
-if isfield(connections,'mu') && strcmp(propCoupling.method,'lagrangeMultipliers')
+if isfield(connections, 'mu') && strcmp(propCoupling.method, 'lagrangeMultipliers')
     isLagrangeMultipliersRotationsEnabled = true;
     if isempty(connections.mu)
         error('Lagrange multipliers discretization for the rotational coupling exists but its empty');
@@ -345,12 +348,12 @@ if isfield(connections,'mu') && strcmp(propCoupling.method,'lagrangeMultipliers'
 end
 
 % On the application of weak Dirichlet boundary conditions
-isWeakDBC = zeros(noPatches,1);
+isWeakDBC = zeros(noPatches, 1);
 for iPatches = 1:noPatches
     if ~isempty(BSplinePatches{iPatches}.weakDBC)
-        if isfield(BSplinePatches{iPatches}.weakDBC,'noCnd')
+        if isfield(BSplinePatches{iPatches}.weakDBC, 'noCnd')
             if BSplinePatches{iPatches}.weakDBC.noCnd > 0
-                isWeakDBC(iPatches,1) = true;
+                isWeakDBC(iPatches, 1) = true;
             end
         end
     end
@@ -361,7 +364,7 @@ end
 isReferenceUpdated = true;
 
 % Initialize convergence flag to false
-hasConverged = false;
+isConverged = false;
 
 % Initialize the history of the Control Points through the form finding
 % iterations and the residual history
@@ -369,10 +372,10 @@ CPHistoryMultipatch = struct([]);
 for iPatches = 1:noPatches
     CPHistoryMultipatch{iPatches}.CPHistory{1} = BSplinePatches{iPatches}.CP;
 end
-resHistory = zeros(propFormFinding.maxNoIter,1);
+resHistory = zeros(propFormFinding.maxNoIter, 1);
 
 % Initialize form finding iteration counter
-counterFormFindingIterations = 1;
+counterFoFiIter = 1;
 
 % Initialize the dummy arrays
 dHatSaved = 'undefined';
@@ -382,11 +385,17 @@ dHatDot = 'undefined';
 dHatDDot = 'undefined';
 massMtx = 'undefined';
 dampMtx = 'undefined';
+updateDirichletBCs = 'undefined';
+propIDBC = 'undefined';
+
+% Set flag for co-simulation with EMPIRE to false
 isCosimulationWithEmpire = false;
-graph.index = 1;
-graph.postprocConfig = 'current';
-graph.resultant = 'displacement';
-graph.component = '2norm';
+
+% Set graph properties
+propGraph.index = 1;
+propGraph.postprocConfig = 'current';
+propGraph.resultant = 'displacement';
+propGraph.component = '2norm';
 
 % On plotting the deformed configuration through the nonlinear iterations
 plot_IGANLinear = '';
@@ -413,10 +422,10 @@ NBC = struct([]);
 parametersCablesSaved = struct([]);
 
 %% 1. Assign the computation of the tangent stiffness matrix according to the selected method
-if strcmp(propCoupling.method,'penalty') || strcmp(propCoupling.method,'lagrangeMultipliers') || ...
-        strcmp(propCoupling.method,'mortar')
+if strcmp(propCoupling.method, 'penalty') || strcmp(propCoupling.method, 'lagrangeMultipliers') || ...
+        strcmp(propCoupling.method, 'mortar')
     computeTanStiffMtxAndResVct = @computeTangentStiffMtxResVctDDMPenaltyIGAMembrane;
-elseif strcmp(propCoupling.method,'nitsche')
+elseif strcmp(propCoupling.method, 'nitsche')
     computeTanStiffMtxAndResVct = @computeTangentStiffMtxResVctDDMNitscheIGAMembrane;
 else
     error('Choose coupling method in propCoupling.method');
@@ -427,14 +436,14 @@ for iPatches = 1:noPatches
     BSplinePatches{iPatches}.noDOFs = 3*BSplinePatches{iPatches}.noCPs;
     noDOFsPatchLM = 0;
     if isWeakDBC(iPatches,1)
-        if strcmp(BSplinePatches{iPatches}.weakDBC.method,'lagrangeMultipliers')
+        if strcmp(BSplinePatches{iPatches}.weakDBC.method, 'lagrangeMultipliers')
             for iCnd = 1:BSplinePatches{iPatches}.weakDBC.noCnd
                 noDOFsPatchLMCnd = 3*length(BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.CP(:,1));
                 noDOFsPatchLM = noDOFsPatchLM + noDOFsPatchLMCnd;
                 if iCnd == 1
                     index = 3*BSplinePatches{iPatches}.noCPs;
                 else
-                    index = BSplinePatches{iPatches}.weakDBC.lambda{iCnd-1}.EFT(length(BSplinePatches{iPatches}.weakDBC.lambda{iCnd-1}.EFT));
+                    index = BSplinePatches{iPatches}.weakDBC.lambda{iCnd - 1}.EFT(length(BSplinePatches{iPatches}.weakDBC.lambda{iCnd - 1}.EFT));
                 end
                 BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.EFT = index + 1:index + noDOFsPatchLMCnd;
             end
@@ -456,14 +465,14 @@ for iPatches = 1:noPatches
         BSplinePatches{iPatches}.EFTPatches = 1:noDOFsPatch;
     else
         BSplinePatches{iPatches}.EFTPatches = ...
-            BSplinePatches{iPatches-1}.EFTPatches(length(BSplinePatches{iPatches-1}.EFTPatches)) + ...
-            1:BSplinePatches{iPatches-1}.EFTPatches(length(BSplinePatches{iPatches-1}.EFTPatches)) + ...
+            BSplinePatches{iPatches - 1}.EFTPatches(length(BSplinePatches{iPatches - 1}.EFTPatches)) + ...
+            1:BSplinePatches{iPatches - 1}.EFTPatches(length(BSplinePatches{iPatches - 1}.EFTPatches)) + ...
             noDOFsPatch;
     end
 end
 
 %% 5. Assign a number of DOFs for each Lagrange Multipliers field corresponding to the multipatch coupling
-if strcmp(propCoupling.method,'lagrangeMultipliers')
+if strcmp(propCoupling.method, 'lagrangeMultipliers')
     noDOFsLagrangeMultipliers = 0;
     for iConnections = 1:connections.No
         noDOFsLagrangeMultipliers = noDOFsLagrangeMultipliers + ...
@@ -488,7 +497,7 @@ for iPatches = 1:noPatches
 end
 
 %% 7. Create a freedom table for each Lagrange Multipliers field corresponding to each patch connection
-if strcmp(propCoupling.method,'lagrangeMultipliers')
+if strcmp(propCoupling.method, 'lagrangeMultipliers')
     for iConnections = 1:connections.No
         if iConnections == 1
             index = noDOFsPatches;
@@ -498,7 +507,7 @@ if strcmp(propCoupling.method,'lagrangeMultipliers')
             if isLagrangeMultipliersRotationsEnabled
                 index = connections.mu{iConnections-1}.EFTLagrangeMultipliers(length(connections.mu{iConnections-1}.EFTLagrangeMultipliers));
             else
-                index = connections.lambda{iConnections-1}.EFTLagrangeMultipliers(length(connections.lambda{iConnections-1}.EFTLagrangeMultipliers));
+                index = connections.lambda{iConnections - 1}.EFTLagrangeMultipliers(length(connections.lambda{iConnections-1}.EFTLagrangeMultipliers));
             end
             connections.lambda{iConnections}.EFTLagrangeMultipliers = index + 1:index+3*connections.lambda{iConnections}.noCPs;
         end
@@ -510,7 +519,7 @@ if strcmp(propCoupling.method,'lagrangeMultipliers')
 end
 
 %% 8. Compute the total number of DOFs for the coupled multipatch system
-if strcmp(propCoupling.method,'lagrangeMultipliers')
+if strcmp(propCoupling.method, 'lagrangeMultipliers')
     noDOFs = noDOFsPatches + noDOFsLagrangeMultipliers;
 else
     noDOFs = noDOFsPatches ;
@@ -525,30 +534,34 @@ for iPatches = 1:noPatches
     BSplinePatches{iPatches}.parameters.rho = densityFF;
     
     %% 9ii. Change the load parameters for each patch
-    if isfield(BSplinePatches{iPatches}.NBC,'noCnd')
+    if isfield(BSplinePatches{iPatches}.NBC, 'noCnd')
         for iCnd = 1:BSplinePatches{iPatches}.NBC.noCnd
-            if isfield(BSplinePatches{iPatches}.NBC,'isFollower')
+            if isfield(BSplinePatches{iPatches}.NBC, 'isFollower')
                 NBC{iPatches} = BSplinePatches{iPatches}.NBC;
-                BSplinePatches{iPatches}.NBC.isFollower(iCnd,1) = isFollowerFF;
+                BSplinePatches{iPatches}.NBC.isFollower(iCnd, 1) = isFollowerFF;
             else
-                error('Neumann condition %d of patch %d does not contain variable isFollower',iCnd,iPatches)
+                error('Neumann condition %d of patch %d does not contain variable isFollower', ...
+                    iCnd, iPatches);
             end
         end
     else
-        error('Patch %d does not contain Neumann boundary conditions',iPatches)
+        error('Patch %d does not contain Neumann boundary conditions', iPatches);
     end
     
     %% 9iii. Change the parameters of the cable elements
     if BSplinePatches{iPatches}.cables.No > 0
-        parametersCablesSaved{iPatches}.parameters = BSplinePatches{iPatches}.cables.parameters;
+        parametersCablesSaved{iPatches}.parameters = ...
+            BSplinePatches{iPatches}.cables.parameters;
     else
         parametersCablesSaved{iPatches}.parameters = [];
     end
     for iCables = 1:BSplinePatches{iPatches}.cables.No
         BSplinePatches{iPatches}.cables.parameters{iCables}.E = 0.0;
-        BSplinePatches{iPatches}.cables.parameters{iCables}.areaCS = parametersCablesSaved{iPatches}.parameters{iCables}.areaCS;
+        BSplinePatches{iPatches}.cables.parameters{iCables}.areaCS = ...
+            parametersCablesSaved{iPatches}.parameters{iCables}.areaCS;
         BSplinePatches{iPatches}.cables.parameters{iCables}.rho = 0.0;
-        BSplinePatches{iPatches}.cables.parameters{iCables}.prestress = parametersCablesSaved{iPatches}.parameters{iCables}.prestress;
+        BSplinePatches{iPatches}.cables.parameters{iCables}.prestress = ...
+            parametersCablesSaved{iPatches}.parameters{iCables}.prestress;
     end
 end
 
@@ -562,17 +575,17 @@ slaveDOFs = [];
 for iPatches = 1:noPatches
     if iPatches ~= 1
         % Determine the number of the DOFs of the previous patches
-        sizePrevious = sizePrevious + BSplinePatches{iPatches-1}.noDOFs;
+        sizePrevious = sizePrevious + BSplinePatches{iPatches - 1}.noDOFs;
         
         % Add the numbering DOFs where homogeneous Dirichlet boundary
         % conditions are applied from the patch level
         homDOFsPatch = sizePrevious + BSplinePatches{iPatches}.homDOFs;
-        homDOFs = mergesorted(homDOFs,homDOFsPatch);
+        homDOFs = mergesorted(homDOFs, homDOFsPatch);
         
         % Add the numbering DOFs where inhomogeneous Dirichlet boundary
         % conditions are applied from the patch level
         inhomDOFsPatch = sizePrevious + BSplinePatches{iPatches}.inhomDOFs;
-        inhomDOFs = mergesorted(inhomDOFs,inhomDOFsPatch);
+        inhomDOFs = mergesorted(inhomDOFs, inhomDOFsPatch);
         
         % Add the prescribed values to the DOFs where inhomogeneous 
         % Dirichlet boundary conditions are applied from the patch level
@@ -580,16 +593,16 @@ for iPatches = 1:noPatches
 %         valuesInhomDOFs = mergesorted(valuesInhomDOFs,valuesInhomDOFsPatch);
         valuesInhomDOFsPatch = BSplinePatches{iPatches}.valuesInhomDOFs;
         if ~isempty(valuesInhomDOFsPatch)
-            valuesInhomDOFs = horzcat(valuesInhomDOFs,valuesInhomDOFsPatch);
+            valuesInhomDOFs = horzcat(valuesInhomDOFs, valuesInhomDOFsPatch);
         end
         
         % Add the numbering of the master DOFs in the patch level
         masterDOFsPatch = sizePrevious + BSplinePatches{iPatches}.masterDOFs;
-        masterDOFs = mergesorted(masterDOFs,masterDOFsPatch);
+        masterDOFs = mergesorted(masterDOFs, masterDOFsPatch);
         
         % Add the numbering of the master DOFs in the patch level
         slaveDOFsPatch = sizePrevious + BSplinePatches{iPatches}.slaveDOFs;
-        slaveDOFs = mergesorted(slaveDOFs,slaveDOFsPatch);
+        slaveDOFs = mergesorted(slaveDOFs, slaveDOFsPatch);
     else
         homDOFs = BSplinePatches{iPatches}.homDOFs;
         inhomDOFs = BSplinePatches{iPatches}.inhomDOFs;
@@ -601,14 +614,14 @@ end
 
 % Vector of the global numbering of the unconstrained DOFs
 freeDOFs = 1:noDOFs;
-freeDOFs(ismember(freeDOFs,homDOFs)) = [];
-freeDOFs(ismember(freeDOFs,inhomDOFs)) = [];
+freeDOFs(ismember(freeDOFs, homDOFs)) = [];
+freeDOFs(ismember(freeDOFs, inhomDOFs)) = [];
 
 %% 11. Find the master/slave and the domain DOFs
-fixedDOFs = mergesorted(homDOFs,inhomDOFs);
-if strcmp(propCoupling.method,'mortar')
-    [BSplinePatches,connections] = findDOFsDDMMortarIGAMembrane...
-        (BSplinePatches,connections,propCoupling,fixedDOFs);
+fixedDOFs = mergesorted(homDOFs, inhomDOFs);
+if strcmp(propCoupling.method, 'mortar')
+    [BSplinePatches,connections] = findDOFsDDMMortarIGAMembrane ...
+        (BSplinePatches, connections, propCoupling, fixedDOFs);
 end
 
 %% 12. Create a DOF numbering for each patch and each Lagrange Multipliers field
@@ -618,21 +631,21 @@ end
 
 for iPatches = 1:noPatches
     % Get the number of Control Points in xi-direction
-    nxi = length(BSplinePatches{iPatches}.CP(:,1,1));
+    nxi = length(BSplinePatches{iPatches}.CP(:, 1, 1));
     
     % Get the number of Control Points in eta-direction
-    neta = length(BSplinePatches{iPatches}.CP(1,:,1));
+    neta = length(BSplinePatches{iPatches}.CP(1, :, 1));
     
     % Initialize the DOF numbering array
-    BSplinePatches{iPatches}.DOFNumbering = zeros(nxi,neta,3);
+    BSplinePatches{iPatches}.DOFNumbering = zeros(nxi, neta, 3);
     
     % Compute the entries of the DOF numbering array
     k = 1;
     for cpj = 1:neta
         for cpi = 1:nxi
-            BSplinePatches{iPatches}.DOFNumbering(cpi,cpj,1) = k;
-            BSplinePatches{iPatches}.DOFNumbering(cpi,cpj,2) = k + 1;
-            BSplinePatches{iPatches}.DOFNumbering(cpi,cpj,3) = k + 2;
+            BSplinePatches{iPatches}.DOFNumbering(cpi, cpj, 1) = k;
+            BSplinePatches{iPatches}.DOFNumbering(cpi, cpj, 2) = k + 1;
+            BSplinePatches{iPatches}.DOFNumbering(cpi, cpj, 3) = k + 2;
 
             % Update counter
             k = k + 3;
@@ -641,21 +654,21 @@ for iPatches = 1:noPatches
     
     % Create a DOF numbering for each Lagrange Multipliers field within the
     % patch
-    if isWeakDBC(iPatches,1)
-        if strcmp(BSplinePatches{iPatches}.weakDBC.method,'lagrangeMultipliers')
+    if isWeakDBC(iPatches, 1)
+        if strcmp(BSplinePatches{iPatches}.weakDBC.method, 'lagrangeMultipliers')
             for iCnd = 1:BSplinePatches{iPatches}.weakDBC.noCnd
                 % Get the number of Control Points
                 noXiLambda = length(BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.Xi);
 
                 % Initialize the field of the DOF numbering
-                BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.DOFNumbering = zeros(noXiLambda,3);
+                BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.DOFNumbering = zeros(noXiLambda, 3);
 
                 % Compute the entries of the DOF numbering array
                 k = 1;
                 for cpi = 1:noXiLambda
-                    BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,1) = k;
-                    BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,2) = k + 1;
-                    BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,3) = k + 2;
+                    BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 1) = k;
+                    BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 2) = k + 1;
+                    BSplinePatches{iPatches}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 3) = k + 2;
 
                     % Update counter
                     k = k + 3;
@@ -668,14 +681,14 @@ end
 % For the Lagrange Multipliers field :
 % ____________________________________
 
-if strcmp(propCoupling.method,'lagrangeMultipliers')
+if strcmp(propCoupling.method, 'lagrangeMultipliers')
     for iConnections = 1:connections.No
         % Get the number of Control Points in xi-direction
         if isLagrangeMultipliersDisplacementsEnabled
-            noXiLambda = length(connections.lambda{iConnections}.CP(:,1));
+            noXiLambda = length(connections.lambda{iConnections}.CP(:, 1));
         end
         if isLagrangeMultipliersRotationsEnabled
-            nxiMu = length(connections.mu{iConnections}.CP(:,1));
+            nxiMu = length(connections.mu{iConnections}.CP(:, 1));
         end
 
         % Lagrange multipliers for the traction forces :
@@ -683,14 +696,14 @@ if strcmp(propCoupling.method,'lagrangeMultipliers')
 
         if isLagrangeMultipliersDisplacementsEnabled
             % Initialize the field
-            connections.lambda{iConnections}.DOFNumbering = zeros(noXiLambda,3);
+            connections.lambda{iConnections}.DOFNumbering = zeros(noXiLambda, 3);
 
             % Compute the entries of the DOF numbering array
             k = 1;
             for cpi = 1:noXiLambda
-                connections.lambda{iConnections}.DOFNumbering(cpi,1) = k;
-                connections.lambda{iConnections}.DOFNumbering(cpi,2) = k + 1;
-                connections.lambda{iConnections}.DOFNumbering(cpi,3) = k + 2;
+                connections.lambda{iConnections}.DOFNumbering(cpi, 1) = k;
+                connections.lambda{iConnections}.DOFNumbering(cpi, 2) = k + 1;
+                connections.lambda{iConnections}.DOFNumbering(cpi, 3) = k + 2;
 
                 % Update counter
                 k = k + 3;
@@ -701,13 +714,13 @@ if strcmp(propCoupling.method,'lagrangeMultipliers')
 
         if isLagrangeMultipliersRotationsEnabled
             % Initialize the field
-            connections.mu{iConnections}.DOFNumbering = zeros(nxiMu,2);
+            connections.mu{iConnections}.DOFNumbering = zeros(nxiMu, 2);
 
             % Compute the entries of the DOF numbering array
             k = 1;
             for cpi = 1:nxiMu
-                connections.mu{iConnections}.DOFNumbering(cpi,1) = k;
-                connections.mu{iConnections}.DOFNumbering(cpi,2) = k + 1;
+                connections.mu{iConnections}.DOFNumbering(cpi, 1) = k;
+                connections.mu{iConnections}.DOFNumbering(cpi, 2) = k + 1;
 
                 % Update counter
                 k = k + 2;
@@ -720,14 +733,14 @@ end
 for iPatches = 1:noPatches
     if isWeakDBC(iPatches,1)
         isConstMtxWeakDBC = true;
-        if isfield(BSplinePatches{iPatches}.weakDBC,'method')
-            if strcmp(BSplinePatches{iPatches}.weakDBC.method,'penalty') || ...
-                    (strcmp(BSplinePatches{iPatches}.weakDBC.method,'nitsche') && ...
+        if isfield(BSplinePatches{iPatches}.weakDBC, 'method')
+            if strcmp(BSplinePatches{iPatches}.weakDBC.method, 'penalty') || ...
+                    (strcmp(BSplinePatches{iPatches}.weakDBC.method, 'nitsche') && ...
                     ~BSplinePatches{iPatches}.weakDBC.estimationStabilPrm)
                 computeWeakDBCConstantProblemMatrices = @computeWeakDBCMtxPenaltyIGAMembrane;
-            elseif strcmp(BSplinePatches{iPatches}.weakDBC.method,'lagrangeMultipliers')
+            elseif strcmp(BSplinePatches{iPatches}.weakDBC.method, 'lagrangeMultipliers')
                 computeWeakDBCConstantProblemMatrices = @computeWeakDBCMtxLagrangeMultipliersIGAMembrane;
-            elseif strcmp(BSplinePatches{iPatches}.weakDBC.method,'nitsche') && ...
+            elseif strcmp(BSplinePatches{iPatches}.weakDBC.method, 'nitsche') && ...
                     BSplinePatches{iPatches}.weakDBC.estimationStabilPrm
                 isConstMtxWeakDBC = false;
             else
@@ -736,8 +749,8 @@ for iPatches = 1:noPatches
             if isConstMtxWeakDBC
                 BSplinePatches{iPatches}.KConstant = ...
                     computeWeakDBCConstantProblemMatrices ...
-                    (BSplinePatches{iPatches},connections,...
-                    BSplinePatches{iPatches}.noDOFs,propCoupling);
+                    (BSplinePatches{iPatches}, connections,...
+                    BSplinePatches{iPatches}.noDOFs, propCoupling);
             else
                 BSplinePatches{iPatches}.KConstant = 'undefined';
             end
@@ -750,68 +763,69 @@ for iPatches = 1:noPatches
 end
 
 %% 14. Compute the constant problem matrices according to the chosen method
-if strcmp(propCoupling.method,'penalty') || ...
-        (strcmp(propCoupling.method,'nitsche') && ~propCoupling.estimationStabilPrm) || ...
-        (~strcmp(propCoupling.method,'lagrangeMultipliers') && isfield(propCoupling,'alphaR'))
-    if (strcmp(propCoupling.method,'nitsche') && ~propCoupling.estimationStabilPrm)
-        if isfield(propCoupling,'alphaD')
+if strcmp(propCoupling.method, 'penalty') || ...
+        (strcmp(propCoupling.method, 'nitsche') && ~propCoupling.estimationStabilPrm) || ...
+        (~strcmp(propCoupling.method, 'lagrangeMultipliers') && isfield(propCoupling, 'alphaR'))
+    if (strcmp(propCoupling.method, 'nitsche') && ~propCoupling.estimationStabilPrm)
+        if isfield(propCoupling, 'alphaD')
             error('For automatic estimation of the stabilization parameter corresponding to the multipatch coupling no displacement penalization needs to be specified in couplingMethod.alphaD');
         end
     end
     computeConstantProblemMatrices = @computeConstantMtxForDDMPenaltyIGAThinStructure;
-elseif strcmp(propCoupling.method,'lagrangeMultipliers')
+elseif strcmp(propCoupling.method, 'lagrangeMultipliers')
     computeConstantProblemMatrices = @computeConstantMtxForDDMLagrangeMultipliersIGAThinStructure;
-elseif strcmp(propCoupling.method,'mortar')
+elseif strcmp(propCoupling.method, 'mortar')
     computeConstantProblemMatrices = @computeConstantMtxForDDMMortarIGAThinStructure;
 else
     computeConstantProblemMatrices = 'undefined';
 end
-if isa(computeConstantProblemMatrices,'function_handle')
+if isa(computeConstantProblemMatrices, 'function_handle')
     KConstant = computeConstantProblemMatrices(BSplinePatches,connections,noDOFs,propCoupling);
 else
     KConstant = 'undefined';
 end
 
 %% 15. Initialize the displacement field
-dHatPrevious = zeros(noDOFs,1);
+dHatPrevious = zeros(noDOFs, 1);
 
 %% 16. Loop over all the form-finding iterations
-if strcmp(outMsg,'outputEnabled')
-    msgPNR = sprintf(strcat(tab,'\tLooping over the form finding iterations\n',...
+if strcmp(outMsg, 'outputEnabled')
+    msgPNR = sprintf(strcat(tab, '\tLooping over the form finding iterations\n',...
         tab,'\t----------------------------------------\n\n'));
     fprintf(msgPNR);
 end
-while ~hasConverged && counterFormFindingIterations <= propFormFinding.maxNoIter
+while ~isConverged && counterFoFiIter <= propFormFinding.maxNoIter
     %% 16i. Solve the static linear problem
-    [dHat,~,rH,~,~,~,~,~,BSplinePatches,propCoupling,~] = ...
-        solve_IGANLinearSystem...
-        (analysis,dHatSaved,dHatDotSaved,dHatDDotSaved,BSplinePatches,connections,...
-        zeros(noDOFs,1),dHatDot,dHatDDot,KConstant,massMtx,dampMtx,...
-        computeTanStiffMtxAndResVct,...
-        @computeUpdatedGeometryIGAThinStructureMultipatches,freeDOFs,homDOFs,...
-        inhomDOFs,valuesInhomDOFs,masterDOFs,slaveDOFs,solve_LinearSystem,...
-        t,propCoupling,propTransientAnalysis,propNLinearAnalysis,plot_IGANLinear,...
-        isReferenceUpdated,isCosimulationWithEmpire,strcat('\t',tab),graph,'');
+    [dHat, ~, rH, ~, ~, ~, ~, ~, BSplinePatches, propCoupling, ~] = ...
+        solve_IGANLinearSystem ...
+        (analysis, dHatSaved, dHatDotSaved, dHatDDotSaved, BSplinePatches, ...
+        connections, zeros(noDOFs,1), dHatDot, dHatDDot, KConstant, ...
+        massMtx, dampMtx, computeTanStiffMtxAndResVct, ...
+        @computeUpdatedGeometryIGAThinStructureMultipatches, freeDOFs, ...
+        homDOFs, inhomDOFs, valuesInhomDOFs, updateDirichletBCs, masterDOFs, ...
+        slaveDOFs, solve_LinearSystem, t, propCoupling, propTransientAnalysis, ...
+        propNLinearAnalysis, propIDBC, plot_IGANLinear, isReferenceUpdated, ...
+        isCosimulationWithEmpire, strcat('\t', tab), propGraph, '');
     if length(find(rH)) > 2
         warning('More than 1 iterations needed for convergence');
     end
     
     %% 16ii. Check if the solution is not NaN
     if sum(isnan(dHat))
-        if strcmp(outMsg,'outputEnabled')
+        if strcmp(outMsg, 'outputEnabled')
             warning('NaN solution has been obtained');
         end
         break;
     end
     
-    %% DEBUG
+    %% Debugging
 %     graph.index = plot_postprocIGAMembraneMultipatchesNLinear...
 %         (BSplinePatches,dHat,graph,'outputEnabled');
 
     %% 16iii. Update the Control Point coordinates of the B-Spline patch
     for iPatches = 1:noPatches
         BSplinePatches{iPatches}.CP = BSplinePatches{iPatches}.CPd;
-        CPHistoryMultipatch{iPatches}.CPHistory{counterFormFindingIterations + 1} = ...
+        CPHistoryMultipatch{iPatches}.CPHistory{counterFoFiIter + 1} = ...
             BSplinePatches{iPatches}.CP;
     end
     
@@ -819,25 +833,25 @@ while ~hasConverged && counterFormFindingIterations <= propFormFinding.maxNoIter
 	delta_dHat = dHat - dHatPrevious;
     
     %% 16v. Compute the residual and check convergence
-    resHistory(counterFormFindingIterations,1) = norm(delta_dHat(EFTFreeOfLM));
-    if strcmp(outMsg,'outputEnabled')
-        msgNR = sprintf(strcat(tab,'\t||delta_dHat|| = %d at form-finding iteration No. %d \n'),...
-            resHistory(counterFormFindingIterations,1),counterFormFindingIterations);
+    resHistory(counterFoFiIter,1) = norm(delta_dHat(EFTFreeOfLM));
+    if strcmp(outMsg, 'outputEnabled')
+        msgNR = sprintf(strcat(tab,'\t||delta_dHat|| = %d at form-finding iteration No. %d \n'), ...
+            resHistory(counterFoFiIter, 1), counterFoFiIter);
         fprintf(msgNR);
     end
-    if counterFormFindingIterations > 1
-        if resHistory(counterFormFindingIterations,1) > resHistory(counterFormFindingIterations - 1,1)
-            if strcmp(outMsg,'outputEnabled')
+    if counterFoFiIter > 1
+        if resHistory(counterFoFiIter, 1) > resHistory(counterFoFiIter - 1, 1)
+            if strcmp(outMsg, 'outputEnabled')
                 warning('The error in the form-finding iterations is increasing\n');
             end
         end
     end
-    if resHistory(counterFormFindingIterations,1) < propFormFinding.tolerance
-        if counterFormFindingIterations > propFormFinding.minNoIter
-            if strcmp(outMsg,'outputEnabled')
+    if resHistory(counterFoFiIter, 1) < propFormFinding.tolerance
+        if counterFoFiIter > propFormFinding.minNoIter
+            if strcmp(outMsg, 'outputEnabled')
                 fprintf(strcat(tab,' \tForm-finding iterations converged!\n\n'));
             end
-            hasConverged = true;
+            isConverged = true;
             break;
         end
     end
@@ -846,21 +860,22 @@ while ~hasConverged && counterFormFindingIterations <= propFormFinding.maxNoIter
     dHatPrevious = dHat;
     
     %% 16vii. Update form-finding iteration counter and the pseudotime
-    counterFormFindingIterations = counterFormFindingIterations + 1;
+    counterFoFiIter = counterFoFiIter + 1;
     t = t + propTransientAnalysis.dt;
 end
 
 %% 17. Re-assign arrays
-noIter = counterFormFindingIterations - 1;
+noIter = counterFoFiIter - 1;
 if noIter == propFormFinding.maxNoIter
-    if strcmp(outMsg,'outputEnabled')
-        warning(strcat(tab,' \tForm-finding iterations did not converge up to tolerance %f!\n\n'),propFormFinding.tolerance);
+    if strcmp(outMsg, 'outputEnabled')
+        warning(strcat(tab, ' \tForm-finding iterations did not converge up to tolerance %f!\n\n'), ...
+            propFormFinding.tolerance);
     end
 end
 for iPatches = 1:noPatches
-    BSplinePatches{iPatches} = rmfield(BSplinePatches{iPatches},'parameters');
+    BSplinePatches{iPatches} = rmfield(BSplinePatches{iPatches}, 'parameters');
     BSplinePatches{iPatches}.parameters = parameters{iPatches};
-    BSplinePatches{iPatches} = rmfield(BSplinePatches{iPatches},'NBC');
+    BSplinePatches{iPatches} = rmfield(BSplinePatches{iPatches}, 'NBC');
     BSplinePatches{iPatches}.NBC = NBC{iPatches};
     for iCables = 1:BSplinePatches{iPatches}.cables.No
         BSplinePatches{iPatches}.cables.parameters{iCables}.E = parametersCablesSaved{iPatches}.parameters{iCables}.E;
@@ -871,11 +886,9 @@ for iPatches = 1:noPatches
 end
 
 %% 18. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
-    fprintf('Form finding analysis took %.2d seconds \n\n',computationalTime);
+    fprintf('Form finding analysis took %.2d seconds \n\n', computationalTime);
     fprintf('_________________Form Finding Analysis Ended__________________\n');
     fprintf('##############################################################\n\n\n');
 end

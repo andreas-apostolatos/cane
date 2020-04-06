@@ -1,23 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [Xir,Etar,CPr] = knotRefineBSplineSurface(p,Xi,q,Eta,CP,Rxi,Reta,outMsg)
+function [Xir, Etar, CPr] = knotRefineBSplineSurface ...
+    (p, Xi, q, Eta, CP, Rxi, Reta, outMsg)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Perform knot insertion in a given NURBS surface in the 3D space. Source 
@@ -53,27 +42,25 @@ function [Xir,Etar,CPr] = knotRefineBSplineSurface(p,Xi,q,Eta,CP,Rxi,Reta,outMsg
 % 5. Appendix
 %
 %% Function main body
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('______________________________________________________________\n');
     fprintf('##############################################################\n');
     fprintf('Knot insertion for a B-Spline surface has been initiated \n\n');
-    fprintf('Number of knots before knot insertion in xi-direction nxi = %d\n',length(Xi));
-    fprintf('Number of knots after knot insertion in xi-direction nxi = %d\n',length(Xi)+length(Rxi));
-    fprintf('Number of knots before knot insertion in eta-direction neta = %d\n',length(Eta));
-    fprintf('Number of knots after knot insertion in eta-direction neta = %d\n',length(Eta)+length(Reta));
+    fprintf('Number of knots before knot insertion in xi-direction nxi = %d\n', length(Xi));
+    fprintf('Number of knots after knot insertion in xi-direction nxi = %d\n', length(Xi) + length(Rxi));
+    fprintf('Number of knots before knot insertion in eta-direction neta = %d\n', length(Eta));
+    fprintf('Number of knots after knot insertion in eta-direction neta = %d\n', length(Eta) + length(Reta));
     fprintf('______________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
 %% 0. Read input
 
 % Number of Control Points in xi-direction
-nxi = length(CP(:,1,1));
+nxi = length(CP(:, 1, 1));
 
 % Number of Control Points in eta-direction
-neta = length(CP(1,:,1));
+neta = length(CP(1, :, 1));
 
 % Number of knots of the unrefined knot vector in xi-direction
 mxi = nxi + p + 1;
@@ -90,17 +77,17 @@ reta = length(Reta);
 netar = neta + reta;
 
 % Initialize output arrays
-Xir = zeros(1,mxi+rxi);
-Etar = zeros(1,meta+reta);
-CPr = zeros(nxir,netar,length(CP(1,1,:)));
-Pw = zeros(nxi,neta,length(CP(1,1,:)));
-Qw = zeros(nxir,netar,length(CP(1,1,:)));
+Xir = zeros(1, mxi + rxi);
+Etar = zeros(1, meta + reta);
+CPr = zeros(nxir, netar, length(CP(1, 1, :)));
+Pw = zeros(nxi, neta, length(CP(1, 1, :)));
+Qw = zeros(nxir, netar, length(CP(1, 1, :)));
 
 %% 1. Compute the projective control points Pw
 for j = 1:neta
     for i = 1:nxi
-        Pw(i,j,1:3) = CP(i,j,1:3)*CP(i,j,4);
-        Pw(i,j,4)   = CP(i,j,4);
+        Pw(i, j, 1:3) = CP(i, j, 1:3)*CP(i, j, 4);
+        Pw(i, j, 4)   = CP(i, j, 4);
     end
 end
 
@@ -111,53 +98,53 @@ if isempty(Rxi)
     Xir = Xi;
     Qw = Pw;
 else
-    a = findKnotSpan(Rxi(1),Xi,nxi);
-    b = findKnotSpan(Rxi(rxi),Xi,nxi) + 1;
+    a = findKnotSpan(Rxi(1), Xi, nxi);
+    b = findKnotSpan(Rxi(rxi), Xi, nxi) + 1;
 
     for col = 1:neta
-        for j = 1:a-p
-            Qw(j,col,:) = Pw(j,col,:);   
+        for j = 1:a - p
+            Qw(j, col, :) = Pw(j, col, :);   
         end
-        for j = b-1:nxi
-            Qw(j+rxi,col,:) = Pw(j,col,:);
+        for j = b - 1:nxi
+            Qw(j + rxi, col, :) = Pw(j, col, :);
         end
     end
     
     for j = 1:a
-        Xir(j)   = Xi(j);  
+        Xir(j) = Xi(j);
     end
     
-    for j = b+p:mxi   
-        Xir(j+rxi) = Xi(j);  
+    for j = b + p:mxi
+        Xir(j+rxi) = Xi(j);
     end
     
-    i = b+p-1;   
-    k = i+rxi;
+    i = b + p - 1;
+    k = i + rxi;
   
     for  j = rxi:-1:1
-        while Rxi(j)<=Xi(i) && i>a
+        while Rxi(j) <= Xi(i) && i > a
             for col = 1:neta
-                Qw(k-p-1,col,:) = Pw(i-p-1,col,:);
+                Qw(k - p - 1, col, :) = Pw(i - p - 1, col, :);
             end
             Xir(k) = Xi(i);
-            k = k-1;   
+            k = k-1;
             i = i-1;
         end
     
         for col = 1:neta
-            Qw(k-p-1,col,:) = Qw(k-p,col,:);
+            Qw(k - p - 1, col, :) = Qw(k - p, col, :);
         end
         
         for l = 1:p
-            ind = k-p+l;
-            alpha = (Rxi(j)-Xir(k+l))/(Xi(i-p+l)-Xir(k+l));
+            ind = k - p + l;
+            alpha = (Rxi(j) - Xir(k + l))/(Xi(i - p + l) - Xir(k + l));
             for col = 1:neta
-                Qw(ind-1,col,:) = alpha*Qw(ind-1,col,:) + (1-alpha)*Qw(ind,col,:);
+                Qw(ind - 1, col, :) = alpha*Qw(ind - 1, col, :) + (1 - alpha)*Qw(ind, col, :);
             end
         end
         
         Xir(k) = Rxi(j);
-        k = k-1;
+        k = k - 1;
         
     end
     Pw = Qw;
@@ -166,71 +153,70 @@ end
 %% 3. Knot refine the surface in the eta-direction
 
 if isempty(Reta)
-    Etar=Eta;
+    Etar = Eta;
 else
-    a = findKnotSpan(Reta(1),Eta,neta);
-    b = findKnotSpan(Reta(reta),Eta,neta)+1;
+    a = findKnotSpan(Reta(1), Eta, neta);
+    b = findKnotSpan(Reta(reta), Eta, neta) + 1;
   
     for row = 1:nxir
-        for j = 1:a-q
-            Qw(row,j,:) = Pw(row,j,:);    
+        for j = 1:a - q
+            Qw(row, j, :) = Pw(row, j, :);
         end
         
-        for j = b-1:neta
-            Qw(row,j+reta,:) = Pw(row,j,:);  
+        for j = b - 1:neta
+            Qw(row, j + reta, :) = Pw(row, j, :);
         end
     end 
     for j = 1:a
-        Etar(j)   = Eta(j);  
+        Etar(j) = Eta(j);  
     end
     
-    for j = b+q:meta
-        Etar(j+reta) = Eta(j);  
+    for j = b + q:meta
+        Etar(j + reta) = Eta(j);
     end
 
-    i = b+q-1;   
-    k = i+reta;
+    i = b + q - 1;
+    k = i + reta;
   
     for j = reta:-1:1
-        while (Reta(j)<=Eta(i)) && (i>a)
+        while (Reta(j) <= Eta(i)) && (i > a)
             for row = 1:nxir
-                Qw(row,k-q-1,:) = Pw(row,i-q-1,:);
+                Qw(row, k - q - 1, :) = Pw(row, i - q - 1, :);
             end
             
             Etar(k) = Eta(i);
-            k = k-1;   
-            i = i-1;
+            k = k - 1;
+            i = i - 1;
         end
 
         for row = 1:nxir
-            Qw(row,k-q-1,:) = Qw(row,k-q,:);
+            Qw(row, k - q - 1, :) = Qw(row, k - q, :);
         end
         for l = 1:q
-            ind = k-q+l;
-            alpha = (Reta(j)-Etar(k+l))/(Eta(i-q+l)-Etar(k+l));
+            ind = k - q + l;
+            alpha = (Reta(j) - Etar(k + l))/(Eta(i - q + l) - Etar(k + l));
             for row = 1:nxir
-                Qw(row,ind-1,:) = alpha*Qw(row,ind-1,:) + (1-alpha)*Qw(row,ind,:);
+                Qw(row, ind - 1, :) = alpha*Qw(row, ind - 1, :) + ....
+                    (1 - alpha)*Qw(row, ind, :);
             end
         end
         Etar(k) = Reta(j);
-        k = k-1;
+        k = k - 1;
     end
 end
 
 %% 4. Transform the projective Control Points Qw to CPr
-for j = 1:length(Qw(1,:,1))
-    for i = 1:length(Qw(:,1,1))
-        CPr(i,j,1:3) = Qw(i,j,1:3)/Qw(i,j,4);
-        CPr(i,j,4)   = Qw(i,j,4);
+for j = 1:length(Qw(1, :, 1))
+    for i = 1:length(Qw(:, 1, 1))
+        CPr(i, j, 1:3) = Qw(i, j, 1:3)/Qw(i, j, 4);
+        CPr(i, j, 4) = Qw(i, j, 4);
     end
 end
 
 %% 5. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-    
-    fprintf('Knot insertion took %d seconds \n\n',computationalTime);
+    fprintf('Knot insertion took %d seconds \n\n', computationalTime);
     fprintf('_____________________Knot Insertion Ended_____________________\n');
     fprintf('##############################################################\n\n\n');
 end

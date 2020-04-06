@@ -1,6 +1,7 @@
-function BSplinePatch = fillUpPatch(analysis,p,Xi,q,Eta,CP,isNURBS,...
-    parameters,homDOFs,inhomDOFs,valuesInhomDOFs,weakDBC,cables,NBC,...
-    masterDOFs,slaveDOFs,cb,xicoup,etacoup,int)
+function BSplinePatch = fillUpPatch ... 
+    (analysis, p, Xi, q, Eta, CP, isNURBS, parameters, homDOFs, inhomDOFs, ...
+    valuesInhomDOFs, weakDBC, cables, NBC, masterDOFs, slaveDOFs, cb, ...
+    xicoup, etacoup, int)
 %% Licensing
 %
 % License:         BSD License
@@ -258,9 +259,10 @@ BSplinePatch.etacoup = etacoup;
 
 % Issue warnings for analyses which have not yet been optimized
 if ~isempty(analysis)
-    if strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis') || ...
-            strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
-        warning('Analysis type %s has not yet been optimized',analysis.type);
+    if strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis') || ...
+            strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis') || ...
+            strcmp(analysis.type, 'isogeometricIncompressibleFlowAnalysis')
+        warning('Analysis type %s has not yet been optimized', analysis.type);
     end
 else
     warning('No analysis chosen');
@@ -268,31 +270,31 @@ else
 end
 
 % Compute the bounding box of the B-Spline geometry
-BSplinePatch.boundingBox = [BSplinePatch.CP(1,1,1)
-                            BSplinePatch.CP(1,1,1)
-                            BSplinePatch.CP(1,1,2)
-                            BSplinePatch.CP(1,1,2)
-                            BSplinePatch.CP(1,1,3)
-                            BSplinePatch.CP(1,1,3)];
-for counterXi = 1:length(BSplinePatch.CP(:,1,1))
-    for counterEta = 1:length(BSplinePatch.CP(1,:,1))
-        x = BSplinePatch.CP(counterXi,counterEta,1);
-        y = BSplinePatch.CP(counterXi,counterEta,2);
-        z = BSplinePatch.CP(counterXi,counterEta,3);
-        if x < BSplinePatch.boundingBox(1,1)
-            BSplinePatch.boundingBox(1,1) = x;
-        elseif x > BSplinePatch.boundingBox(2,1)
-            BSplinePatch.boundingBox(2,1) = x;
+BSplinePatch.boundingBox = [BSplinePatch.CP(1, 1, 1)
+                            BSplinePatch.CP(1, 1, 1)
+                            BSplinePatch.CP(1, 1, 2)
+                            BSplinePatch.CP(1, 1, 2)
+                            BSplinePatch.CP(1, 1, 3)
+                            BSplinePatch.CP(1, 1, 3)];
+for iXi = 1:length(BSplinePatch.CP(:, 1, 1))
+    for iEta = 1:length(BSplinePatch.CP(1, :, 1))
+        x = BSplinePatch.CP(iXi, iEta, 1);
+        y = BSplinePatch.CP(iXi, iEta, 2);
+        z = BSplinePatch.CP(iXi, iEta, 3);
+        if x < BSplinePatch.boundingBox(1, 1)
+            BSplinePatch.boundingBox(1, 1) = x;
+        elseif x > BSplinePatch.boundingBox(2, 1)
+            BSplinePatch.boundingBox(2, 1) = x;
         end
-        if y < BSplinePatch.boundingBox(3,1)
-            BSplinePatch.boundingBox(3,1) = y;
-        elseif y > BSplinePatch.boundingBox(4,1)
-            BSplinePatch.boundingBox(4,1) = y;
+        if y < BSplinePatch.boundingBox(3, 1)
+            BSplinePatch.boundingBox(3, 1) = y;
+        elseif y > BSplinePatch.boundingBox(4, 1)
+            BSplinePatch.boundingBox(4, 1) = y;
         end
-        if z < BSplinePatch.boundingBox(5,1)
-            BSplinePatch.boundingBox(5,1) = z;
-        elseif z > BSplinePatch.boundingBox(6,1)
-            BSplinePatch.boundingBox(6,1) = z;
+        if z < BSplinePatch.boundingBox(5, 1)
+            BSplinePatch.boundingBox(5, 1) = z;
+        elseif z > BSplinePatch.boundingBox(6, 1)
+            BSplinePatch.boundingBox(6, 1) = z;
         end
     end
 end
@@ -302,33 +304,34 @@ mxi = length(Xi);
 meta = length(Eta);
 
 % Number of Control Points in xi- and eta- directions
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
 
 % Check the input
-checkInputForBSplineSurface(p,mxi,nxi,q,meta,neta);
+checkInputForBSplineSurface(p, mxi, nxi, q, meta, neta);
 
 % Number of Control Points to the patch array
 BSplinePatch.noCPs = nxi*neta;
 
 % Get a characteristic length for the structure
-characteristicLength = max([norm(squeeze(CP(1,1,1:3) - CP(end,1,1:3))) ...
-    norm(squeeze(CP(1,end,1:3) - CP(end,end,1:3))) ...
-    norm(squeeze(CP(1,1,1:3) - CP(1,end,1:3))) ...
-    norm(squeeze(CP(end,1,1:3) - CP(end,end,1:3)))]);
+characteristicLength = max([norm(squeeze(CP(1, 1, 1:3) - CP(end, 1, 1:3))) ...
+    norm(squeeze(CP(1, end, 1:3) - CP(end, end, 1:3))) ...
+    norm(squeeze(CP(1, 1, 1:3) - CP(1, end, 1:3))) ...
+    norm(squeeze(CP(end, 1, 1:3) - CP(end, end, 1:3)))]);
 BSplinePatch.characteristicLength = characteristicLength;
 
 % Number of Degrees of Freedom (DOFs) per element
-if strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis') || ...
-        strcmp(analysis.type,'isogeometricMembraneAnalysis')
+if strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis') || ...
+        strcmp(analysis.type, 'isogeometricMembraneAnalysis') || ...
+        strcmp(analysis.type, 'isogeometricIncompressibleFlowAnalysis')
     noDOFsNode = 3;
-elseif strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
+elseif strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis')
     noDOFsNode = 2;
 else
     noDOFsNode = 'undefined';
 end
 if ~ischar(noDOFsNode)
-    noCPsEl = (p+1)*(q+1);
+    noCPsEl = (p + 1)*(q + 1);
     noDOFsEl = noDOFsNode*noCPsEl;
 else
     noCPsEl = 'undefined';
@@ -337,34 +340,35 @@ end
 
 % Issue the Gauss Point coordinates and weights
 if ~ischar(int)
-    if isfield(int,'type')
-        if strcmp(int.type,'default')
-            if strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis') || ...
-                strcmp(analysis.type,'isogeometricMembraneAnalysis') || ...
-                strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
-                noXiGP = p + 1;
-                noEtaGP = q + 1;
+    if isfield(int, 'type')
+        if strcmp(int.type, 'default')
+            if strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis') || ...
+                strcmp(analysis.type, 'isogeometricMembraneAnalysis') || ...
+                strcmp(analysis.type,  'isogeometricPlateInMembraneActionAnalysis') || ...
+                strcmp(analysis.type, 'isogeometricIncompressibleFlowAnalysis')
+                numXiGP = p + 1;
+                numEtaGP = q + 1;
             end
         elseif strcmp(int.type,'user')
-            noXiGP = int.xiNGP;
-            noEtaGP = int.etaNGP;
+            numXiGP = int.xiNGP;
+            numEtaGP = int.etaNGP;
         else
-            noXiGP = 'undefined';
-            noEtaGP = 'undefined';
+            numXiGP = 'undefined';
+            numEtaGP = 'undefined';
         end
     else
         return;
     end
-    [xiGP,xiGW] = getGaussPointsAndWeightsOverUnitDomain(noXiGP);
-    [etaGP,etaGW] = getGaussPointsAndWeightsOverUnitDomain(noEtaGP);
+    [xiGP, xiGW] = getGaussPointsAndWeightsOverUnitDomain(numXiGP);
+    [etaGP, etaGW] = getGaussPointsAndWeightsOverUnitDomain(numEtaGP);
 else
-    noXiGP = 'undefined';
-    noEtaGP = 'undefined';
+    numXiGP = 'undefined';
+    numEtaGP = 'undefined';
 end
 
 % Number of Gauss Points per element
-if ~ischar(noXiGP) && ~ischar(noEtaGP)
-    BSplinePatch.noGPsEl = noXiGP*noEtaGP;
+if ~ischar(numXiGP) && ~ischar(numEtaGP)
+    BSplinePatch.noGPsEl = numXiGP*numEtaGP;
 end
 
 % Get the number of the elements in the isogeometric discretization
@@ -373,12 +377,12 @@ noElmntsEta = length(unique(Eta)) - 1;
 BSplinePatch.noElmnts = noElmntsXi*noElmntsEta;
 
 % Initialize the span indices for each element
-BSplinePatch.xiKnotSpan = zeros(BSplinePatch.noElmnts,1);
-BSplinePatch.etaKnotSpan = zeros(BSplinePatch.noElmnts,1);
+BSplinePatch.xiKnotSpan = zeros(BSplinePatch.noElmnts, 1);
+BSplinePatch.etaKnotSpan = zeros(BSplinePatch.noElmnts, 1);
 
 % Total number of Gauss Points
 if ~ischar(int)
-    if isfield(BSplinePatch,'noGPsEl')
+    if isfield(BSplinePatch, 'noGPsEl')
         noGPs = BSplinePatch.noGPsEl*BSplinePatch.noElmnts;
     else
         noGPs = 'undefined';
@@ -387,25 +391,25 @@ end
 
 % Initialize the element area size on the Gauss point for each Gauss point
 if ~ischar(int)
-    if isfield(BSplinePatch,'noGPsEl')
-        BSplinePatch.elementAreaOnGP = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl);
+    if isfield(BSplinePatch, 'noGPsEl')
+        BSplinePatch.elementAreaOnGP = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl);
     end
 end
 
 % Initialize arrays of Gauss point coordinates, basis functions, their
 % derivatives, base vectors and their derivatives
 if ~ischar(int)
-    if isfield(BSplinePatch,'noGPsEl')
-        BSplinePatch.xi = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl);
-        BSplinePatch.eta = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl);
-        BSplinePatch.R = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl,noCPsEl);
+    if isfield(BSplinePatch, 'noGPsEl')
+        BSplinePatch.xi = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl);
+        BSplinePatch.eta = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl);
+        BSplinePatch.R = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, noCPsEl);
         if strcmp(analysis.type,'isogeometricMembraneAnalysis')
-            BSplinePatch.dRdXi = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl,noCPsEl);
-            BSplinePatch.dRdEta = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl,noCPsEl);
-            BSplinePatch.GXi = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl,3);
-            BSplinePatch.GEta = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl,3);
-            BSplinePatch.G3Tilde = zeros(3,noGPs);
-            BSplinePatch.prestressPage = zeros(BSplinePatch.noElmnts,BSplinePatch.noGPsEl,3);
+            BSplinePatch.dRdXi = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, noCPsEl);
+            BSplinePatch.dRdEta = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, noCPsEl);
+            BSplinePatch.GXi = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, 3);
+            BSplinePatch.GEta = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, 3);
+            BSplinePatch.G3Tilde = zeros(3, noGPs);
+            BSplinePatch.prestressPage = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, 3);
         end
     end
 end
@@ -413,13 +417,13 @@ end
 % Initialize minimum element area in the IGA mesh
 tolerance = 1e-4;
 if abs(CP(1,1,1)-CP(nxi,1,1)) >= tolerance
-    BSplinePatch.minElArea = abs(CP(1,1,1)-CP(nxi,1,1));
-elseif abs(CP(1,1,1)-CP(1,neta,1)) >= tolerance
-    BSplinePatch.minElArea = abs(CP(1,1,1)-CP(1,neta,1));
-elseif abs(CP(1,end,1)-CP(nxi,end,1))
-    BSplinePatch.minElArea = abs(CP(1,end,1)-CP(nxi,end,1));
+    BSplinePatch.minElArea = abs(CP(1, 1, 1) - CP(nxi, 1, 1));
+elseif abs(CP(1, 1, 1) - CP(1, neta, 1)) >= tolerance
+    BSplinePatch.minElArea = abs(CP(1, 1, 1) - CP(1, neta, 1));
+elseif abs(CP(1, end, 1) - CP(nxi, end, 1))
+    BSplinePatch.minElArea = abs(CP(1, end, 1) - CP(nxi, end, 1));
 else
-    BSplinePatch.minElArea = abs(CP(end,1,1)-CP(end,neta,1));
+    BSplinePatch.minElArea = abs(CP(end, 1, 1) - CP(end, neta, 1));
 end
 BSplinePatch.maxElArea = 0;
 
@@ -429,7 +433,7 @@ counterGPs = 1;
 
 % Initialize the array of the Element Freedom Tables (EFTs)
 if ~ischar(noDOFsEl)
-    BSplinePatch.EFT = zeros(noDOFsEl,BSplinePatch.noElmnts);
+    BSplinePatch.EFT = zeros(noDOFsEl, BSplinePatch.noElmnts);
 end
 
 % Initialize the array containing the knot span indices with the
@@ -438,8 +442,9 @@ BSplinePatch.knotSpan2ElmntNo = zeros(mxi - p - 1,meta - q - 1);
 
 %% 1. Create a DOF numbering for the B-Spline patch
 if strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis') || ...
-        strcmp(analysis.type,'isogeometricMembraneAnalysis')
-    BSplinePatch.DOFNumbering = zeros(nxi,neta,3);
+        strcmp(analysis.type,'isogeometricMembraneAnalysis') || ...
+        strcmp(analysis.type,'isogeometricIncompressibleFlowAnalysis')
+    BSplinePatch.DOFNumbering = zeros(nxi, neta, 3);
     k = 1;
     for cpj = 1:neta
         for cpi = 1:nxi
@@ -462,8 +467,8 @@ elseif strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
 end
 
 %% 2. Get the Gauss point coordinates and weights according the selected quadrature rule
-for iEtaSpan = q+1:meta-q-1
-    for iXiSpan = p+1:mxi-p-1
+for iEtaSpan = q + 1:meta - q - 1
+    for iXiSpan = p + 1:mxi - p - 1
         % check if element is greater than zero
         if Xi(iXiSpan+1) ~= Xi(iXiSpan) && Eta(iEtaSpan+1) ~= Eta(iEtaSpan)
             %% 2i. Save the span index of the current element and the indices of the Control Points affecting the current knot span
@@ -514,10 +519,10 @@ for iEtaSpan = q+1:meta-q-1
             counterGPEl = 1;
             
             %% 2v. Loop over all Gauss points
-            if ~ischar(noEtaGP)
-                for cEta = 1:noEtaGP
-                    if ~ischar(noXiGP)
-                        for cXi = 1:noXiGP
+            if ~ischar(numEtaGP)
+                for cEta = 1:numEtaGP
+                    if ~ischar(numXiGP)
+                        for cXi = 1:numXiGP
                             %% 2v.1. Compute and save the NURBS coordinates xi,eta of the Gauss Point coordinates in the bi-unit interval [-1, 1]
                             xi = ( Xi(iXiSpan+1)+Xi(iXiSpan) + xiGP(cXi)*(Xi(iXiSpan+1)-Xi(iXiSpan)) )/2;
                             eta = ( Eta(iEtaSpan+1)+Eta(iEtaSpan) + etaGP(cEta)*(Eta(iEtaSpan+1)-Eta(iEtaSpan)) )/2;
@@ -528,7 +533,8 @@ for iEtaSpan = q+1:meta-q-1
                             if strcmp(analysis.type,'isogeometricMembraneAnalysis') || ...
                                     strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
                                 noDrvBasis = 1;
-                            elseif strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis')
+                            elseif strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis') || ...
+                                    strcmp(analysis.type, 'isogeometricIncompressibleFlowAnalysis')
                                 noDrvBasis = 2;
                             end
                             dR = computeIGABasisFunctionsAndDerivativesForSurface...

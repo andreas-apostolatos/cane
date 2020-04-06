@@ -524,10 +524,10 @@ propStrDynamics.damping.beta = betaR;
 
 % Function handle to the computation of the matrices for the defined time
 % integration scheme
-if strcmp(propStrDynamics.method,'explicitEuler')
+if strcmp(propStrDynamics.method, 'explicitEuler')
     propStrDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsExplicitEuler;
-elseif strcmp(propStrDynamics.method,'bossak')
+elseif strcmp(propStrDynamics.method, 'bossak')
     propStrDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossak;
 else
@@ -536,10 +536,10 @@ end
 
 % Function handle to the update of the discrete fields for the defined time
 % integration scheme
-if strcmp(propStrDynamics.method,'explicitEuler')
+if strcmp(propStrDynamics.method, 'explicitEuler')
     propStrDynamics.computeUpdatedVct = ...
         @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propStrDynamics.method,'bossak')
+elseif strcmp(propStrDynamics.method, 'bossak')
     propStrDynamics.computeUpdatedVct = ...
         @computeBossakTransientUpdatedVctAccelerationField;
 else
@@ -566,15 +566,15 @@ propStrDynamics.dt = (propStrDynamics.TEnd - propStrDynamics.TStart)/propStrDyna
 
 %% 11. Solve the transient nonlinear problem
 pathToOutput = 'undefined';
-[dHatHistory,resHistory,~,~] = ...
-    solve_IGAMembraneTransient...
-    (BSplinePatches,computeInitCnds,propNLinearAnalysis,propStrDynamics,...
-    propPostproc,solve_LinearSystem,propOutput,pathToOutput,caseName,...
-    propEmpireCoSimulation,'');
+[dHatHistory,resHistory, ~, ~] = ...
+    solve_IGAMembraneTransient ...
+    (BSplinePatches, computeInitCnds, propNLinearAnalysis, ...
+    propStrDynamics, propPostproc, solve_LinearSystem, propOutput, ...
+    pathToOutput, caseName, propEmpireCoSimulation,'');
 
 %% 12. Verify the solution
-testCase.verifyEqual(dHatHistory,expSolDispHistory,'AbsTol',absTol);
-testCase.verifyEqual(resHistory,expSolResHistory,'AbsTol',absTol);
-testCase.verifyEqual(BSplinePatch.minElArea,expSolMinElArea,'AbsTol',absTol);
+testCase.verifyEqual(dHatHistory,expSolDispHistory, 'AbsTol', absTol);
+testCase.verifyEqual(resHistory,expSolResHistory, 'AbsTol', absTol);
+testCase.verifyEqual(BSplinePatch.minElArea,expSolMinElArea, 'AbsTol', absTol);
 
 end

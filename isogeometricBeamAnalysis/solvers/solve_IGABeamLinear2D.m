@@ -1,6 +1,7 @@
-function [dHat,FComplete,minElSize] = solve_IGABeamLinear2D...
-    (analysis,p,Xi,CP,homDOFs,NBC,parameters,isNURBS,solve_LinearSystem,...
-    int,outMsg)
+function [dHat, FComplete, minElSize] = ...
+    solve_IGABeamLinear2D ...
+    (analysis, p, Xi, CP, homDOFs, NBC, parameters, isNURBS, ...
+    solve_LinearSystem, int, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -62,15 +63,13 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('______________________________________________________\n');
     fprintf('######################################################\n');
     fprintf('Static Linear Analysis for the isogeometric ');
-    if strcmp(analysis.type,'Bernoulli');
+    if strcmp(analysis.type, 'Bernoulli')
         fprintf('Bernoulli ');
-    elseif strcmp(analysis.type,'Timoshenko');
+    elseif strcmp(analysis.type, 'Timoshenko')
         fprintf('Timoshenko ');
     end
     fprintf('\nbeam has been initiated\n');
     fprintf('______________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -89,24 +88,24 @@ BSplinePatch.NBC = NBC;
 tab = '\t';
 
 % Compute the number of Control Points
-nxi = length(CP(:,1));
+numCPs_xi = length(CP(:, 1));
 
 % Compute the number of DOFs
-if strcmp(analysis.type,'Bernoulli')
-    nDOFs = 2*nxi;
-elseif strcmp(analysis.type,'Timoshenko')
-    nDOFs = 3*nxi;
+if strcmp(analysis.type, 'Bernoulli')
+    numDOFs = 2*numCPs_xi;
+elseif strcmp(analysis.type, 'Timoshenko')
+    numDOFs = 3*numCPs_xi;
 end
 
 % Assign a sequential numbering to the system DOFs
-DOFSequentialNumbering = zeros(1,nDOFs);
-for i=1:nDOFs
-    DOFSequentialNumbering(1,i) = i;
+DOFSequentialNumbering = zeros(1, numDOFs);
+for i = 1:numDOFs
+    DOFSequentialNumbering(1, i) = i;
 end
 
 % Find the free DOFs of the system
 freeDOFs = DOFSequentialNumbering;
-freeDOFs(ismember(freeDOFs,homDOFs)) = [];
+freeDOFs(ismember(freeDOFs, homDOFs)) = [];
 
 % Create the dummy variables
 dHatSaved = 'undefined';
@@ -122,8 +121,13 @@ masterDOFS = 'undefined';
 slaveDOFs = 'undefined';
 computeUpdatedGeometry = 'undefined';
 massMtx = 'undefined';
+dampMtx = 'undefined';
+updateDirichletBCs = 'undefined';
+propIDBC = 'undefined';
 plot_IGANLinear = 'undefined';
-graph = 'undefined';
+isReferenceUpdated = 'undefined';
+isCosimulationWithEmpire = 'undefined';
+propGraph = 'undefined';
 
 % Static linear analysis
 propTransientAnalysis.timeDependence = 'steadyState';
@@ -137,41 +141,41 @@ valuesInhomDOFs = [];
 
 % Get the rule for computating the master stiffness matrix according to the
 % analysis type
-if strcmp(analysis.type,'Bernoulli')
+if strcmp(analysis.type, 'Bernoulli')
     computeLinearMatricesSteadyState = @computeStiffMtxIGABernoulliBeamLinear;
-elseif strcmp(analysis.type,'Timoshenko')
+elseif strcmp(analysis.type, 'Timoshenko')
     computeLinearMatricesSteadyState = @computeStiffMtxIGATimoshenkoBeamLinear;
 end
 
 % Initialize the output array
-dHat = zeros(nDOFs,1);
+dHat = zeros(numDOFs, 1);
 
 %% 1. Assign DoF numbering as CP: CP1->dof1,dof2,dof3 CP2->dof4,dof5,dof6
 
 % Initialize the array of the degrees of freedom
-if strcmp(analysis.type,'Bernoulli')
-    DOFNumbering = zeros(nxi,2);
-elseif strcmp(analysis.type,'Timoshenko')
-    DOFNumbering = zeros(nxi,3);
+if strcmp(analysis.type, 'Bernoulli')
+    DOFNumbering = zeros(numCPs_xi, 2);
+elseif strcmp(analysis.type, 'Timoshenko')
+    DOFNumbering = zeros(numCPs_xi, 3);
 end
 
 % Initialize counter
 k = 1;
 
 % Loop over all the Control points
-if strcmp(analysis.type,'Bernoulli')
-    for cpi = 1:nxi
-        DOFNumbering(cpi,1) = k;
-        DOFNumbering(cpi,2) = k + 1;
+if strcmp(analysis.type, 'Bernoulli')
+    for cpi = 1:numCPs_xi
+        DOFNumbering(cpi, 1) = k;
+        DOFNumbering(cpi, 2) = k + 1;
 
         % Update counter
         k = k + 2;
     end
-elseif strcmp(analysis.type,'Timoshenko')
-    for cpi = 1:nxi
-        DOFNumbering(cpi,1) = k;
-        DOFNumbering(cpi,2) = k + 1;
-        DOFNumbering(cpi,3) = k + 2;
+elseif strcmp(analysis.type, 'Timoshenko')
+    for cpi = 1:numCPs_xi
+        DOFNumbering(cpi, 1) = k;
+        DOFNumbering(cpi, 2) = k + 1;
+        DOFNumbering(cpi, 3) = k + 2;
 
         % Update counter
         k = k + 3;
@@ -185,19 +189,20 @@ BSplinePatch.DOFNumbering = DOFNumbering;
 BSplinePatches = {BSplinePatch};
 
 %% 2. Solve the linear equation system
-[dHat,~,~,~,FComplete,rankD,condK,minEig,~,minElSize] = solve_IGALinearSystem...
-    (analysis,dHatSaved,dHatDotSaved,dHatDDotSaved,BSplinePatches,connections,...
-    dHat,dHatDot,dHatDDot,KConstant,massMtx,computeLinearMatricesSteadyState,...
-    computeUpdatedGeometry,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
-    masterDOFS,slaveDOFs,solve_LinearSystem,t,propCoupling,...
-    propTransientAnalysis,propNLinearAnalysis,plot_IGANLinear,tab,...
-    graph,outMsg);
+[dHat, ~, ~, ~, FComplete, rankD, condK, minEig, ~, ~, minElSize] = ...
+    solve_IGALinearSystem ...
+    (analysis, dHatSaved, dHatDotSaved, dHatDDotSaved, BSplinePatches, ...
+    connections, dHat, dHatDot, dHatDDot, KConstant, massMtx, dampMtx, ...
+    computeLinearMatricesSteadyState, computeUpdatedGeometry, freeDOFs, ...
+    homDOFs, inhomDOFs, valuesInhomDOFs, updateDirichletBCs, ...
+    masterDOFS, slaveDOFs, solve_LinearSystem, t, propCoupling, ...
+    propTransientAnalysis, propNLinearAnalysis, propIDBC, ...
+    plot_IGANLinear, isReferenceUpdated, isCosimulationWithEmpire, ...
+    tab, propGraph, outMsg);
 
 %% 3. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
     fprintf('Static Linear Analysis took %d seconds \n\n',computationalTime);
     fprintf('_____________Static Linear Analysis Ended_____________\n');
     fprintf('######################################################\n\n\n');

@@ -84,12 +84,12 @@ CP(:,:,4) = [1 1
              1 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
-isNURBS = 0;
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+isNURBS = false;
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
 for i= 1:nxi
     for j=1:neta
-        if CP(i,j,4)~=1
+        if CP(i, j, 4) ~= true
             isNURBS = 1;
             break;
         end
@@ -130,7 +130,7 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % type = 'default' : default FGI integration element-wise
 % type = 'manual' : manual choice of the number of Gauss points
 int.type = 'default';
-if strcmp(int.type,'user')
+if strcmp(int.type, 'user')
     int.xiNGP = 6;
     int.etaNGP = 6;
     int.xiNGPForLoad = 6;
@@ -158,13 +158,15 @@ graph.component = '2norm';
 a = 1; % default value = 2
 tp = a;
 tq = a;
-[Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'');
+[Xi, Eta, CP, p, q] = degreeElevateBSplineSurface ...
+    (p, q, Xi, Eta, CP, tp, tq, '');
 
 % Number of knots to exist in both directions ("h-refinement")
 scaling = 2;
 refXi = scaling;
 refEta = scaling;
-[Xi,Eta,CP] = knotRefineUniformlyBSplineSurface(p,Xi,q,Eta,CP,refXi,refEta,'');
+[Xi, Eta, CP] = knotRefineUniformlyBSplineSurface ...
+    (p, Xi, q, Eta, CP, refXi, refEta, '');
 
 %% 5. Define the boundary conditions
 
@@ -174,9 +176,10 @@ refEta = scaling;
 
 % Homogeneous Dirichlet boundary conditions
 homDOFs = [];
-xiSup = [0 1];   etaSup = [0 1];
+xiSup = [0 1];
+etaSup = [0 1];
 for dirSupp = [2 3]
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+    homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 end
 
 % Weak homogeneous Dirichlet boundary conditions
@@ -199,20 +202,22 @@ cables.No = 0;
 % Neumann boundary conditions   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-xib = 1;   etab = [0 1];   dirForce = 'x';
+xib = 1;
+etab = [0 1];
+dirForce = 'x';
 NBC.noCnd = 1;
 NBC.xiLoadExtension = {xib};
 NBC.etaLoadExtension = {etab};
 NBC.loadAmplitude{1} = 10;
 NBC.loadDirection = {dirForce};
 NBC.computeLoadVct{1} = 'computeLoadVctLineIGAThinStructure';
-NBC.isFollower(1,1) = false;
-NBC.isTimeDependent(1,1) = false;
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 %% 6. Create the patch cell array
-BSplinePatch = fillUpPatch...
-    (analysis,p,Xi,q,Eta,CP,isNURBS,parameters,homDOFs,inhomDOFs,...
-    valuesInhomDOFs,weakDBC,cables,NBC,[],[],[],[],[],int);
+BSplinePatch = fillUpPatch ...
+    (analysis, p, Xi, q, Eta, CP, isNURBS, parameters, homDOFs, inhomDOFs, ...
+    valuesInhomDOFs, weakDBC, cables, NBC, [], [], [], [], [], int);
 
 %% 7. Define the expected solutions for the linear problem
 
@@ -268,23 +273,23 @@ expSolDispLinear =      [ -0.000000000000000
                                            0];
                                
 % Define the expected solution in terms of the Control Point displacements
-expSolCPHistoryLinear{1}(:,:,:,1) = CP;
-expSolCPHistoryLinear{1}(:,:,1,2) = [ -5.000000000000000  -5.000000000000000  -5.000000000000000  -5.000000000000000
-                                      -2.249999999999996  -2.249999999999996  -2.249999999999995  -2.249999999999996
-                                       3.250000000000012   3.250000000000012   3.250000000000011   3.250000000000012
-                                       6.000000000000012   6.000000000000012   6.000000000000012   6.000000000000012];
-expSolCPHistoryLinear{1}(:,:,2,2) = [ -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
-                                      -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
-                                      -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
-                                      -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000];
-expSolCPHistoryLinear{1}(:,:,3,2) = [0     0     0     0
-                                     0     0     0     0
-                                     0     0     0     0
-                                     0     0     0     0];
-expSolCPHistoryLinear{1}(:,:,4,2) = [1     1     1     1
-                                     1     1     1     1
-                                     1     1     1     1
-                                     1     1     1     1];
+expSolCPHistoryLinear{1}(:, :, :, 1) = CP;
+expSolCPHistoryLinear{1}(:, :, 1, 2) = [ -5.000000000000000  -5.000000000000000  -5.000000000000000  -5.000000000000000
+                                         -2.249999999999996  -2.249999999999996  -2.249999999999995  -2.249999999999996
+                                          3.250000000000012   3.250000000000012   3.250000000000011   3.250000000000012
+                                          6.000000000000012   6.000000000000012   6.000000000000012   6.000000000000012];
+expSolCPHistoryLinear{1}(:, :, 2, 2) = [ -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
+                                         -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
+                                         -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
+                                         -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000];
+expSolCPHistoryLinear{1}(:, :, 3, 2) = [0     0     0     0
+                                        0     0     0     0
+                                        0     0     0     0
+                                        0     0     0     0];
+expSolCPHistoryLinear{1}(:, :, 4, 2) = [1     1     1     1
+                                        1     1     1     1
+                                        1     1     1     1
+                                        1     1     1     1];
                            
 % Define the expected solution in terms of the residual history
 expSolResHistoryLinear = 5.270462766947300;
@@ -346,23 +351,23 @@ expSolDispNonlinear = [   -0.000000000000000
                                            0];
                                    
 % Define the expected solution in terms of the Control Point displacements
-expSolCPHistoryNonlinear{1}(:,:,:,1) = CP;
-expSolCPHistoryNonlinear{1}(:,:,1,2) = [  -5.000000000000000  -5.000000000000000  -5.000000000000000  -4.999999999999999
-                                          -2.279915213271771  -2.279915213271770  -2.279915213271771  -2.279915213271771
-                                           3.160254360184687   3.160254360184687   3.160254360184687   3.160254360184687
-                                           5.880339146912915   5.880339146912915   5.880339146912917   5.880339146912915];
-expSolCPHistoryNonlinear{1}(:,:,2,2) = [  -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
-                                          -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
-                                          -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
-                                          -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000];
-expSolCPHistoryNonlinear{1}(:,:,3,2) = [ 0     0     0     0
-                                         0     0     0     0
-                                         0     0     0     0
-                                         0     0     0     0];
-expSolCPHistoryNonlinear{1}(:,:,4,2) = [ 1     1     1     1
-                                         1     1     1     1
-                                         1     1     1     1
-                                         1     1     1     1];
+expSolCPHistoryNonlinear{1}(:, :, :, 1) = CP;
+expSolCPHistoryNonlinear{1}(:, :, 1, 2) = [  -5.000000000000000  -5.000000000000000  -5.000000000000000  -4.999999999999999
+                                             -2.279915213271771  -2.279915213271770  -2.279915213271771  -2.279915213271771
+                                              3.160254360184687   3.160254360184687   3.160254360184687   3.160254360184687
+                                              5.880339146912915   5.880339146912915   5.880339146912917   5.880339146912915];
+expSolCPHistoryNonlinear{1}(:, :, 2, 2) = [  -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
+                                             -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
+                                             -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000
+                                             -0.500000000000000  -0.250000000000000   0.250000000000000   0.500000000000000];
+expSolCPHistoryNonlinear{1}(:, :, 3, 2) = [ 0     0     0     0
+                                            0     0     0     0
+                                            0     0     0     0
+                                            0     0     0     0];
+expSolCPHistoryNonlinear{1}(:, :, 4, 2) = [ 1     1     1     1
+                                            1     1     1     1
+                                            1     1     1     1
+                                            1     1     1     1];
                                     
 % Define the expected solution in terms of the residual history
 expSolResHistoryNonlinear = [  5.270462766947300
@@ -500,25 +505,26 @@ propNonlinearAnalysis.maxIter = 120;
 
 %% 11. Solve the steady-state linear problem
 plot_IGANLinear = 'undefined';
-[dHatLinear,CPHistoryLinear,resHistoryLinear,~,~] = solve_IGAMembraneNLinear...
-    (BSplinePatch,propLinearAnalysis,...
-    solve_LinearSystem,plot_IGANLinear,graph,'');
+[dHatLinear, CPHistoryLinear, resHistoryLinear, ~, ~] = ...
+    solve_IGAMembraneNLinear ...
+    (BSplinePatch, propLinearAnalysis, solve_LinearSystem, ...
+    plot_IGANLinear, graph,'');
 
 %% 12. Solve the steady-state nonlinear problem
 plot_IGANLinear = 'undefined';
-[dHatNonlinear,CPHistoryNonlinear,resHistoryNonlinear,hasConverged,~] = ...
-    solve_IGAMembraneNLinear...
-    (BSplinePatch,propNonlinearAnalysis,...
-    solve_LinearSystem,plot_IGANLinear,graph,'');
+[dHatNonlinear, CPHistoryNonlinear, resHistoryNonlinear, hasConverged, ~] = ...
+    solve_IGAMembraneNLinear ...
+    (BSplinePatch, propNonlinearAnalysis, solve_LinearSystem, ...
+    plot_IGANLinear, graph, '');
 
 %% 13. Verify the solution
-testCase.verifyEqual(dHatLinear,expSolDispLinear,'AbsTol',absTolDisp);
-testCase.verifyEqual(CPHistoryLinear,expSolCPHistoryLinear,'AbsTol',absTolDisp);
-testCase.verifyEqual(resHistoryLinear,expSolResHistoryLinear,'AbsTol',absTolResHistory);
-testCase.verifyEqual(BSplinePatch.minElArea,expSolMinElArea,'AbsTol',0);
-testCase.verifyEqual(dHatNonlinear,expSolDispNonlinear,'AbsTol',absTolDisp);
-testCase.verifyEqual(CPHistoryNonlinear,expSolCPHistoryNonlinear,'AbsTol',absTolDisp);
-testCase.verifyEqual(resHistoryNonlinear,expSolResHistoryNonlinear,'AbsTol',absTolResHistory);
-testCase.verifyEqual(hasConverged,true,'AbsTol',0);
+testCase.verifyEqual(dHatLinear,expSolDispLinear, 'AbsTol', absTolDisp);
+testCase.verifyEqual(CPHistoryLinear,expSolCPHistoryLinear, 'AbsTol', absTolDisp);
+testCase.verifyEqual(resHistoryLinear,expSolResHistoryLinear, 'AbsTol', absTolResHistory);
+testCase.verifyEqual(BSplinePatch.minElArea,expSolMinElArea, 'AbsTol', 0);
+testCase.verifyEqual(dHatNonlinear,expSolDispNonlinear, 'AbsTol', absTolDisp);
+testCase.verifyEqual(CPHistoryNonlinear,expSolCPHistoryNonlinear, 'AbsTol', absTolDisp);
+testCase.verifyEqual(resHistoryNonlinear,expSolResHistoryNonlinear, 'AbsTol', absTolResHistory);
+testCase.verifyEqual(hasConverged, true, 'AbsTol', 0);
 
 end

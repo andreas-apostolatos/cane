@@ -1,13 +1,14 @@
-function [uHistory,resHistory,BSplinePatches,propCoupling,minElAreaSize] = ...
-    solve_IGATransientAnalysis...
-    (analysis,BSplinePatches,connections,freeDOFs,homDOFs,inhomDOFs,...
-    valuesInhomDOFs,masterDOFs,slaveDOFs,nodesALE,computeInitCnds,...
-    solve_IGAEquationSystem,computeConstantMatrices,computeMassMtx,...
-    computeProblemMatricesSteadyState,computeUpdatedMesh,...
-    computeUpdatedGeometry,solve_LinearSystem,propCoupling,...
-    propTransientAnalysis,propNLinearAnalysis,propPostproc,caseName,...
-    pathToOutput,title,propOutput,isReferenceUpdated,...
-    propEmpireCoSimulation,tab,outMsg)
+function [uHistory, resHistory, BSplinePatches, propCoupling, minElAreaSize] = ...
+    solve_IGATransientAnalysis ...
+    (analysis, BSplinePatches, connections, freeDOFs, homDOFs, inhomDOFs, ...
+    valuesInhomDOFs, updateDirichletBCs, masterDOFs, slaveDOFs, ...
+    propNodesALE, computeInitCnds, solve_IGAEquationSystem, ...
+    computeConstantMatrices, computeMassMtx, ...
+    computeProblemMatricesSteadyState, computeUpdatedMesh, ...
+    computeUpdatedGeometry, solve_LinearSystem, propCoupling, ...
+    propTransientAnalysis, propNLinearAnalysis, propPostproc, propIDBC, ...
+    caseName, pathToOutput, title, propOutput, isReferenceUpdated, ...
+    propEmpireCoSimulation, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -35,18 +36,6 @@ function [uHistory,resHistory,BSplinePatches,propCoupling,minElAreaSize] = ...
 %                                          NURBS or a B-Spline
 %                            .parameters : Technical parameters for the 
 %                                          structure
-%                               .homDOFs : The global numbering of the DOFs 
-%                                          where homogeneous Dirichlet 
-%                                          boundary conditions are applied
-%                             .inhomDOFs : The global numbering of the DOFs 
-%                                          where inhomogeneous Dirichlet 
-%                                          boundary conditions are applied
-%                       .valuesInhomDOFs : The values on the DOFs 
-%                                          corresponding to the application 
-%                                          of inhomogeneous Dirichlet 
-%                                          boundary conditions
-%                            masterDOFs : Master DOFs of the system
-%                             slaveDOFs : Slave DOFs of the system
 %                                  .NBC : Structure containing information 
 %                                         on the application of the Neumann 
 %                                         boundary conditions
@@ -89,7 +78,13 @@ function [uHistory,resHistory,BSplinePatches,propCoupling,minElAreaSize] = ...
 %                valuesInhomDOFs : Prescribed values on the nodes where 
 %                                  inhomogeneous boundary conditions are 
 %                                  applied
-%                       nodesALE : The nodes on the ALE boundary:
+%             updateDirichletBCs : Function handle to the update of the
+%                                  Dirichlet boundary conditions in case
+%                                  these are transient
+%                     masterDOFs : Master DOFs of the system
+%                      slaveDOFs : Slave DOFs of the system
+%                   propNodesALE : Structure containing information about 
+%                                  the Arbitrary-Eulerian mesh motion,
 %                                       .nodes : The sequence of the nodal 
 %                                                coordinates on the ALE 
 %                                                boundary
@@ -165,7 +160,9 @@ function [uHistory,resHistory,BSplinePatches,propCoupling,minElAreaSize] = ...
 %                                    .eps : The residual tolerance
 %                                .maxIter : The maximum number of nonlinear
 %                                           iterations
-%                   propPostproc :            .resultant : Array of strings 
+%                   propPostproc : Structure containing information on the 
+%                                  computation of postprocessing resultants
+%                                             .resultant : Array of strings 
 %                                                          containing the 
 %                                                          name of each 
 %                                                          resultant to be 
@@ -177,6 +174,41 @@ function [uHistory,resHistory,BSplinePatches,propCoupling,minElAreaSize] = ...
 %                                                          computation of 
 %                                                          the desirable 
 %                                                          resultant
+%                       propIDBC : Structure containing information on the 
+%                                  inhomogeneous Dirichlet boundary 
+%                                  conditions,
+%                              .numCnd : Number of segements where those
+%                                        conditions are applied
+%                              .xiSpan : .noConditions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in xi-direction
+%                             .etaSpan : .noConditions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in eta-direction
+%                 .prescribedDirection : .noConditions x 1 array containing
+%                                        the direction of the load
+%                                        application for each condition
+%                  .isUniqueOnBoundary : .noConditions x 1 array containing
+%                                        flags on whether each of those
+%                                        conditions are unique over their
+%                                        application boundary
+%                                 .irb : Array .noConditions x m containing
+%                                        the global numbering of the DOFs
+%                                        which belong to each of the
+%                                        segment
+%                     .prescribedValue : Array of size .noConditions which
+%                                        contains handles to functions
+%                                        which determine the prescribed
+%                                        values at each segment
+%                          .isDominant : Flag on whether the inhomogeneous
+%                                        Dirichlet boundary conditions are
+%                                        dominant over the homogeneous ones
+%                                        or notions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in eta-direction
 %                       caseName : String defining the case name
 %                   pathToOutput : Path to where to write out the output 
 %                                  file
@@ -311,16 +343,16 @@ if isfield(propTransientAnalysis,'damping')
         end
     end
 end
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'Transient analysis properties\n'));
-    fprintf(strcat(tab,'-----------------------------\n\n'));
-    fprintf(strcat(tab,'Time integration method: %s \n'),propTransientAnalysis.method);
-    fprintf(strcat(tab,'Start time = %d \n'),propTransientAnalysis.TStart);
-    fprintf(strcat(tab,'End time = %d \n'),propTransientAnalysis.TEnd);
-    fprintf(strcat(tab,'No. time steps = %d \n'),propTransientAnalysis.noTimeSteps);
-    fprintf(strcat(tab,'Time step size = %d \n'),propTransientAnalysis.dt);
-    if isfield(propTransientAnalysis,'damping')
-        fprintf(strcat(tab,'Damping method: %s \n'),propTransientAnalysis.damping.method);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf(strcat(tab, 'Transient analysis properties\n'));
+    fprintf(strcat(tab, '-----------------------------\n\n'));
+    fprintf(strcat(tab, 'Time integration method: %s \n'), propTransientAnalysis.method);
+    fprintf(strcat(tab, 'Start time = %d \n'), propTransientAnalysis.TStart);
+    fprintf(strcat(tab, 'End time = %d \n'), propTransientAnalysis.TEnd);
+    fprintf(strcat(tab, 'No. time steps = %d \n'), propTransientAnalysis.noTimeSteps);
+    fprintf(strcat(tab, 'Time step size = %d \n'), propTransientAnalysis.dt);
+    if isfield(propTransientAnalysis, 'damping')
+        fprintf(strcat(tab,'Damping method: %s \n'), propTransientAnalysis.damping.method);
     else
         fprintf(strcat(tab,'No damping is selected\n'));
     end
@@ -331,7 +363,7 @@ end
 
 % Dummy arrays for this function
 plot_IGANLinear = 'undefined';
-graph = 'undefinded';
+propGraph = 'undefinded';
 
 % Initialize restart flag
 isRestart = false;
@@ -341,13 +373,13 @@ masterDOFs = [];
 slaveDOFs = [];
 
 % Get number of DOFs of the system
-noDOFs = length(freeDOFs) + length(homDOFs) + length(inhomDOFs);
+numDOFs = length(freeDOFs) + length(homDOFs) + length(inhomDOFs);
 
 % Get the number of weak Dirichlet boundary conditions
 noWeakDBCCnd = 0;
 for iPatches = 1:length(BSplinePatches)
-    if isfield(BSplinePatches{iPatches},'weakDBC')
-        if isfield(BSplinePatches{iPatches}.weakDBC,'noCnd')
+    if isfield(BSplinePatches{iPatches}, 'weakDBC')
+        if isfield(BSplinePatches{iPatches}.weakDBC, 'noCnd')
             noWeakDBCCnd = noWeakDBCCnd + ...
                 BSplinePatches{iPatches}.weakDBC.noCnd;
         end
@@ -359,24 +391,24 @@ counterRes = 1;
 counterPrim = 1;
 
 % Initialize output arrays
-uHistory = zeros(noDOFs,propTransientAnalysis.noTimeSteps);
+uHistory = zeros(numDOFs, propTransientAnalysis.noTimeSteps);
 if ~ischar(propNLinearAnalysis)
-    resHistory = zeros(propNLinearAnalysis.maxIter,propTransientAnalysis.noTimeSteps);
+    resHistory = zeros(propNLinearAnalysis.maxIter, propTransientAnalysis.noTimeSteps);
 else
-    resHistory = zeros(length('undefined'),propTransientAnalysis.noTimeSteps);
+    resHistory = zeros(length('undefined'), propTransientAnalysis.noTimeSteps);
 end
 
 %% 1. Initialize connection to EMPIRE
 if propEmpireCoSimulation.isCoSimulation
-    initializeConnectionWithEmpire(propEmpireCoSimulation.strMatlabXml,tab,outMsg);
+    initializeConnectionWithEmpire(propEmpireCoSimulation.strMatlabXml, tab, outMsg);
 end
 
 %% 2. Send the multipatch isogeometric surface to EMPIRE
 if propEmpireCoSimulation.isCoSimulation
-    sendBSplineGeometryToEmpire(BSplinePatches,connections,propEmpireCoSimulation,tab,outMsg);
+    sendBSplineGeometryToEmpire(BSplinePatches, connections, propEmpireCoSimulation, tab, outMsg);
     if propEmpireCoSimulation.isInterfaceLayer
-        if strcmp(outMsg,'outputEnabled')
-            fprintf(strcat(tab,'Interface layer option chosen, no analysis is performed\n'));
+        if strcmp(outMsg, 'outputEnabled')
+            fprintf(strcat(tab, 'Interface layer option chosen, no analysis is performed\n'));
         end
         EMPIRE_API_Disconnect();
         return;
@@ -384,22 +416,23 @@ if propEmpireCoSimulation.isCoSimulation
 end
 
 %% 3. Get and write the initial values for the discrete solution vector and its first and second order rate, write out the initial conditions and initialize output array
-[u,uDot,uDDot,noTimeStep,~] = computeInitCnds...
-    (BSplinePatches,noDOFs,propTransientAnalysis,caseName,pathToOutput,tab,outMsg);
+[u, uDot, uDDot, noTimeStep, ~] = computeInitCnds ...
+    (BSplinePatches, numDOFs, propTransientAnalysis, caseName, ...
+    pathToOutput, tab, outMsg);
 if noTimeStep ~= 0
     isRestart = true;
-    uHistory(:,1:length(u(1,:))) = u;
-    counterPrim = length(u(1,:)) + 1;
-    u = u(:,end);
+    uHistory(:, 1:length(u(1, :))) = u;
+    counterPrim = length(u(1, :)) + 1;
+    u = u(:, end);
 else
-    uHistory(:,counterPrim) = u;
+    uHistory(:, counterPrim) = u;
     counterPrim = counterPrim + 1;
     if ~ischar(propOutput)
-        if isfield(propOutput,'writeOutput')
-            if isa(propOutput.writeOutput,'function_handle')
-                propOutput.writeOutput(analysis,BSplinePatches,u,...
-                    uDot,uDDot,propNLinearAnalysis,propTransientAnalysis,...
-                    propPostproc,caseName,pathToOutput,title,noTimeStep);
+        if isfield(propOutput, 'writeOutput')
+            if isa(propOutput.writeOutput, 'function_handle')
+                propOutput.writeOutput(analysis, BSplinePatches, u, ...
+                    uDot, uDDot, propNLinearAnalysis, propTransientAnalysis, ...
+                    propPostproc, caseName, pathToOutput, title, noTimeStep);
             end
         end
     end
@@ -409,70 +442,75 @@ end
 t = propTransientAnalysis.TStart + propTransientAnalysis.dt*noTimeStep;
 
 %% 5. Compute matrix which stays constant throughout the transient simulation
-if isa(computeConstantMatrices,'function_handle')
-    constMtx = computeConstantMatrices(BSplinePatches,connections,noDOFs,propCoupling);
+if isa(computeConstantMatrices, 'function_handle')
+    constMtx = computeConstantMatrices ...
+        (BSplinePatches, connections, numDOFs, propCoupling);
 else
     constMtx = 'undefined';
 end
 
 %% 6. Compute the mass matrix of the problem
-if isa(computeMassMtx,'function_handle')
-    if strcmp(outMsg,'outputEnabled')
-        fprintf(strcat(tab,'Computing the mass matrix of the system\n'));
-        fprintf(strcat(tab,'---------------------------------------\n\n'));
+if isa(computeMassMtx, 'function_handle')
+    if strcmp(outMsg, 'outputEnabled')
+        fprintf(strcat(tab, 'Computing the mass matrix of the system\n'));
+        fprintf(strcat(tab, '---------------------------------------\n\n'));
     end
-    massMtx = computeMassMtx(BSplinePatches,noDOFs);
+    massMtx = computeMassMtx(BSplinePatches, numDOFs);
 else
     error('Variable computeMassMtx is not defining a function handle as expected');
 end
 
 %% 7. Compute the damping matrix of the problem
-if isfield(propTransientAnalysis,'damping')
-    if strcmp(outMsg,'outputEnabled')
-        fprintf(strcat(tab,'Computing the damping matrix of the system\n'));
-        fprintf(strcat(tab,'------------------------------------------\n\n'));
+if isfield(propTransientAnalysis, 'damping')
+    if strcmp(outMsg, 'outputEnabled')
+        fprintf(strcat(tab, 'Computing the damping matrix of the system\n'));
+        fprintf(strcat(tab, '------------------------------------------\n\n'));
     end 
-    dampMtx = propTransientAnalysis.damping.computeDampMtx...
-        (constMtx,computeProblemMatricesSteadyState,...
-        massMtx,noDOFs,BSplinePatches,connections,...
-        propCoupling,propTransientAnalysis.TStart,propTransientAnalysis,...
-        noWeakDBCCnd,isReferenceUpdated,tab,outMsg);
+    dampMtx = propTransientAnalysis.damping.computeDampMtx ...
+        (constMtx, computeProblemMatricesSteadyState, ...
+        massMtx, numDOFs, BSplinePatches, connections, ...
+        propCoupling, propTransientAnalysis.TStart, propTransientAnalysis, ...
+        noWeakDBCCnd, isReferenceUpdated, tab, outMsg);
 else
     dampMtx = 'undefined';
 end
 
 %% 8. Perform a static analysis for the structure to come into equilibrium with its internal forces before starting the time loop
 propTransientAnalysis.isStaticStep = true;
-if ~isRestart    
+if (strcmp(analysis.type, 'isogeometricMembraneAnalysis') || strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis')) && ...
+        ~isRestart
     if strcmp(outMsg,'outputEnabled')
         fprintf(strcat(tab,'Performing a static step to bring the structure in equilibrium with its internal forces \n'));
         fprintf(strcat(tab,'--------------------------------------------------------------------------------------- \n\n'));
     end
-    [u,~,resHistory(:,counterRes),hasConverged,FComplete,rankD,condK,...
-        minEig,BSplinePatches,propCoupling,minElAreaSize] = ...
-        solve_IGAEquationSystem...
-        (analysis,u,uDot,uDDot,BSplinePatches,connections,...
-        u,uDot,uDDot,constMtx,massMtx,dampMtx,computeProblemMatricesSteadyState,...
-        computeUpdatedGeometry,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
-        masterDOFs,slaveDOFs,solve_LinearSystem,t,propCoupling,...
-        propTransientAnalysis,propNLinearAnalysis,plot_IGANLinear,...
-        isReferenceUpdated,propEmpireCoSimulation.isCoSimulation,strcat(tab),graph,outMsg);
+    [u, ~, resHistory(:, counterRes), isConverged, FComplete, rankD, ...
+        condK, minEig, BSplinePatches, propCoupling, minElAreaSize] = ...
+        solve_IGAEquationSystem ...
+        (analysis, u, uDot, uDDot, BSplinePatches, connections, ...
+        u, uDot, uDDot, constMtx, massMtx, dampMtx, ...
+        computeProblemMatricesSteadyState, computeUpdatedGeometry, ...
+        freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, updateDirichletBCs , ...
+        masterDOFs, slaveDOFs, solve_LinearSystem, t, propCoupling, ...
+        propTransientAnalysis, propNLinearAnalysis, propIDBC, ...
+        plot_IGANLinear, isReferenceUpdated, ...
+        propEmpireCoSimulation.isCoSimulation, strcat(tab), ...
+        propGraph, outMsg);
     counterRes = counterRes + 1;
-    if ~hasConverged
-        warning(strcat(tab,'\t','Nonlinear analysis did not converge'));
+    if ~isConverged
+        warning(strcat(tab, '\t', 'Nonlinear analysis did not converge'));
     end
-    uHistory(:,counterPrim) = u;
+    uHistory(:, counterPrim) = u;
     counterPrim = counterPrim + 1;
     if ~ischar(propOutput)
-        if isfield(propOutput,'writeOutput')
-            if isa(propOutput.writeOutput,'function_handle') && noTimeStep == 0  
-                propOutput.writeOutput(analysis,BSplinePatches,u,...
-                    uDot,uDDot,propNLinearAnalysis,propTransientAnalysis,...
-                    propPostproc,caseName,pathToOutput,title,noTimeStep + 1);
+        if isfield(propOutput, 'writeOutput')
+            if isa(propOutput.writeOutput, 'function_handle') && noTimeStep == 0  
+                propOutput.writeOutput(analysis, BSplinePatches, u, ...
+                    uDot, uDDot, propNLinearAnalysis, propTransientAnalysis, ...
+                    propPostproc, caseName, pathToOutput, title, noTimeStep + 1);
             end
         end
     end
-    if isfield(propOutput,'saveFrequency')
+    if isfield(propOutput, 'saveFrequency')
         save(['dataTemporary_' caseName]);
     end
 end
@@ -480,36 +518,40 @@ propTransientAnalysis.isStaticStep = false;
 
 %% 9. Update the displaced Control Point coordinates in case restart option is enabled
 if isRestart
-    BSplinePatches = computeUpdatedGeometry(BSplinePatches,u);
+    BSplinePatches = computeUpdatedGeometry(BSplinePatches, u);
 end
 
 %% 10. Loop over all the time instances of the simulation
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'Looping over all the time steps \n'));
-    fprintf(strcat(tab,'------------------------------- \n\n'));
+if strcmp(outMsg, 'outputEnabled')
+    fprintf(strcat(tab, 'Looping over all the time steps \n'));
+    fprintf(strcat(tab, '------------------------------- \n\n'));
 end
 for iTimeSteps = noTimeStep + 1:propTransientAnalysis.noTimeSteps
     %% 10i. Update the simulation time
     t = t + propTransientAnalysis.dt;
     
     %% 10ii. Preamble of the time stepping iterations
-    if strcmp(outMsg,'outputEnabled')
+    if strcmp(outMsg, 'outputEnabled')
         if ~ischar(propNLinearAnalysis)
-            msgTS = sprintf(strcat(tab,'Time step %d/%d at real time %d seconds with dt=%d and maxNoNRIter=%d \n \n'),...
-                iTimeSteps,propTransientAnalysis.noTimeSteps,t,propTransientAnalysis.dt,propNLinearAnalysis.maxIter);
+            msgTS = sprintf(strcat(tab, ...
+                'Time step %d/%d at real time %d seconds with dt=%d and maxNoNRIter=%d \n \n'), ...
+                iTimeSteps, propTransientAnalysis.noTimeSteps, t, ...
+                propTransientAnalysis.dt, propNLinearAnalysis.maxIter);
         else
-            msgTS = sprintf(strcat(tab,'Time step %d/%d at real time %d seconds with dt=%d\n\n'),...
-                iTimeSteps,propTransientAnalysis.noTimeSteps,t,propTransientAnalysis.dt);
+            msgTS = sprintf(strcat(tab, 'Time step %d/%d at real time %d seconds with dt=%d\n\n'), ...
+                iTimeSteps, propTransientAnalysis.noTimeSteps, t, ...
+                propTransientAnalysis.dt);
         end
         fprintf(msgTS);
     end
     
     %% 10iii. Solve the mesh motion problem and update the mesh node locations and velocities
-    if ~ischar(nodesALE)
-        [BSplinePatches,uMeshALE,inhomDOFs,valuesInhomDOFs] = ...
-            computeUpdatedMesh(BSplinePatches,homDOFs,inhomDOFs,...
-            valuesInhomDOFs,nodesALE,propTransientAnalysis,t);
-    elseif strcmp(nodesALE,'undefined')
+    if ~ischar(propNodesALE)
+        [BSplinePatches, uMeshALE, inhomDOFs, valuesInhomDOFs] = ...
+            computeUpdatedMesh ...
+            (BSplinePatches, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+            propNodesALE, propTransientAnalysis, t);
+    elseif strcmp(propNodesALE, 'undefined')
         uMeshALE = 'undefined';
     end
     
@@ -519,53 +561,57 @@ for iTimeSteps = noTimeStep + 1:propTransientAnalysis.noTimeSteps
     uDDotSaved = uDDot;
     
     %% 10v. Solve the equation system
-    [u,~,resHistory(:,counterRes),hasConverged,FComplete,rankD,...
-        condK,minEig,BSplinePatches,propCoupling,minElAreaSize] = ...
-        solve_IGAEquationSystem...
-        (analysis,uSaved,uDotSaved,uDDotSaved,BSplinePatches,connections,...
-        u,uDot,uDDot,constMtx,massMtx,dampMtx,computeProblemMatricesSteadyState,...
-        computeUpdatedGeometry,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
-        masterDOFs,slaveDOFs,solve_LinearSystem,t,propCoupling,...
-        propTransientAnalysis,propNLinearAnalysis,plot_IGANLinear,...
-        isReferenceUpdated,propEmpireCoSimulation.isCoSimulation,strcat(tab,'\t'),...
-        graph,outMsg);
+    [u, ~, resHistory(:, counterRes), isConverged, FComplete, rankD, ...
+        condK, minEig, BSplinePatches, propCoupling, minElAreaSize] = ...
+        solve_IGAEquationSystem ...
+        (analysis, uSaved, uDotSaved, uDDotSaved, BSplinePatches, ...
+        connections, u, uDot, uDDot, constMtx, massMtx, dampMtx, ...
+        computeProblemMatricesSteadyState, computeUpdatedGeometry, ...
+        freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, updateDirichletBCs, ...
+        masterDOFs, slaveDOFs, solve_LinearSystem, t, propCoupling, ...
+        propTransientAnalysis, propNLinearAnalysis, propIDBC, ...
+        plot_IGANLinear, isReferenceUpdated, ...
+        propEmpireCoSimulation.isCoSimulation, strcat(tab,'\t'), ...
+        propGraph, outMsg);
     counterRes = counterRes + 1;
     
     %% 10vi. Update the time derivatives of the field
-    if hasConverged
-        if isa(propTransientAnalysis.computeUpdatedVct,'function_handle')
-            [uDot,uDDot] = propTransientAnalysis.computeUpdatedVct ...
-                (u,uSaved,uDotSaved,uDDotSaved,propTransientAnalysis);
+    if isConverged
+        if isa(propTransientAnalysis.computeUpdatedVct, 'function_handle')
+            [uDot, uDDot] = propTransientAnalysis.computeUpdatedVct ...
+                (u, uSaved, uDotSaved, uDDotSaved, propTransientAnalysis);
         else
             error('Function handle propTransientAnalysis.computeUpdatedVct undefined');
         end
     end
     
     %% 10vii. Save and write out the results into a GiD file
-    uHistory(:,counterPrim) = u;
+    uHistory(:, counterPrim) = u;
     counterPrim = counterPrim + 1;
     if ~ischar(propOutput)
-        if isfield(propOutput,'writeOutput')
-            if isa(propOutput.writeOutput,'function_handle')
-                if mod((iTimeSteps - noTimeStep - 1),propOutput.writeFrequency) == 0
-                    propOutput.writeOutput(analysis,BSplinePatches,u,...
-                        uDot,uDDot,propNLinearAnalysis,propTransientAnalysis,...
-                        propPostproc,caseName,pathToOutput,title,iTimeSteps + 1);
+        if isfield(propOutput, 'writeOutput')
+            if isa(propOutput.writeOutput, 'function_handle')
+                if mod((iTimeSteps - noTimeStep - 1), propOutput.writeFrequency) == 0
+                    propOutput.writeOutput ...
+                        (analysis, BSplinePatches, u, uDot, uDDot, ...
+                        propNLinearAnalysis, propTransientAnalysis, ...
+                        propPostproc, caseName, pathToOutput, title, ...
+                        iTimeSteps + 1);
                 end
             end
         end
     end
     
     %% 10viii. Save temporary data at the current time step
-    if isfield(propOutput,'saveFrequency')
-        if mod((iTimeSteps - noTimeStep - 1),propOutput.saveFrequency) == 0
+    if isfield(propOutput, 'saveFrequency')
+        if mod((iTimeSteps - noTimeStep - 1), propOutput.saveFrequency) == 0
             save(['dataTemporary_' caseName]);
         end
     end
 end
 
 %% 11. Erase temporary data
-if isfield(propOutput,'saveFrequency')
+if isfield(propOutput, 'saveFrequency')
     delete(['dataTemporary_' caseName '.mat']);
 end
 
@@ -575,7 +621,7 @@ if propEmpireCoSimulation.isCoSimulation
 end
 
 %% 13. Check if all output variables are assigned a value
-if ~exist('minElAreaSize','var')
+if ~exist('minElAreaSize', 'var')
     minElAreaSize = 'undefined';
 end
 

@@ -119,7 +119,7 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % type = 'default' : default FGI integration element-wise
 % type = 'manual' : manual choice of the number of Gauss points
 int.type = 'default';
-if strcmp(int.type,'user')
+if strcmp(int.type, 'user')
     int.xiNGP = 6;
     int.etaNGP = 6;
     int.xiNGPForLoad = 6;
@@ -156,13 +156,15 @@ propPostproc.computeResultant = {'computeDisplacement'};
 a = 0;
 tp = a;
 tq = a;
-[Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'outputEnabled');
+[Xi, Eta, CP, p, q] = degreeElevateBSplineSurface ...
+    (p, q, Xi, Eta, CP, tp,tq, 'outputEnabled');
 
 % Number of knots to exist in both directions
 scaling = 0;
 refXi = scaling;
 refEta = scaling;
-[Xi,Eta,CP] = knotRefineUniformlyBSplineSurface(p,Xi,q,Eta,CP,refXi,refEta,'outputEnabled');
+[Xi, Eta, CP] = knotRefineUniformlyBSplineSurface ...
+    (p, Xi, q, Eta, CP, refXi, refEta, 'outputEnabled');
 
 %% Dirichlet and Neumann boundary conditions 
 
@@ -170,19 +172,19 @@ refEta = scaling;
 homDOFs = [];
 xiSup = [0 0];   etaSup = [0 0];
 for dirSupp = 1:3
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+    homDOFs = findDofs3D(homDOFs,xiSup, etaSup, dirSupp, CP);
 end
 xiSup = [0 0];   etaSup = [1 1];
 for dirSupp = 1:3
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+    homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 end
 xiSup = [1 1];   etaSup = [0 0];
 for dirSupp = 1:3
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+    homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 end
 xiSup = [1 1];   etaSup = [1 1];
 for dirSupp = 1:3
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+    homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 end
 
 % Inhomogeneous Dirichlet boundary conditions
@@ -214,57 +216,58 @@ xib = [0 1];   etab = [0 1];   dirForce = 'z';
 NBC.noCnd = 1;
 NBC.xiLoadExtension = {xib};
 NBC.etaLoadExtension = {etab};
-windLoad = {@(x,y,z,t) FAmp*sin(2*pi()*x/Length/1e0)*sin(2*pi()*z/Height/1e0)};
+windLoad = {@(x, y, z, t) FAmp*sin(2*pi()*x/Length/1e0)*sin(2*pi()*z/Height/1e0)};
 NBC.loadAmplitude(1,1) = windLoad;
 NBC.loadDirection = {dirForce};
 NBC.computeLoadVct{1} = 'computeLoadVctAreaIGAThinStructure';
-NBC.isFollower(1,1) = false;
-NBC.isTimeDependent(1,1) = true;
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = true;
 
 %% Create the B-Spline patch array
 BSplinePatch = fillUpPatch...
-    (analysis,p,Xi,q,Eta,CP,isNURBS,parameters,homDOFs,inhomDOFs,...
-    valuesInhomDOFs,weakDBC,cables,NBC,[],[],[],[],[],int);
+    (analysis, p, Xi, q, Eta, CP, isNURBS, parameters, homDOFs, ...
+    inhomDOFs, valuesInhomDOFs, weakDBC, cables, NBC, [], [], [], [], ...
+    [], int);
 BSplinePatches = {BSplinePatch};
 
 %% Output the initial geometry as a Carat++ input file
 % pathToOutput = '../../outputGiD/isogeometricMembraneAnalysis/';
-% writeOutMultipatchBSplineSurface4Carat(BSplinePatches,pathToOutput,caseName);
+% writeOutMultipatchBSplineSurface4Carat(BSplinePatches, pathToOutput, caseName);
 
 %% Compute the load vector for the visualization of the reference configuration
 BSplinePatches{1}.FGamma = [];
-for counterNBC = 1:NBC.noCnd
+for iNBC = 1:NBC.noCnd
     BSplinePatches{1}.FGamma = zeros(3*BSplinePatches{1}.noCPs,1);
-%     funcHandle = str2func(NBC.computeLoadVct{counterNBC});
+%     funcHandle = str2func(NBC.computeLoadVct{iNBC});
 %     BSplinePatches{1}.FGamma = ...
-%         funcHandle(BSplinePatches{1}.FGamma,BSplinePatches{1},...
-%         NBC.xiLoadExtension{counterNBC},...
-%         NBC.etaLoadExtension{counterNBC},...
-%         NBC.loadAmplitude{counterNBC},...
-%         NBC.loadDirection{counterNBC},...
-%         NBC.isFollower(counterNBC,1),...
-%         0,int,'outputEnabled');
+%         funcHandle(BSplinePatches{1}.FGamma, BSplinePatches{1} , ...
+%         NBC.xiLoadExtension{iNBC}, ...
+%         NBC.etaLoadExtension{iNBC}, ...
+%         NBC.loadAmplitude{iNBC}, ...
+%         NBC.loadDirection{iNBC}, ...
+%         NBC.isFollower(iNBC,1), ...
+%         0, int, 'outputEnabled');
 end
 
 %% Plot reference configuration
 color = [.85098 .8549 .85882];
 connections = [];
-graph.index = plot_referenceConfigurationIGAThinStructureMultipatches...
-    (BSplinePatches,connections,color,graph,'outputEnabled');
+graph.index = plot_referenceConfigurationIGAThinStructureMultipatches ...
+    (BSplinePatches, connections, color, graph, 'outputEnabled');
 az = 260;
 el = 30;
-view(az,el);
-camlight(30,70);
+view(az, el);
+camlight(30, 70);
 lighting phong;
 axis off;
 title('');
     
 %% Output the initial geometry to be read by GiD
 pathToOutput = '../../../outputGiD/isogeometricMembraneAnalysis/';
-writeOutMultipatchBSplineSurface4GiD(BSplinePatches,pathToOutput,caseName);
+writeOutMultipatchBSplineSurface4GiD(BSplinePatches, pathToOutput, caseName);
 
 %% Write the geometry for Carat++
-% writeOutMultipatchBSplineSurface4Carat(BSplinePatches,pathToOutput,caseName);
+% writeOutMultipatchBSplineSurface4Carat(BSplinePatches, pathToOutput, caseName);
 
 %% Nonlinear analysis properties
 
@@ -282,11 +285,13 @@ propNLinearAnalysis.maxIter = 10000;
     
 %% Perform a modal analysis over the linear isogeometric membrane system
 noEig = 1000; % 2180
-[eigenmodeShapes,naturalFrequencies,dHat] = solve_eigenmodeAnalysisIGAMembrane...
-    (BSplinePatch,solve_LinearSystem,noEig,propNLinearAnalysis,'outputEnabled');
+[eigenmodeShapes, naturalFrequencies, dHat] = ...
+    solve_eigenmodeAnalysisIGAMembrane ...
+    (BSplinePatch, solve_LinearSystem, noEig, propNLinearAnalysis, ...
+    'outputEnabled');
 BSplinePatchesEq = BSplinePatches;
-BSplinePatchesEq{1}.CP = computeDisplacedControlPointsForIGAKirchhoffLoveShell...
-    (BSplinePatches{1}.CP,dHat);
+BSplinePatchesEq{1}.CP = computeDisplacedControlPointsForIGAKirchhoffLoveShell ...
+    (BSplinePatches{1}.CP, dHat);
 save(['data_modalAnalysis' caseName fileName]);
 return; 
 
@@ -294,12 +299,12 @@ return;
 for i = 4
     scalingFct = 20;
     noEigen = i;
-    graph.index = plot_postprocIGAMembraneMultipatchesNLinear...
-       (BSplinePatchesEq,scalingFct*eigenmodeShapes(:,noEigen),graph,'');
+    graph.index = plot_postprocIGAMembraneMultipatchesNLinear ...
+       (BSplinePatchesEq, scalingFct*eigenmodeShapes(:, noEigen), graph, '');
     az = 260;
     el = 30;
-    view(az,el);
-    camlight(30,70);
+    view(az, el);
+    camlight(30, 70);
     lighting phong;
     axis off;
     title('');

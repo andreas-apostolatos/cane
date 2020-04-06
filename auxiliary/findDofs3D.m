@@ -1,4 +1,4 @@
-function homDOFs = findDofs3D(homDOFs,xi,eta,dir,CP)
+function homDOFs = findDofs3D(homDOFs, xi, eta, dir, CP)
 %% Licensing
 %
 % License:         BSD License

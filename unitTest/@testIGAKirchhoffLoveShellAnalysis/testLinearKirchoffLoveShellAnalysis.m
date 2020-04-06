@@ -17,7 +17,7 @@ function testLinearKirchoffLoveShellAnalysis(testCase)
 %
 % 2. Define material constants
 %
-% 3. Define Gauss quadrature
+% 3. UI
 %
 % 4. Define h- and p-refinement
 %
@@ -182,30 +182,30 @@ Eta = [0 0 0 1 1 1];
 % Control Point coordinates
 
 % x-coordinates
-CP(:,:,1) = [-Length/2 -Length/2 -Length/2
-             Length/2  Length/2  Length/2];
+CP(:, :, 1) = [-Length/2 -Length/2 -Length/2
+               Length/2  Length/2  Length/2];
          
 % y-coordinates
-CP(:,:,2) = [-Radius*sin(2*pi/9) 0 Radius*sin(2*pi/9)
-             -Radius*sin(2*pi/9) 0 Radius*sin(2*pi/9)];
+CP(:, :, 2) = [-Radius*sin(2*pi/9) 0 Radius*sin(2*pi/9)
+               -Radius*sin(2*pi/9) 0 Radius*sin(2*pi/9)];
          
 % z-coordinates
-CP(:,:,3) = [Radius*cos(2*pi/9) Radius/cos(2*pi/9) Radius*cos(2*pi/9)
-             Radius*cos(2*pi/9) Radius/cos(2*pi/9) Radius*cos(2*pi/9)];
+CP(:, :, 3) = [Radius*cos(2*pi/9) Radius/cos(2*pi/9) Radius*cos(2*pi/9)
+               Radius*cos(2*pi/9) Radius/cos(2*pi/9) Radius*cos(2*pi/9)];
        
 % Weights
 weight = cos(2*pi/9);
-CP(:,:,4) = [1 weight 1
-             1 weight 1];
+CP(:, :, 4) = [1 weight 1
+               1 weight 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
-isNURBS = 0;
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
-for i= 1:nxi
-    for j=1:neta
-        if CP(i,j,4)~=1
-            isNURBS = 1;
+isNURBS = false;
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
+for i = 1:nxi
+    for j = 1:neta
+        if CP(i, j, 4) ~= 1
+            isNURBS = true;
             break;
         end
     end
@@ -228,7 +228,7 @@ parameters.t = .25;
 % Density of the shell (used only for dynamics)
 parameters.rho = 7850;
 
-%% 3. Define Gauss quadrature
+%% 3. UI
 
 % On the analysis
 analysis.type = 'isogeometricKirchhoffLoveShellAnalysis';
@@ -251,14 +251,16 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % Degree by which to elevate
 tp = 1;
 tq = 0;
-[Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'');
+[Xi, Eta, CP, p, q] = degreeElevateBSplineSurface ...
+    (p, q, Xi, Eta, CP, tp, tq, '');
 
 % Number of knots to exist in both directions
 scaling = 1;
 edgeRatio = ceil(Length/Radius/(sin(4*pi/9)));
 refXi = edgeRatio*scaling;
 refEta = ceil(4/3)*scaling;
-[Xi,Eta,CP] = knotRefineUniformlyBSplineSurface(p,Xi,q,Eta,CP,refXi,refEta,'');
+[Xi, Eta, CP] = knotRefineUniformlyBSplineSurface ...
+    (p, Xi, q, Eta, CP, refXi, refEta, '');
 
 %% 5. Define Dirichlet and Neumann boundary conditions 
 
@@ -266,18 +268,22 @@ refEta = ceil(4/3)*scaling;
 
 % back and front curved edges are a rigid diaphragm
 homDOFs = [];
-xiSup = [0 0];   etaSup = [0 1];    
-for dirSupp = [2 3];
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xiSup = [0 0];
+etaSup = [0 1];
+for dirSupp = [2 3]
+    homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 end
-xiSup = [1 1];   etaSup = [0 1];    
-for dirSupp = [2 3];
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xiSup = [1 1];
+etaSup = [0 1];
+for dirSupp = [2 3]
+    homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 end
 
 % Fix the back left corner of the shell to avoid rigid body motions
-xiSup = [0 0];   etaSup = [0 0];   dirSupp = 1;
-homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xiSup = [0 0];
+etaSup = [0 0];
+dirSupp = 1;
+homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 
 % Inhomogeneous Dirichlet boundary conditions
 inhomDOFs = [];
@@ -292,27 +298,29 @@ cables = [];
 % load (Neuman boundary conditions)
 FAmp = - 9e1;
 NBC.noCnd = 1;
-xib = [0 1];   etab = [0 1];   dirForce = 'z';
+xib = [0 1];
+etab = [0 1];
+dirForce = 'z';
 NBC.xiLoadExtension = {xib};
 NBC.etaLoadExtension = {etab};
 NBC.loadAmplitude = {FAmp};
 NBC.loadDirection = {dirForce};
 NBC.computeLoadVct{1} = 'computeLoadVctAreaIGAThinStructure';
-NBC.isFollower(1,1) = false;
-NBC.isTimeDependent(1,1) = false;
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 %% 6. Create the B-Spline patch array
-BSplinePatch = fillUpPatch...
-    (analysis,p,Xi,q,Eta,CP,isNURBS,parameters,homDOFs,inhomDOFs,...
-    valuesInhomDOFs,weakDBC,cables,NBC,[],[],[],[],[],int);
+BSplinePatch = fillUpPatch ...
+    (analysis, p, Xi, q, Eta, CP, isNURBS, parameters, homDOFs, inhomDOFs, ...
+    valuesInhomDOFs, weakDBC, cables, NBC, [], [], [], [], [], int);
 
 %% 7. Solve the system applying linear analysis
-[dHatLinear,F,minElArea] = solve_IGAKirchhoffLoveShellLinear...
-    (BSplinePatch,solve_LinearSystem,'');
+[dHatLinear, F, minElArea] = solve_IGAKirchhoffLoveShellLinear ...
+    (BSplinePatch, solve_LinearSystem, '');
 
 %% 8. Verify the result
-testCase.verifyEqual(dHatLinear,expSolDisp,'AbsTol',absTolRelaxed);
-testCase.verifyEqual(F,expSolForces,'AbsTol',absTolRelaxed);
-testCase.verifyEqual(minElArea,expSolMinElArea,'AbsTol',absTol);
+testCase.verifyEqual(dHatLinear, expSolDisp, 'AbsTol', absTolRelaxed);
+testCase.verifyEqual(F, expSolForces, 'AbsTol', absTolRelaxed);
+testCase.verifyEqual(minElArea, expSolMinElArea, 'AbsTol', absTol);
 
 end
