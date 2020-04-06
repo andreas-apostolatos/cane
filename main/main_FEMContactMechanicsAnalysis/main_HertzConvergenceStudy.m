@@ -109,7 +109,7 @@ radius = 5;
 contactSegments = computeUnitNormalVctsToSegments(contactSegments);
 
 %% Amplitude of the externally applied boundary traction
-tractionLoadVct = [1e2; 0; 0];
+tractionLoadVct = [1e3; 0; 0];
 
 %% Parse data from GiD input file
 
