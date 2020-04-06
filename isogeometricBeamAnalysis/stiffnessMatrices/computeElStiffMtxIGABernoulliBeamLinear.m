@@ -1,4 +1,5 @@
-function Ke = computeElStiffMtxIGABernoulliBeamLinear(p,G,dG,dR,parameters)
+function Ke = computeElStiffMtxIGABernoulliBeamLinear ...
+    (p, G, dG, dR, parameters)
 %% Licensing
 %
 % License:         BSD License
@@ -31,7 +32,7 @@ function Ke = computeElStiffMtxIGABernoulliBeamLinear(p,G,dG,dR,parameters)
 %
 % 2. Compute change in the curvature kappa
 %
-% 3. Compute the geometrical and technical prefactors
+% 3. Transform the material tensors in the local Cartesian basis
 %
 % 4. Compute the virtual work contributions
 %
@@ -45,47 +46,47 @@ function Ke = computeElStiffMtxIGABernoulliBeamLinear(p,G,dG,dR,parameters)
 L = norm(G);
 
 % Initializations
-epsilon = zeros(2*(p+1),1);
-kappa = zeros(2*(p+1),1);
+epsilon = zeros(2*(p + 1), 1);
+kappa = zeros(2*(p + 1), 1);
 
 %% 1. Compute normal strain epsilon
 
 % Loop over all the knot span contributions
-for j = 1:p+1
-    epsilon(1+(j-1)*2,1) = dR(j,2)*G(1,1);
-    epsilon(2+(j-1)*2,1) = dR(j,2)*G(2,1);
+for j = 1:p + 1
+    epsilon(1 + (j - 1)*2, 1) = dR(j, 2)*G(1, 1);
+    epsilon(2 + (j - 1)*2, 1) = dR(j, 2)*G(2, 1);
 end
 
 %% 2. Compute change in the curvature kappa
 
 % Necessary variables for the curvature
-d1 = ( 1 / L^2 ) * G(1,1) * G(2,1);
-d2 = ( 1 / L^2 ) * G(2,1)^2 - 1;
-d3 = 1 - ( 1 / L^2 ) * G(1,1)^2;
-alpha1 = ( dG(1,1) * d1 + dG(2,1) * d3 )/L;
-alpha2 = ( dG(1,1) * d2 - dG(2,1) * d1 )/L;
+d1 = G(1, 1)*G(2, 1)/L^2;
+d2 = G(2, 1)^2/L^2 - 1;
+d3 = 1 - G(1, 1)^2/L^2;
+alpha1 = (dG(1, 1)*d1 + dG(2, 1)*d3)/L;
+alpha2 = (dG(1, 1)*d2 - dG(2, 1)*d1)/L;
 
 % Loop over all the knot span contributions
-for j = 1:p+1
-   kappa(1+(j-1)*2,1) = - alpha1 * dR(j,2) + G(2,1) * dR(j,3)/L;
-   kappa(2+(j-1)*2,1) = - alpha2 * dR(j,2) - G(1,1) * dR(j,3)/L;
+for j = 1:p + 1
+   kappa(1 + (j - 1)*2, 1) = - alpha1*dR(j, 2) + G(2, 1) * dR(j, 3)/L;
+   kappa(2 + (j - 1)*2, 1) = - alpha2*dR(j, 2) - G(1, 1) * dR(j, 3)/L;
 end
 
-%% 3. Compute the geometrical and technical prefactors
+%% 3. Transform the material tensors in the local Cartesian basis
 
 % Axial contribution
-EAxial = parameters.EYoung*parameters.A / L^4;
+EAxial = parameters.EYoung*parameters.A/L^4;
 
 % Bending contribution
-EBending = parameters.EYoung*parameters.I / L^4;
+EBending = parameters.EYoung*parameters.I/L^4;
 
 %% 4. Compute the virtual work contributions
 
 % virtual work done by the normal force n 
-workEpsilon = EAxial * (epsilon*epsilon');
+workEpsilon = EAxial*(epsilon*epsilon');
 
 % virtual work done by the bending moment m 
-workKappa = EBending *(kappa*kappa');
+workKappa = EBending*(kappa*kappa');
 
 %% 5. Compute the element stiffness matrix on the Gauss Point
 Ke = workEpsilon + workKappa;

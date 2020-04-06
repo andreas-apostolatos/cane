@@ -16,7 +16,7 @@ classdef testIGAKirchhoffLoveShellAnalysis < matlab.unittest.TestCase
         testLinearKirchoffLoveShellAnalysis(testCase)
         testNonlinearKirchoffLoveShellAnalysis(testCase)
         testPlateBentIntoACircleKirchoffLoveShellAnalysis(testCase)
-        % testLinearKirchoffLoveShellMultipatchAnalysis(testCase)
+        testLinearKirchoffLoveShellMultipatchAnalysis(testCase)
         testNonlinearKirchoffLoveShellMultipatchAnalysis(testCase)
     end
 end

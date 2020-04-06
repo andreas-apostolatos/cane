@@ -1,11 +1,13 @@
-function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
-    minEig,propCoupling,minElAreaSize] = ...
-    solve_IGALinearSystem...
-    (analysis,uSaved,uDotSaved,uDDotSaved,BSplinePatches,connections,u,uDot,...
-    uDDot,KConstant,massMtx,computeLinearMtrcsSteadyState,computeUpdatedGeometry,...
-    freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,masterDOFs,slaveDOFs,...
-    solve_LinearSystem,t,propCoupling,propTransientAnalysis,...
-    propNLinearAnalysis,plot_IGANLinear,tab,graph,outMsg)
+function [u, CPHistory, residual, isConverged, FComplete, rankD, ...
+    condK, minEig, BSplinePatches, propCoupling, minElAreaSize] = ...
+    solve_IGALinearSystem ...
+    (analysis, uSaved, uDotSaved, uDDotSaved, BSplinePatches, connections, ...
+    u, uDot, uDDot, constMtx, massMtx, dampMtx, computeLinearMtrcsSteadyState, ...
+    computeUpdatedGeometry, freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    updateDirichletBCs, masterDOFs, slaveDOFs, solve_LinearSystem, t, ...
+    propCoupling, propTransientAnalysis, propNLinearAnalysis, propIDBC, ...
+    plot_IGANLinear, isReferenceUpdated, isCosimulationWithEmpire, tab, ...
+    propGraph, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -36,15 +38,6 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %                                        weights
 %                              .isNURBS: Flag on whether the basis is a 
 %                                        NURBS or a B-Spline
-%                             .homDOFs : The global numbering of the
-%                                        DOFs where homogeneous Dirichlet
-%                                        boundary conditions are applied
-%                           .inhomDOFs : The global numbering of the
-%                                        DOFs where homogeneous Dirichlet
-%                                        boundary conditions are applied
-%                     .valuesInhomDOFs : Prescribed values to the DOFs 
-%                                        where homogeneous Dirichlet
-%                                        boundary conditions are applied
 %                                 .NBC : Structure containing information 
 %                                        on the application of the Neumann 
 %                                        boundary conditions
@@ -112,9 +105,10 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %                                  the primary field
 %                          uDDot : Initial guess for the second time 
 %                                  derivative of the primary field
-%                      KConstant : The matrices which stay constant 
+%                       constMtx : The matrices which stay constant 
 %                                  throughout the nonlinear computations
 %                        massMtx : The mass matrix of the problem
+%                        dampMtx : The damping matrix of the problem
 %  computeLinearMtrcsSteadyState : Function handle for the computation of 
 %                                  the matrices and vectors corresponding
 %                                  to the steady-state problem
@@ -131,6 +125,10 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %                valuesInhomDOFs : The vector containing the magnitude of 
 %                                  the prescribed values on the DOFs with
 %                                  inhomogeneous Dirichlet boundary 
+%                                  conditions
+%             updateDirichletBCs : Function handle to the computation of
+%                                  the updated prescribed values of the
+%                                  inhomogeneous Dirichlet boundary
 %                                  conditions
 %                     masterDOFs : The global numbering of the DOFs which 
 %                                  drive the master-slave relations
@@ -176,17 +174,52 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %                                                 to the static one, namely
 %                                                 before the time loop
 %            propNLinearAnalysis : Dummy variable for this function
+%                       propIDBC : Structure containing information on the 
+%                                  inhomogeneous Dirichlet boundary 
+%                                  conditions,
+%                              .numCnd : Number of segements where those
+%                                        conditions are applied
+%                              .xiSpan : .noConditions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in xi-direction
+%                             .etaSpan : .noConditions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in eta-direction
+%                 .prescribedDirection : .noConditions x 1 array containing
+%                                        the direction of the load
+%                                        application for each condition
+%                  .isUniqueOnBoundary : .noConditions x 1 array containing
+%                                        flags on whether each of those
+%                                        conditions are unique over their
+%                                        application boundary
+%                     .prescribedValue : Array of size .noConditions which
+%                                        contains handles to functions
+%                                        which determine the prescribed
+%                                        values at each segment
+%                          .isDominant : Flag on whether the inhomogeneous
+%                                        Dirichlet boundary conditions are
+%                                        dominant over the homogeneous ones
+%                                        or notions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in eta-direction
 %                plot_IGANLinear : Dummy variable for this function
+%             isReferenceUpdated : Flag on whether the reference geometry 
+%                                  is updated
+%       isCosimulationWithEmpire : Flag on whether co-simulation through
+%                                  Empire is assumed
 %                            tab : Tabulation for the output messages
-%                          graph : Dummy variable for this function
+%                      propGraph : Dummy variable for this function
 %                         outMsg : On printing information during analysis 
 %                                  on the command window
 %
 %                         Output :
 %                              u : The converged discrete solution vector
 %                      CPHistory : Dummy output for this function
-%                     resHistory : Dummy output for this function
-%                   hasConverged : Dummy output for this function
+%                       residual : Zero since it is a linear analysis
+%                    isConverged : Dummy output for this function
 %                      FComplete : The complete force vector of the system
 %                          rankD : The rank deficiency of the linear system
 %                          condK : The condition number of the linear 
@@ -202,87 +235,116 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %
 % 0. Read input
 %
-% 1. Compute the linear matrices of the system
+% 1. Update the time-dependent inhomogeneous Dirichlet boundary conditions
 %
-% 2. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
+% 2. Compute the linear matrices of the system
 %
-% 3. Solve the linear equation system
+% 3. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
 %
-% 4. Re-assemble to the complete vector of unknowns
+% 4. Solve the linear equation system
 %
-% 5. Compute the complete force vector
+% 5. Re-assemble to the complete vector of unknowns
 %
-% 6. Appendix
+% 6. Compute the complete force vector
+%
+% 7. Appendix
 %
 %% Function main body
 
 %% 0. Read input
 
-% Assign back dummy output variables
+% Dummy variables
 CPHistory = 'undefined';
 loadFactor = 'undefined';
-resHistory = 'undefined';
-hasConverged = true;
+tanMtxLoad = 'undefined';
+noPatch = 'undefined';
+noTimeStep = 'undefined';
+iNLinearIter = 'undefined';
+noWeakDBCCnd = 'undefined';
+isReferenceUpdated = 'undefined';
+isConverged = true;
 
-% Damping is still not implemented
-damMtx = 'undefined';
+% The residual for a linear analysis is zero
+residual = 0;
 
-%% 1. Compute the linear matrices of the system
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Computing the system matrix and right hand side vector\n'));
-end
-[stiffMtx,RHS,minElAreaSize] = computeLinearMtrcsSteadyState(KConstant,u,...
-            uSaved,uDot,uDotSaved,BSplinePatches,connections,...
-            propCoupling,propTransientAnalysis,t,strcat(tab,'\t'),...
-            loadFactor,outMsg);
-if isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
-        ~propTransientAnalysis.isStaticStep
-    [stiffMtx,RHS] = propTransientAnalysis.computeProblemMtrcsTransient...
-        (u,uSaved,uDot,uDotSaved,uDDot,uDDotSaved,massMtx,damMtx,...
-        stiffMtx,RHS,propTransientAnalysis);
-end
-if strcmp(outMsg,'outputEnabled')
-    rankD = length(RHS(freeDOFs)) - rank(stiffMtx(freeDOFs,freeDOFs));
-    if rankD ~= 0
-        fprintf(strcat(tab,'>> The system has rank deficiency equal to %d\n'),rankD);
+% Check if the linear solver is called from a transient analysis
+isTransient = false;
+if ~ischar(propTransientAnalysis)
+    if isfield(propTransientAnalysis, 'timeDependence')
+        if strcmp(propTransientAnalysis.timeDependence, 'transient')
+            isTransient = true;
+        end
     end
-    condK = cond(stiffMtx(freeDOFs,freeDOFs));
-    fprintf(strcat(tab,'>> The condition number of the system is %d\n'),condK); 
-    [~,eigVal] = eig(stiffMtx(freeDOFs,freeDOFs));
+end
+
+%% 1. Update the time-dependent inhomogeneous Dirichlet boundary conditions
+if ~ischar(propIDBC)
+    if isa(updateDirichletBCs, 'function_handle')
+        [homDOFs, inhomDOFs, valuesInhomDOFs] = ...
+            updateDirichletBCs(BSplinePatches, homDOFs, propIDBC, t);
+    else
+        error('Variable updateInhomDOFs should define a function handle');
+    end
+end
+
+%% 2. Compute the linear matrices of the system
+if strcmp(outMsg, 'outputEnabled') && ~isTransient
+    fprintf(strcat(tab, '>> Computing the system matrix and right hand side vector\n'));
+end
+[stiffMtx, RHS, BSplinePatches, propCoupling, minElAreaSize] = ...
+    computeLinearMtrcsSteadyState ...
+    (constMtx, tanMtxLoad, u, uSaved, uDot, uDotSaved, BSplinePatches, ...
+    connections, propCoupling, loadFactor, noPatch, noTimeStep, ...
+    iNLinearIter, noWeakDBCCnd, t, propTransientAnalysis, ...
+    isReferenceUpdated, strcat(tab, '\t'), outMsg);
+if isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle') && ...
+        ~propTransientAnalysis.isStaticStep
+    [stiffMtx, RHS] = propTransientAnalysis.computeProblemMtrcsTransient ...
+        (u, uSaved, uDot, uDotSaved, uDDot, uDDotSaved, massMtx, dampMtx, ...
+        stiffMtx, RHS, propTransientAnalysis);
+end
+if strcmp(outMsg, 'outputEnabled') && ~isTransient
+    rankD = length(RHS(freeDOFs)) - rank(stiffMtx(freeDOFs, freeDOFs));
+    if rankD ~= 0
+        fprintf(strcat(tab,'>> The system has rank deficiency equal to %d\n'), rankD);
+    end
+    condK = cond(stiffMtx(freeDOFs, freeDOFs));
+    fprintf(strcat(tab, '>> The condition number of the system is %d\n'), condK); 
+    [~, eigVal] = eig(stiffMtx(freeDOFs, freeDOFs));
     eigVal(~eigVal) = Inf;
     minEig = min(min(eigVal));
-    fprintf(strcat(tab,'>> The minimum eigenvalue of the system is %d\n'),minEig); 
+    fprintf(strcat(tab, '>> The minimum eigenvalue of the system is %d\n'), minEig);
 else
     rankD = 'undefined';
     condK = 'undefined';
     minEig = 'undefined';
 end
 
-%% 2. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
-if norm(valuesInhomDOFs(inhomDOFs)) ~= 0
-    RHS = RHS - stiffMtx(:,inhomDOFs)*valuesInhomDOFs(inhomDOFs);
+%% 3. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
+if norm(valuesInhomDOFs) ~= 0
+    RHS = RHS - stiffMtx(:, inhomDOFs)*valuesInhomDOFs';
 end
 
-%% 3. Solve the linear equation system
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Solving the linear system of %d equations\n'),length(RHS(freeDOFs)));
+%% 4. Solve the linear equation system
+if strcmp(outMsg, 'outputEnabled') && ~isTransient
+    fprintf(strcat(tab, '>> Solving the linear system of %d equations\n'), length(RHS(freeDOFs)));
 end
-[uRed,hasLinearSystemConverged] = solve_LinearSystem...
-    (stiffMtx(freeDOFs,freeDOFs),RHS(freeDOFs),u(freeDOFs));
+[uRed, hasLinearSystemConverged] = solve_LinearSystem ...
+    (stiffMtx(freeDOFs, freeDOFs), RHS(freeDOFs), u(freeDOFs));
 if ~hasLinearSystemConverged
     error('Linear equation solver has not converged');
 end
 
-%% 4. Re-assemble to the complete vector of unknowns
+%% 5. Re-assemble to the complete vector of unknowns
 u(freeDOFs) = uRed;
 u(homDOFs) = 0;
-u(inhomDOFs) = valuesInhomDOFs(inhomDOFs);
+u(inhomDOFs) = valuesInhomDOFs;
 
-%% 5. Compute the complete force vector
+%% 6. Compute the complete force vector
 FComplete = stiffMtx*u;
 
-%% 6. Appendix
-if strcmp(outMsg,'outputEnabled')
+%% 7. Appendix
+if strcmp(outMsg,'outputEnabled') && ~isTransient
     fprintf('\n');
 end
 

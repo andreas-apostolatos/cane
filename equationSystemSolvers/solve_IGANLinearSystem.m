@@ -1,12 +1,13 @@
-function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
-    minEig,BSplinePatches,propCoupling,minElAreaSize] = ...
+function [u, CPHistory, resHistory, isConverged, FComplete, rankD, condK, ...
+    minEig, BSplinePatches, propCoupling, minElAreaSize] = ...
     solve_IGANLinearSystem...
-    (analysis,uSaved,uDotSaved,uDDotSaved,BSplinePatches,connections,u,...
-    uDot,uDDot,constMtx,massMtx,dampMtx,computeNLinearMtrcsSteadyState,...
-    computeUpdatedGeometry,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
-    masterDOFs,slaveDOFs,solve_LinearSystem,t,propCoupling,...
-    propTransientAnalysis,propNLinearAnalysis,plot_IGANLinear,...
-    isReferenceUpdated,isCosimulationWithEmpire,tab,graph,outMsg)
+    (analysis, uSaved, uDotSaved, uDDotSaved, BSplinePatches, connections, ...
+    u, uDot, uDDot, constMtx, massMtx, dampMtx, computeNLinearMtrcsSteadyState, ...
+    computeUpdatedGeometry, freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    updateDirichletBCs, masterDOFs, slaveDOFs, solve_LinearSystem, t, ...
+    propCoupling, propTransientAnalysis, propNLinearAnalysis, propIDBC, ...
+    plot_IGANLinear, isReferenceUpdated, isCosimulationWithEmpire, tab, ...
+    graph, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -37,15 +38,6 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %                                        weights
 %                              .isNURBS: Flag on whether the basis is a 
 %                                        NURBS or a B-Spline
-%                             .homDOFs : The global numbering of the
-%                                        DOFs where homogeneous Dirichlet
-%                                        boundary conditions are applied
-%                           .inhomDOFs : The global numbering of the
-%                                        DOFs where homogeneous Dirichlet
-%                                        boundary conditions are applied
-%                     .valuesInhomDOFs : Prescribed values to the DOFs 
-%                                        where homogeneous Dirichlet
-%                                        boundary conditions are applied
 %                                 .NBC : Structure containing information 
 %                                        on the application of the Neumann 
 %                                        boundary conditions
@@ -138,6 +130,10 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %                                  the prescribed values on the DOFs with
 %                                  inhomogeneous Dirichlet boundary 
 %                                  conditions
+%             updateDirichletBCs : Function handle to the computation of
+%                                  the updated prescribed values of the
+%                                  inhomogeneous Dirichlet boundary
+%                                  conditions
 %                     masterDOFs : The global numbering of the DOFs which 
 %                                  drive the master-slave relations
 %                      slaveDOFs : The global numbering of the DOFs which 
@@ -190,6 +186,37 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %                                          .eps : The residual tolerance
 %                                      .maxIter : The maximum number of
 %                                                 nonlinear iterations
+%                       propIDBC : Structure containing information on the 
+%                                  inhomogeneous Dirichlet boundary 
+%                                  conditions,
+%                              .numCnd : Number of segements where those
+%                                        conditions are applied
+%                              .xiSpan : .noConditions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in xi-direction
+%                             .etaSpan : .noConditions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in eta-direction
+%                 .prescribedDirection : .noConditions x 1 array containing
+%                                        the direction of the load
+%                                        application for each condition
+%                  .isUniqueOnBoundary : .noConditions x 1 array containing
+%                                        flags on whether each of those
+%                                        conditions are unique over their
+%                                        application boundary
+%                     .prescribedValue : Array of size .noConditions which
+%                                        contains handles to functions
+%                                        which determine the prescribed
+%                                        values at each segment
+%                          .isDominant : Flag on whether the inhomogeneous
+%                                        Dirichlet boundary conditions are
+%                                        dominant over the homogeneous ones
+%                                        or notions x 2 array containing
+%                                        the knot span extension of the
+%                                        segments where those conditions
+%                                        are applied in eta-direction
 %                plot_IGANLinear : Function handle to the plotting of the 
 %                                  current configuration throughout the 
 %                                  nonlinear iterations
@@ -208,7 +235,7 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %                     resHistory : Array containing the evolution of the 
 %                                  residual throughout the nonlinear 
 %                                  iterations and the load steps
-%                   hasConverged : Flag on whether the nonlinear iterations 
+%                    isConverged : Flag on whether the nonlinear iterations 
 %                                  have converged
 %                      FComplete : Dummy output for this function
 %                          rankD : Dummy output for this function
@@ -224,94 +251,96 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 %
 % 0. Read input
 %
-% 1. Initialize the load vector on the multipatch structure
+% 1. Update the time-dependent inhomogeneous Dirichlet boundary conditions
+%
+% 2. Initialize the load vector on the multipatch structure
 % ->
-%    1i. Initialize the load vector of the patch
+%    2i. Initialize the load vector of the patch
 %
-%   1ii. Get the Neumann boundary conditions of the current patch
+%   2ii. Get the Neumann boundary conditions of the current patch
 %
-%  1iii. Check if there is a non-conservative loading associated with the current patch
+%  2iii. Check if there is a non-conservative loading associated with the current patch
 %
-%   1iv. Loop over the Neumann boundary conditions of the current patch
+%   2iv. Loop over the Neumann boundary conditions of the current patch
 %   ->
-%        1iv.1. Initialize the load vector for the current condition
+%        2iv.1. Initialize the load vector for the current condition
 %
-%        1iv.2. Get the function handle for the load vector computation  
+%        2iv.2. Get the function handle for the load vector computation  
 %
-%        1iv.3. Compute the load vector and the tangent matrix resulting from the application of follower loads
+%        2iv.3. Compute the load vector and the tangent matrix resulting from the application of follower loads
 %
-%        1iv.4. If the loading is not conservative add the contribution to the non-conservative load vector
+%        2iv.4. If the loading is not conservative add the contribution to the non-conservative load vector
 %
-%        1iv.5. Add The compute external load vector into the B-Spline array
+%        2iv.5. Add The compute external load vector into the B-Spline array
 %   <-
 % <-
 % 
-% 2. Loop over all the fixed point (coupling) iterations if external coupling through Empire is considered
+% 3. Loop over all the fixed point (coupling) iterations if external coupling through Empire is considered
 % ->
-%    2i. Initialize the force vector to be received by Empire
+%    3i. Initialize the force vector to be received by Empire
 %
-%   2ii. Receive field from Empire
+%   3ii. Receive field from Empire
 %
-%  2iii. Distribute the received forces from Empire to each patch
+%  3iii. Distribute the received forces from Empire to each patch
 %
-%   2iv. Loop over all load steps
+%   3iv. Loop over all load steps
 %   ->
-%        2iv.1. Compute the load factor
+%        3iv.1. Compute the load factor
 %
-%        2iv.2. Loop over all the nonlinear iterations
+%        3iv.2. Loop over all the nonlinear iterations
 %        ->
-%               2iv.2i. Compute the tangent stiffness matrix and the residual vector for the steady-state problem
+%               3iv.2i. Compute the tangent stiffness matrix and the residual vector for the steady-state problem
 %
-%              2iv.2ii. Compute the tangent stiffness matrix and the residual vector for the transient problem
+%              3iv.2ii. Compute the tangent stiffness matrix and the residual vector for the transient problem
 %
-%             2iv.2iii. Re-arrangement of the equation system for specific treatment of condition enforcement
+%             3iv.2iii. Re-arrangement of the equation system for specific treatment of condition enforcement
 %
-%              2iv.2iv. Get the array of inhomogeneous Dirichlet boundary conditions
+%              3iv.2iv. Get the array of inhomogeneous Dirichlet boundary conditions
 %
-%               2iv.2v. Compute the right-hand side (RHS) residual vector in equation
+%               3iv.2v. Compute the right-hand side (RHS) residual vector in equation
 %
-%              2iv.2vi. Check condition for convergence on the residual vector
+%              3iv.2vi. Check condition for convergence on the residual vector
 %
-%             2iv.2vii. Solve the linearized equation system
+%             3iv.2vii. Solve the linearized equation system
 %
-%            2iv.2viii. Re-assemble to the complete vector of unknowns
+%            3iv.2viii. Re-assemble to the complete vector of unknowns
 %
-%              2iv.2ix. Update the patch geometry
+%              3iv.2ix. Update the patch geometry
 %
-%               2iv.2x. Loop over the patches and update the external load vector if a nonconservative load is encountered
+%               3iv.2x. Loop over the patches and update the external load vector if a nonconservative load is encountered
 %               ->
-%                       2iv.2x.1. Get the Neumann boundary conditions of the current patch
+%                       3iv.2x.1. Get the Neumann boundary conditions of the current patch
 %
-%                       2iv.2x.2. Erase the nonconservative part from the load application and the corresponding tangent matrix in order to update it
+%                       3iv.2x.2. Erase the nonconservative part from the load application and the corresponding tangent matrix in order to update it
 %
-%                       2iv.2x.3. Loop over the Neumann boundary conditions of the current patch
+%                       3iv.2x.3. Loop over the Neumann boundary conditions of the current patch
 %                       ->
-%                                 2iv.2x.3i. Check if the load application is conservative or not and if the current linear system corresponds to the static step and the load is transient and continue if it yes
+%                                 3iv.2x.3i. Check if the load application is conservative or not and if the current linear system corresponds to the static step and the load is transient and continue if it yes
 %
-%                                2iv.2x.3ii. Get the function handle for the computation of the load vector at the current patch
+%                                3iv.2x.3ii. Get the function handle for the computation of the load vector at the current patch
 %
-%                               2iv.2x.3iii. Compute the non-conservative load vector corresponding to the next iteration step and the tangent matrix resulting from the application of follower loads
+%                               3iv.2x.3iii. Compute the non-conservative load vector corresponding to the next iteration step and the tangent matrix resulting from the application of follower loads
 %                       <-
 %
-%                       2iv.2x.4. Add the nonconservative part to the load vector
+%                       3iv.2x.4. Add the nonconservative part to the load vector
 %               <-
 %
-%              2iv.2xi. Save the results of the Control Point deformation
+%              3iv.2xi. Save the results of the Control Point deformation
 %        <-
 %
-%        2iv.3. If the nonlinear iterations have not converged break the loop
+%        3iv.3. If the nonlinear iterations have not converged break the loop
 %
-%        2iv.4. Plot the current configuration
+%        3iv.4. Plot the current configuration
 %   <-
 %
-%    2v. Send the converged solution to Empire
+%    3v. Send the converged solution to Empire
 %
-%   2vi. Check convergence of the fixed point (coupling) iterations
+%   3vi. Check convergence of the fixed point (coupling) iterations
 %
-%  2vii. Subtract the received from Empire forces from each patch 
+%  3vii. Subtract the received from Empire forces from each patch 
 % <-
 %
-% 3. Close figures
+% 4. Close figures
 %
 %% Function main body
 
@@ -321,8 +350,8 @@ function [u,CPHistory,resHistory,hasConverged,FComplete,rankD,condK,...
 eps = 1e-14;
 
 % Print out message on the nonlinear method under use
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'Nonlinear method : %s\n\n'),propNLinearAnalysis.method);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf(strcat(tab, 'Nonlinear method : %s\n\n'), propNLinearAnalysis.method);
 end
 
 % Get number of patches
@@ -336,8 +365,8 @@ end
 % Get the number of weak Dirichlet boundary conditions
 noWeakDBCCnd = 0;
 for iPatches = 1:noPatches
-    if isfield(BSplinePatches{iPatches},'weakDBC')
-        if isfield(BSplinePatches{iPatches}.weakDBC,'noCnd')
+    if isfield(BSplinePatches{iPatches}, 'weakDBC')
+        if isfield(BSplinePatches{iPatches}.weakDBC, 'noCnd')
             noWeakDBCCnd = noWeakDBCCnd + ...
                 BSplinePatches{iPatches}.weakDBC.noCnd;
         end
@@ -346,8 +375,9 @@ end
 
 % Get the time step number if the analysis is transient
 if ~ischar(propTransientAnalysis)
-    if isfield(propTransientAnalysis,'timeDependence')
-        if strcmp(propTransientAnalysis.timeDependence,'transient') || strcmp(propTransientAnalysis.timeDependence,'pseudotransient')
+    if isfield(propTransientAnalysis, 'timeDependence')
+        if strcmp(propTransientAnalysis.timeDependence, 'transient') || ...
+                strcmp(propTransientAnalysis.timeDependence, 'pseudotransient')
             noTimeStep = (t - propTransientAnalysis.TStart)/propTransientAnalysis.dt + 1;
             if mod(noTimeStep,1) ~= 0
                 if abs(noTimeStep - round(noTimeStep)) > eps*noTimeStep/propTransientAnalysis.dt
@@ -358,19 +388,20 @@ if ~ischar(propTransientAnalysis)
         end
     end
 end
-if ~exist('noTimeStep','var')
+if ~exist('noTimeStep', 'var')
     noTimeStep = 'undefined';
 end
 
 % Get the coupling type in case of co-simulation using Empire
 if isCosimulationWithEmpire && ~propTransientAnalysis.isStaticStep
     couplingType = EMPIRE_API_getUserDefinedText('couplingType');
-    if strcmp(couplingType,'looseCoupling')
+    if strcmp(couplingType, 'looseCoupling')
         isIterativeCoupling = false;
-    elseif strcmp(couplingType,'iterativeCoupling')
+    elseif strcmp(couplingType, 'iterativeCoupling')
         isIterativeCoupling = true;
     else
-        error('Coupling type in propEmpireCoSimulation.strMatlabXml is %s but it has to be defined as either looseCoupling or iterativeCoupli',couplingType);
+        error('Coupling type in propEmpireCoSimulation.strMatlabXml is %s but it has to be defined as either looseCoupling or iterativeCoupli', ...
+            couplingType);
     end
 end
 
@@ -388,12 +419,12 @@ end
 % Get the global numbering of the DOFs which are sent to Empire
 if isCosimulationWithEmpire && ~propTransientAnalysis.isStaticStep
     noDOFsPrevious = 0;
-    EFTEmpire = zeros(noDOFsEmpire,1);
+    EFTEmpire = zeros(noDOFsEmpire, 1);
     for iPatches = 1:noPatches
         if iPatches ~= 1
             noDOFsPrevious = noDOFsPrevious + BSplinePatches{iPatches - 1}.noDOFsEmpire;
         end
-        EFTEmpire(noDOFsPrevious + 1:noDOFsPrevious + BSplinePatches{iPatches}.noDOFsEmpire,1) = ...
+        EFTEmpire(noDOFsPrevious + 1:noDOFsPrevious + BSplinePatches{iPatches}.noDOFsEmpire, 1) = ...
             BSplinePatches{iPatches}.EFTPatches(1,1:BSplinePatches{iPatches}.noDOFsEmpire);
     end
 end
@@ -407,18 +438,20 @@ minEig = 'undefined';
 % Initialize the displacement history array for each patch
 CPHistory = struct([]);
 for iPatches = 1:noPatches
-    CPHistory{iPatches} = zeros(length(BSplinePatches{iPatches}.CP(:,1,1)),length(BSplinePatches{iPatches}.CP(1,:,1)),...
-        length(BSplinePatches{iPatches}.CP(1,1,:)),propNLinearAnalysis.noLoadSteps + 1);
-    CPHistory{iPatches}(:,:,:,1) = BSplinePatches{iPatches}.CP;
+    CPHistory{iPatches} = zeros(length(BSplinePatches{iPatches}.CP(:, 1, 1)), ...
+        length(BSplinePatches{iPatches}.CP(1, :, 1)), ...
+        length(BSplinePatches{iPatches}.CP(1, 1, :)), ...
+        propNLinearAnalysis.noLoadSteps + 1);
+    CPHistory{iPatches}(:, :, :, 1) = BSplinePatches{iPatches}.CP;
 end
 
 % Check if there exist a nonconservative loading
 tanMtxLoad = struct([]);
-isConservative = true(noPatches,1);
+isConservative = true(noPatches, 1);
 for iPatches = 1:noPatches
     for iNBC = 1:BSplinePatches{iPatches}.NBC.noCnd
-        if BSplinePatches{iPatches}.NBC.isFollower(iNBC,1)
-            isConservative(iPatches,1) = false;
+        if BSplinePatches{iPatches}.NBC.isFollower(iNBC, 1)
+            isConservative(iPatches, 1) = false;
             break;
         end
     end
@@ -426,7 +459,7 @@ end
 
 % Initialize the tangent matrix due to follower loading for each patch
 for iPatches = 1:noPatches
-    if ~isConservative(iPatches,1)
+    if ~isConservative(iPatches, 1)
         tanMtxLoad{iPatches} = zeros(BSplinePatches{iPatches}.noDOFs);
     else
         tanMtxLoad{iPatches} = 'undefined';
@@ -434,267 +467,288 @@ for iPatches = 1:noPatches
 end
 
 % Initialize the residual history array
-resHistory = zeros(propNLinearAnalysis.maxIter,propNLinearAnalysis.noLoadSteps);
+resHistory = zeros(propNLinearAnalysis.maxIter, propNLinearAnalysis.noLoadSteps);
 
-%% 1. Initialize the load vector on the multipatch structure
+%% 1. Update the time-dependent inhomogeneous Dirichlet boundary conditions
+if ~ischar(propIDBC)
+    if isa(updateDirichletBCs, 'function_handle')
+        [homDOFs, inhomDOFs, valuesInhomDOFs] = ...
+            updateDirichletBCs(BSplinePatches, homDOFs, propIDBC, t);
+    else
+        error('Variable updateInhomDOFs should define a function handle');
+    end
+end
+
+%% 2. Initialize the load vector on the multipatch structure
 for iPatches = 1:noPatches
-    %% 1i. Initialize the load vector of the patch
-    BSplinePatches{iPatches}.FGamma = zeros(BSplinePatches{iPatches}.noDOFs,1);
+    %% 2i. Initialize the load vector of the patch
+    BSplinePatches{iPatches}.FGamma = zeros(BSplinePatches{iPatches}.noDOFs, 1);
     
-    %% 1ii. Get the Neumann boundary conditions of the current patch
+    %% 2ii. Get the Neumann boundary conditions of the current patch
     NBC = BSplinePatches{iPatches}.NBC;
     
-    %% 1iii. Check if there is a non-conservative loading associated with the current patch
-    if ~isConservative(iPatches,1)
+    %% 2iii. Check if there is a non-conservative loading associated with the current patch
+    if ~isConservative(iPatches, 1)
         BSplinePatches{iPatches}.FNonConservative = ...
-            zeros(BSplinePatches{iPatches}.noDOFs,1);
+            zeros(BSplinePatches{iPatches}.noDOFs, 1);
     end
 
-    %% 1iv. Loop over the Neumann boundary conditions of the current patch
+    %% 2iv. Loop over the Neumann boundary conditions of the current patch
     for iNBC = 1:NBC.noCnd
-        %% 1iv.1. Initialize the load vector for the current condition
-        FGamma = zeros(BSplinePatches{iPatches}.noDOFs,1);
+        %% 2iv.1. Initialize the load vector for the current condition
+        FGamma = zeros(BSplinePatches{iPatches}.noDOFs, 1);
         
-        %% 1iv.2. Get the function handle for the load vector computation
+        %% 2iv.2. Get the function handle for the load vector computation
         funcHandle = str2func(NBC.computeLoadVct{iNBC});
         
-        %% 1iv.3. Compute the load vector and the tangent matrix resulting from the application of follower loads
-        if ~(propTransientAnalysis.isStaticStep && NBC.isTimeDependent(iNBC,1))
-            [FGamma,tanMtxLoadPatch] = funcHandle(FGamma,BSplinePatches{iPatches},...
-                NBC.xiLoadExtension{iNBC},NBC.etaLoadExtension{iNBC},...
-                NBC.loadAmplitude{iNBC},NBC.loadDirection{iNBC},...
-                NBC.isFollower(iNBC,1),t,BSplinePatches{iPatches}.int,'');
-            if NBC.isFollower(iNBC,1)
+        %% 2iv.3. Compute the load vector and the tangent matrix resulting from the application of follower loads
+        if ~(propTransientAnalysis.isStaticStep && NBC.isTimeDependent(iNBC, 1))
+            [FGamma, tanMtxLoadPatch] = funcHandle ...
+                (FGamma,BSplinePatches{iPatches}, ...
+                NBC.xiLoadExtension{iNBC}, NBC.etaLoadExtension{iNBC}, ...
+                NBC.loadAmplitude{iNBC}, NBC.loadDirection{iNBC}, ...
+                NBC.isFollower(iNBC, 1), t, BSplinePatches{iPatches}.int, ...
+                '');
+            if NBC.isFollower(iNBC, 1)
                 tanMtxLoad{iPatches} = tanMtxLoad{iPatches} + tanMtxLoadPatch;
             end
         end
         
-        %% 1iv.4. If the loading is not conservative add the contribution to the non-conservative load vector
-        if NBC.isFollower(iNBC,1)
+        %% 2iv.4. If the loading is not conservative add the contribution to the non-conservative load vector
+        if NBC.isFollower(iNBC, 1)
             BSplinePatches{iPatches}.FNonConservative = BSplinePatches{iPatches}.FNonConservative + ...
                 FGamma;
         end
         
-        %% 1iv.5. Add The compute external load vector into the B-Spline array
-        BSplinePatches{iPatches}.FGamma = BSplinePatches{iPatches}.FGamma +...
+        %% 2iv.5. Add The compute external load vector into the B-Spline array
+        BSplinePatches{iPatches}.FGamma = BSplinePatches{iPatches}.FGamma + ...
             FGamma;
     end
 end
 
-%% 2. Loop over all the fixed point (coupling) iterations if external coupling through Empire is considered
+%% 3. Loop over all the fixed point (coupling) iterations if external coupling through Empire is considered
 while ~isFixedPointConvergent
-    %% 2i. Initialize the force vector to be received by Empire
+    %% 3i. Initialize the force vector to be received by Empire
     if isCosimulationWithEmpire && ~propTransientAnalysis.isStaticStep
-        forceVctEmpire = zeros(1,noDOFsEmpire);
+        forceVctEmpire = zeros(1, noDOFsEmpire);
     end
     
-    %% 2ii. Receive field from Empire
+    %% 3ii. Receive field from Empire
     if isCosimulationWithEmpire && ~propTransientAnalysis.isStaticStep
-        fprintf(strcat(tab,'Receiving field from Empire\n\n'));
-        EMPIRE_API_recvDataField('defaultField',noDOFsEmpire,forceVctEmpire);
+        fprintf(strcat(tab, 'Receiving field from Empire\n\n'));
+        EMPIRE_API_recvDataField('defaultField', noDOFsEmpire, forceVctEmpire);
     end
     
-    %% 2iii. Distribute the received forces from Empire to each patch
+    %% 3iii. Distribute the received forces from Empire to each patch
     if isCosimulationWithEmpire && ~propTransientAnalysis.isStaticStep
         for iPatches = 1:noPatches
-            BSplinePatches{iPatches}.FGamma(1:BSplinePatches{iPatches}.noDOFsEmpire,1) = ...
-                BSplinePatches{iPatches}.FGamma(1:BSplinePatches{iPatches}.noDOFsEmpire,1) + ...
-                forceVctEmpire(1,BSplinePatches{iPatches}.EFTPatches(1,1:BSplinePatches{iPatches}.noDOFsEmpire))';
+            BSplinePatches{iPatches}.FGamma(1:BSplinePatches{iPatches}.noDOFsEmpire, 1) = ...
+                BSplinePatches{iPatches}.FGamma(1:BSplinePatches{iPatches}.noDOFsEmpire, 1) + ...
+                forceVctEmpire(1, BSplinePatches{iPatches}.EFTPatches(1, 1:BSplinePatches{iPatches}.noDOFsEmpire))';
         end
     end
     
-    %% 2iv. Loop over all load steps
+    %% 3iv. Loop over all load steps
     for iLoadStep = 1:propNLinearAnalysis.noLoadSteps
-        if strcmp(outMsg,'outputEnabled')
-            fprintf(strcat(tab,'Load step %d/%d \n'),iLoadStep,propNLinearAnalysis.noLoadSteps);
-            fprintf(strcat(tab,'----------------\n'));
+        if strcmp(outMsg, 'outputEnabled')
+            fprintf(strcat(tab, 'Load step %d/%d \n'), iLoadStep, ...
+                propNLinearAnalysis.noLoadSteps);
+            fprintf(strcat(tab, '----------------\n'));
             fprintf('\n');
         end
-        %% 2iv.1. Compute the load factor
+        %% 3iv.1. Compute the load factor
         loadFactor = iLoadStep/propNLinearAnalysis.noLoadSteps;
 
-        %% 2iv.2. Loop over all the nonlinear iterations
+        %% 3iv.2. Loop over all the nonlinear iterations
         if strcmp(outMsg,'outputEnabled')
-            msgPNR = sprintf(strcat(tab,'\tLooping over the nonlinear iterations\n',tab,'\t-------------------------------------\n\n'));
+            msgPNR = sprintf(strcat(tab, '\tLooping over the nonlinear iterations\n', ...
+                tab, '\t-------------------------------------\n\n'));
             fprintf(msgPNR);
         end
         for iNLinearIter = 1:propNLinearAnalysis.maxIter
-            %% 2iv.2i. Compute the tangent stiffness matrix and the residual vector for the steady-state problem
-            [tanMtx,resVct,BSplinePatches,propCoupling,minElAreaSize] = ...
-                computeNLinearMtrcsSteadyState(constMtx,tanMtxLoad,u,uSaved,...
-                uDot,uDotSaved,BSplinePatches,connections,propCoupling,...
-                loadFactor,noPatch,noTimeStep,iNLinearIter,...
-                noWeakDBCCnd,t,propTransientAnalysis,isReferenceUpdated,...
-                strcat(tab,'\t'),outMsg);
+            %% 3iv.2i. Compute the tangent stiffness matrix and the residual vector for the steady-state problem
+            [tanMtx, resVct, BSplinePatches, propCoupling, minElAreaSize] = ...
+                computeNLinearMtrcsSteadyState ...
+                (constMtx, tanMtxLoad, u, uSaved, uDot, uDotSaved, ...
+                BSplinePatches, connections, propCoupling, loadFactor, ...
+                noPatch, noTimeStep, iNLinearIter, noWeakDBCCnd, t, ...
+                propTransientAnalysis, isReferenceUpdated, ...
+                strcat(tab, '\t'), outMsg);
 
-            %% 2iv.2ii. Compute the tangent stiffness matrix and the residual vector for the transient problem
+            %% 3iv.2ii. Compute the tangent stiffness matrix and the residual vector for the transient problem
             if isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
                 ~propTransientAnalysis.isStaticStep
-                [tanMtx,resVct] = propTransientAnalysis.computeProblemMtrcsTransient...
-                    (u,uSaved,uDot,uDotSaved,uDDot,uDDotSaved,massMtx,dampMtx,...
-                    tanMtx,resVct,propTransientAnalysis);
-            elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
-                    ~(strcmp(propTransientAnalysis.timeDependence,'steadyState') || strcmp(propTransientAnalysis.timeDependence,'pseudotransient'))
-                error('Variable propTransientAnalysis.computeProblemMtrcsTransient is undefined but the simulation is transient')
+                [tanMtx,resVct] = propTransientAnalysis.computeProblemMtrcsTransient ...
+                    (u, uSaved, uDot, uDotSaved, uDDot, uDDotSaved, ...
+                    massMtx, dampMtx, tanMtx, resVct, propTransientAnalysis);
+            elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle') && ...
+                    ~(strcmp(propTransientAnalysis.timeDependence, 'steadyState') || ...
+                    strcmp(propTransientAnalysis.timeDependence, 'pseudotransient'))
+                error('Variable propTransientAnalysis.computeProblemMtrcsTransient is undefined but the simulation is transient');
             end
 
-            %% 2iv.2iii. Re-arrangement of the equation system for specific treatment of condition enforcement
+            %% 3iv.2iii. Re-arrangement of the equation system for specific treatment of condition enforcement
             if ~ischar(propCoupling)
-                if isfield(propCoupling,'method')
-                    if strcmp(propCoupling.method,'mortar')
-                        if ~isfield(propCoupling,'computeRearrangedProblemMtrcs')
+                if isfield(propCoupling, 'method')
+                    if strcmp(propCoupling.method, 'mortar')
+                        if ~isfield(propCoupling, 'computeRearrangedProblemMtrcs')
                             error('For the mortar method a function handle under propCoupling.computeRearrangedProblemMtrcs needs to be specified');
                         end
-                        [tanMtx,resVct] = propCoupling.computeRearrangedProblemMtrcs...
-                            (constMtx,BSplinePatches,connections,tanMtx,resVct);
+                        [tanMtx, resVct] = propCoupling.computeRearrangedProblemMtrcs ...
+                            (constMtx, BSplinePatches, connections, tanMtx, resVct);
                     end
                 end
             end
 
-            %% 2iv.2iv. Get the array of inhomogeneous Dirichlet boundary conditions
+            %% 3iv.2iv. Get the array of inhomogeneous Dirichlet boundary conditions
             if iscell(valuesInhomDOFs)
                 if length(valuesInhomDOFs) ~= length(inhomDOFs)
                     error('The arrays of the inhomogeneous Dirichlet boundary conditions and their values are not the same');
                 end
-                valuesInhomDOFsTemp = zeros(1,length(inhomDOFs));
+                valuesInhomDOFsTemp = zeros(1, length(inhomDOFs));
                 for iInhomDBC = 1:length(inhomDOFs)
-                    valuesInhomDOFsTemp(1,iInhomDBC) = valuesInhomDOFs{iInhomDBC}(t);
+                    valuesInhomDOFsTemp(1, iInhomDBC) = valuesInhomDOFs{iInhomDBC}(t);
                 end
                 clear valuesInhomDOFs;
                 valuesInhomDOFs = valuesInhomDOFsTemp;
             end
 
-            %% 2iv.2v. Compute the right-hand side (RHS) residual vector in equation
+            %% 3iv.2v. Compute the right-hand side (RHS) residual vector in equation
             RHS = - resVct;
             if norm(valuesInhomDOFs) ~= 0 && iNLinearIter == 1
-                RHS = RHS + tanMtx(:,inhomDOFs)*valuesInhomDOFs';
+                RHS = RHS + tanMtx(:, inhomDOFs)*valuesInhomDOFs';
             end
 
-            %% 2iv.2vi. Check condition for convergence on the residual vector
+            %% 3iv.2vi. Check condition for convergence on the residual vector
 
             % Compute the norm of the residual vector over the free DOFs
-            resHistory(iNLinearIter,iLoadStep) = norm(resVct(freeDOFs));
+            resHistory(iNLinearIter, iLoadStep) = norm(resVct(freeDOFs));
 
             % Issue a message on the evolution of the residual vector
-            if strcmp(outMsg,'outputEnabled')
-                msgNR = sprintf(strcat(tab,'\t||resVct|| = %d at nonlinear iteration No. %d \n'),...
-                    resHistory(iNLinearIter,iLoadStep),iNLinearIter);
+            if strcmp(outMsg, 'outputEnabled')
+                msgNR = sprintf(strcat(tab, '\t||resVct|| = %d at nonlinear iteration No. %d \n'), ...
+                    resHistory(iNLinearIter, iLoadStep), iNLinearIter);
                 fprintf(msgNR);
             end
 
             % Check the convergence of the nonlinear iterations
-            if resHistory(iNLinearIter,iLoadStep) <= propNLinearAnalysis.eps && iNLinearIter ~= 1
-                if strcmp(outMsg,'outputEnabled')
-                    msgANR = sprintf(strcat('\n',tab,'\tNonlinear iterations converged! \n \n \n'));
+            if resHistory(iNLinearIter, iLoadStep) <= propNLinearAnalysis.eps && iNLinearIter ~= 1
+                if strcmp(outMsg, 'outputEnabled')
+                    msgANR = sprintf(strcat('\n', tab, '\tNonlinear iterations converged! \n \n \n'));
                     fprintf(msgANR);
                 end
-                hasConverged = true;
+                isConverged = true;
                 break;
             end
 
             % If the nonlinear iterations do not converge after specified limit:
             if iNLinearIter == propNLinearAnalysis.maxIter
-                if strcmp(outMsg,'outputEnabled')
+                if strcmp(outMsg, 'outputEnabled')
                     warning('Nonlinear iterations did not converge');
                 end
 
                 % Flag on the convergence of the nonlinear iterations
-                hasConverged = false;
+                isConverged = false;
             end
 
-            %% 2iv.2vii. Solve the linearized equation system
-            [deltauRed,hasLinearSystemConverged] = solve_LinearSystem...
-                (tanMtx(freeDOFs,freeDOFs),RHS(freeDOFs),u(freeDOFs));
-            if ~hasLinearSystemConverged
+            %% 3iv.2vii. Solve the linearized equation system
+            [deltauRed, isLinearSystemConverged] = solve_LinearSystem ...
+                (tanMtx(freeDOFs, freeDOFs), RHS(freeDOFs), u(freeDOFs));
+            if ~isLinearSystemConverged
                 error('Linear equation solver did not converge');
             end
 
-            %% 2iv.2viii. Re-assemble to the complete vector of unknowns
+            %% 3iv.2viii. Re-assemble to the complete vector of unknowns
             u(freeDOFs) = u(freeDOFs) + deltauRed;
             if iNLinearIter == 1
                 u(homDOFs) = 0;
                 u(inhomDOFs) = valuesInhomDOFs;
             end
 
-            %% 2iv.2ix. Update the patch geometry
-            BSplinePatches = computeUpdatedGeometry(BSplinePatches,u);
+            %% 3iv.2ix. Update the patch geometry
+            if isa(computeUpdatedGeometry, 'function_handle')
+                BSplinePatches = computeUpdatedGeometry(BSplinePatches, u);
+            end
 
-            %% 2iv.2x. Loop over the patches and update the external load vector if a nonconservative load is encountered
+            %% 3iv.2x. Loop over the patches and update the external load vector if a nonconservative load is encountered
             for iPatches = 1:noPatches
-                %% 2iv.2x.1. Get the Neumann boundary conditions of the current patch
+                %% 3iv.2x.1. Get the Neumann boundary conditions of the current patch
                 NBC = BSplinePatches{iPatches}.NBC;
 
-                %% 2iv.2x.2. Erase the nonconservative part from the load application and the corresponding tangent matrix in order to update it
-                if ~isConservative(iPatches,1)
+                %% 3iv.2x.2. Erase the nonconservative part from the load application and the corresponding tangent matrix in order to update it
+                if ~isConservative(iPatches, 1)
                     BSplinePatches{iPatches}.FGamma = BSplinePatches{iPatches}.FGamma - ...
                         BSplinePatches{iPatches}.FNonConservative;
                     BSplinePatches{iPatches}.FNonConservative = ...
-                        zeros(BSplinePatches{iPatches}.noDOFs,1);
+                        zeros(BSplinePatches{iPatches}.noDOFs, 1);
                     tanMtxLoad{iPatches} = zeros(BSplinePatches{iPatches}.noDOFs);
                 end
 
-                %% 2iv.2x.3. Loop over the Neumann boundary conditions of the current patch
+                %% 3iv.2x.3. Loop over the Neumann boundary conditions of the current patch
                 for iNBC = 1:NBC.noCnd
-                    %% 2iv.2x.3i. Check if the load application is conservative or not and if the current linear system corresponds to the static step and the load is transient and continue if it yes
-                    if ~NBC.isFollower(iNBC,1) || (propTransientAnalysis.isStaticStep && NBC.isTimeDependent(iNBC,1))
+                    %% 3iv.2x.3i. Check if the load application is conservative or not and if the current linear system corresponds to the static step and the load is transient and continue if it yes
+                    if ~NBC.isFollower(iNBC, 1) || ...
+                            (propTransientAnalysis.isStaticStep && NBC.isTimeDependent(iNBC, 1))
                         continue; 
                     end
 
-                    %% 2iv.2x.3ii. Get the function handle for the computation of the load vector at the current patch
+                    %% 3iv.2x.3ii. Get the function handle for the computation of the load vector at the current patch
                     funcHandle = str2func(NBC.computeLoadVct{iNBC});
 
-                    %% 2iv.2x.3iii. Compute the non-conservative load vector corresponding to the next iteration step and the tangent matrix resulting from the application of follower loads
-                    [BSplinePatches{iPatches}.FNonConservative,tanMtxLoadPatch] = ...
-                        funcHandle(BSplinePatches{iPatches}.FNonConservative,...
-                        BSplinePatches{iPatches},NBC.xiLoadExtension{iNBC},...
-                        NBC.etaLoadExtension{iNBC},NBC.loadAmplitude{iNBC},...
-                        NBC.loadDirection{iNBC},NBC.isFollower(iNBC,1),...
-                        t,BSplinePatches{iPatches}.int,'');
-                    if NBC.isFollower(iNBC,1)
+                    %% 3iv.2x.3iii. Compute the non-conservative load vector corresponding to the next iteration step and the tangent matrix resulting from the application of follower loads
+                    [BSplinePatches{iPatches}.FNonConservative, tanMtxLoadPatch] = ...
+                        funcHandle ...
+                        (BSplinePatches{iPatches}.FNonConservative, ...
+                        BSplinePatches{iPatches}, NBC.xiLoadExtension{iNBC}, ...
+                        NBC.etaLoadExtension{iNBC}, NBC.loadAmplitude{iNBC}, ...
+                        NBC.loadDirection{iNBC}, NBC.isFollower(iNBC, 1), ...
+                        t, BSplinePatches{iPatches}.int, '');
+                    if NBC.isFollower(iNBC, 1)
                         tanMtxLoad{iPatches} = tanMtxLoad{iPatches} + tanMtxLoadPatch;
                     end
                 end
 
-                %% 2iv.2x.4. Add the nonconservative part to the load vector
-                if ~isConservative(iPatches,1)
+                %% 3iv.2x.4. Add the nonconservative part to the load vector
+                if ~isConservative(iPatches, 1)
                     BSplinePatches{iPatches}.FGamma = BSplinePatches{iPatches}.FGamma + ...
                         BSplinePatches{iPatches}.FNonConservative;
                 end
             end
 
-            %% 2iv.2xi. Save the results of the Control Point deformation
+            %% 3iv.2xi. Save the results of the Control Point deformation
             for iPatches = 1:noPatches
-                CPHistory{iPatches}(:,:,:,iLoadStep + 1) = BSplinePatches{iPatches}.CPd;
+                CPHistory{iPatches}(:, :, :, iLoadStep + 1) = ...
+                    BSplinePatches{iPatches}.CPd;
             end
         end
 
-        %% 2iv.3. If the nonlinear iterations have not converged break the loop
-        if ~hasConverged
+        %% 3iv.3. If the nonlinear iterations have not converged break the loop
+        if ~isConverged
             break;
         end
 
-        %% 2iv.4. Plot the current configuration
+        %% 3iv.4. Plot the current configuration
         if ~ischar(plot_IGANLinear)
             figure(graph.index)
-            graph.index = plot_IGANLinear(BSplinePatches,u,graph,'');
+            graph.index = plot_IGANLinear(BSplinePatches, u, graph, '');
             graph.index = graph.index - 1;
         end
     end
     
-    %% 2v. Send the converged solution to Empire
+    %% 3v. Send the converged solution to Empire
     if isCosimulationWithEmpire && ~propTransientAnalysis.isStaticStep
-        fprintf(strcat(tab,'Sending converged solution to Empire\n\n'));
-        EMPIRE_API_sendDataField('defaultField',noDOFsEmpire,u(EFTEmpire));
+        fprintf(strcat(tab, 'Sending converged solution to Empire\n\n'));
+        EMPIRE_API_sendDataField('defaultField', noDOFsEmpire, u(EFTEmpire));
     end
         
-    %% 2vi. Check convergence of the fixed point (coupling) iterations
+    %% 3vi. Check convergence of the fixed point (coupling) iterations
     if isCosimulationWithEmpire && ~propTransientAnalysis.isStaticStep
         if isIterativeCoupling
             convergenceSignal = EMPIRE_API_recvConvergenceSignal();
             if convergenceSignal == 1
                 isFixedPointConvergent = true;
             end
-            fprintf(strcat(tab,'Fixed point (coupling) iterations converged\n\n'));
+            fprintf(strcat(tab, 'Fixed point (coupling) iterations converged\n\n'));
         else
             isFixedPointConvergent = true;
         end
@@ -702,17 +756,17 @@ while ~isFixedPointConvergent
         isFixedPointConvergent = true;
     end
     
-    %% 2vii. Subtract the received from Empire forces from each patch
+    %% 3vii. Subtract the received from Empire forces from each patch
     if isCosimulationWithEmpire && ~propTransientAnalysis.isStaticStep
         for iPatches = 1:noPatches
-            BSplinePatches{iPatches}.FGamma(1:BSplinePatches{iPatches}.noDOFsEmpire,1) = ...
-                BSplinePatches{iPatches}.FGamma(1:BSplinePatches{iPatches}.noDOFsEmpire,1) - ...
-                forceVctEmpire(1,BSplinePatches{iPatches}.EFTPatches(1,1:BSplinePatches{iPatches}.noDOFsEmpire))';
+            BSplinePatches{iPatches}.FGamma(1:BSplinePatches{iPatches}.noDOFsEmpire, 1) = ...
+                BSplinePatches{iPatches}.FGamma(1:BSplinePatches{iPatches}.noDOFsEmpire, 1) - ...
+                forceVctEmpire(1, BSplinePatches{iPatches}.EFTPatches(1, 1:BSplinePatches{iPatches}.noDOFsEmpire))';
         end
     end
 end
 
-%% 3. Close figures
+%% 4. Close figures
 if ~ischar(plot_IGANLinear)
     close(figure(graph.index));
 end

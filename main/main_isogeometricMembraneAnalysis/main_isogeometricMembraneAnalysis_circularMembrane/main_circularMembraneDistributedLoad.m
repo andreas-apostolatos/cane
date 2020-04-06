@@ -180,7 +180,8 @@ graph.component = '2norm';
 a = 0;
 tp = a;
 tq = a;
-[Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'outputEnabled');
+[Xi, Eta, CP, p, q] = degreeElevateBSplineSurface ...
+    (p, q, Xi, Eta, CP, tp, tq, 'outputEnabled');
 
 % Number of knots to exist in both directions
 scaling = 5; % 5

@@ -14,9 +14,10 @@
 %        - Isogeometric Kichhoff-Love shell analysis
 %        - Finite element formulation of plate in membrane action analysis
 %        - Finite element formulation of the frictionless Signorini problem
+%        - Stabilized isogeometric analysis for incompressible flows
 %        - Stabilized finite element analysis for the Navier-Stokes problem
 %
-% Date : 12.02.2015
+% Date : 04.04.2020
 %
 %% Clear memnory and command window
 clc;
@@ -96,6 +97,18 @@ addpath('../../FEMContactMechanicsAnalysis/graphics/',...
         '../../FEMContactMechanicsAnalysis/auxiliary/',...
         '../../FEMContactMechanicsAnalysis/contactSegments/',...
         '../../FEMContactMechanicsAnalysis/postprocessing/');
+    
+% Add all functions related to the isogeometric Computational Fluid
+% Dynamics problems
+addpath('../../isogeometricComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/',...
+        '../../isogeometricComputationalFluidDynamicsAnalysis/solvers/',...
+        '../../isogeometricComputationalFluidDynamicsAnalysis/neumannBoundaryConditions/',...
+        '../../isogeometricComputationalFluidDynamicsAnalysis/graphics/',...
+        '../../isogeometricComputationalFluidDynamicsAnalysis/postProcessing/',...
+        '../../isogeometricComputationalFluidDynamicsAnalysis/inhomogeneousDirichletBoundaryConditions/',...
+        '../../isogeometricComputationalFluidDynamicsAnalysis/initialConditions/',...
+        '../../isogeometricComputationalFluidDynamicsAnalysis/transientAnalysis/',...
+        '../../isogeometricComputationalFluidDynamicsAnalysis/errorComputation/');
     
 % Add all functions related to the Finite Element Methods for Computational
 % Fluid Dynamics problems
@@ -179,6 +192,15 @@ if isLight
         HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactHertz2D'));
 end
 resultContactMechanicsAnalysis = run(suiteClassFEMContactMechanics);
+
+%% Run the unit test cases for the stabilized isogeometric incompressible flow equations
+suiteClassIGA4CFD = TestSuite.fromClass(?testIGAComputationalFluidDynamicsAnalysis);
+if isLight
+    suiteClassIGA4CFD = suiteClassIGA4CFD.selectIf...
+        (HasName('testIGAComputationalFluidDynamicsAnalysis/testIGA4StokesSteadyState2D') | ...
+        HasName('testIGAComputationalFluidDynamicsAnalysis/testIGA4TransientTaylorGreenVortices2D'));
+end
+resultIGA4CFD = run(suiteClassIGA4CFD);
 
 %% Run the unit test cases for stabilized finite element formulation for the Navier-Stokes problem
 suiteClassFEM4CFD = TestSuite.fromClass(?testFEMComputationalFluidDynamicsAnalysis);

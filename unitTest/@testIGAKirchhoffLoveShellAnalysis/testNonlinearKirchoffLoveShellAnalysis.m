@@ -61,30 +61,30 @@ Eta = [0 0 0 1 1 1];
 % Control Point coordinates
 
 % x-coordinates
-CP(:,:,1) = [-Length/2 -Length/2 -Length/2
-             Length/2  Length/2  Length/2];
+CP(:, :, 1) = [-Length/2 -Length/2 -Length/2
+               Length/2  Length/2  Length/2];
          
 % y-coordinates
-CP(:,:,2) = [-Radius*sin(2*pi/9) 0 Radius*sin(2*pi/9)
-             -Radius*sin(2*pi/9) 0 Radius*sin(2*pi/9)];
+CP(:, :, 2) = [-Radius*sin(2*pi/9) 0 Radius*sin(2*pi/9)
+               -Radius*sin(2*pi/9) 0 Radius*sin(2*pi/9)];
          
 % z-coordinates
-CP(:,:,3) = [Radius*cos(2*pi/9) Radius/cos(2*pi/9) Radius*cos(2*pi/9)
-             Radius*cos(2*pi/9) Radius/cos(2*pi/9) Radius*cos(2*pi/9)];
+CP(:, :, 3) = [Radius*cos(2*pi/9) Radius/cos(2*pi/9) Radius*cos(2*pi/9)
+               Radius*cos(2*pi/9) Radius/cos(2*pi/9) Radius*cos(2*pi/9)];
        
 % Weights
 weight = cos(2*pi/9);
-CP(:,:,4) = [1 weight 1
-             1 weight 1];
-         
+CP(:, :, 4) = [1 weight 1
+               1 weight 1];
+
 % Find whether the geometrical basis is a NURBS or a B-Spline
-isNURBS = 0;
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
-for i= 1:nxi
-    for j=1:neta
-        if CP(i,j,4)~=1
-            isNURBS = 1;
+isNURBS = false;
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
+for i = 1:nxi
+    for j = 1:neta
+        if CP(i, j, 4) ~= 1
+            isNURBS = true;
             break;
         end
     end
@@ -130,14 +130,16 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % Degree by which to elevate
 tp = 1;
 tq = 0;
-[Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'');
+[Xi, Eta, CP, p, q] = degreeElevateBSplineSurface ...
+    (p, q, Xi, Eta, CP, tp, tq, '');
 
 % Number of knots to exist in both directions
 scaling = 1;
 edgeRatio = ceil(Length/Radius/(sin(4*pi/9)));
 refXi = edgeRatio*scaling;
 refEta = ceil(4/3)*scaling;
-[Xi,Eta,CP] = knotRefineUniformlyBSplineSurface(p,Xi,q,Eta,CP,refXi,refEta,'');
+[Xi, Eta, CP] = knotRefineUniformlyBSplineSurface ...
+    (p, Xi, q, Eta, CP, refXi, refEta, '');
 
 %% 5. Define the expected solutions
 % Define reference solution on the displacements
@@ -204,29 +206,29 @@ expSolDisp = [     0
                
 % Define the expected solution in terms of the Control Point deformation
 expSolCPHist = struct([]);
-for counterComp = 1:4
-    expSolCPHist{1}(:,:,counterComp,1) = CP(:,:,counterComp);
+for iComp = 1:4
+    expSolCPHist{1}(:, :, iComp, 1) = CP(:, :, iComp);
 end
-expSolCPHist{1}(:,:,1,2) = [-25.000000000000000 -24.991768495974885 -24.991768495974888 -25.000000000000000
-                            -16.666359250055653 -16.658615117874728 -16.658615117874724 -16.666359250055653
-                            0.005424875290998   0.005424875290995   0.005424875290997   0.005424875290995
-                            16.677209000637642  16.669464868456725  16.669464868456725  16.677209000637646
-                            25.010849750581997  25.002618246556878  25.002618246556885  25.010849750582000];
-expSolCPHist{1}(:,:,2,2) = [ -16.069690242163482  -9.099255856655059   9.099255856655059  16.069690242163482
-                             -16.067861750915657  -9.099192924078924   9.099192924078924  16.067861750915657
-                             -16.068545562721482  -9.099271964712274   9.099271964712274  16.068545562721454
-                             -16.067861750915654  -9.099192924078926   9.099192924078926  16.067861750915661
-                             -16.069690242163482  -9.099255856655059   9.099255856655059  16.069690242163482];
-expSolCPHist{1}(:,:,3,2) = [19.151111077974452  25.000000000000000  25.000000000000000  19.151111077974452
-                            19.133266993186869  24.984648793193827  24.984648793193834  19.133266993186865
-                            19.120686063049032  24.971386215782744  24.971386215782726  19.120686063048986
-                            19.133266993186869  24.984648793193838  24.984648793193827  19.133266993186858
-                            19.151111077974452  25.000000000000000  25.000000000000000  19.151111077974452];
-expSolCPHist{1}(:,:,4,2) = [1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000
-                            1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000
-                            1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000
-                            1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000
-                            1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000];
+expSolCPHist{1}(:, :, 1, 2) = [-25.000000000000000 -24.991768495974885 -24.991768495974888 -25.000000000000000
+                               -16.666359250055653 -16.658615117874728 -16.658615117874724 -16.666359250055653
+                               0.005424875290998   0.005424875290995   0.005424875290997   0.005424875290995
+                               16.677209000637642  16.669464868456725  16.669464868456725  16.677209000637646
+                               25.010849750581997  25.002618246556878  25.002618246556885  25.010849750582000];
+expSolCPHist{1}(:, :, 2, 2) = [ -16.069690242163482  -9.099255856655059   9.099255856655059  16.069690242163482
+                                -16.067861750915657  -9.099192924078924   9.099192924078924  16.067861750915657
+                                -16.068545562721482  -9.099271964712274   9.099271964712274  16.068545562721454
+                                -16.067861750915654  -9.099192924078926   9.099192924078926  16.067861750915661
+                                -16.069690242163482  -9.099255856655059   9.099255856655059  16.069690242163482];
+expSolCPHist{1}(:, :, 3, 2) = [19.151111077974452  25.000000000000000  25.000000000000000  19.151111077974452
+                               19.133266993186869  24.984648793193827  24.984648793193834  19.133266993186865
+                               19.120686063049032  24.971386215782744  24.971386215782726  19.120686063048986
+                               19.133266993186869  24.984648793193838  24.984648793193827  19.133266993186858
+                               19.151111077974452  25.000000000000000  25.000000000000000  19.151111077974452];
+expSolCPHist{1}(:, :, 4, 2) = [1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000
+                               1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000
+                               1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000
+                               1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000
+                               1.000000000000000   0.883022221559489   0.883022221559489   1.000000000000000];
 
 % Residual history
 expSolResHistory = 1.0e+04 *[
@@ -234,122 +236,122 @@ expSolResHistory = 1.0e+04 *[
                                0.406254542836505
                                0.00000744496092483343
                                0.0000000000831335726027163
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0
-                                               0];
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0
+                               0];
                      
 % Define the reference solution on the minimum element area size
 expSolMinElArea = 50;
@@ -360,18 +362,22 @@ expSolMinElArea = 50;
 
 % back and front curved edges are a rigid diaphragm
 homDOFs = [];
-xiSup = [0 0];   etaSup = [0 1];    
-for dirSupp = [2 3];
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xiSup = [0 0];
+etaSup = [0 1];
+for dirSupp = [2 3]
+    homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 end
-xiSup = [1 1];   etaSup = [0 1];    
-for dirSupp = [2 3];
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xiSup = [1 1];
+etaSup = [0 1];
+for dirSupp = [2 3]
+    homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 end
 
 % Fix the back left corner of the shell to avoid rigid body motions
-xiSup = [0 0];   etaSup = [0 0];   dirSupp = 1;
-homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xiSup = [0 0];
+etaSup = [0 0];
+dirSupp = 1;
+homDOFs = findDofs3D(homDOFs, xiSup, etaSup, dirSupp, CP);
 
 % Inhomogeneous Dirichlet boundary conditions
 inhomDOFs = [];
@@ -392,13 +398,13 @@ NBC.etaLoadExtension = {etab};
 NBC.loadAmplitude = {FAmp};
 NBC.loadDirection = {dirForce};
 NBC.computeLoadVct{1} = 'computeLoadVctAreaIGAThinStructure';
-NBC.isFollower(1,1) = false;
-NBC.isTimeDependent(1,1) = false;
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 %% 7. Create the B-Spline patch array
-BSplinePatch = fillUpPatch...
-    (analysis,p,Xi,q,Eta,CP,isNURBS,parameters,homDOFs,inhomDOFs,...
-    valuesInhomDOFs,weakDBC,cables,NBC,[],[],[],[],[],int);
+BSplinePatch = fillUpPatch ...
+    (analysis, p, Xi, q, Eta, CP, isNURBS, parameters, homDOFs, inhomDOFs, ...
+    valuesInhomDOFs, weakDBC, cables, NBC, [], [], [], [], [], int);
 
 %% 8. Define nonlinear analysis parameters
 propNLinearAnalysis.scheme = 'newtonRaphson';
@@ -406,21 +412,21 @@ propNLinearAnalysis.noLoadSteps = 1;
 propNLinearAnalysis.eps = 10e-7;
 propNLinearAnalysis.maxIter = 120;
 noPatches = 1;
-propNLinearAnalysis.conservativeLoad = true(noPatches,1);
+propNLinearAnalysis.conservativeLoad = true(noPatches, 1);
 
 %% 9. Solve the nonlinear system
 graph = [];
 plot_IGANonlinear = 'undefined';
-[dHatNLinear,CPHistory,resHistory,hasConverged,minElASize] = ...
-    solve_IGAKirchhoffLoveShellNLinear...
-    (BSplinePatch,propNLinearAnalysis,solve_LinearSystem,...
-    plot_IGANonlinear,graph,'');
+[dHatNLinear, CPHistory, resHistory, isConverged, ~, minElASize] = ...
+    solve_IGAKirchhoffLoveShellNLinear ...
+    (BSplinePatch, propNLinearAnalysis, solve_LinearSystem, ...
+    plot_IGANonlinear, graph, '');
 
 %% 10. Verify the results
-testCase.verifyEqual(dHatNLinear,expSolDisp,'AbsTol',absTol);
-testCase.verifyEqual(CPHistory,expSolCPHist,'AbsTol',absTol);
-testCase.verifyEqual(resHistory,expSolResHistory,'AbsTol',absTolRelaxed);
-testCase.verifyEqual(hasConverged,true,'AbsTol',absTol);
-testCase.verifyEqual(minElASize,expSolMinElArea,'AbsTol',absTol);
+testCase.verifyEqual(dHatNLinear, expSolDisp, 'AbsTol', absTol);
+testCase.verifyEqual(CPHistory, expSolCPHist, 'AbsTol', absTol);
+testCase.verifyEqual(resHistory, expSolResHistory, 'AbsTol', absTolRelaxed);
+testCase.verifyEqual(isConverged, true, 'AbsTol', absTol);
+testCase.verifyEqual(minElASize, expSolMinElArea, 'AbsTol', absTol);
 
 end

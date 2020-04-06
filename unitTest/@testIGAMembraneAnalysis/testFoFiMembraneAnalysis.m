@@ -67,28 +67,28 @@ Eta = [0 0 1 1];
 % Control Point coordinates
 
 % x-coordinates
-CP(:,:,1) = [-Length/2 -Length/2
-             Length/2  Length/2];
+CP(:, :, 1) = [-Length/2 -Length/2
+               Length/2  Length/2];
          
 % y-coordinates
-CP(:,:,2) = [-Width/2 Width/2
-             -Width/2 Width/2];
+CP(:, :, 2) = [-Width/2 Width/2
+               -Width/2 Width/2];
          
 % z-coordinates
-CP(:,:,3) = [Height 0      
-             0      Height];
+CP(:, :, 3) = [Height 0      
+               0      Height];
        
 % Weights
-CP(:,:,4) = [1 1
-             1 1];
+CP(:, :, 4) = [1 1
+               1 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
 isNURBS = 0;
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
-for i= 1:nxi
-    for j=1:neta
-        if CP(i,j,4)~=1
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
+for i = 1:nxi
+    for j = 1:neta
+        if CP(i, j, 4) ~= 1
             isNURBS = 1;
             break;
         end
@@ -518,12 +518,12 @@ expSolNoIter = 10;
 
 %% 12. Solve the form-finding analysis problem
 [~,CPHistory,resHistory,~,noIter] = ...
-    solve_formFindingIGAMembrane(BSplinePatch,propFormFinding,...
-    solve_LinearSystem,'');
+    solve_formFindingIGAMembrane ...
+    (BSplinePatch, propFormFinding, solve_LinearSystem, '');
 
 %% 13. Verify the solution
-testCase.verifyEqual(CPHistory,expSoCPHistory,'AbsTol',absTolCarat);
-testCase.verifyEqual(resHistory,expSolResHistory,'AbsTol',absTol);
-testCase.verifyEqual(noIter,expSolNoIter,'AbsTol',absTol);
+testCase.verifyEqual(CPHistory, expSoCPHistory, 'AbsTol', absTolCarat);
+testCase.verifyEqual(resHistory, expSolResHistory, 'AbsTol', absTol);
+testCase.verifyEqual(noIter, expSolNoIter, 'AbsTol', absTol);
 
 end

@@ -1,6 +1,6 @@
-function [eigenmodeShapes,naturalFrequencies,dHat] = ...
-    solve_eigenmodeAnalysisIGAMembrane...
-    (BSplinePatch,solve_LinearSystem,noEig,propNLinearAnalysis,outMsg)
+function [eigenmodeShapes, naturalFrequencies, dHat] = ...
+    solve_eigenmodeAnalysisIGAMembrane ...
+    (BSplinePatch, solve_LinearSystem, noEig, propNLinearAnalysis, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -134,26 +134,26 @@ function [eigenmodeShapes,naturalFrequencies,dHat] = ...
 % 12. Appendix
 %
 %% Function main body
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('_______________________________________________________________\n');
     fprintf('###############################################################\n');
     fprintf('Modal analysis for the isogeometric membrane has been initiated\n');
     fprintf('\n');
     if isnumeric(noEig)
-        if ~rem(noEig,1) == 0
+        if mod(noEig, 1) ~= 0
             error('The number of eigenfrequencies must be an integer');
         end
         if noEig <= 0
             error('The number of eigenfrequencies must be strictly positive');
         end
-        fprintf('Number of eigenfrequencies requested : %d',noEig);
+        fprintf('Number of eigenfrequencies requested : %d', noEig);
     else
         error('Variable noEig must be numeric');
     end
     fprintf('\n');
     isWeakDBC = false;
-    if isfield(BSplinePatch,'weakDBC')
-        if isfield(BSplinePatch.weakDBC,'noCnd')
+    if isfield(BSplinePatch, 'weakDBC')
+        if isfield(BSplinePatch.weakDBC, 'noCnd')
             if BSplinePatch.weakDBC.noCnd > 0
                 isWeakDBC = true;
             end
@@ -162,24 +162,27 @@ if strcmp(outMsg,'outputEnabled')
 	if isWeakDBC
         fprintf('Weak Dirichlet boundary conditions \n');
         fprintf('---------------------------------- \n\n');
-        if isfield(BSplinePatch,'weakDBC')
-            if isfield(BSplinePatch.weakDBC,'noCnd')
+        if isfield(BSplinePatch, 'weakDBC')
+            if isfield(BSplinePatch.weakDBC, 'noCnd')
                 if BSplinePatch.weakDBC.noCnd > 0
-                    fprintf('Weak boundary conditions using the %s method are applied \n',BSplinePatch.weakDBC.method);
-                    if strcmp(BSplinePatch.weakDBC.method,'Nitsche')
-                        if BSplinePatch.weakDBC.estimationStabilPrm == true
+                    fprintf('Weak boundary conditions using the %s method are applied \n', ...
+                        BSplinePatch.weakDBC.method);
+                    if strcmp(BSplinePatch.weakDBC.method, 'Nitsche')
+                        if BSplinePatch.weakDBC.estimationStabilPrm
                             fprintf('Automatic estimation of the stabilization parameter is enabled \n');
                         end
-                        if isfield(BSplinePatch.weakDBC,'computeConstMtx')
+                        if isfield(BSplinePatch.weakDBC, 'computeConstMtx')
                             if isfield(BSplinePatch.weakDBC.alpha)
-                                fprintf('Manual stabilization parameter chosen as %d\n',BSplinePatch.weakDBC.alpha)
+                                fprintf('Manual stabilization parameter chosen as %d\n', ...
+                                    BSplinePatch.weakDBC.alpha)
                             else
                                 error('Manual stabilization parameter weakDBC.alpha needs to be assigned\n');
                             end
                         end
-                    elseif strcmp(BSplinePatch.weakDBC.method,'Penalty')
+                    elseif strcmp(BSplinePatch.weakDBC.method, 'Penalty')
                         if isfield(BSplinePatch.weakDBC.alpha)
-                            fprintf('The penalty parameter is chosen as %d',BSplinePatch.weakDBC.alpha);
+                            fprintf('The penalty parameter is chosen as %d', ...
+                                BSplinePatch.weakDBC.alpha);
                         else
                             error('The penalty parameter needs to be assigned');
                         end
@@ -192,8 +195,6 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('\n');
     fprintf('_______________________________________________________________\n');
     fprintf('\n');
-    
-    % start measuring computational time
     tic;
 end
 
@@ -226,6 +227,8 @@ dampMtx = 'undefined';
 connections = 'undefined';
 masterDOFs = 'undefined';
 slaveDOFs = 'undefined';
+updateDirichletBCs = 'undefined';
+propIDBC = 'undefined';
 plot_IGANLinear = 'undefined';
 graph = 'undefined';
 
@@ -246,8 +249,8 @@ computeUpdatedGeometry = @computeUpdatedGeometryIGAThinStructureMultipatches;
 
 % Get the number of weak Dirichlet boundary conditions
 noWeakDBCCnd = 0;
-if isfield(BSplinePatches{1},'weakDBC')
-    if isfield(BSplinePatches{1}.weakDBC,'noCnd')
+if isfield(BSplinePatches{1}, 'weakDBC')
+    if isfield(BSplinePatches{1}.weakDBC, 'noCnd')
         noWeakDBCCnd = BSplinePatches{1}.weakDBC.noCnd;
     end
 end
@@ -280,15 +283,16 @@ end
 
 % Assign an EFT for each Lagrange Multipliers field
 noDOFsPatchLM = 0;
-if isfield(BSplinePatches{1}.weakDBC,'computeConstMtx')
-    if strcmp(BSplinePatches{1}.weakDBC.computeConstMtx,'computeWeakDBCMtxLagrangeMultipliersIGAMembrane')
+if isfield(BSplinePatches{1}.weakDBC, 'computeConstMtx')
+    if strcmp(BSplinePatches{1}.weakDBC.computeConstMtx, ...
+            'computeWeakDBCMtxLagrangeMultipliersIGAMembrane')
         for iCnd = 1:BSplinePatches{1}.weakDBC.noCnd
-            noDOFsPatchLMCnd = 3*length(BSplinePatches{1}.weakDBC.lambda{iCnd}.CP(:,1));
+            noDOFsPatchLMCnd = 3*length(BSplinePatches{1}.weakDBC.lambda{iCnd}.CP(:, 1));
             noDOFsPatchLM = noDOFsPatchLM + noDOFsPatchLMCnd;
             if iCnd == 1
                 index = 3*BSplinePatches{1}.noCPs;
             else
-                index = BSplinePatches{1}.weakDBC.lambda{iCnd-1}.EFT(length(BSplinePatches{1}.weakDBC.lambda{iCnd-1}.EFT));
+                index = BSplinePatches{1}.weakDBC.lambda{iCnd - 1}.EFT(length(BSplinePatches{1}.weakDBC.lambda{iCnd - 1}.EFT));
             end
             BSplinePatches{1}.weakDBC.lambda{iCnd}.EFT = index + 1:index + noDOFsPatchLMCnd;
         end
@@ -296,32 +300,33 @@ if isfield(BSplinePatches{1}.weakDBC,'computeConstMtx')
 end
 BSplinePatches{1}.noDOFs = 3*BSplinePatches{1}.noCPs + noDOFsPatchLM;
 if noEig > BSplinePatches{1}.noDOFs
-    error('The number of  requested eigenfrequencies can be up to %',BSplinePatches{1}.noDOFs);
+    error('The number of  requested eigenfrequencies can be up to %', BSplinePatches{1}.noDOFs);
 end
 
 % Compute the number of DOFs
-noDOFs = BSplinePatches{1}.noDOFs;
+numDOFs = BSplinePatches{1}.noDOFs;
 
 % Create the element freedom table for the BSplinePatch into the array of
 % the patches
 BSplinePatches{1}.EFTPatches = 1:BSplinePatches{1}.noDOFs;
 
 % Create a DOF numbering for each Lagrange Multipliers field of the patch
-if isfield(BSplinePatches{1}.weakDBC,'computeConstMtx')
-    if strcmp(BSplinePatches{1}.weakDBC.computeConstMtx,'computeWeakDBCMtxLagrangeMultipliersIGAMembrane')
+if isfield(BSplinePatches{1}.weakDBC, 'computeConstMtx')
+    if strcmp(BSplinePatches{1}.weakDBC.computeConstMtx, ...
+            'computeWeakDBCMtxLagrangeMultipliersIGAMembrane')
         for iCnd = 1:BSplinePatches{1}.weakDBC.noCnd
             % Get the number of Control Points
             nxiLambda = length(BSplinePatches{1}.weakDBC.lambda{iCnd}.Xi);
 
             % Initialize the field of the DOF numbering
-            BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering = zeros(nxiLambda,3);
+            BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering = zeros(nxiLambda, 3);
 
              % Compute the entries of the DOF numbering array
             k = 1;
             for cpi = 1:nxiLambda
-                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,1) = k;
-                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,2) = k + 1;
-                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,3) = k + 2;
+                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 1) = k;
+                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 2) = k + 1;
+                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 3) = k + 2;
 
                 % Update counter
                 k = k + 3;
@@ -331,50 +336,51 @@ if isfield(BSplinePatches{1}.weakDBC,'computeConstMtx')
 end
 
 %% 2. Compute the constant matrices of the patch corresponding to the application of weak boundary conditions
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     message = 'Computing the constant matrices related to the application of weak Dirichlet boundary conditions\n';
-    fprintf([tab,'>>',' ',message]);
+    fprintf([tab, '>>', ' ', message]);
 end
-if isfield(BSplinePatches{1}.weakDBC,'computeConstMtx') && BSplinePatches{1}.weakDBC.noCnd > 0
+if isfield(BSplinePatches{1}.weakDBC, 'computeConstMtx') && BSplinePatches{1}.weakDBC.noCnd > 0
     computeWeakDBCConstantProblemMatrices = str2func(BSplinePatches{1}.weakDBC.computeConstMtx);
     BSplinePatches{1}.KConstant = ...
         computeWeakDBCConstantProblemMatrices...
-        (BSplinePatches{1},connections,noDOFs,propCoupling);
+        (BSplinePatches{1}, connections, numDOFs, propCoupling);
 else
     BSplinePatches{1}.KConstant = 'undefined';
 end
 
 %% 3. Compute an empty load vector for each patch
-BSplinePatches{1}.FGamma = zeros(BSplinePatches{1}.noDOFs,1);
+BSplinePatches{1}.FGamma = zeros(BSplinePatches{1}.noDOFs, 1);
 
 %% 4. Rearrange the vectors containing the global numbering of the DOFs where Dirichlet boundary conditions are applied to account for the coupled system
 homDOFs = BSplinePatches{1}.homDOFs;
 inhomDOFs = BSplinePatches{1}.inhomDOFs;
 valuesInhomDOFs = BSplinePatches{1}.valuesInhomDOFs;
-freeDOFs = 1:noDOFs;
-freeDOFs(ismember(freeDOFs,homDOFs)) = [];
-freeDOFs(ismember(freeDOFs,inhomDOFs)) = [];
+freeDOFs = 1:numDOFs;
+freeDOFs(ismember(freeDOFs, homDOFs)) = [];
+freeDOFs(ismember(freeDOFs, inhomDOFs)) = [];
 
 %% 5. Initialize the solution field
-dHat = zeros(noDOFs,1);
+dHat = zeros(numDOFs, 1);
 
 %% 6. Perform a static solve to bring the structure in equilibrium with its internal forces
 if strcmp(outMsg,'outputEnabled')
     message = 'Performing steady-state analysis to bring the structure in equilibrium\n';
-    fprintf([tab,'>>',' ',message]);
+    fprintf([tab, '>>', ' ', message]);
 end
-[dHat,~,~,~,~,~,~,~,BSplinePatches,propCoupling,~] = ...
+[dHat, ~, ~, ~, ~, ~, ~, ~, BSplinePatches, propCoupling, ~] = ...
     solve_IGANLinearSystem...
-    (analysis,dHatSaved,dHatDotSaved,dHatDDotSaved,BSplinePatches,connections,...
-    dHat,dHatDot,dHatDDot,constStiff,massMtx,dampMtx,computeTangentStiffMtxResVct,...
-    computeUpdatedGeometry,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
-    masterDOFs,slaveDOFs,solve_LinearSystem,t,propCoupling,propTransientAnalysis,...
-    propNLinearAnalysis,plot_IGANLinear,isReferenceUpdated,...
-    isCosimulationWithEmpire,strcat(tab,'\t'),graph,outMsg);
+    (analysis, dHatSaved, dHatDotSaved, dHatDDotSaved, BSplinePatches, ...
+    connections, dHat, dHatDot, dHatDDot, constStiff, massMtx, dampMtx, ...
+    computeTangentStiffMtxResVct, computeUpdatedGeometry, freeDOFs, ...
+    homDOFs, inhomDOFs, valuesInhomDOFs, updateDirichletBCs, masterDOFs, ...
+    slaveDOFs, solve_LinearSystem, t, propCoupling, propTransientAnalysis, ...
+    propNLinearAnalysis, propIDBC, plot_IGANLinear, isReferenceUpdated, ...
+    isCosimulationWithEmpire, strcat(tab, '\t'), graph, outMsg);
 
 %% 7. Compute the static external loads
 %% 7i. Initialize the load vector and the tangent stiffness matrix
-FGamma = zeros(BSplinePatches{1}.noDOFs,1);
+FGamma = zeros(BSplinePatches{1}.noDOFs, 1);
 tanMtxLoad{1} = zeros(BSplinePatches{1}.noDOFs);
 BSplinePatches{1}.FGamma = FGamma;
 
@@ -384,7 +390,7 @@ NBC = BSplinePatches{1}.NBC;
 %% 7iii. Check if there is a non-conservative loading associated with the current patch
 if ~isConservative
     BSplinePatches{1}.FNonConservative = ...
-        zeros(BSplinePatches{1}.noDOFs,1);
+        zeros(BSplinePatches{1}.noDOFs, 1);
 end
 
 %% 7iv. Loop over the Neumann boundary conditions of the current patch
@@ -394,18 +400,19 @@ for iNBC = 1:NBC.noCnd
     funcHandle = str2func(NBC.computeLoadVct{iNBC});
 
     %% 7iv.2. Compute the load vector and the tangent matrix resulting from the application of follower loads
-    if ~(propTransientAnalysis.isStaticStep && NBC.isTimeDependent(iNBC,1))
-        [FGamma,tanMtxLoadPatch] = funcHandle(FGamma,BSplinePatches{1},...
-            NBC.xiLoadExtension{iNBC},NBC.etaLoadExtension{iNBC},...
-            NBC.loadAmplitude{iNBC},NBC.loadDirection{iNBC},...
-            NBC.isFollower(iNBC,1),t,BSplinePatches{1}.int,'');
-        if NBC.isFollower(iNBC,1)
+    if ~(propTransientAnalysis.isStaticStep && NBC.isTimeDependent(iNBC, 1))
+        [FGamma,tanMtxLoadPatch] = funcHandle ...
+            (FGamma,BSplinePatches{1}, NBC.xiLoadExtension{iNBC}, ...
+            NBC.etaLoadExtension{iNBC}, NBC.loadAmplitude{iNBC}, ...
+            NBC.loadDirection{iNBC}, NBC.isFollower(iNBC,1), t, ...
+            BSplinePatches{1}.int, '');
+        if NBC.isFollower(iNBC, 1)
             tanMtxLoad{1} = tanMtxLoad{1} + tanMtxLoadPatch;
         end
     end
 
     %% 7iv.3. If the loading is not conservative add the contribution to the non-conservative load vector
-    if NBC.isFollower(iNBC,1)
+    if NBC.isFollower(iNBC, 1)
         BSplinePatches{1}.FNonConservative = BSplinePatches{1}.FNonConservative + ...
             FGamma;
     end
@@ -416,52 +423,52 @@ for iNBC = 1:NBC.noCnd
 end
 
 %% 8. Compute the linear stiffness matrix of the membrane problem
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     message = 'Computing the linear stiffness matrix of the structure\n';
-    fprintf([tab,'>>',' ',message]);
+    fprintf([tab, '>>', ' ', message]);
 end
-stiffMtxLinear = computeTangentStiffMtxResVct(constStiff,tanMtxLoad,dHat,...
-    dHatSaved,dHatDot,dHatDotSaved,BSplinePatches,connections,...
-    propCoupling,loadFactor,noPatch,noTimeStep,counterNonlinearIterations,...
-    noWeakDBCCnd,propTransientAnalysis,isReferenceUpdated,strcat(tab,'\t'),outMsg);
+stiffMtxLinear = computeTangentStiffMtxResVct ...
+    (constStiff, tanMtxLoad, dHat, dHatSaved, dHatDot, dHatDotSaved, ...
+    BSplinePatches, connections, propCoupling, loadFactor, noPatch, ...
+    noTimeStep, counterNonlinearIterations, noWeakDBCCnd, ...
+    propTransientAnalysis, isReferenceUpdated, strcat(tab, '\t'), outMsg);
 
 %% 9. Compute the mass matrix of the membrane problem
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     message = 'Computing the mass matrix of the structure\n';
-    fprintf([tab,'>>',' ',message]);
+    fprintf([tab, '>>', ' ', message]);
 end
-massMtx = computeIGAMassMtxThinStructure(BSplinePatches,noDOFs);
+massMtx = computeIGAMassMtxThinStructure(BSplinePatches, numDOFs);
 
 %% 10. Solve the generalized eigenvalue problem to get the eigenmode shapes
 if strcmp(outMsg,'outputEnabled')
     message = 'Solving the generalized eigenvalue problem to get the eigenmode shapes\n';
-    fprintf([tab,'>>',' ',message]);
+    fprintf([tab, '>>', ' ', message]);
 end
-[eigenmodeShapesDBC,naturalFrequencies] = ...
-    eigs(stiffMtxLinear(freeDOFs,freeDOFs),massMtx(freeDOFs,freeDOFs),noEig,'sm');
-naturalFrequencies = naturalFrequencies*ones(length(naturalFrequencies),1);
+[eigenmodeShapesDBC, naturalFrequencies] = ...
+    eigs(stiffMtxLinear(freeDOFs, freeDOFs), massMtx(freeDOFs, freeDOFs), ...
+    noEig, 'sm');
+naturalFrequencies = naturalFrequencies*ones(length(naturalFrequencies), 1);
 naturalFrequencies = sqrt(naturalFrequencies);
 naturalFrequencies = naturalFrequencies./(2*pi);
 [noModeShapes,m] = size(eigenmodeShapesDBC);
 
 %% 11. Apply the boundary conditions onto the system
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     message = 'Applying the Dirichlet boundary conditions at each mode shape\n\n';
-    fprintf([tab,'>>',' ',message]);
+    fprintf([tab, '>>', ' ', message]);
 end
-eigenmodeShapes = zeros(noModeShapes,m);
+eigenmodeShapes = zeros(noModeShapes, m);
 for iMode = 1:noEig
-    eigenmodeShapes(freeDOFs,iMode) = eigenmodeShapesDBC(:,iMode);
-    eigenmodeShapes(homDOFs,iMode) = 0;
-    eigenmodeShapes(inhomDOFs,iMode) = 0;
+    eigenmodeShapes(freeDOFs, iMode) = eigenmodeShapesDBC(:, iMode);
+    eigenmodeShapes(homDOFs, iMode) = 0;
+    eigenmodeShapes(inhomDOFs, iMode) = 0;
 end
 
 %% 12. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
-    fprintf('Modal analysis took %.2d seconds \n\n',computationalTime);
+    fprintf('Modal analysis took %.2d seconds \n\n', computationalTime);
     fprintf('__________________Form Finding Analysis Ended__________________\n');
     fprintf('##############################################################\n\n\n');
 end

@@ -1,6 +1,9 @@
-function [K,F,minElArea] = computeStiffMtxAndLoadVctIGAKirchhoffLoveShellLinear...
-    (KConstant,dHat,dHatSaved,dHatDot,dHatDotSaved,BSplinePatch,connections,...
-    propCoupling,propStrDynamics,t,tab,loadFactor,outMsg)
+function [K, F, BSplinePatch, propCoupling, minElArea] = ...
+    computeStiffMtxAndLoadVctIGAKirchhoffLoveShellLinear ...
+    (KConstant, tanMtxLoad, dHat, dHatSaved, dHatDot, dHatDotSaved, ...
+    BSplinePatch, connections, propCoupling, loadFactor, noPatch, ...
+    noTimeStep, iNLinearIter, noWeakDBCCnd, t, propStrDynamics, ...
+    isReferenceUpdated, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -15,8 +18,8 @@ function [K,F,minElArea] = computeStiffMtxAndLoadVctIGAKirchhoffLoveShellLinear.
 % for performing a refinement study.
 %
 %                 Input : 
-%             KConstant : The constant part of the stiffness matrix (dummy 
-%                         variable for this function)
+%             KConstant : Dummy variable for this function
+%            tanMtxLoad : Dummy variable for this function
 %                  dHat : The displacement field of the previous iteration 
 %                        step (dummy variable for this function)
 %             dHatSaved : The displacement field of the previous time step 
@@ -58,27 +61,31 @@ function [K,F,minElArea] = computeStiffMtxAndLoadVctIGAKirchhoffLoveShellLinear.
 %                    .parameters : Technical parameters of the shell patch
 %                  .DOFNumbering : The numbering of the DOFs within the
 %                                  patch itself
-%           connections : Structure containing information on the 
-%                         connecting edges between multipatches (dummy variable for this 
-%                   function)
+%           connections : Dummy variable for this function
 %          propCoupling : Structure containing information on the coupling
 %                         between patches in a multipatch system (dummy 
 %                         variable for this function)
-%       propStrDynamics : Transient analysis parameters (dummy variable 
-%                         for this function)
-%                     t : The time instance of the transient simulation 
-%                         (dummy variable for this function)
-%                   tab : Tabulation (dummy variable for this function)
+%            loadFactor : Dummy variable for this function
+%               noPatch : Dummy variable for this function
+%            noTimeStep : Dummy variable for this function
+%          iNLinearIter : Dummy variable for this function
+%          noWeakDBCCnd : Dummy variable for this function
+%                     t : Time instance
+%       propStrDynamics : Dummy variable for this function
+%    isReferenceUpdated : Dummy variable for this function
+%                   tab : Dummy variable for this function
 %            loadFactor : Load factor for nonlinear analysis (dummy 
 %                         variable for this function)
 %                outMsg : Enalbes outputting information onto the cell when
 %                         it is chosen as 'outputEnabled' (dummy variable 
 %                         for this function)
 %
-%      Output :
-%           K : master stiffness matrix
-%           F : The externally applied load vector   
-%   minElArea : The minimum element area in the IGA mesh
+%                Output :
+%                     K : master stiffness matrix
+%                     F : The externally applied load vector
+%        BSplinePatches : Dummy output for this function
+%          propCoupling : Dummy output for this function
+%             minElArea : The minimum element area in the IGA mesh
 %
 % Function layout :
 %
@@ -119,17 +126,21 @@ function [K,F,minElArea] = computeStiffMtxAndLoadVctIGAKirchhoffLoveShellLinear.
 % 
 % 4. Compute the exernally applied load vector
 %
+% 5. Check output
+%
 %% Function main body
 
 %% 0. Read input
 
 % Check the NURBS geometry input
+isBSplinePatchCell = false;
 if iscell(BSplinePatch)
     if length(BSplinePatch) > 1
         error('Multipatch NURBS surface is given as input to the computation of the stiffness matrix for a single patch NURBS surface');
     else
         BSplinePatch = BSplinePatch{1};
     end
+    isBSplinePatchCell = true;
 end
 
 % Assign back the patch properties
@@ -147,65 +158,64 @@ DOFNumbering = BSplinePatch.DOFNumbering;
 NBC = BSplinePatch.NBC;
 
 % Number of knots in xi-,eta-direction
-mxi = length(Xi);
-meta = length(Eta);
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+numKnots_xi = length(Xi);
+numKnots_eta = length(Eta);
+numCPs_xi = length(CP(:, 1, 1));
+numCPs_eta = length(CP(1, :, 1));
 
 % Check input
-checkInputForBSplineSurface(p,mxi,nxi,q,meta,neta);
+checkInputForBSplineSurface(p, numKnots_xi, numCPs_xi, q, numKnots_eta, numCPs_eta);
 
 % Initialize minimum element area in the IGA mesh
 tolerance = 1e-4;
-if abs(CP(1,1,1)-CP(nxi,1,1))>=tolerance
-    minElArea = abs(CP(1,1,1)-CP(nxi,1,1));
+if abs(CP(1, 1, 1) - CP(numCPs_xi, 1, 1)) >= tolerance
+    minElArea = abs(CP(1, 1, 1) - CP(numCPs_xi, 1, 1));
 else
-    minElArea = CP(1,1,1)-CP(1,neta,1);
+    minElArea = CP(1, 1, 1) - CP(1, numCPs_eta, 1);
 end
 
 % Local number of DOFs
-noDOFsEl = 3*(p+1)*(q+1);
+numDOFsEl = 3*(p + 1)*(q + 1);
 
 % Number DOFs
-noDOFs = 3*nxi*neta;
+numDOFs = 3*numCPs_xi*numCPs_eta;
 
 % Initialize global stiffness matrix
-K  = zeros(noDOFs,noDOFs);
+K  = zeros(numDOFs);
 
 %% 1. Compute the material matrices
 
 % Compute the membrane material matrix
-Dm = parameters.E*parameters.t/(1-parameters.nue^2)*...
+Dm = parameters.E*parameters.t/(1 - parameters.nue^2)*...
     [1              parameters.nue 0
 	 parameters.nue 1              0
-     0              0              (1-parameters.nue)/2];
+     0              0              (1 - parameters.nue)/2];
                                                  
 % Compute the bending material matrix
-Db = parameters.E*parameters.t^3/(12*(1-parameters.nue^2))*...
+Db = parameters.E*parameters.t^3/(12*(1 - parameters.nue^2))*...
     [1              parameters.nue 0
      parameters.nue 1              0 
-     0              0              (1-parameters.nue)/2];
+     0              0              (1 - parameters.nue)/2];
 
 %% 2. Choose an integration rule
 
 % Select the integration scheme
-if strcmp(int.type,'default')
-    xiNGP = p + 1;
-    etaNGP = q + 1;
-elseif strcmp(int.type,'user')
-    xiNGP = int.xiNGP;
-    etaNGP = int.etaNGP;
+if strcmp(int.type, 'default')
+    numGP_xi = p + 1;
+    numGP_eta = q + 1;
+elseif strcmp(int.type, 'user')
+    numGP_xi = int.xiNGP;
+    numGP_eta = int.etaNGP;
 end
 
 % Issue the Gauss Point coordinates and weights
-[xiGP,xiGW] = getGaussPointsAndWeightsOverUnitDomain(xiNGP);
-[etaGP,etaGW] = getGaussPointsAndWeightsOverUnitDomain(etaNGP);
+[xiGP, xiGW] = getGaussPointsAndWeightsOverUnitDomain(numGP_xi);
+[etaGP, etaGW] = getGaussPointsAndWeightsOverUnitDomain(numGP_eta);
 
 %% 3. loops over elements
-for j = q+1:meta-q-1
-    for i = p+1:mxi-p-1
-        % check if element is greater than zero
-        if Xi(i+1)~=Xi(i) && Eta(j+1)~=Eta(j)
+for j = q + 1:numKnots_eta - q - 1
+    for i = p + 1:numKnots_xi - p - 1
+        if Xi(i + 1) ~= Xi(i) && Eta(j + 1) ~= Eta(j)
             %% 3i. Compute the determinant of the Jacobian to the transformation from the NURBS space (xi-eta) to the integration domain [-1,1]x[-1,1] 
             %
             %         | xi_i+1 - xi_i                    |
@@ -215,22 +225,22 @@ for j = q+1:meta-q-1
             %         |                  eta_j+1 - eta_j |
             %         |        0         --------------- |
             %         |                          2       |
-            detJxiu = (Xi(i+1)-Xi(i))*(Eta(j+1)-Eta(j))/4;
+            detJxiu = (Xi(i + 1) - Xi(i))*(Eta(j + 1) - Eta(j))/4;
             
             %% 3ii. Create the Element Freedom Table
             
             % Initialize element freedome table
-            EFT = zeros(1,noDOFsEl);
+            EFT = zeros(1, numDOFsEl);
             
             % initialize counter
             k = 1;
             
             % relation global-local dof
-            for cpj = j-q:j
-                for cpi = i-p:i
-                    EFT(k) = DOFNumbering(cpi,cpj,1);
-                    EFT(k+1) = DOFNumbering(cpi,cpj,2);
-                    EFT(k+2) = DOFNumbering(cpi,cpj,3);
+            for cpj = j - q:j
+                for cpi = i - p:i
+                    EFT(k) = DOFNumbering(cpi, cpj, 1);
+                    EFT(k + 1) = DOFNumbering(cpi, cpj, 2);
+                    EFT(k + 2) = DOFNumbering(cpi, cpj, 3);
                     
                     % Update counter
                     k = k + 3;
@@ -241,35 +251,40 @@ for j = q+1:meta-q-1
             elementArea = 0;
             
             %% 3iv. Loop over all the Gauss Points
-            for cEta = 1:etaNGP
-                for cXi = 1:xiNGP
+            for iGP_eta = 1:numGP_eta
+                for iGP_xi = 1:numGP_xi
                     %% 3iv.1. Compute the NURBS coordinates u,v of the Gauss Point coordinates in the bi-unit interval [-1, 1]
-                    xi = ( Xi(i+1)+Xi(i) + xiGP(cXi)*(Xi(i+1)-Xi(i)) )/2;
-                    eta = ( Eta(j+1)+Eta(j) + etaGP(cEta)*(Eta(j+1)-Eta(j)) )/2;
+                    xi = (Xi(i + 1) + Xi(i) + xiGP(iGP_xi)*(Xi(i + 1) - Xi(i)))/2;
+                    eta = (Eta(j + 1) + Eta(j) + etaGP(iGP_eta)*(Eta(j + 1) - Eta(j)))/2;
                     
                     %% 3iv.2. Compute the NURBS basis function and up to their second derivatives at the Gauss Point
                     nDrvBasis = 2;
-                    dR = computeIGABasisFunctionsAndDerivativesForSurface(i,p,xi,Xi,j,q,eta,Eta,CP,isNURBS,nDrvBasis);
+                    dR = computeIGABasisFunctionsAndDerivativesForSurface ...
+                        (i, p, xi, Xi, j, q, eta, Eta, CP, isNURBS, nDrvBasis);
                     
                     %% 3iv.3. Compute the covariant base vectors and their first derivatives
                     nDrvBaseVct = 1;
-                    [dG1,dG2] = computeBaseVectorsAndDerivativesForBSplineSurface(i,p,j,q,CP,nDrvBaseVct,dR);
+                    [dG1, dG2] = ...
+                        computeBaseVectorsAndDerivativesForBSplineSurface ...
+                        (i, p, j, q, CP, nDrvBaseVct, dR);
                  
                     %% 3iv.4. Compute the surface normal (third covariant base vector not normalized)
-                    G3Tilde = cross(dG1(:,1),dG2(:,1));
+                    G3Tilde = cross(dG1(:, 1), dG2(:, 1));
                     
                     %% 3iv.5. Compute the legth of G3Tilde (= area dA)
                     dA = norm(G3Tilde);
   
                     %% 3iv.6. Compute the element stiffness matrix at the Gauss point
-                    KeOnGP = computeElStiffMtxKirchhoffLoveShellLinear(p,q,dR,[dG1(:,1) dG2(:,1)],[dG1(:,2) dG2(:,2) dG1(:,3)],G3Tilde,Dm,Db);
+                    KeOnGP = computeElStiffMtxKirchhoffLoveShellLinear ...
+                        (p, q, dR, [dG1(:, 1) dG2(:, 1)], [dG1(:, 2) dG2(:, 2) ...
+                        dG1(:, 3)], G3Tilde, Dm, Db);
                     
                     %% 3iv.7 Compute the element area on the Gauss Point and add the contribution
-                    elementAreaOnGP = dA*detJxiu*xiGW(cXi)*etaGW(cEta);
+                    elementAreaOnGP = dA*detJxiu*xiGW(iGP_xi)*etaGW(iGP_eta);
                     elementArea = elementArea + elementAreaOnGP;
                     
                     %% 3iv.8. Add the contribution from the Gauss Point
-                    K(EFT,EFT) = K(EFT,EFT) + KeOnGP*elementAreaOnGP;
+                    K(EFT, EFT) = K(EFT, EFT) + KeOnGP*elementAreaOnGP;
                 end
             end
             %% 3v. Find the minimum element area in the mesh
@@ -281,12 +296,19 @@ for j = q+1:meta-q-1
 end
 
 %% 4. Compute the exernally applied load vector
-F = zeros(noDOFs,1);
+F = zeros(numDOFs, 1);
 for iNBC = 1:NBC.noCnd
     funcHandle = str2func(NBC.computeLoadVct{iNBC});
-    F = funcHandle(F,BSplinePatch,NBC.xiLoadExtension{iNBC},...
-        NBC.etaLoadExtension{iNBC},NBC.loadAmplitude{iNBC},...
-        NBC.loadDirection(iNBC,1),NBC.isFollower(iNBC,1),t,int,'');
+    F = funcHandle ...
+        (F, BSplinePatch, NBC.xiLoadExtension{iNBC}, ...
+        NBC.etaLoadExtension{iNBC}, NBC.loadAmplitude{iNBC}, ...
+        NBC.loadDirection(iNBC, 1), NBC.isFollower(iNBC, 1), ...
+        t, int, '');
+end
+
+%% 5. Check output
+if isBSplinePatchCell
+    BSplinePatch = {BSplinePatch};
 end
 
 end

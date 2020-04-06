@@ -29,7 +29,7 @@ function massMtx = computeMassMtx4FEMVMSStabNSE2D...
 % Initialize arrays
 massMtx = 'undefined';
 
-% This function needs to be investigated as the mass matrix seems to be
-% dependent on the stabilization terms
+% This function needs to be investigated as the mass matrix is dependent on 
+% the stabilization terms
 
 end

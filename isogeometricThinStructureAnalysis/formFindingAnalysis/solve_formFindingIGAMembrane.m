@@ -1,6 +1,6 @@
-function [BSplinePatch,CPHistory,resHistory,hasConverged,noIter] = ...
-    solve_formFindingIGAMembrane(BSplinePatch,propFormFinding,...
-    solve_LinearSystem,outMsg)
+function [BSplinePatch, CPHistory, resHistory, isConverged, noIter] = ...
+    solve_formFindingIGAMembrane ...
+    (BSplinePatch,propFormFinding, solve_LinearSystem, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -113,11 +113,11 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('__________________________________________________________________\n');
     fprintf('##################################################################\n');
     fprintf('Form Finding analysis for a membrane has been initiated \n\n');
-    fprintf('Form finding iteration tolerance : %f \n',propFormFinding.tolerance);
-    fprintf('Maximum number of form finding iterations: %d \n\n',propFormFinding.maxNoIter);
+    fprintf('Form finding iteration tolerance : %f \n', propFormFinding.tolerance);
+    fprintf('Maximum number of form finding iterations: %d \n\n', propFormFinding.maxNoIter);
     isWeakDBC = false;
-    if isfield(BSplinePatch,'weakDBC')
-        if isfield(BSplinePatch.weakDBC,'noCnd')
+    if isfield(BSplinePatch, 'weakDBC')
+        if isfield(BSplinePatch.weakDBC, 'noCnd')
             if BSplinePatch.weakDBC.noCnd > 0
                 isWeakDBC = true;
             end
@@ -126,25 +126,25 @@ if strcmp(outMsg,'outputEnabled')
     if isWeakDBC
         fprintf('Weak Dirichlet boundary conditions \n');
         fprintf('---------------------------------- \n\n');
-        if isfield(BSplinePatch,'weakDBC')
-            if isfield(BSplinePatch.weakDBC,'noCnd')
+        if isfield(BSplinePatch, 'weakDBC')
+            if isfield(BSplinePatch.weakDBC, 'noCnd')
                 if BSplinePatch.weakDBC.noCnd > 0
-                    fprintf('Weak boundary conditions using the %s method are applied \n',BSplinePatch.weakDBC.method);
-                    fprintf('over %d boundaries: \n',BSplinePatch.weakDBC.noCnd);
-                    if strcmp(BSplinePatch.weakDBC.method,'Nitsche')
+                    fprintf('Weak boundary conditions using the %s method are applied \n', BSplinePatch.weakDBC.method);
+                    fprintf('over %d boundaries: \n', BSplinePatch.weakDBC.noCnd);
+                    if strcmp(BSplinePatch.weakDBC.method, 'Nitsche')
                         if BSplinePatch.weakDBC.estimationStabilPrm == true
                             fprintf('Automatic estimation of the stabilization parameter is enabled \n');
                         end
-                        if isfield(BSplinePatch.weakDBC,'computeConstMtx')
+                        if isfield(BSplinePatch.weakDBC, 'computeConstMtx')
                             if isfield(BSplinePatch.weakDBC.alpha)
-                                fprintf('Manual stabilization parameter chosen as %d\n',BSplinePatch.weakDBC.alpha)
+                                fprintf('Manual stabilization parameter chosen as %d\n', BSplinePatch.weakDBC.alpha)
                             else
                                 error('Manual stabilization parameter weakDBC.alpha needs to be assigned\n');
                             end
                         end
-                    elseif strcmp(BSplinePatch.weakDBC.method,'Penalty')
+                    elseif strcmp(BSplinePatch.weakDBC.method, 'Penalty')
                         if isfield(BSplinePatch.weakDBC.alpha)
-                            fprintf('The penalty parameter is chosen as %d',BSplinePatch.weakDBC.alpha);
+                            fprintf('The penalty parameter is chosen as %d', BSplinePatch.weakDBC.alpha);
                         else
                             error('The penalty parameter needs to be assigned');
                         end
@@ -156,6 +156,7 @@ if strcmp(outMsg,'outputEnabled')
     end
     fprintf('\n');
     fprintf('__________________________________________________________________\n\n');
+    tic;
 end
 
 %% 0. Read input
@@ -165,16 +166,16 @@ analysis.type = 'isogeometricMembraneAnalysis';
 
 % Check input
 if isfield(BSplinePatch.weakDBC,'computeTangMtxResVct') && ...
-        (strcmp(BSplinePatch.weakDBC.method,'penalty') || ...
-        strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers'))
+        (strcmp(BSplinePatch.weakDBC.method, 'penalty') || ...
+        strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers'))
     error('No field weakDBC.%s needs to be defined for the method %s corresponding to the application of weak Dirichlet boundary conditions', ...
-        BSplinePatch.weakDBC.computeTangMtxResVct,BSplinePatch.weakDBC.method);
+        BSplinePatch.weakDBC.computeTangMtxResVct, BSplinePatch.weakDBC.method);
 end
 
 % On the application of weak Dirichlet boundary conditions
 isWeakDBC = false;
 if ~isempty(BSplinePatch.weakDBC)
-    if isfield(BSplinePatch.weakDBC,'noCnd')
+    if isfield(BSplinePatch.weakDBC, 'noCnd')
         if BSplinePatch.weakDBC.noCnd > 0
             isWeakDBC = true;
         end
@@ -195,7 +196,7 @@ end
 NBCSaved = BSplinePatch.NBC;
 
 % Assign zero material to the B-Spline patch
-BSplinePatch = rmfield(BSplinePatch,'parameters');
+BSplinePatch = rmfield(BSplinePatch, 'parameters');
 BSplinePatch.parameters.E = 0.0;
 BSplinePatch.parameters.nue = 0.0;
 BSplinePatch.parameters.t = parametersSaved.t;
@@ -220,12 +221,12 @@ end
 isReferenceUpdated = true;
 
 % Initialize convergence flag to false
-hasConverged = false;
+isConverged = false;
 
 % Initialize the history of the Control Points through the form finding
 % iterations and the residual history
 CPHistory = struct([]);
-resHistory = zeros(propFormFinding.maxNoIter - 1,1);
+resHistory = zeros(propFormFinding.maxNoIter - 1, 1);
 
 % Initialize form finding iteration counter
 counterFormFindingIterations = 1;
@@ -242,9 +243,13 @@ KConstant = 'undefined';
 massMtx = 'undefined';
 dampMtx = 'undefined';
 graph = 'undefined';
-isCosimulationWithEmpire = false;
+updateDirichletBCs = 'undefined';
+propIDBC = 'undefined';
 masterDOFs = [];
 slaveDOFs = [];
+
+% Set flag for co-simulation with EMPIRE to false
+isCosimulationWithEmpire = false;
 
 % On plotting the deformed configuration through the nonlinear iterations
 plot_IGANLinear = '';
@@ -276,17 +281,17 @@ tab = '\t';
 CP = BSplinePatch.CP;
 
 % Number of Control Points in xi,eta-direction
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
 
 % Create an element freedom table for the patch in the array
-BSplinePatch.DOFNumbering = zeros(nxi,neta,3);
+BSplinePatch.DOFNumbering = zeros(nxi, neta, 3);
 k = 1;
 for cpj = 1:neta
     for cpi = 1:nxi
-        BSplinePatch.DOFNumbering(cpi,cpj,1) = k;
-        BSplinePatch.DOFNumbering(cpi,cpj,2) = k + 1;
-        BSplinePatch.DOFNumbering(cpi,cpj,3) = k + 2;
+        BSplinePatch.DOFNumbering(cpi, cpj, 1) = k;
+        BSplinePatch.DOFNumbering(cpi, cpj, 2) = k + 1;
+        BSplinePatch.DOFNumbering(cpi, cpj, 3) = k + 2;
 
         % Update counter
         k = k + 3;
@@ -297,14 +302,14 @@ end
 BSplinePatch.noDOFs = 3*BSplinePatch.noCPs;
 noDOFsPatchLM = 0;
 if isWeakDBC
-    if strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers')
+    if strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers')
         for iCnd = 1:BSplinePatch.weakDBC.noCnd
-            noDOFsPatchLMCnd = 3*length(BSplinePatch.weakDBC.lambda{iCnd}.CP(:,1));
+            noDOFsPatchLMCnd = 3*length(BSplinePatch.weakDBC.lambda{iCnd}.CP(:, 1));
             noDOFsPatchLM = noDOFsPatchLM + noDOFsPatchLMCnd;
             if iCnd == 1
                 index = 3*BSplinePatch.noCPs;
             else
-                index = BSplinePatch.weakDBC.lambda{iCnd-1}.EFT(length(BSplinePatch.weakDBC.lambda{iCnd-1}.EFT));
+                index = BSplinePatch.weakDBC.lambda{iCnd - 1}.EFT(length(BSplinePatch.weakDBC.lambda{iCnd - 1}.EFT));
             end
             BSplinePatch.weakDBC.lambda{iCnd}.EFT = index + 1:index + noDOFsPatchLMCnd;
         end
@@ -326,32 +331,32 @@ inhomDOFs = BSplinePatch.inhomDOFs;
 valuesInhomDOFs = BSplinePatch.valuesInhomDOFs;
 
 % Find the numbering of the free DOFs
-freeDOFs = zeros(noDOFs,1);
+freeDOFs = zeros(noDOFs, 1);
 for i = 1:noDOFs
-    freeDOFs(i,1) = i;
+    freeDOFs(i, 1) = i;
 end
-freeDOFs(ismember(freeDOFs,homDOFs)) = [];
-freeDOFs(ismember(freeDOFs,inhomDOFs)) = [];
+freeDOFs(ismember(freeDOFs, homDOFs)) = [];
+freeDOFs(ismember(freeDOFs, inhomDOFs)) = [];
 
 %% 4. Create an element freedom table for the B-Spline patch
 BSplinePatch.EFTPatches = 1:noDOFs;
 
 %% 5. Find the total number of DOFs for the patch including the Lagrange Multipliers and make an EFT for each Lagrange Multipliers field employed
 if isWeakDBC
-    if strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers')
+    if strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers')
         for iCnd = 1:BSplinePatch.weakDBC.noCnd
             % Get the number of Control Points
             noXiLambda = length(BSplinePatch.weakDBC.lambda{iCnd}.Xi);
 
             % Initialize the field of the DOF numbering
-            BSplinePatch.weakDBC.lambda{iCnd}.DOFNumbering = zeros(noXiLambda,3);
+            BSplinePatch.weakDBC.lambda{iCnd}.DOFNumbering = zeros(noXiLambda, 3);
 
             % Compute the entries of the DOF numbering array
             k = 1;
             for cpi = 1:noXiLambda
-                BSplinePatch.weakDBC.lambda{iCnd}.DOFNumbering(cpi,1) = k;
-                BSplinePatch.weakDBC.lambda{iCnd}.DOFNumbering(cpi,2) = k + 1;
-                BSplinePatch.weakDBC.lambda{iCnd}.DOFNumbering(cpi,3) = k + 2;
+                BSplinePatch.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 1) = k;
+                BSplinePatch.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 2) = k + 1;
+                BSplinePatch.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 3) = k + 2;
 
                 % Update counter
                 k = k + 3;
@@ -363,14 +368,14 @@ end
 %% 6. Compute the constant matrices for each patch corresponding to the application of weak boundary conditions
 if isWeakDBC
     isConstMtxWeakDBC = true;
-    if isfield(BSplinePatch.weakDBC,'method')
-        if strcmp(BSplinePatch.weakDBC.method,'penalty') || ...
-                (strcmp(BSplinePatch.weakDBC.method,'nitsche') && ...
+    if isfield(BSplinePatch.weakDBC, 'method')
+        if strcmp(BSplinePatch.weakDBC.method, 'penalty') || ...
+                (strcmp(BSplinePatch.weakDBC.method, 'nitsche') && ...
                 ~BSplinePatch.weakDBC.estimationStabilPrm)
             computeWeakDBCConstantProblemMatrices = @computeWeakDBCMtxPenaltyIGAMembrane;
-        elseif strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers')
+        elseif strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers')
             computeWeakDBCConstantProblemMatrices = @computeWeakDBCMtxLagrangeMultipliersIGAMembrane;
-        elseif strcmp(BSplinePatch.weakDBC.method,'nitsche') && ...
+        elseif strcmp(BSplinePatch.weakDBC.method, 'nitsche') && ...
                 BSplinePatch.weakDBC.estimationStabilPrm
             isConstMtxWeakDBC = false;
         else
@@ -379,8 +384,8 @@ if isWeakDBC
         if isConstMtxWeakDBC
             BSplinePatch.KConstant = ...
                 computeWeakDBCConstantProblemMatrices ...
-                (BSplinePatch,connections,...
-                BSplinePatch.noDOFs,propCoupling);
+                (BSplinePatch, connections, ...
+                BSplinePatch.noDOFs, propCoupling);
         else
             BSplinePatch.KConstant = 'undefined';
         end
@@ -399,20 +404,23 @@ dHatPrevious = zeros(noDOFs,1);
 
 %% 9. Loop over all the form finding iterations
 if strcmp(outMsg,'outputEnabled')
-    msgPNR = sprintf(strcat(tab,'\tLooping over the form finding iterations\n',tab,'\t----------------------------------------\n\n'));
+    msgPNR = sprintf(strcat(tab,'\tLooping over the form finding iterations\n', ...
+        tab, '\t----------------------------------------\n\n'));
     fprintf(msgPNR);
 end
-dHat_null = zeros(noDOFs,1);
-while ~hasConverged && counterFormFindingIterations <= propFormFinding.maxNoIter
+dHat_null = zeros(noDOFs, 1);
+while ~isConverged && counterFormFindingIterations <= propFormFinding.maxNoIter
     %% 9i. Solve the static linear problem
-    [dHat,~,rH,~,~,~,~,~,BSplinePatches,~,~] = ...
+    [dHat, ~, rH, ~, ~, ~, ~, ~, BSplinePatches, ~, ~] = ...
         solve_IGANLinearSystem...
-        (analysis,dHatSaved,dHatDotSaved,dHatDDotSaved,BSplinePatches,connections,...
-        dHat_null,dHatDot,dHatDDot,KConstant,massMtx,dampMtx,computeTangentStiffMtxesVct,...
-        @computeUpdatedGeometryIGAThinStructureMultipatches,freeDOFs,homDOFs,...
-        inhomDOFs,valuesInhomDOFs,masterDOFs,slaveDOFs,solve_LinearSystem,...
-        t,propCoupling,propTransientAnalysis,propNLinearAnalysis,plot_IGANLinear,...
-        isReferenceUpdated,isCosimulationWithEmpire,tab,graph,'');
+        (analysis, dHatSaved, dHatDotSaved, dHatDDotSaved, BSplinePatches, ...
+        connections, dHat_null, dHatDot, dHatDDot, KConstant, massMtx, ...
+        dampMtx, computeTangentStiffMtxesVct, ...
+        @computeUpdatedGeometryIGAThinStructureMultipatches, freeDOFs, ...
+        homDOFs, inhomDOFs, valuesInhomDOFs, updateDirichletBCs, masterDOFs, ...
+        slaveDOFs, solve_LinearSystem, t, propCoupling, propTransientAnalysis, ...
+        propNLinearAnalysis, propIDBC, plot_IGANLinear, isReferenceUpdated, ...
+        isCosimulationWithEmpire, tab, graph, '');
     if length(find(rH)) > 2
         warning('More than 1 iterations needed for convergence');
     end
@@ -427,19 +435,19 @@ while ~hasConverged && counterFormFindingIterations <= propFormFinding.maxNoIter
     %% 9iv. Compute the residual and check convergence
     resHistory(counterFormFindingIterations,1) = norm(delta_dHat);
     if strcmp(outMsg,'outputEnabled')
-        msgNR = sprintf(strcat(tab,'\t||delta_dHat|| = %d at form-finding iteration No. %d \n'),...
-            resHistory(counterFormFindingIterations,1),counterFormFindingIterations);
+        msgNR = sprintf(strcat(tab,'\t||delta_dHat|| = %d at form-finding iteration No. %d \n'), ...
+            resHistory(counterFormFindingIterations, 1), counterFormFindingIterations);
         fprintf(msgNR);
     end
-    if resHistory(counterFormFindingIterations,1) < propFormFinding.tolerance
-        if strcmp(outMsg,'outputEnabled')
-            fprintf(strcat(tab,' \tForm-finding iterations converged!\n\n'));
+    if resHistory(counterFormFindingIterations, 1) < propFormFinding.tolerance
+        if strcmp(outMsg, 'outputEnabled')
+            fprintf(strcat(tab, ' \tForm-finding iterations converged!\n\n'));
         end
-        hasConverged = true;
+        isConverged = true;
         break;
     end
     
-    %% DEBUG
+    %% Debugging
 %     clear graph;
 %     graph.index = 1;
 %     graph.postprocConfig = 'current';
@@ -447,7 +455,6 @@ while ~hasConverged && counterFormFindingIterations <= propFormFinding.maxNoIter
 %     graph.component = '2norm';
 %     graph.index = plot_postprocIGAMembraneMultipatchesNLinear...
 %         (BSplinePatches,dHat,graph,'');
-    %% DEBUG
     
     %% 9v. Save the displacement field of the previous form-finding step
     dHatPrevious = dHat;
@@ -461,8 +468,8 @@ end
 % Check convergence
 noIter = counterFormFindingIterations - 1;
 if noIter == propFormFinding.maxNoIter
-    if strcmp(outMsg,'outputEnabled')
-        warning(strcat(tab,' \tForm-finding iterations did not converge up to tolerance %f!\n\n'),propFormFinding.tolerance);
+    if strcmp(outMsg, 'outputEnabled')
+        warning(strcat(tab, ' \tForm-finding iterations did not converge up to tolerance %f!\n\n'), propFormFinding.tolerance);
     end
 end
 
@@ -470,7 +477,7 @@ end
 BSplinePatch = BSplinePatches{1};
 
 % Assign back the material properties of the patch
-BSplinePatch = rmfield(BSplinePatch,'parameters');
+BSplinePatch = rmfield(BSplinePatch, 'parameters');
 BSplinePatch.parameters.E = parametersSaved.E;
 BSplinePatch.parameters.nue = parametersSaved.nue;
 BSplinePatch.parameters.t = parametersSaved.t;
@@ -487,15 +494,13 @@ end
 
 % % Assign back the variable to whether the load is consevative or not
 for iCnd = 1:BSplinePatch.NBC.noCnd
-    BSplinePatch.NBC.isFollower(iCnd,1) = NBCSaved.isFollower(iCnd,1);
+    BSplinePatch.NBC.isFollower(iCnd,1) = NBCSaved.isFollower(iCnd, 1);
 end
 
 %% 11. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
-    fprintf('Form finding analysis took %.2d seconds \n\n',computationalTime);
+    fprintf('Form finding analysis took %.2d seconds \n\n', computationalTime);
     fprintf('___________________Form Finding Analysis Ended____________________\n');
     fprintf('##################################################################\n\n\n');
 end
