@@ -67,14 +67,14 @@ computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
 maxIter = 50;
 
 % On whether the case is a unit test
-isUnitTest = true;
+isUnitTest = false;
 
 % Enable output
-%outMsg = 'outputEnabled';
-outMsg = '';
+outMsg = 'outputEnabled';
+% outMsg = '';
 
 % Output data to a VTK format
-pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
+pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/refinementStudyHertz/';
 
 %% Initialize variables for convergence study
 
@@ -118,7 +118,7 @@ pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/refinementStu
 
 % Collect all case names into an array of case names
 % refined mesh -> 0.001 - 0.009 element size at the tip
-caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_00%d'));
+caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_%d'));
 
 %% Preform a FEM calculation for each case
 for n = 1:numberOfCases
@@ -145,8 +145,8 @@ for n = 1:numberOfCases
         solveSignoriniFrictionlessContact2D...
         (analysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, bodyForces, ...
         parameters, contactSegments, computeStiffMtxLoadVct, solve_LinearSystem, ...
-        propNLinearAnalysis, propContact , propGaussInt, caseName, pathToOutput,...
-        isUnitTest, outMsg);
+        propNLinearAnalysis, propContact , propGaussInt, char(caseName(n)), ...
+        pathToOutput, isUnitTest, outMsg);
 
     %% Postprocessing
     
