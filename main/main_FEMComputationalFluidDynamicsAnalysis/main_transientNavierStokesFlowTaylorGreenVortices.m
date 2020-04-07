@@ -44,6 +44,7 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/',...
         '../../FEMComputationalFluidDynamicsAnalysis/initialConditions',...
         '../../FEMComputationalFluidDynamicsAnalysis/solvers/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/graphics/',...
         '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
         '../../FEMComputationalFluidDynamicsAnalysis/output/',...
         '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
@@ -70,6 +71,9 @@ caseName = 'TaylorGreenVortices2';
 
 %% UI
 
+% On the graph
+propGraph.index = 1;
+
 % On the computation of the body forces
 computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
 
@@ -87,61 +91,15 @@ if strcmp(propFldDynamics.method, 'BOSSAK')
 end
    
 %% On transient inhomogeneous Dirichlet boundary conditions
-
-% Anonymous function to Apply Taylor-Green boundary conditions
-% computeTaylorGreenBCs = @(propIDBC,t) reshape([-cos(propIDBC.coordsNode(:,1)).*sin(propIDBC.coordsNode(:,2))*exp(-2*t*propIDBC.nue),...
-%                                                 sin(propIDBC.coordsNode(:,1)).*cos(propIDBC.coordsNode(:,2))*exp(-2*t*propIDBC.nue),...
-%                                                -0.25*( cos(2*propIDBC.coordsNode(:,1)) + cos(2*propIDBC.coordsNode(:,2)) )*exp(-4*t*propIDBC.nue)]',1,[]);
-
 computeTaylorGreenBCs = @(fldMsh,propIDBC,t) reshape([-cos(fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),1)).*sin(fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),2))*exp(-2*t*propIDBC.nue),...
                                                        sin(fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),1)).*cos(fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),2))*exp(-2*t*propIDBC.nue),...
                                                       -0.25*( cos(2*fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),1)) + cos(2*fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),2)) )*exp(-4*t*propIDBC.nue)]',1,[]);
-
-%% Find the mesh nodes where inhomDBCs apply
-
-% % Number of nodes where inhomDBC apply
-% noInhomNodes = length(inhomDOFs)/propAnalysis.noFields;
-%                                    
-% % Initialize vector of nodes and coordinates
-% inhomNodes = zeros(noInhomNodes,1);
-% coordsNode = zeros(noInhomNodes,2);
-% 
-% % Find all the coresponding nodes
-% for n = 1:length(inhomDOFs)
-%     % Find the corresponding node
-%     indexDOF = inhomDOFs(n);
-%     inhomNodes(n) = ceil(indexDOF/propAnalysis.noFields);
-% end
-% inhomNodes = unique(inhomNodes);
-% 
-% % Find correct coordinates
-% count  = 1;
-% for m = 1:noInhomNodes
-%     nodeIndex = inhomNodes(m);
-%     coordsNode(m,:) = fldMsh.nodes(nodeIndex,1:2);
-%     
-%     % Compute node coordinates for test solution
-%     x = fldMsh.nodes(nodeIndex,1);
-%     y = fldMsh.nodes(nodeIndex,2);
-%     
-%     % Compute test solution
-%     t = propFldDynamics.T0;
-%     expectedSolution(count) = -exp(-2*parameters.nue*t)*cos(x)*sin(y);
-%     expectedSolution(count+1) = exp(-2*parameters.nue*t)*sin(x)*cos(y);
-%     expectedSolution(count+2) = -0.25*( (cos(2*x)+cos(2*y))*exp(-4*parameters.nue*t) );
-%     count = count + 3;
-% end
-
-%% On transient inhomogeneous Dirichlet boundary conditions
+% Assign anonymous function as a function handle
 updateInhomDOFs = computeTaylorGreenBCs;
 propIDBC = [];
 
-%% Define the update boundary conditions function
-%valuesInhomDOFs = computeTaylorGreenBCs(propIDBC,propFldDynamics.T0);
+% Assign the taylor-Green boundary conditions function
 valuesInhomDOFs = computeTaylorGreenBCs(fldMsh,parameters,propFldDynamics.T0);
-
-% For testing purpose -> if arrays are the same the value must be 1
-% validate = min(abs(expectedSolution) - abs(valuesInhomDOFs) < 1e-10);
 
 %% Choose the equation system solver
 if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
@@ -163,5 +121,18 @@ computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
     computeInitialConditions, solve_LinearSystem, propFldDynamics, ...
     propNLinearAnalysis, propIDBC, propGaussInt, propVTK, caseName, ...
     'outputEnabled');
+
+%% Visualize analytical solution
+propGraph.postProcComponent = 'xVelocity';
+
+propGraph.index = plot_transientTaylorGreenVortices2D ... 
+(fldMsh, parameters, propFldDynamics ,propGraph, 'outputEnabled');
+
+%% Visualize the solution at the end time using the Navier-Stokes equations
+% propGraph.index = plot_postprocIGAIncompressibleFlow2D ...
+%     (BSplinePatch, upHistoryNavierStokes(:, end), homDOFs, inhomDOFs, ...
+%     zeros(length(upHistoryNavierStokes(:, end)), 1), propGraph, ...
+%     'outputEnabled');
+% title('End solution of the Navier-Stokes equations');
 
 %% END OF THE SCRIPT
