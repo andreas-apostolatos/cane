@@ -358,7 +358,7 @@ while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTi
     
     %% 7iv. Update the values of the inhomogeneous Dirichlet boundary conditions
     if isa(updateInhomDOFs, 'function_handle')
-        valuesInhomDOFs = updateInhomDOFs(valuesInhomDOFs, propIDBC);
+        valuesInhomDOFs = updateInhomDOFs(msh,parameters,t);
     end
     
     %% 7v. Solve the mesh motion problem and update the mesh node locations and velocities

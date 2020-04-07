@@ -11,8 +11,7 @@ noValues = length(x_discretization);
 % problem parameters
 size = 2*pi;
 t = 0.1;
-ro = 1;
-nu = 1;
+nu = 1e-3;
 
 % Discrete coordinates
 x_coordinates = size * (x_discretization/discretization);
@@ -50,7 +49,7 @@ for g = 1:noNodes
     % compute solution
     u(g) = -exp(-2*nu*t)*cos(x)*sin(y);
     v(g) = exp(-2*nu*t)*sin(x)*cos(y);
-    p(g) = -ro*0.25*( (cos(2*x)+cos(2*y))*exp(-4*nu*t) );
+    p(g) = -0.25*( (cos(2*x)+cos(2*y))*exp(-4*nu*t) );
 end
 
 % reshape variables
@@ -60,7 +59,7 @@ p = reshape(p,noValues,noValues);
 
 % plot pressure solution
 figure('Name','X-velocity');
-pcolor(x_coordinates,x_coordinates,u);
+pcolor(x_coordinates,y_coordinates,u);
 title(['Analytical solution of U at t = ',num2str(t)]);
 shading interp;
 axis equal;
@@ -71,7 +70,7 @@ colorbar('Location','EastOutside');
 
 % plot pressure solution
 figure('Name','Y-velocity');
-pcolor(x_coordinates,x_coordinates,v);
+pcolor(x_coordinates,y_coordinates,v);
 title(['Analytical solution of V at t = ',num2str(t)]);
 shading interp;
 axis equal;
@@ -82,7 +81,7 @@ colorbar('Location','EastOutside');
 
 % plot pressure solution
 figure('Name','Pressure');
-pcolor(x_coordinates,x_coordinates,p);
+pcolor(x_coordinates,y_coordinates,p);
 title(['Analytical solution of Pressure at t = ',num2str(t)]);
 shading interp;
 axis equal;

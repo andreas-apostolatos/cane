@@ -59,11 +59,11 @@ addpath('../../efficientComputation/');
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
-caseName = 'TaylorGreenVortices';
+%caseName = 'TaylorGreenVortices';
+caseName = 'TaylorGreenVortices2';
 
-% THERE COULD BE AN ERROR HERE !!!
 % Parse the data
-[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesALE, propNBC, ...
+[fldMsh, homDOFs, inhomDOFs, ~, nodesALE, propNBC, ...
     propAnalysis, parameters, propNLinearAnalysis, propFldDynamics, ...
     propGaussInt] = parse_FluidModelFromGid...
     (pathToCase, caseName, 'outputEnabled');
@@ -85,34 +85,63 @@ if strcmp(propFldDynamics.method, 'BOSSAK')
     propFldDynamics.computeUpdatedVct = ...
         @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE;
 end
-
+   
 %% On transient inhomogeneous Dirichlet boundary conditions
 
-% Total number of DOFs in the system
-noDOFs = size(fldMsh.nodes,1)*propAnalysis.noFields;
+% Anonymous function to Apply Taylor-Green boundary conditions
+% computeTaylorGreenBCs = @(propIDBC,t) reshape([-cos(propIDBC.coordsNode(:,1)).*sin(propIDBC.coordsNode(:,2))*exp(-2*t*propIDBC.nue),...
+%                                                 sin(propIDBC.coordsNode(:,1)).*cos(propIDBC.coordsNode(:,2))*exp(-2*t*propIDBC.nue),...
+%                                                -0.25*( cos(2*propIDBC.coordsNode(:,1)) + cos(2*propIDBC.coordsNode(:,2)) )*exp(-4*t*propIDBC.nue)]',1,[]);
 
-% The prescribed values by function pointers
-propIDBC.prescribedValue = ...
-    {@computeXVelocityComponentForTaylorGreenVortices2D,...
-    @computeYVelocityComponentForTaylorGreenVortices2D,...
-    @computePressureFieldForTaylorGreenVortices2D};
+computeTaylorGreenBCs = @(fldMsh,propIDBC,t) reshape([-cos(fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),1)).*sin(fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),2))*exp(-2*t*propIDBC.nue),...
+                                                       sin(fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),1)).*cos(fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),2))*exp(-2*t*propIDBC.nue),...
+                                                      -0.25*( cos(2*fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),1)) + cos(2*fldMsh.nodes(unique(ceil(inhomDOFs./propAnalysis.noFields)),2)) )*exp(-4*t*propIDBC.nue)]',1,[]);
 
-% Anonymous function for updating Taylor-Green boundary conditions
-updateTaylorGreenBCs = @(propIDBC,t) [propIDBC.u0*exp(-2*t*nue)
-                                      propIDBC.v0*exp(-2*t*nue)
-                                      propIDBC.p0*exp(-4*t*nue)];
-                                  
-updateInhomDOFs = updateTaylorGreenBCs;
+%% Find the mesh nodes where inhomDBCs apply
 
-%% Apply Taylor-Green boundary conditions
+% % Number of nodes where inhomDBC apply
+% noInhomNodes = length(inhomDOFs)/propAnalysis.noFields;
+%                                    
+% % Initialize vector of nodes and coordinates
+% inhomNodes = zeros(noInhomNodes,1);
+% coordsNode = zeros(noInhomNodes,2);
+% 
+% % Find all the coresponding nodes
+% for n = 1:length(inhomDOFs)
+%     % Find the corresponding node
+%     indexDOF = inhomDOFs(n);
+%     inhomNodes(n) = ceil(indexDOF/propAnalysis.noFields);
+% end
+% inhomNodes = unique(inhomNodes);
+% 
+% % Find correct coordinates
+% count  = 1;
+% for m = 1:noInhomNodes
+%     nodeIndex = inhomNodes(m);
+%     coordsNode(m,:) = fldMsh.nodes(nodeIndex,1:2);
+%     
+%     % Compute node coordinates for test solution
+%     x = fldMsh.nodes(nodeIndex,1);
+%     y = fldMsh.nodes(nodeIndex,2);
+%     
+%     % Compute test solution
+%     t = propFldDynamics.T0;
+%     expectedSolution(count) = -exp(-2*parameters.nue*t)*cos(x)*sin(y);
+%     expectedSolution(count+1) = exp(-2*parameters.nue*t)*sin(x)*cos(y);
+%     expectedSolution(count+2) = -0.25*( (cos(2*x)+cos(2*y))*exp(-4*parameters.nue*t) );
+%     count = count + 3;
+% end
 
-% Function that changes the inhomDBCs values
-computeTaylorGreenBCs = @(propIDBC,t) [-cos(x)*sin(y)*exp(-2*t*nue)
-                                        sin(x)*cos(y)*exp(-2*t*nue)
-                                       -0.25*(cos(2*x) + cos(2*y))*exp(-4*t*nue)];
+%% On transient inhomogeneous Dirichlet boundary conditions
+updateInhomDOFs = computeTaylorGreenBCs;
+propIDBC = [];
 
+%% Define the update boundary conditions function
+%valuesInhomDOFs = computeTaylorGreenBCs(propIDBC,propFldDynamics.T0);
+valuesInhomDOFs = computeTaylorGreenBCs(fldMsh,parameters,propFldDynamics.T0);
 
-
+% For testing purpose -> if arrays are the same the value must be 1
+% validate = min(abs(expectedSolution) - abs(valuesInhomDOFs) < 1e-10);
 
 %% Choose the equation system solver
 if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')

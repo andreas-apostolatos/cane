@@ -291,10 +291,12 @@ for i = 1:noDBCNodes
         presValue = out((noDOFsPerNodeFromGiD+1)*i-noDOFsPerNodeFromGiD+j);
         if ~isnan(presValue)
             if presValue == 0
-                homDOFs(counterHomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+j;
+                %homDOFs(counterHomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+j;
+                homDOFs(counterHomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+jCounter;
                 counterHomDBC = counterHomDBC + 1;
             else
-                inhomDOFs(counterInhomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+j;
+                %inhomDOFs(counterInhomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+j;
+                inhomDOFs(counterInhomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+jCounter;
                 valuesInhomDOFs(counterInhomDBC) = presValue;
                 counterInhomDBC = counterInhomDBC + 1;
             end
