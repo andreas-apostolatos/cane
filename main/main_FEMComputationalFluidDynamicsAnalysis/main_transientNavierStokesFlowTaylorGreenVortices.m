@@ -60,8 +60,10 @@ addpath('../../efficientComputation/');
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
-%caseName = 'TaylorGreenVortices';
-caseName = 'TaylorGreenVortices2';
+caseName = 'taylorGreenVortices_pi_domain';
+%caseName = 'taylorGreenVortices_2pi_domain';
+%caseName = 'taylorGreenVortices_2pi_domain_updated';
+
 
 % Parse the data
 [fldMsh, homDOFs, inhomDOFs, ~, nodesALE, propNBC, ...
@@ -123,16 +125,17 @@ computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
     'outputEnabled');
 
 %% Visualize analytical solution
+%'xVelocity','yVelocity','pressure','2normVelocity','velocityVectorPlot'
 propGraph.postProcComponent = 'xVelocity';
 
 propGraph.index = plot_transientTaylorGreenVortices2D ... 
-(fldMsh, parameters, propFldDynamics ,propGraph, 'outputEnabled');
+(fldMsh, parameters, propFldDynamics.TEnd ,propGraph, 'outputEnabled');
 
-%% Visualize the solution at the end time using the Navier-Stokes equations
-% propGraph.index = plot_postprocIGAIncompressibleFlow2D ...
-%     (BSplinePatch, upHistoryNavierStokes(:, end), homDOFs, inhomDOFs, ...
-%     zeros(length(upHistoryNavierStokes(:, end)), 1), propGraph, ...
-%     'outputEnabled');
-% title('End solution of the Navier-Stokes equations');
+%% Display resultant at point over time
+% x_coord = pi/2;
+% y_coord = pi/2;
+% propGraph.index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem...
+%     (x_coord, y_coord, parameters, upHistory, propFldDynamics, propGraph);
+% legend('Analytical', 'Navier-Stokes');
 
 %% END OF THE SCRIPT

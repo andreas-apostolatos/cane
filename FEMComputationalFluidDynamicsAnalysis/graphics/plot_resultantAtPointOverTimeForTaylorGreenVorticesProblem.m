@@ -1,6 +1,5 @@
 function index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem ...
-    (xi, p, Xi, eta, q, Eta, CP, isNURBS, parameters, upHistory1, upHistory2, ...
-    propFldDynamics, propGraph)
+    (x, y, parameters, upHistory, propFldDynamics, propGraph)
 %% Licensing
 %
 % License:         BSD License
@@ -80,41 +79,16 @@ function index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem ...
 
 %% 0. Read input
 
-% Number of knots in u,v-direction
-numKnots_xi = length(Xi);
-numKnots_eta = length(Eta);
-
-% Number of Control Points in u,v-direction
-numCPs_xi = length(CP(:, 1, 1));
-numCPs_eta = length(CP(1, :, 1));
-
-% Check input
-checkInputForBSplineSurface ...
-    (p, numKnots_xi, numCPs_xi, q, numKnots_eta, numCPs_eta);
-
 % Initialize figure handle
 figure(propGraph.index)
 
 % Initialize the output arrays
-resultantAtPointNumerical1 = zeros(propFldDynamics.noTimeSteps, 1);
-resultantAtPointNumerical2 = zeros(propFldDynamics.noTimeSteps, 1);
+resultantAtPointNumerical = zeros(propFldDynamics.noTimeSteps, 1);
 resultantAtPointAnalytical = zeros(propFldDynamics.noTimeSteps, 1);
 timeSteps = zeros(propFldDynamics.noTimeSteps, 1);
 
 % Initialize time
-t = propFldDynamics.TStart;
-
-%% 1. Find the knot spans where the point lives in
-xiSpan = findKnotSpan(xi, Xi, numCPs_xi);
-etaSpan = findKnotSpan(eta, Eta, numCPs_eta);
-
-%% 2. Compute the Cartesian coordinates of the Point
-RMtx = computeIGABasisFunctionsAndDerivativesForSurface ...
-    (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, isNURBS, 0);
-xCartesian = computeCartesianCoordinatesOfAPointOnBSplineSurface ...
-    (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, RMtx);
-x = xCartesian(1);
-y = xCartesian(2);
+t = propFldDynamics.T0;
 
 %% 3. Loop over all the time steps
 for iTime = 1:propFldDynamics.noTimeSteps
@@ -127,23 +101,20 @@ for iTime = 1:propFldDynamics.noTimeSteps
     % step :
     
     % element discrete solution vectors
-    upEl1 = zeros(numKnots_xi - p - 1, numKnots_eta - q - 1, 3*(p + 1)*(q + 1));
-    upEl2 = zeros(numKnots_xi - p - 1, numKnots_eta - q - 1, 3*(p + 1)*(q + 1));
+  
+    upEl = zeros(numKnots_xi - p - 1, numKnots_eta - q - 1, 3*(p + 1)*(q + 1));
     for j = (q + 1):(numKnots_eta - q - 1)
         for i = (p + 1):(numKnots_xi - p - 1)
             % Initialize the counter
             k = 1;
             for c = j - q - 1:j - 1 
                 for b = i - p:i
-                    % For solution 1
-                    upEl1(i, j, k) = upHistory1(3*(c*numCPs_xi + b) - 2, iTime);
-                    upEl1(i, j, k + 1) = upHistory1(3*(c*numCPs_xi + b) - 1, iTime);
-                    upEl1(i, j, k + 2) = upHistory1(3*(c*numCPs_xi + b), iTime);
+                    
                     
                     % For solution 2
-                    upEl2(i, j, k) = upHistory2(3*(c*numCPs_xi + b) - 2, iTime);
-                    upEl2(i, j, k + 1) = upHistory2(3*(c*numCPs_xi + b) - 1, iTime);
-                    upEl2(i, j, k + 2) = upHistory2(3*(c*numCPs_xi + b), iTime);
+                    upEl(i, j, k) = upHistory(3*(c*numCPs_xi + b) - 2, iTime);
+                    upEl(i, j, k + 1) = upHistory(3*(c*numCPs_xi + b) - 1, iTime);
+                    upEl(i, j, k + 2) = upHistory(3*(c*numCPs_xi + b), iTime);
 
                     % Update the counter
                     k = k + 3;
@@ -153,48 +124,43 @@ for iTime = 1:propFldDynamics.noTimeSteps
     end
     
     %% 3iii. Get the actual discrete solution vector
-    upActual1 = upEl1(xiSpan, etaSpan, :);
-    upActual2 = upEl2(xiSpan, etaSpan, :);
-    upActualVector1 = zeros(3*(p + 1)*(q + 1), 1);
-    upActualVector2 = zeros(3*(p + 1)*(q + 1), 1);
+   
+    upActual = upEl(xiSpan, etaSpan, :);
+   
+    upActualVector = zeros(3*(p + 1)*(q + 1), 1);
     for i = 1:3*(p + 1)*(q + 1)
-        % For solution 1
-        upActualVector1(i) = upActual1(1, 1, i);
+        
         
         % For solution 2
-        upActualVector2(i) = upActual2(1, 1, i);
+        upActualVector(i) = upActual(1, 1, i);
     end
     
     %% 3iv. Get the actual resultants at the point and at the current time step
     
-    % For method 1
-    upVector1 = computeNodalVectorIncompressibleFlow2D ...
-        (RMtx, p, q, upActualVector1);
+    
     
     % For method 2
-    upVector2 = computeNodalVectorIncompressibleFlow2D ...
-        (RMtx, p, q, upActualVector2);
+    upVector = computeNodalVectorIncompressibleFlow2D ...
+        (RMtx, p, q, upActualVector);
     
     %% 3v. Get the desirable resultant at the point and at the current time step
     if strcmp(propGraph.postProcComponent, 'xVelocity')
-        resultantAtPointNumerical1(iTime, 1) = upVector1(1);
-        resultantAtPointNumerical2(iTime, 1) = upVector2(1);
+
+        resultantAtPointNumerical(iTime, 1) = upVector(1);
         resultantAtPointAnalytical(iTime, 1) = -cos(x)*sin(y)*exp(-2*t*parameters.nue);
     elseif strcmp(propGraph.postProcComponent, 'yVelocity')
-        resultantAtPointNumerical1(iTime, 1) = upVector1(2);
-        resultantAtPointNumerical2(iTime, 1) = upVector2(2);
+
+        resultantAtPointNumerical(iTime, 1) = upVector(2);
         resultantAtPointAnalytical(iTime, 1) = sin(x)*cos(y)*exp(-2*t*parameters.nue);
     elseif strcmp(propGraph.postProcComponent, 'pressure')
-        resultantAtPointNumerical1(iTime, 1) = upVector1(3);
-        resultantAtPointNumerical2(iTime, 1) = upVector2(3);
+
+        resultantAtPointNumerical(iTime, 1) = upVector(3);
         resultantAtPointAnalytical(iTime, 1) = -.25*(cos(2*x) + cos(2*y))*exp(-4*t*parameters.nue);
     elseif strcmp(propGraph.postProcComponent, '2normVelocity')
-        uXNumerical1 = upVector1(1);
-        uYNumerical1 = upVector1(2);
-        resultantAtPointNumerical1(iTime, 1) = norm([uXNumerical1 uYNumerical1]);
-        uXNumerical2 = upVector2(1);
-        uYNumerical2 = upVector2(2);
-        resultantAtPointNumerical2(iTime, 1) = norm([uXNumerical2 uYNumerical2]);
+
+        uXNumerical = upVector(1);
+        uYNumerical = upVector(2);
+        resultantAtPointNumerical(iTime, 1) = norm([uXNumerical uYNumerical]);
         uXAnalytical = -cos(x)*sin(y)*exp(-2*t*parameters.nue);
         uYAnalytical = sin(x)*cos(y)*exp(-2*t*parameters.nue);
         resultantAtPointAnalytical(iTime, 1) = norm([uXAnalytical uYAnalytical]);
@@ -205,9 +171,9 @@ for iTime = 1:propFldDynamics.noTimeSteps
 end
 
 %% 4. Plot the resultant at the given point and over time
-plot(timeSteps, resultantAtPointAnalytical, 'b', timeSteps, ...
-    resultantAtPointNumerical1, 'g', timeSteps, resultantAtPointNumerical2, 'r');
-legend('Analytical', 'Solution 1', 'Solution  2');
+plot(timeSteps, resultantAtPointAnalytical, 'b',...
+     timeSteps, resultantAtPointNumerical, 'r');
+legend('Analytical', 'Navier-Stokes');
 xlabel('time (seconds)');
 if strcmp(propGraph.postProcComponent, 'xVelocity')
     yLabelString = 'x-velocity component u_x (m/s)';
@@ -219,8 +185,7 @@ elseif strcmp(propGraph.postProcComponent,'2normVelocity')
     yLabelString = 'velocity magnitude ||u||_2 (m/s)';
 end
 ylabel(yLabelString);
-title(sprintf('Evaluation point X = (%d, %d, %d)', xCartesian(1), ...
-    xCartesian(2), xCartesian(3)));
+title(sprintf('Evaluation point X = (%d, %d)', xCartesian(1), xCartesian(2)));
     
 %% 5. Update the figure handle index
 index = propGraph.index + 1;
