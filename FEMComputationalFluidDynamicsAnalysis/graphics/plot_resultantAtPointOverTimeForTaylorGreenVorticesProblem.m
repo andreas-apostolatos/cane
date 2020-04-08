@@ -6,6 +6,7 @@ function index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem ...
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
 %
 %% Function documenation
 %
@@ -93,15 +94,13 @@ t = propFldDynamics.T0;
 %% 3. Loop over all the time steps
 for iTime = 1:propFldDynamics.noTimeSteps
     %% 3i. Fill up the time step array accordingly
-    timeSteps(iTime, 1) = t;
+    timeSteps(iTime) = t;
     
     %% 3ii. Get the current discrete solution vector
     
-    % Distribute the solution vector into the elememts for the current time
-    % step :
+    upHCurrent = upHistory(:,iTime+1);
     
-    % element discrete solution vectors
-  
+    
     upEl = zeros(numKnots_xi - p - 1, numKnots_eta - q - 1, 3*(p + 1)*(q + 1));
     for j = (q + 1):(numKnots_eta - q - 1)
         for i = (p + 1):(numKnots_xi - p - 1)
@@ -129,15 +128,12 @@ for iTime = 1:propFldDynamics.noTimeSteps
    
     upActualVector = zeros(3*(p + 1)*(q + 1), 1);
     for i = 1:3*(p + 1)*(q + 1)
-        
-        
+
         % For solution 2
         upActualVector(i) = upActual(1, 1, i);
     end
     
     %% 3iv. Get the actual resultants at the point and at the current time step
-    
-    
     
     % For method 2
     upVector = computeNodalVectorIncompressibleFlow2D ...
@@ -145,19 +141,15 @@ for iTime = 1:propFldDynamics.noTimeSteps
     
     %% 3v. Get the desirable resultant at the point and at the current time step
     if strcmp(propGraph.postProcComponent, 'xVelocity')
-
         resultantAtPointNumerical(iTime, 1) = upVector(1);
         resultantAtPointAnalytical(iTime, 1) = -cos(x)*sin(y)*exp(-2*t*parameters.nue);
     elseif strcmp(propGraph.postProcComponent, 'yVelocity')
-
         resultantAtPointNumerical(iTime, 1) = upVector(2);
         resultantAtPointAnalytical(iTime, 1) = sin(x)*cos(y)*exp(-2*t*parameters.nue);
     elseif strcmp(propGraph.postProcComponent, 'pressure')
-
         resultantAtPointNumerical(iTime, 1) = upVector(3);
         resultantAtPointAnalytical(iTime, 1) = -.25*(cos(2*x) + cos(2*y))*exp(-4*t*parameters.nue);
     elseif strcmp(propGraph.postProcComponent, '2normVelocity')
-
         uXNumerical = upVector(1);
         uYNumerical = upVector(2);
         resultantAtPointNumerical(iTime, 1) = norm([uXNumerical uYNumerical]);

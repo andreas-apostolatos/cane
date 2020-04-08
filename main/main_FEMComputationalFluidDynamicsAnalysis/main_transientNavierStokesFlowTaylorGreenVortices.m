@@ -81,7 +81,9 @@ computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
 
 % On the writing the output function
 propVTK.isOutput = true;
+%propVTK.isOutput = false;
 propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+%propVTK.writeOutputToFile = 'undefined';
 propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
 %% GUI
