@@ -79,7 +79,7 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/refinementStudy
 %% Initialize variables for convergence study
 
 % Number of cases defined in GiD input folder
-numberOfCases = 9;
+numberOfCases = 4;
 zeroVector = zeros(numberOfCases,1);
 
 % Array of Hertz (reference) contact lengths and pressures
@@ -109,7 +109,7 @@ radius = 5;
 contactSegments = computeUnitNormalVctsToSegments(contactSegments);
 
 %% Amplitude of the externally applied boundary traction
-tractionLoadVct = [1e3; 0; 0];
+tractionLoadVct = [5e2; 0; 0];
 
 %% Parse data from GiD input file
 
@@ -117,7 +117,7 @@ tractionLoadVct = [1e3; 0; 0];
 pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/refinementStudyHertz/';
 
 % Collect all case names into an array of case names
-% refined mesh -> 0.001 - 0.009 element size at the tip
+% refined mesh with reduced element size at the tip
 caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_%d'));
 
 %% Preform a FEM calculation for each case
@@ -168,29 +168,29 @@ end
 
 %% Convergence study
 
-% Plot contact length vs. number of mesh elements
-figure('Name','Contact Length Convergence')
-hold on
-grid on
-plot(numberOfElements,contactLength,'r-o','LineWidth',2);
-plot(numberOfElements,hertzContactLength,'b--d','LineWidth',2);
-hold off
-%set(gca,'xscale','log')
-legend('FEM','reference','location','southeast')
-xlabel('number of mesh elements')
-ylabel('contact length [m]')
-
 % Plot max contact pressure vs. number of mesh elements
-figure('Name','Max Contact Pressure Convergence')
+figure('Name','Max Contact Pressure')
 hold on
 grid on
 plot(numberOfElements,maxContactPressure,'r-o','LineWidth',2);
 plot(numberOfElements,hertzPressure,'b--d','LineWidth',2);
 hold off
-%set(gca,'xscale','log')
+set(gca,'xscale','log')
 legend('FEM','reference','location','southeast')
 xlabel('number of mesh elements')
 ylabel('max contact pressure [Pa]')
+
+% Plot contact length vs. number of mesh elements
+figure('Name','Contact Length')
+hold on
+grid on
+plot(numberOfElements,contactLength,'r-o','LineWidth',2);
+plot(numberOfElements,hertzContactLength,'b--d','LineWidth',2);
+hold off
+set(gca,'xscale','log')
+legend('FEM','reference','location','southeast')
+xlabel('number of mesh elements')
+ylabel('contact length [m]')
 
 % Calculate the difference in applied force and resultant contact force
 forceDifference = max(abs(appliedForce - contactForce));
