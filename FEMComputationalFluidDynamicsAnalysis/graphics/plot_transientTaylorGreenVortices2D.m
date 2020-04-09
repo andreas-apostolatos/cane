@@ -16,11 +16,7 @@ function index = plot_transientTaylorGreenVortices2D ...
 %             Input :
 %            fldMsh : Nodes and elements for the fluid mesh
 %        parameters : The parameters of the flow (density, viscosity)
-%   propFldDynamics : Transient analysis parameters : 
-%                           T0 : Start time of the simulation
-%                    	  TEnd : End time of the simulation
-%                  noTimeSteps : Number of time steps
-%                        	dt : Time step (automatically computed)
+%                 t : Real time at which we want to visualize the results
 %         propGraph : Structure containing information on the graphics
 %            outMsg : Enables outputting information in the command window 
 %                     when selected as 'outputEnabled'
@@ -158,15 +154,15 @@ ylabel('y', 'FontSize', 14);
 
 % Graph title
 if strcmp(propGraph.postProcComponent, 'xVelocity')
-    title(['Velocity component U at t = ',num2str(t)]);
+    title(['x-velocity component u_x (m/s) at t = ',num2str(t),'s']);
 elseif strcmp(propGraph.postProcComponent, 'yVelocity')
-    title(['Velocity component V at t = ',num2str(t)]);
+    title(['y-velocity component u_y (m/s) at t = ',num2str(t),'s']);
 elseif strcmp(propGraph.postProcComponent, 'pressure')
-    title(['Pressure distribution at t = ',num2str(t)]);
+    title(['pressure p (Pa) at t = ',num2str(t),'s']);
 elseif strcmp(propGraph.postProcComponent, '2normVelocity')
-    title(['Velocity magnitude ||u|| at t = ',num2str(t)]);
+    title(['velocity magnitude ||u||_2 (m/s) at t = ',num2str(t),'s']);
 elseif strcmp(propGraph.postProcComponent, 'velocityVectorPlot')
-    title(['Contours of the velocity field u at t = ',num2str(t)]);
+    title(['Contours of the velocity field u at t = ',num2str(t),'s']);
 end
 hold off;
 

@@ -60,10 +60,8 @@ addpath('../../efficientComputation/');
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
-caseName = 'taylorGreenVortices_pi_domain';
-%caseName = 'taylorGreenVortices_2pi_domain';
-%caseName = 'taylorGreenVortices_2pi_domain_updated';
-
+%caseName = 'taylorGreenVortices_pi_domain';
+caseName = 'taylorGreenVortices_2pi_domain';
 
 % Parse the data
 [fldMsh, homDOFs, inhomDOFs, ~, nodesALE, propNBC, ...
@@ -80,10 +78,10 @@ propGraph.index = 1;
 computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
 
 % On the writing the output function
-propVTK.isOutput = true;
-%propVTK.isOutput = false;
-propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
-%propVTK.writeOutputToFile = 'undefined';
+% propVTK.isOutput = true;
+% propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+propVTK.isOutput = false;
+propVTK.writeOutputToFile = 'undefined';
 propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
 %% GUI
@@ -115,8 +113,9 @@ else
 end
    
 %% Define the initial condition function
-computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
+% computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
 % computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE;
+computeInitialConditions = @computeInitialConditionsForTaylorGreenVorticesFEM4NSE2D;
 
 %% Solve the CFD problem
 [upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI ...
@@ -134,10 +133,10 @@ propGraph.index = plot_transientTaylorGreenVortices2D ...
 (fldMsh, parameters, propFldDynamics.TEnd ,propGraph, 'outputEnabled');
 
 %% Display resultant at point over time
-% x_coord = pi/2;
-% y_coord = pi/2;
-% propGraph.index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem...
-%     (x_coord, y_coord, parameters, upHistory, propFldDynamics, propGraph);
-% legend('Analytical', 'Navier-Stokes');
+x_coordinate = 1;
+y_coordinate = 1;
+
+propGraph.index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem...
+    (x_coordinate, y_coordinate, fldMsh, parameters, upHistory, propFldDynamics, propGraph);
 
 %% END OF THE SCRIPT

@@ -1,5 +1,5 @@
 function index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem ...
-    (x, y, parameters, upHistory, propFldDynamics, propGraph)
+    (x, y, fldMsh, parameters, upHistory, propFldDynamics, propGraph)
 %% Licensing
 %
 % License:         BSD License
@@ -11,29 +11,19 @@ function index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem ...
 %% Function documenation
 %
 % Returns a 2D plot with the evolution of a resultant throught the
-% transient analysis at a specific point for two different solutions
-% corresponding to a 2D incompressible flow problem using isogeometric 
-% analysis for the benchmark of Taylor-Green votices together with the 
-% analytical resultant at the chosen point.
+% transient analysis at a specific point for 2D incompressible flow problem
+% using FEM analysis for the benchmark of Taylor-Green votices together with
+% the analytical resultant at the chosen point.
 %
 %                     Input :
-%                    xi,eta : The NURBS parametric coordinates of the
-%                             points on which to plot the resultants over 
-%                             the time
-%                       p,q : The polynomial degrees of the NURBS patch
-%                    Xi,Eta : The knot vectors of the NURBS patch
-%                        CP : The set of Control Point coordinates and
-%                             weights for the NURBS patch
-%                   isNURBS : Function handle to whether the basis of the
-%                             B-Spline patch is a NURBS or a B-Spline
+%                       x,y : Cartesian coordinates of evaluation point
+%                    fldMsh : Nodes and elements for the fluid mesh
 %                parameters : The parameters of the flow (density, 
 %                             viscosity)
-%                upHistory1 : The history data of the transient analysis by
-%                             solving the problem numerically with method 1
-%                upHistory2 : The history data of the transient analysis by
-%                             solving the problem numerically with method 2
+%                 upHistory : The history data of the transient analysis by
+%                             solving the problem numerically
 %           propFldDynamics : Transient analysis parameters : 
-%                              TStart : Start time of the simulation
+%                                  T0 : Start time of the simulation
 %                                TEnd : End time of the simulation
 %                         noTimeSteps : Number of time steps
 %                                  dt : Time step (automatically computed)
@@ -47,16 +37,15 @@ function index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem ...
 %                                                    'pressure'
 %                                                    '2normVelocity'
 %
-%                   Output :
-%                            graphics
+%                   Output :  graphics
 %
-% Function layout :
+%% Function layout :
 %
 % 0. Read input
 %
-% 1. Find the knot spans where the point lives in
+% 1. Find the mesh element from cartesian coordinates
 %
-% 2. Compute the Cartesian coordinates of the Point
+% 2. Compute the DOFs that corespond to element nodes
 %
 % 3. Loop over all the time steps
 %
@@ -64,13 +53,11 @@ function index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem ...
 %
 %   3ii. Get the current discrete solution vector
 %
-%  3iii. Get the actual discrete solution vector
+%  3iii. Get the actual resultants at the point and at the current time step
 %
-%   3iv. Get the actual resultants at the point and at the current time step
+%   3iv. Assign the resultants from numerical and analytical solution
 %
-%    3v. Get the desirable resultant at the point and at the current time step
-%
-%   3vi. Update the simulation time
+%    3v. Update the simulation time
 %
 % 4. Plot the resultant at the given point and over time
 %
@@ -89,7 +76,32 @@ resultantAtPointAnalytical = zeros(propFldDynamics.noTimeSteps, 1);
 timeSteps = zeros(propFldDynamics.noTimeSteps, 1);
 
 % Initialize time
-t = propFldDynamics.T0;
+t = propFldDynamics.dt;
+
+%% 1. Find the mesh element from cartesian coordinates
+for iElement = 1:size(fldMsh.elements,1)
+
+    % Find the node IDs of an element
+    node_IDs = fldMsh.elements(iElement,:);
+    
+    % Find the node coordinates of an element
+    vertexI = fldMsh.nodes(node_IDs(1),1:2);
+    vertexJ = fldMsh.nodes(node_IDs(2),1:2);
+    vertexK = fldMsh.nodes(node_IDs(3),1:2);
+    
+    % Compute basis functions and check if the point is inside the element
+    [N,~,isInside] = computeCST2DBasisFunctions(vertexI,vertexJ,vertexK,x,y);
+    
+    % Break the loop if the point is inside the element
+    if isInside
+       break
+    end
+end
+
+%% 2. Compute the DOFs that corespond to element nodes
+vertexI_DOFs = (node_IDs(1)*3-2):(node_IDs(1)*3);
+vertexJ_DOFs = (node_IDs(2)*3-2):(node_IDs(2)*3);
+vertexK_DOFs = (node_IDs(3)*3-2):(node_IDs(3)*3);
 
 %% 3. Loop over all the time steps
 for iTime = 1:propFldDynamics.noTimeSteps
@@ -97,49 +109,14 @@ for iTime = 1:propFldDynamics.noTimeSteps
     timeSteps(iTime) = t;
     
     %% 3ii. Get the current discrete solution vector
+    upCurrent = upHistory(:,iTime+1);
     
-    upHCurrent = upHistory(:,iTime+1);
+    %% 3iii. Get the actual resultants at the point and at the current time step
+    upVector = upCurrent(vertexI_DOFs)*N(1) + ...
+               upCurrent(vertexJ_DOFs)*N(2) + ...
+               upCurrent(vertexK_DOFs)*N(3);
     
-    
-    upEl = zeros(numKnots_xi - p - 1, numKnots_eta - q - 1, 3*(p + 1)*(q + 1));
-    for j = (q + 1):(numKnots_eta - q - 1)
-        for i = (p + 1):(numKnots_xi - p - 1)
-            % Initialize the counter
-            k = 1;
-            for c = j - q - 1:j - 1 
-                for b = i - p:i
-                    
-                    
-                    % For solution 2
-                    upEl(i, j, k) = upHistory(3*(c*numCPs_xi + b) - 2, iTime);
-                    upEl(i, j, k + 1) = upHistory(3*(c*numCPs_xi + b) - 1, iTime);
-                    upEl(i, j, k + 2) = upHistory(3*(c*numCPs_xi + b), iTime);
-
-                    % Update the counter
-                    k = k + 3;
-                end
-            end
-        end
-    end
-    
-    %% 3iii. Get the actual discrete solution vector
-   
-    upActual = upEl(xiSpan, etaSpan, :);
-   
-    upActualVector = zeros(3*(p + 1)*(q + 1), 1);
-    for i = 1:3*(p + 1)*(q + 1)
-
-        % For solution 2
-        upActualVector(i) = upActual(1, 1, i);
-    end
-    
-    %% 3iv. Get the actual resultants at the point and at the current time step
-    
-    % For method 2
-    upVector = computeNodalVectorIncompressibleFlow2D ...
-        (RMtx, p, q, upActualVector);
-    
-    %% 3v. Get the desirable resultant at the point and at the current time step
+    %% 3iv. Assign the resultants from numerical and analytical solution
     if strcmp(propGraph.postProcComponent, 'xVelocity')
         resultantAtPointNumerical(iTime, 1) = upVector(1);
         resultantAtPointAnalytical(iTime, 1) = -cos(x)*sin(y)*exp(-2*t*parameters.nue);
@@ -158,26 +135,26 @@ for iTime = 1:propFldDynamics.noTimeSteps
         resultantAtPointAnalytical(iTime, 1) = norm([uXAnalytical uYAnalytical]);
     end
    
-    %% 3vi. Update the simulation time
+    %% 3v. Update the simulation time
     t = t + propFldDynamics.dt;
 end
 
 %% 4. Plot the resultant at the given point and over time
 plot(timeSteps, resultantAtPointAnalytical, 'b',...
      timeSteps, resultantAtPointNumerical, 'r');
-legend('Analytical', 'Navier-Stokes');
+legend('Analytical', 'Navier-Stokes','Orientation','horizontal','Location','southoutside');
 xlabel('time (seconds)');
 if strcmp(propGraph.postProcComponent, 'xVelocity')
     yLabelString = 'x-velocity component u_x (m/s)';
 elseif strcmp(propGraph.postProcComponent, 'yVelocity')
-    yLabelString = 'y-velocity component u_y (m/s)';
+    yLabelString = 'y-velocity component u_y ';
 elseif strcmp(propGraph.postProcComponent, 'pressure')
     yLabelString = 'pressure p (Pa)';
 elseif strcmp(propGraph.postProcComponent,'2normVelocity')
-    yLabelString = 'velocity magnitude ||u||_2 (m/s)';
+    yLabelString = ' (m/s)';
 end
 ylabel(yLabelString);
-title(sprintf('Evaluation point X = (%d, %d)', xCartesian(1), xCartesian(2)));
+title(sprintf('Evaluation point X = (%d, %d)', x, y));
     
 %% 5. Update the figure handle index
 index = propGraph.index + 1;
