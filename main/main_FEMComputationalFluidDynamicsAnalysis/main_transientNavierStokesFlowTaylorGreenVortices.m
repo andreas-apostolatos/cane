@@ -61,13 +61,32 @@ addpath('../../efficientComputation/');
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 %caseName = 'taylorGreenVortices_pi_domain';
-caseName = 'taylorGreenVortices_2pi_domain';
+% caseName = 'taylorGreenVortices_2pi_domain';
+caseName = 'unitTest_taylorGreenVortices_2pi_domain';
 
 % Parse the data
 [fldMsh, homDOFs, inhomDOFs, ~, nodesALE, propNBC, ...
     propAnalysis, parameters, propNLinearAnalysis, propFldDynamics, ...
     propGaussInt] = parse_FluidModelFromGid...
     (pathToCase, caseName, 'outputEnabled');
+
+% On the postprocessing properties
+%'xVelocity','yVelocity','pressure','2normVelocity','velocityVectorPlot'
+propPostproc.postProcComponent = 'pressure';
+if strcmp(propPostproc.postProcComponent, 'xVelocity')
+    propPostproc.computeAnalytical = ...
+        @(x, y, t, parameters) -cos(x)*sin(y)*exp(-2*t*parameters.nue);
+elseif strcmp(propPostproc.postProcComponent, 'yVelocity')
+    propPostproc.computeAnalytical = ...
+        @(x, y, t, parameters) sin(x)*cos(y)*exp(-2*t*parameters.nue);
+elseif strcmp(propPostproc.postProcComponent, 'pressure')
+    propPostproc.computeAnalytical = ...
+        @(x, y, t, parameters) -.25*(cos(2*x) + cos(2*y))*exp(-4*t*parameters.nue);
+elseif strcmp(propPostproc.postProcComponent, '2normVelocity')
+    propPostproc.computeAnalytical = ...
+        @(x, y, t, parameters) norm([-cos(x)*sin(y)*exp(-2*t*parameters.nue)
+                                     sin(x)*cos(y)*exp(-2*t*parameters.nue)]);
+end
 
 %% UI
 
@@ -80,6 +99,7 @@ computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
 % On the writing the output function
 % propVTK.isOutput = true;
 % propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+% propVTK.VTKResultFile = 'undefined';
 propVTK.isOutput = false;
 propVTK.writeOutputToFile = 'undefined';
 propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
@@ -113,8 +133,6 @@ else
 end
    
 %% Define the initial condition function
-% computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
-% computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE;
 computeInitialConditions = @computeInitialConditionsForTaylorGreenVorticesFEM4NSE2D;
 
 %% Solve the CFD problem
@@ -126,17 +144,39 @@ computeInitialConditions = @computeInitialConditionsForTaylorGreenVorticesFEM4NS
     'outputEnabled');
 
 %% Visualize analytical solution
-%'xVelocity','yVelocity','pressure','2normVelocity','velocityVectorPlot'
-propGraph.postProcComponent = 'xVelocity';
+% propGraph.index = plot_transientTaylorGreenVortices2D ... 
+% (fldMsh, parameters, propFldDynamics.TEnd ,propGraph, 'outputEnabled');
 
-propGraph.index = plot_transientTaylorGreenVortices2D ... 
-(fldMsh, parameters, propFldDynamics.TEnd ,propGraph, 'outputEnabled');
+%% Compute the selected resultant at the chosen Cartesian location over time
+x = pi/2; % pi/3, pi/2;
+y = -pi/2; % pi/3, -pi/2;
+[timeSpaceDiscrete, resultantNumerical, resultantAnalytical] = ...
+    computeResultantAtPointOverTime...
+    (x, y, fldMsh, parameters, upHistory, ...
+    propFldDynamics, propPostproc, 'outputEnabled');
 
-%% Display resultant at point over time
-x_coordinate = 1;
-y_coordinate = 1;
-
-propGraph.index = plot_resultantAtPointOverTimeForTaylorGreenVorticesProblem...
-    (x_coordinate, y_coordinate, fldMsh, parameters, upHistory, propFldDynamics, propGraph);
+%% Plot the selected resultant at the chosen Cartesian location over time
+figure(propGraph.index)
+if ~ischar(resultantAnalytical)
+    plot(timeSpaceDiscrete, resultantAnalytical, 'black',...
+         timeSpaceDiscrete, resultantNumerical, 'blue');
+    legend('Analytical', 'FEM', 'Orientation', 'horizontal', 'Location', 'southoutside');
+else
+    plot(timeSpaceDiscrete, resultantNumerical, 'blue');
+end
+xlabel('time (seconds)');
+if strcmp(propPostproc.postProcComponent, 'xVelocity')
+    yLabelString = 'x-velocity component u_x (m/s)';
+elseif strcmp(propPostproc.postProcComponent, 'yVelocity')
+    yLabelString = 'y-velocity component u_y ';
+elseif strcmp(propPostproc.postProcComponent, 'pressure')
+    yLabelString = 'pressure p (Pa)';
+elseif strcmp(propPostproc.postProcComponent,'2normVelocity')
+    yLabelString = '||u|| (m/s)';
+end
+ylabel(yLabelString);
+title(sprintf('Evolution of %s at point X = (%d, %d)', ...
+    propPostproc.postProcComponent, x, y));
+propGraph.index = propGraph.index + 1;
 
 %% END OF THE SCRIPT

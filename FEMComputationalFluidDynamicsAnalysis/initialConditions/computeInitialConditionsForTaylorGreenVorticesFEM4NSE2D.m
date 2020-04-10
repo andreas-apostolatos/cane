@@ -55,12 +55,12 @@ function [up, upDot, upDDot, noTimeStep] = ...
 nue = parameters.nue;
 
 % Get the total number of nodes and DOFs
-noNodes = size(fldMsh.nodes,1);
-noDOFs = noNodes*propAnalysis.noFields;
+numNodes = size(fldMsh.nodes, 1);
+numDOFs = numNodes*propAnalysis.noFields;
 
 % Initialize output arrays
-up = zeros(noDOFs, 1);
-upDot = zeros(noDOFs, 1);
+up = zeros(numDOFs, 1);
+upDot = zeros(numDOFs, 1);
 upDDot = 'undefined';
 
 % Number of time step
@@ -68,11 +68,10 @@ noTimeStep = 0;
 
 %% 1. Loop over all the Nodes and assign initial conditions to each DOF
 counter = 1;
-for iNodes = 1:noNodes
-
+for iNodes = 1:numNodes
     % Compute node coordinates
-    x = fldMsh.nodes(iNodes,1);
-    y = fldMsh.nodes(iNodes,2);
+    x = fldMsh.nodes(iNodes, 1);
+    y = fldMsh.nodes(iNodes, 2);
     
     % Assign the initial conditions at t = 0s;
     % velocity and acceleration in x-direction
@@ -89,7 +88,6 @@ for iNodes = 1:noNodes
     
     % Update DOF counter
     counter = counter+3;
-
 end
 
 end

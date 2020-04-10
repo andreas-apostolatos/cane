@@ -301,8 +301,12 @@ if propOutput.isOutput
             propTransientAnalysis, msh, parameters, u, uDot, uDDot, ...
             DOF4Output, caseName, pathToOutput, title, numTimeStep);
     else
-        uHistory(:,1) = u;
+        error('%s should define a function handle', ...
+            propOutput.writeOutputToFile);
     end
+else
+    numTimeStep = numTimeStep + 1;
+    uHistory(:,numTimeStep) = u;
 end
 
 %% 4. Compute the mass matrix of the problem
@@ -337,7 +341,7 @@ end
 if strcmp(outMsg, 'outputEnabled')
     fprintf('\tLooping over all the time steps \n\t------------------------------- \n\n');
 end
-while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTimeSteps
+while t < propTransientAnalysis.TEnd && numTimeStep <= propTransientAnalysis.noTimeSteps
     %% 7i. Update the simulation time
     t = t + propTransientAnalysis.dt;
     
@@ -348,10 +352,10 @@ while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTi
     if strcmp(outMsg, 'outputEnabled')
         if ~ischar(propNLinearAnalysis)
             msgTS = sprintf(strcat(tab, '\tTime step %d/%d at real time %d seconds with dt=%d and maxNoNRIter=%d \n \n'), ...
-                numTimeStep, propTransientAnalysis.noTimeSteps, t, propTransientAnalysis.dt, propNLinearAnalysis.maxIter);
+                numTimeStep - 1, propTransientAnalysis.noTimeSteps, t, propTransientAnalysis.dt, propNLinearAnalysis.maxIter);
         else
             msgTS = sprintf(strcat(tab, '\tTime step %d/%d at real time %d seconds with dt=%d \n \n'), ...
-                numTimeStep, propTransientAnalysis.noTimeSteps, t, propTransientAnalysis.dt);
+                numTimeStep - 1, propTransientAnalysis.noTimeSteps, t, propTransientAnalysis.dt);
         end
         fprintf(msgTS);
     end
@@ -411,7 +415,7 @@ while t < propTransientAnalysis.TEnd && numTimeStep < propTransientAnalysis.noTi
             msh, parameters, u, uDot, uDDot, DOF4Output, caseName, ...
             pathToOutput, title, numTimeStep);
     else
-        uHistory(:,numTimeStep + 1) = u;
+        uHistory(:,numTimeStep) = u;
     end
 end
 

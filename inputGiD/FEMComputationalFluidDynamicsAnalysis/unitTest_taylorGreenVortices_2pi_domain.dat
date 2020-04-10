@@ -19,43 +19,6 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Structural Boundary Value Problem                                     %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-STRUCTURE_ANALYSIS
- ANALYSIS_TYPE,planeStress
-
-STRUCTURE_MATERIAL_PROPERTIES
-
-STRUCTURE_NLINEAR_SCHEME
- NLINEAR_SCHEME,NEWTON_RAPHSON
- NO_LOAD_STEPS,1
- TOLERANCE,1e-9
- MAX_ITERATIONS,100
-
-STRUCTURE_TRANSIENT_ANALYSIS
- SOLVER STEADY_STATE
- TIME_INTEGRATION EXPLICIT_EULER
- ALPHA_BETA -0.1
- GAMMA 0.6
- START_TIME 0
- END_TIME 10
- NUMBER_OF_TIME_STEPS 100
- ADAPTIVE_TIME_STEPPING true
- 
-STRUCTURE_INTEGRATION
- DOMAIN default
- domainNoGP 1
- boundaryNoGP 1
-
-STRUCTURE_NODES
-STRUCTURE_ELEMENTS
-STRUCTURE_DIRICHLET_NODES
-STRUCTURE_FORCE_NODES
-STRUCTURE_CONTACT_NODES
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                         %
 %   Fluid Boundary Value Problem                                          %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -79,9 +42,9 @@ FLUID_TRANSIENT_ANALYSIS
  ALPHA_BETA -0.1
  GAMMA 0.6
  START_TIME 0
- END_TIME 10
- NUMBER_OF_TIME_STEPS 1000
- ADAPTIVE_TIME_STEPPING true
+ END_TIME 1
+ NUMBER_OF_TIME_STEPS 2
+ ADAPTIVE_TIME_STEPPING false
  
 FLUID_INTEGRATION
  DOMAIN default
