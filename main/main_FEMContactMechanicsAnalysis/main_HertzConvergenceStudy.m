@@ -79,8 +79,8 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/refinementStudy
 %% Initialize variables for convergence study
 
 % Number of cases defined in GiD input folder
-numberOfCases = 4;
-zeroVector = zeros(numberOfCases,1);
+numCases = 4;
+zeroVector = zeros(numCases,1);
 
 % Array of Hertz (reference) contact lengths and pressures
 hertzContactLength = zeroVector;
@@ -94,7 +94,6 @@ maxContactPressure = zeroVector;
 
 % Intialize array of number of elements
 numberOfElements = zeroVector;
-
 clear zeroVector;
 
 %% Define boundary segments of the rigid contact wall
@@ -109,7 +108,9 @@ radius = 5;
 contactSegments = computeUnitNormalVctsToSegments(contactSegments);
 
 %% Amplitude of the externally applied boundary traction
-tractionLoadVct = [5e2; 0; 0];
+tractionLoadVct = [5e1
+                   0
+                   0];
 
 %% Parse data from GiD input file
 
@@ -118,18 +119,19 @@ pathToCase = '../../inputGiD/FEMContactLinearPlateInMembraneAction/refinementStu
 
 % Collect all case names into an array of case names
 % refined mesh with reduced element size at the tip
-caseName = cellstr(num2str((numberOfCases:-1:1)', 'refinementStudyHertz_%d'));
+caseName = cellstr(num2str((numCases:-1:1)', 'refinementStudyHertz_%d'));
 
 %% Preform a FEM calculation for each case
-for n = 1:numberOfCases
-
+for iCases = 1:numCases
+    %% Print message
     if strcmp(outMsg,'outputEnabled')
-        fprintf('Case number :%d\n',n);
+        fprintf('Case number :%d\n', iCases);
     end
+    
     %% Parse data from GiD input file
     [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, analysis, parameters, ...
         propNLinearAnalysis, propStrDynamics, propGaussInt, propContact] = ...
-        parse_StructuralModelFromGid(pathToCase, char(caseName(n)), outMsg);
+        parse_StructuralModelFromGid(pathToCase, char(caseName(iCases)), outMsg);
 
     % Assign values to each iteration step
     propContact.maxIter = maxIter;
@@ -138,62 +140,64 @@ for n = 1:numberOfCases
     %% Compute the load vector
     time = 0;
     F = computeLoadVctFEMPlateInMembraneAction...
-        (strMsh, analysis, propNBC, time, propGaussInt,'');
+        (strMsh, analysis, propNBC, time, propGaussInt, '');
 
     %% Solve the system for the displacement field and the Lagrange Multipliers fields
     [dHat, lambdaHat, nodeIDs_active, numIter, FComplete, minElSize] = ...
         solveSignoriniFrictionlessContact2D...
         (analysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, bodyForces, ...
         parameters, contactSegments, computeStiffMtxLoadVct, solve_LinearSystem, ...
-        propNLinearAnalysis, propContact , propGaussInt, char(caseName(n)), ...
+        propNLinearAnalysis, propContact , propGaussInt, char(caseName(iCases)), ...
         pathToOutput, isUnitTest, outMsg);
 
     %% Postprocessing
     
     % Compute the contact length, the contact force and the maximum contact
     % pressure
-    [contactLength(n), contactForce(n), maxContactPressure(n)] = ...
+    [contactLength(iCases, 1), contactForce(iCases, 1), maxContactPressure(iCases, 1)] = ...
         computePostprocResultantsSignoriniFrictionlessContact2D...
         (strMsh, parameters, dHat, lambdaHat, nodeIDs_active);
 
     % Get the length of the contact area and the reaction force on the contact
-    appliedForce(n) = sum(F);
-    hertzContactLength(n) = sqrt(4*(2*appliedForce(n))*radius*((1 - parameters.nue^2)/parameters.E)/(pi*parameters.t));
-    hertzPressure(n) = 2*(2*appliedForce(n))/(parameters.t*pi*hertzContactLength(n));
+    appliedForce(iCases, 1) = sum(F);
+    hertzContactLength(iCases, 1) = sqrt(4*(2*appliedForce(iCases, 1))*radius*...
+        ((1 - parameters.nue^2)/parameters.E)/(pi*parameters.t));
+    hertzPressure(iCases, 1) = 2*(2*appliedForce(iCases, 1))/(parameters.t*pi*...
+        hertzContactLength(iCases, 1));
     
     % Get the number of mesh elements
-    numberOfElements(n) = size(strMsh.elements,1);
-    
+    numberOfElements(iCases, 1) = size(strMsh.elements, 1);
 end
 
 %% Convergence study
 
-% Plot max contact pressure vs. number of mesh elements
+% Plot the maximum contact pressure versus the number of mesh elements
 figure('Name','Max Contact Pressure')
 hold on
 grid on
-plot(numberOfElements,maxContactPressure,'r-o','LineWidth',2);
-plot(numberOfElements,hertzPressure,'b--d','LineWidth',2);
+plot(numberOfElements,maxContactPressure, 'r-o', 'LineWidth', 2);
+plot(numberOfElements,hertzPressure, 'b--d','LineWidth', 2);
 hold off
-set(gca,'xscale','log')
-legend('FEM','reference','location','southeast')
-xlabel('number of mesh elements')
-ylabel('max contact pressure [Pa]')
+set(gca, 'xscale', 'log');
+legend('FEM', 'reference', 'location', 'southeast');
+xlabel('number of mesh elements');
+ylabel('max contact pressure [Pa]');
 
-% Plot contact length vs. number of mesh elements
-figure('Name','Contact Length')
-hold on
-grid on
-plot(numberOfElements,contactLength,'r-o','LineWidth',2);
-plot(numberOfElements,hertzContactLength,'b--d','LineWidth',2);
-hold off
-set(gca,'xscale','log')
-legend('FEM','reference','location','southeast')
-xlabel('number of mesh elements')
-ylabel('contact length [m]')
+% Plot the contact length versus the number of mesh elements
+figure('Name', 'Contact Length');
+hold on;
+grid on;
+plot(numberOfElements,contactLength, 'r-o', 'LineWidth', 2);
+plot(numberOfElements,hertzContactLength, 'b--d', 'LineWidth', 2);
+hold off;
+set(gca,'xscale', 'log');
+legend('FEM', 'reference', 'location', 'southeast');
+xlabel('number of mesh elements');
+ylabel('contact length [m]');
 
 % Calculate the difference in applied force and resultant contact force
 forceDifference = max(abs(appliedForce - contactForce));
-fprintf('Maximum difference between applied and computed contact force is : %d\n',forceDifference);
+fprintf('Maximum difference between applied and computed contact force is : %d\n', ...
+    forceDifference);
 
 %% End of the script
