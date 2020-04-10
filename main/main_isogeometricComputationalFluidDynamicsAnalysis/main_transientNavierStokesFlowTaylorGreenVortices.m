@@ -318,7 +318,7 @@ propNLinearAnalysis.maxIter = 50;
 
 % Plot the analytical solution versus time
 % plot_transientTaylorGreenVortices2D ...
-%     (p, Xi, q, Eta, CP, isNURBS, parameters, propFldDynamics, propGraph);
+%     (p, Xi, q, Eta, CP, isNURBS, parameters, propFldDynamics, propGraph,'outputEnabled');
 
 % Display resultant at point over time
 xi = .7;
