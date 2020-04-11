@@ -273,7 +273,7 @@ resVecLM = [F
 if strcmp(outMsg, 'outputEnabled')
     fprintf(strcat(tab, '>> Loop over all contact iterations\n\n'));
 end
-while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)    
+while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     %% Debugging
 %     graph.index = 1;
 %     graph.visualization.geometry = 'current';

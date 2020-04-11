@@ -63,6 +63,12 @@ function homDOFsLM = findInactiveLagrangeMultipliersContact2D...
 %    <-
 % <-
 %
+% 2. Clean up from duplicate entries the array of the Lagrange Multipliers DOF IDs which have to be enabled
+%
+% 3. Clean up from duplicate entries the array of the Lagrange Multipliers DOF IDs which have to be disabled
+%
+% 4. Remove the DOF IDs of the Lagrange Multipliers DOFs which have to be enabled from the array of the Lagrange Multipliers DOF IDs which are disabled
+%
 %% Function main body
 
 %% 0. Read input
@@ -122,7 +128,7 @@ for iSeg = 1:segmentsContact.numSegments
             end
         else
             % Deactivate the Lagrange Multipliers DOF if its value is
-            % positive
+            % negative
             if dHat_stiffMtxLM(idLM) < tolerance
                 homDOFsLM = [homDOFsLM idLM];
             else
@@ -181,15 +187,15 @@ for iSeg = 1:segmentsContact.numSegments
     end
 end
 
+%% 2. Clean up from duplicate entries the array of the Lagrange Multipliers DOF IDs which have to be enabled
 idLM_to_be_removed = unique(idLM_to_be_removed);
 
+%% 3. Clean up from duplicate entries the array of the Lagrange Multipliers DOF IDs which have to be disabled
 homDOFsLM = unique(homDOFsLM);
 
+%% 4. Remove the DOF IDs of the Lagrange Multipliers DOFs which have to be enabled from the array of the Lagrange Multipliers DOF IDs which are disabled
 for i = 1:length(idLM_to_be_removed)
     homDOFsLM(idLM_to_be_removed(1, i) == homDOFsLM) = [];
 end
-
-
-
 
 end
