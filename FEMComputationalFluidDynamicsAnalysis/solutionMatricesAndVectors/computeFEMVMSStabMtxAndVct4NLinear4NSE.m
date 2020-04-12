@@ -1,8 +1,9 @@
 function [K, resVct, minElEdgeSize] = ...
     computeFEMVMSStabMtxAndVct4NLinear4NSE ...
     (propAnalysis, up, upSaved, upDot, upDotSaved, uMeshALE, ...
-    DOFNumbering, fldMsh, F, loadFactor, propFldDynamics, t, ...
-    parameters, computeBodyForces, propGaussInt)
+    precompStiffMtx, precomResVct, DOFNumbering, fldMsh, F, ...
+    loadFactor, computeBodyForces, propFldDynamics, t, ...
+    propParameters, propGaussInt)
 %% Licensing
 %
 % License:         BSD License
@@ -62,24 +63,26 @@ function [K, resVct, minElEdgeSize] = ...
 %                     previous time step
 %          uMeshALE : The mesh motion velocity field on the nodes of the
 %                     mesh
+%   precompStiffMtx : Precomputed part of the stiffness matrix
+%      precomResVct : Precomputed part of the residual vector
 %      DOFNumbering : The global numbering of the DOFs arranged in a
 %                     3-dimentional array
 %            fldMsh : Nodes and elements of the fluid mesh
 %                 F : The boundary applied flux vector
 %        loadFactor : Load factor in case more than one load steps are
 %                     performed within each time step
+% computeBodyForces : Function handle to the computation of the body force
+%                     vector
 %   propFldDynamics : Transient analysis parameters :
 %                             .scheme : The time integration method
 %                          .alphaBeta : (parameter for the Bossak scheme)
 %                              .gamma : (parameter for the Bossak scheme)
 %                                 .T0 : Start time of the simulation
 %                               .TEnd : End time of the simulation
-%                                 .nT : Number of time steps
+%                        .noTimeSteps : Number of time steps
 %                                 .dt : Time step
 %                 t : The current time of the transient simulation
-%        parameters : Flow parameters
-% computeBodyForces : Function handle to the computation of the body force
-%                     vector
+%    propParameters : Flow parameters
 %      propGaussInt : Structure containing information on the quadrature,
 %                         .type : 'default', 'user'
 %                   .domainNoGP : Number of Gauss Points for the domain 
@@ -272,7 +275,7 @@ for iGP = 1:noGP
     [KLineaElOnGP, KNLineaElOnGP, massMtxElOnGP, FBodyElOnGP] = ...
         computeFEMVMSStabElTangentStiffMtxMassMtxLoadVctNLinear4NSE ...
         (xGP(1, 1), xGP(1, 2), xGP(1, 3), t, upEl, uMeshALEEL, dN, ...
-        computeBodyForces, parameters, h, propFldDynamics, isAnalysis3D);
+        computeBodyForces, propParameters, h, propFldDynamics, isAnalysis3D);
 
     %% 7v. Compute the load vector corresponding to the body force vector of the system
     if norm(FBodyElOnGP) ~= 0

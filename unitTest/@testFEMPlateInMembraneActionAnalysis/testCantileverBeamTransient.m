@@ -81,13 +81,23 @@ caseName = 'unitTest_cantileverBeamPlaneStressTransientNLinear';
 % On the computation of the body forces
 computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 
+% Choose equation system solver
+solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
+
+% Function handle to the computation of the initial conditions
+computeInitCnds = @computeInitCndsFEMPlateInMembraneAction;
+
+% Function handle to the computation of the steady-state stiffness matrix
+% and force vector
+computeProblemMatricesSteadyState = @computeTangentStiffMtxResVctFEMPlateInMembraneAction;
+
+% Function handle to the nonlinear finite element solver
+solve_FEMSystem = @solve_FEMNLinearSystem;
+
 % On the writing the output function
 propOutput.isOutput = false;
 propOutput.writeOutputToFile = 'undefined';
 propOutput.VTKResultFile = 'undefined';
-
-% Choose equation system solver
-solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % On transient inhomogeneous Dirichlet boundary conditions
 updateInhomDOFs = 'undefined';
@@ -103,12 +113,13 @@ if strcmp(propStrDynamics.method, 'EXPLICIT_EULER')
 end
 
 %% 3. Solve the plate in membrane action problem
-[dHistory, minElSize] = solve_FEMPlateInMembraneActionNLinearTransient...
+[dHistory, minElSize] = solve_FEMPlateInMembraneActionTransient ...
     (propAnalysis, strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     updateInhomDOFs, propNBC, @computeLoadVctFEMPlateInMembraneAction, ...
-    parameters, computeBodyForces, propNLinearAnalysis, propIDBC, ...
-    propStrDynamics, solve_LinearSystem, propGaussInt, propOutput, ...
-    caseName,'');
+    parameters, computeBodyForces, computeInitCnds, ...
+    computeProblemMatricesSteadyState, propNLinearAnalysis, propIDBC, ...
+    propStrDynamics, solve_LinearSystem, solve_FEMSystem, propGaussInt, ...
+    propOutput, caseName,'');
 
 %% 4. Define the expected solutions
 

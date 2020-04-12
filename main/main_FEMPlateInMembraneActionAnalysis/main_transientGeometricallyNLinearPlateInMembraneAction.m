@@ -56,8 +56,8 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 
-% caseName = 'curvedPlateTipShearPlaneStress';
-caseName = 'cantileverBeamPlaneStressTransientNLinear';
+caseName = 'curvedPlateTipShearPlaneStressTransient';
+% caseName = 'cantileverBeamPlaneStressTransientNLinear';
 
 % Parse the data from the GiD input file
 [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, propAnalysis, ...
@@ -69,13 +69,44 @@ caseName = 'cantileverBeamPlaneStressTransientNLinear';
 % On the computation of the body forces
 computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 
+% Equation system solver
+solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
+
+% Function handle to the computation of the initial conditions
+computeInitCnds = @computeInitCndsFEMPlateInMembraneAction;
+
+% Define the amplitude of the externally applied load and time duration
+propNBC.tractionVector = [-1e5; 0; 0];
+propNBC.endTime = 1;
+
+% Assign the function handles for the computation of the stiffness matrix 
+% and choose solver for the finite element system based on whether the 
+% analysis is linear or nonlinear
+isLinear = true;
+if ~isempty(propNLinearAnalysis)
+    if ~ischar(propNLinearAnalysis)
+        if isfield(propNLinearAnalysis, 'method')
+            if strcmp(propNLinearAnalysis.method, 'NEWTON_RAPHSON')
+                isLinear = false;
+            end
+        else
+            error('Structure propNLinearAnalysis should define member variable method')
+        end
+    end
+end
+if isLinear
+%     computeProblemMatricesSteadyState = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
+    computeProblemMatricesSteadyState = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
+    solve_FEMSystem = @solve_FEMLinearSystem;
+else
+    computeProblemMatricesSteadyState = @computeTangentStiffMtxResVctFEMPlateInMembraneAction;
+    solve_FEMSystem = @solve_FEMNLinearSystem;
+end
+
 % On the writing the output function
 propVTK.isOutput = true;
 propVTK.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
 propVTK.VTKResultFile = 'undefined';
-
-% Equation system solver
-solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % On transient inhomogeneous Dirichlet boundary conditions
 updateInhomDOFs = 'undefined';
@@ -114,12 +145,13 @@ graph.index = 1;
 % graph.index = plot_referenceConfigurationFEMPlateInMembraneAction(strMsh,analysis,F,homDBC,graph,'outputEnabled');
 
 %% Solve the plate in membrane action problem
-[~, minElSize] = solve_FEMPlateInMembraneActionNLinearTransient...
+[~, minElSize] = solve_FEMPlateInMembraneActionTransient ...
     (propAnalysis, strMsh, homDBC, inhomDBC, valuesInhomDBC, ...
     updateInhomDOFs, propNBC, @computeLoadVctFEMPlateInMembraneAction, ...
-    parameters, computeBodyForces, propNLinearAnalysis, propIDBC, ...
-    propStrDynamics, solve_LinearSystem, propGaussInt, propVTK, ...
-    caseName, 'outputEnabled');
+    parameters, computeBodyForces, computeInitCnds, ...
+    computeProblemMatricesSteadyState, propNLinearAnalysis, propIDBC, ...
+    propStrDynamics, solve_LinearSystem, solve_FEMSystem, propGaussInt, ...
+    propVTK, caseName, 'outputEnabled');
 
 %% Postprocessing
 % graph.visualization.geometry = 'reference_and_current';
