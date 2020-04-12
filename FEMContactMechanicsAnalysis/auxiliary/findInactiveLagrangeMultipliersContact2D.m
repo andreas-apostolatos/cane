@@ -179,11 +179,9 @@ for iSeg = 1:segmentsContact.numSegments
                             idLM_to_be_removed = [idLM_to_be_removed idLM];
                         end
                     end
-                    
                 end
             end
         end
-        
     end
 end
 
