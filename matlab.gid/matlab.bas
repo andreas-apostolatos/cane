@@ -259,3 +259,81 @@ FLUID_NODES
 
 *NodesNum *NodesCoord(1,real) *NodesCoord(2,real) *NodesCoord(3,real) *\
 *end loop
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Heat Boundary Value Problem                                           %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+HEAT_ANALYSIS
+ ANALYSIS_TYPE,*GenData(HT_Analysis_Type)
+
+HEAT_MATERIAL_PROPERTIES
+*Loop materials
+*if(strcmp(MatProp(0),"Steel")==0 || strcmp(MatProp(0),"Aluminium")==0)
+ DENSITY,*MatProp(Density)
+ THERMAL_CONDUCTIVITY,*MatProp(Thermal_Conductivity)
+ SPECIFIC_HEAT,*MatProp(Specific_Heat)
+*endif
+*end loop
+
+HEAT_NLINEAR_SCHEME
+ NLINEAR_SCHEME,*GenData(HT_Non-Linear_Solver_Type)
+ NO_LOAD_STEPS,*GenData(HT_Number_of_Steps)
+ TOLERANCE,*GenData(HT_Tolerance)
+ MAX_ITERATIONS,*GenData(HT_Max_Iterations)
+
+HEAT_TRANSIENT_ANALYSIS
+ SOLVER *GenData(HT_Time_Analysis_Type)
+ TIME_INTEGRATION *GenData(HT_Time_Integration_Scheme)
+ ALPHA_BETA *GenData(HT_AlphaBeta)
+ GAMMA *GenData(HT_Gamma)
+ START_TIME *GenData(HT_Start_Time)
+ END_TIME *GenData(HT_End_Time)
+ NUMBER_OF_TIME_STEPS *GenData(HT_Number_of_Time_Steps)
+ ADAPTIVE_TIME_STEPPING *GenData(HT_Adaptive_Time_Stepping)
+ 
+HEAT_INTEGRATION
+ DOMAIN *GenData(HT_Gauss_Integration_Type)
+ domainNoGP *GenData(HT_Domain_NO_GP)
+ boundaryNoGP *GenData(HT_Boundary_NO_GP)
+
+HEAT_NODES*\
+*set Cond Heat-Nodes *nodes
+*loop nodes OnlyInCond
+*format "%8i%10.5f%10.5f%10.5f"
+
+*NodesNum *NodesCoord(1,real) *NodesCoord(2,real) *NodesCoord(3,real) *\
+*end loop
+
+HEAT_ELEMENTS*\
+*set Cond Heat-Elements *elems
+*loop elems OnlyInCond
+*format "%8i%6i%6i%8i%8i%8i%8i%8i%8i%8i%8i"
+
+*ElemsNum *ElemsConec*\
+*end loop
+
+HEAT_DIRICHLET_NODES*\
+*set Cond Heat-Dirichlet *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*NodesNum *\
+*if(cond(T-Constraint,int)==1)
+*cond(T-Value)  *\
+*else
+NaN  *\
+*endif
+*end loop
+
+HEAT_FLUX_NODES*\
+*set Cond Heat-Flux *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*if(strcmp(cond(FluxType),"boundaryFlux")==0)
+*NodesNum *cond(FluxType) *cond(FunctionHandleToFluxComputation)*\
+*endif
+*end loop
