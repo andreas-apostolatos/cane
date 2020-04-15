@@ -3257,7 +3257,7 @@ FLUID_DIRICHLET_NODES
     1585 0.2  0.0  NaN  NaN  
 
 FLUID_DIRICHLET_ALE_NODES
-       1 computeNullV
+       1 computeNull0
        2 computeNullV
        3 computeNullH
        5 computeNullV
@@ -3273,7 +3273,7 @@ FLUID_DIRICHLET_ALE_NODES
       45 computeNullV
       48 computeNullH
       56 computeNullV
-      60 computeNullH
+      60 computeNull0
       61 computeNullV
       63 computeNullV
       68 computeNullV
@@ -3666,7 +3666,7 @@ FLUID_DIRICHLET_ALE_NODES
     1566 computeNullV
     1569 computeNullV
     1576 computeNullV
-    1577 computeNullH
+    1577 computeNull0
     1578 computeNullH
     1579 computeNullH
     1580 computeNullH
@@ -3674,7 +3674,7 @@ FLUID_DIRICHLET_ALE_NODES
     1582 computeNullH
     1583 computeNullH
     1584 computeNullH
-    1585 computeNullH
+    1585 computeNull0
 FLUID_POST_PROC_NODES
      496 body1 computeResultingTotalForceOnSelectedDomain
      497 body1 computeResultingTotalForceOnSelectedDomain
