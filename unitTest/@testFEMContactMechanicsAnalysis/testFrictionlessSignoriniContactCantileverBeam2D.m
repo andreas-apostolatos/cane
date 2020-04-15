@@ -37,8 +37,9 @@ function testFrictionlessSignoriniContactCantileverBeam2D(testCase)
 
 % Define tolerances for both cases
 absTol = 1e-15;
-absTol2 = 1e-15*1e2;
-absTol3 = absTol2*1e1;
+absTol1 = absTol*1e1;
+absTol6 = absTol1*1e5;
+absTol7 = absTol6*1e1;
 
 %% 1. Parse data from GiD input file
 
@@ -119,9 +120,9 @@ expNumIter = 18;
 expMinElSize = 0.073932639612014;
 
 %% 7. Verify the results
-testCase.verifyEqual(contactLength, expContactLength, 'AbsTol', absTol);
-testCase.verifyEqual(contactForce, expContactForce, 'AbsTol', absTol2);
-testCase.verifyEqual(maxContactPressure, expMaxContactPressure, 'AbsTol', absTol3);
+testCase.verifyEqual(contactLength, expContactLength, 'AbsTol', absTol1);
+testCase.verifyEqual(contactForce, expContactForce, 'AbsTol', absTol6);
+testCase.verifyEqual(maxContactPressure, expMaxContactPressure, 'AbsTol', absTol7);
 testCase.verifyEqual(numIter, expNumIter, 'AbsTol', absTol);
 testCase.verifyEqual(minElSize, expMinElSize, 'AbsTol', absTol);
 

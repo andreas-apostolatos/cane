@@ -49,6 +49,7 @@ function testIGA4TransientTaylorGreenVortices2D(testCase)
 
 % Define absolute tolerances
 absTol = 1e-15;
+absTol1 = absTol*1e1;
 
 %% 1. Define NURBS parameters
 
@@ -510,7 +511,7 @@ expMinElSize = 2.467401100272339;
 
 %% 13. Verify the results
 testCase.verifyEqual(upHistoryStokes, expUpHistoryStokes, 'AbsTol', absTol);
-testCase.verifyEqual(upHistoryNavierStokes, expUpHistoryNavierStokes, 'AbsTol', absTol);
+testCase.verifyEqual(upHistoryNavierStokes, expUpHistoryNavierStokes, 'AbsTol', absTol1);
 testCase.verifyEqual(resHistNavierStokes, expResHistNavierStokes, 'AbsTol', absTol);
 testCase.verifyEqual(minElSize, expMinElSize, 'AbsTol', absTol);
 
