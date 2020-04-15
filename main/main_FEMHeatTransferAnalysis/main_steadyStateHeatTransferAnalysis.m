@@ -4,22 +4,17 @@
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
 %
 %% Script documentation
 %
-% Task : Heat transfer analysis for different GiD input files
+% Task : Steady state heat transfer analysis for different GiD input files
 %
 % Date : 14.04.2020
 %
 %% Preamble
-
-% Clear memory
 clear;
-
-% Clear the command window
 clc;
-
-% Close all generated windows
 close all;
  
 %% Includes
@@ -39,7 +34,7 @@ addpath('../../equationSystemSolvers/');
 % Add all the efficient computation functions
 addpath('../../efficientComputation/');
 
-% Add all functions related to plate in membrane action analysis
+% Add all functions related to heat transfer analysis
 addpath('../../FEMHeatTransferAnalysis/solvers/',...
         '../../FEMHeatTransferAnalysis/solutionMatricesAndVectors/',...
         '../../FEMHeatTransferAnalysis/loads/',...
@@ -55,14 +50,13 @@ caseName = 'test';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
-    parameters, propNLinearAnalysis, propStrDynamics, propGaussInt] = ...
+    parameters, propNLinearAnalysis, ~, propGaussInt] = ...
     parse_HeatModelFromGid(pathToCase, caseName, 'outputEnabled');
 
 %% GUI
 
 % On the body forces
 computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
-% ADD A NEW FUNCTION
 
 % Choose solver for the linear equation system
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
@@ -70,29 +64,44 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % Output properties
 propVTK.isOutput = true;
-propVTK.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
+propVTK.writeOutputToFile = @writeOutputFEMHeatTransferAnalysisToVTK;
 propVTK.VTKResultFile = 'undefined';
+
+% Choose computation of the stiffness matrix
+computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMHeatTransferAnalysisCST;
+
+% Linear analysis
+propStrDynamics = 'undefined';
 
 % Initialize graphics index
 graph.index = 1;
 
 %% Output data to a VTK format
-pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
+pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
+
+%% Compute the load vector
+t = 0;
+F = computeLoadVctFEMHeatTransferAnalysis ...
+    (strMsh, propAnalysis, propNBC, t, propGaussInt, 'outputEnabled');
+
+%% Visualization of the configuration
+% graph.index = plot_referenceConfigurationFEMPlateInMembraneAction ...
+%     (strMsh, propAnalysis, F, homDOFs, [], graph, 'outputEnabled');
 
 %% Visualization of the configuration
 % graph.index = plot_referenceConfigurationFEMPlateInMembraneAction(strMsh,analysis,F,homDBC,graph,'outputEnabled');
 
 %% Initialize solution
 numNodes = length(strMsh.nodes(:,1));
-numDOFs = 2*numNodes;
+numDOFs = numNodes;
 dHat = zeros(numDOFs,1);
 
 %% Solve the plate in membrane action problem
-[dHat, FComplete, minElSize] = ...
-    solve_FEMPlateInMembraneActionNLinear...
-    (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
-    computeBodyForces, parameters, solve_LinearSystem, propNLinearAnalysis, ...
-    propGaussInt, propVTK, caseName, pathToOutput, 'outputEnabled');
+[dHat, FComplete, minElSize] = solve_FEMHeatTransferSteadyState ...
+    (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    propNBC, computeBodyForces, parameters, computeStiffMtxLoadVct, ...
+    solve_LinearSystem, propNLinearAnalysis, propGaussInt, propVTK, ...
+    caseName, pathToOutput, 'outputEnabled');
 
 %% Postprocessing
 % graph.visualization.geometry = 'reference_and_current';

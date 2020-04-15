@@ -270,14 +270,18 @@ out = cell(size(block));
 for k = 1:numel(block)
     out{k} = textscan(block{k},'%f %s %s','delimiter',' ','MultipleDelimsAsOne', 1);
 end
-out = out{1};
-propNBC.nodes = cell2mat(out(:,1));
-outLoadType = out(:,2);
-propNBC.loadType = cell2mat(outLoadType{1});
-outFctHandle = out(:,3);
-propNBC.fctHandle = cell2mat(outFctHandle{1});
+
+if ~isempty(out)
+    out = out{1};
+    propNBC.nodes = cell2mat(out(:,1));
+    outLoadType = out(:,2);
+    propNBC.loadType = cell2mat(outLoadType{1});
+    outFctHandle = out(:,3);
+    propNBC.fctHandle = cell2mat(outFctHandle{1});
+end
 
 %% 11. Get edge connectivity arrays for the Neumann edges
+
 if strcmp(outMsg,'outputEnabled')
     fprintf('>> Neumann boundary edges: %d \n',length(propNBC.nodes) - 1);
 end
@@ -296,30 +300,30 @@ for i = 1:length(propNBC.nodes)
             % Get the node index in the element array
             nodeI = propNBC.nodes(i);
             nodeJ = propNBC.nodes(j);
-            
-            
+
+
             % Find the element indices to which the nodes belong
             [indexI,~] = find(nodeI == strMsh.elements);
             [indexJ,~] = find(nodeJ == strMsh.elements);
-            
+
             % For all the element indices to which indexJ belongs to
             for k = 1:length(indexJ)
                 % Find the common elements to which both nodes belong to
                 commonElmnts = find(indexJ(k) == indexI);
-                
+
                 % If there are common elements to which the nodes belong
                 if norm(commonElmnts) ~= 0 && strcmp(propNBC.fctHandle(i,:),propNBC.fctHandle(j,:))
                     % Get the common element index
                     elementIndex = indexI(commonElmnts);
-                    
+
                     % Store the line into the NBC.line array with the same
                     % ordering as the are stored in the element array
                     propNBC.lines(counterLines,:) = ...
                         [propNBC.nodes(i) propNBC.nodes(j) elementIndex];
-                    
+
                     % Get the appropriate function handle for the line
                     fctHandle(counterLines,:) = propNBC.fctHandle(i,:);
-                    
+
                     % Update counter
                     counterLines = counterLines + 1;
                 end
@@ -327,8 +331,7 @@ for i = 1:length(propNBC.nodes)
         end
     end
 end
-propNBC.fctHandle = fctHandle;
-
+%propNBC.fctHandle = fctHandle;
 %% 12. Appendix
 if strcmp(outMsg,'outputEnabled')
     % Save computational time
