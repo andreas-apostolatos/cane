@@ -68,7 +68,7 @@ caseName = 'unitTest_flowAroundCylinderAdaptiveSteadyState';
 %% UI
 
 % On the body forces
-computeBodyForces = @computeConstantVerticalBodyForceVct;
+computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
 
 % On the initial conditions
 % computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE2D;

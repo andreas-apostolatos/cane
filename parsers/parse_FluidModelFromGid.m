@@ -110,8 +110,6 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('Parsing data from GiD input file for a fluid boundary value\n');
     fprintf('problem has been initiated\n');
     fprintf('___________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -433,9 +431,7 @@ end
 
 %% 14. Appendix
 if strcmp(outMsg, 'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
     fprintf('\nParsing took %.2d seconds \n\n', computationalTime);
     fprintf('_______________________Parsing Ended_______________________\n');
     fprintf('###########################################################\n\n\n');
