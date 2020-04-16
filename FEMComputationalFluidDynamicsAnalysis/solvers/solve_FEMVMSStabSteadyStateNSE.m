@@ -137,6 +137,7 @@ massMtx = 'undefined';
 dampMtx = 'undefined';
 precompStiffMtx = 'undefined';
 precomResVct = 'undefined';
+nodesSaved = 'undefined';
 t = 'undefined';
 
 % Define tabulation for the output to the command window
@@ -172,8 +173,8 @@ freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 if ~ischar(propALE) && ~isempty(propALE)
     [fldMsh, uMeshALE, inhomDOFs, valuesInhomDOFs] = ...
         computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
-        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ...
-        solve_LinearSystem, propFldDynamics, t);
+        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesSaved, ...
+        propALE, solve_LinearSystem, propFldDynamics, t);
 else
     uMeshALE = 'undefined';
 end
@@ -194,7 +195,9 @@ if isfield(propOutput, 'isOutput')
         if propOutput.isOutput
             if isfield(propOutput, 'writeOutputToFile')
                 if isa(propOutput.writeOutputToFile, 'function_handle')
-                    fprintf('>> Writting out the results to "%s"\n\n',strcat(pathToOutput, caseName, '/'));
+                    if strcmp(outMsg,'outputEnabled')
+                        fprintf('>> Writting out the results to "%s"\n\n',strcat(pathToOutput, caseName, '/'));
+                    end
                     DOF4Output = [1:3:numDOFs - 2
                                   2:3:numDOFs - 1
                                   3:3:numDOFs];

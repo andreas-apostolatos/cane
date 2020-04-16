@@ -1,0 +1,18 @@
+
+    Authors : Andreas Apostolatos
+              Matthew Keller
+              
+       Date : 16.04.2020
+
+    Content : This is a GiD case for the unit test of the steepest-descent unconstrained 
+              drag optimization of a 2D cylinder in flow. The only design variable is the 
+              radius of the cylinder and after a few iterations it is expected that the 
+              cylinder vanishes, i.e. the radius converges to zero.
+              
+                Number of nodes : 456
+                
+             Number of elements : 824
+             
+                Mesh Properties : The domain is divided in parts for local refinement
+                                  purposes. Boundary layer is enabled up to 1/2 the 
+                                  overall distance past the cyclinder.

@@ -46,34 +46,31 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/
         '../../FEMComputationalFluidDynamicsAnalysis/boundaryConditions/',...
         '../../FEMComputationalFluidDynamicsAnalysis/solvers/',...
         '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/output/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/');
+        '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
 
 % Add all functions related to parsing
 addpath('../../parsers/');
 
 % Add all functions related to the efficient computation functions
 addpath('../../efficientComputation/');
-addpath('../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
 
-% Define the path to the case
+%% Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = 'unitTest_Cylinder2D_SensitivityCheck';
 
 %% Parse the data from the GiD input file
-[fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,~,analysis,parameters,...
-    propNLinearAnalysis,propFldDynamics,gaussInt,postProc] = ...
-    parse_FluidModelFromGid...
-    (pathToCase,caseName,'');
+[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ~, propAnalysis, ...
+    propParameters, propNLinearAnalysis, propFldDynamics, gaussInt, ...
+    postProc] = parse_FluidModelFromGid(pathToCase, caseName, '');
+
+% Manually set up the nonlinear analysis properties
 propNLinearAnalysis.maxIter = 10;
 propNLinearAnalysis.eps = 1e-5;
 
 %% GUI
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
-
-% On the initial conditions
-computeInitialConditions = @computeNullInitialConditionsFEM4NSE2D;
 
 % On the transient analysis properties
 if strcmp(propFldDynamics.method,'bossak')
@@ -83,26 +80,31 @@ if strcmp(propFldDynamics.method,'bossak')
         @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
 end
 
+% Dummy parameters
+nodesSaved = 'undefined';
+
 %% Choose the equation system solver
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
+if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+elseif strcmp(propAnalysis.type,'NAVIER_STOKES_3D')
     solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
 end
 
 %% Define the name of the vtk file from where to resume the simulation
-VTKResultFile = 'undefined';
 propVTK_true.isOutput = true;
+propVTK_true.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
 propVTK_false.isOutput = false;
+propVTK_false.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
 
 %% Input parameters
 % max input velocity defined in the reference paper
 Umax = .1;
 
 %% Change input velocity to have the parabolic distribution for each randomized input
-valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
+% valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
+valuesInhomDBCModified = valuesInhomDOFs;
 
 %% Variable initialization
 i = 1; % Counter initialization for iteration search
@@ -127,11 +129,6 @@ p1 = p1_0;
 propALE.propUser.x_Mid = x_Min + p1_0;
 propALE.propUser.y_Mid = y_Min + p1_0;
 
-% Initialization of the solution
-noNodes = length(fldMsh.nodes(:,1));
-noDOFs = 3*noNodes;
-up = zeros(noDOFs,1);
-
 % Parameters (I/O)
 PlotFlag = 'False';
 
@@ -144,20 +141,25 @@ fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
 %Start time count
 tic
 
+%% Initialize the solution
+up = computeNullInitialConditionsFEM4NSE ...
+    (propAnalysis, fldMsh, 'undefined', 'undefined', 'undefined', ... 
+    'undefined', 'undefined', 'undefined');
+
 %% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
 while (abs(djd1) > 1e-4 && i <= iterationLimit)
     %% Update internal variables with updated values from previous iteration
     propALE.propUser.p1 = p1;
      
     %% Solve the CFD problem in nominal state   
-    [up,FComplete,~,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh,up,homDOFs,inhomDOFs,valuesInhomDBCModified,'undefined',parameters,...
-        computeBodyForces,analysis,computeInitialConditions,...
-        VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-        i,propVTK_true,gaussInt,caseName,'');
+    [up, FComplete, ~, ~] = solve_FEMVMSStabSteadyStateNSE ...
+        (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDBCModified, 'undefined', ...
+        propParameters, computeBodyForces, propAnalysis, solve_LinearSystem, ...
+        propFldDynamics, propNLinearAnalysis, i, gaussInt, propVTK_true, ...
+        caseName, 'outputEnabled');
     
     % Calculate drag and lift force from the nodal forces
-    postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
+    postProc_update = computePostProc(FComplete, propAnalysis, propParameters, postProc);
 
     % Retrieve Fx and Fy from post processing
     forcesOnDomain = postProc_update.valuePostProc{1};
@@ -169,7 +171,7 @@ while (abs(djd1) > 1e-4 && i <= iterationLimit)
     drag = Fx;
 
     % Write nominal output vector
-    output_Nom(i,:) = [i, p1, lift, drag];  
+    output_Nom(i,:) = [i, p1, lift, drag];
     referenceDrag_Nom = drag; % Define reference drag of nominal state for accuracy calculations
  
     %% Solve the CFD problem with perturbed p1   
@@ -177,19 +179,21 @@ while (abs(djd1) > 1e-4 && i <= iterationLimit)
     propALE.propUser.Perturb_Flag = 'perturb';
    
     % Update the mesh for perturbed state 1
-    [fldMsh_p1,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
-        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
-        solve_LinearSystem,propFldDynamics, i);
+    [fldMsh_p1, ~, ~, ~] = ...
+        computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
+        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesSaved, ...
+        propALE, solve_LinearSystem, propFldDynamics, i);
     
     fldMsh_p1.initialNodes = fldMsh_p1.nodes;
     
-    [~,FComplete,~,~] = solve_FEMVMSStabSteadyStateNSE2D...
-        (fldMsh_p1,up,homDOFs,inhomDOFs,valuesInhomDBCModified,propALE,parameters,...
-        computeBodyForces,analysis,computeInitialConditions,...
-        VTKResultFile,solve_LinearSystem,propFldDynamics,propNLinearAnalysis,...
-        i,propVTK_false,gaussInt,caseName,'');
+    [~, FComplete,~,~] = solve_FEMVMSStabSteadyStateNSE ...
+        (fldMsh_p1, up, homDOFs, inhomDOFs, valuesInhomDBCModified, ...
+        propALE, propParameters, computeBodyForces, propAnalysis, ...
+        solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
+        i, gaussInt, propVTK_false, caseName, '');
 
-    postProc_update = computePostProc(FComplete, analysis, parameters, postProc);
+    postProc_update = computePostProc ...
+        (FComplete, propAnalysis, propParameters, postProc);
 
     forcesOnDomain = postProc_update.valuePostProc{1};
     Fx = forcesOnDomain(1,1);
@@ -199,7 +203,7 @@ while (abs(djd1) > 1e-4 && i <= iterationLimit)
     drag = Fx;
 
     % Write output vector
-    output_p1(i,:) = [i, p1, lift, drag];  
+    output_p1(i,:) = [i p1 lift drag];  
 
     % Compute sensitivities via finite differencing
     drag_dp1 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p1;
@@ -213,9 +217,9 @@ while (abs(djd1) > 1e-4 && i <= iterationLimit)
     propALE.propUser.Perturb_Flag = 'set_final';
 
     %% Update the mesh for the adjusted nominal state  
-    [fldMsh,~,~,~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D...
-        (fldMsh,homDOFs,inhomDOFs,valuesInhomDOFs,propALE,...
-        solve_LinearSystem,propFldDynamics, i);
+    [fldMsh, ~, ~, ~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
+        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesSaved, ...
+        propALE, solve_LinearSystem, propFldDynamics, i);
     
     fldMsh.initialNodes = fldMsh.nodes;
 
