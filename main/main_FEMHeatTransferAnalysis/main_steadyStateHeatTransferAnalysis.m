@@ -46,7 +46,9 @@ addpath('../../FEMHeatTransferAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMHeatTransferAnalysis/';
-caseName = 'test';
+%caseName = 'steadyStateBenchmark_1w1h';
+%caseName = 'steadyStateBenchmark_2w1h';
+caseName = 'plateWithTwoHoles';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
@@ -76,6 +78,9 @@ propStrDynamics = 'undefined';
 % Initialize graphics index
 graph.index = 1;
 
+% Assign load
+%computeConstantFlux
+
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
 
@@ -101,6 +106,10 @@ dHat = zeros(numDOFs,1);
     caseName, pathToOutput, 'outputEnabled');
 
 %% Postprocessing
-graph.index = plot_temperatureDistribution(strMsh,dHat,parameters,graph,'outputEnabled');
+
+% Show analytical solution if we have a benchmark case
+if strcmp(caseName, 'steadyStateBenchmark_1w1h') || strcmp(caseName, 'steadyStateBenchmark_2w1h')
+    graph.index = plot_steadyStateBenchmarkProblemAnalyticalSolution(strMsh,valuesInhomDOFs,graph,'outputEnabled');
+end
 
 %% END OF THE SCRIPT
