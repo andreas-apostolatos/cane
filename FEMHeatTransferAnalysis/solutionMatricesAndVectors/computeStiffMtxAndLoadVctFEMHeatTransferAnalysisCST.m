@@ -101,10 +101,11 @@ numDOFs = numNodes;
 numNodesEl = 3;
 
 % Number of DOFs per node
-numDOFsPerNode = 1;
+% numDOFsPerNode = 1;
 
 % Number of degrees of freedom per element
-numDOFsEl = numDOFsPerNode*numNodesEl;
+% numDOFsEl = numDOFsPerNode*numNodesEl;
+numDOFsEl = numNodesEl;
 
 % Total number of elements in the mesh
 numElmnts = length(strMsh.elements(:, 1));
@@ -114,13 +115,18 @@ stiffMtxEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
 FBodyEl = zeros(numElmnts, numDOFsEl, 1);
 
 %% 1. Create the element freedom tables for all elements at once
+% EFT = zeros(numDOFsEl, numElmnts);
+% for iEFT = 1:numNodesEl
+%     for counterDOFsPerNode = 1:numDOFsPerNode - 1
+%         EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT)';
+%         EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - counterDOFsPerNode), :) = ...
+%             EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - counterDOFsPerNode);
+%     end
+% end
+
 EFT = zeros(numDOFsEl, numElmnts);
 for iEFT = 1:numNodesEl
-    for counterDOFsPerNode = 1:numDOFsPerNode - 1
-        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT)';
-        EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - counterDOFsPerNode), :) = ...
-            EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - counterDOFsPerNode);
-    end
+        EFT(iEFT, :) = strMsh.elements(:, iEFT)';
 end
 
 %% 2. Get the coordinates of the nodes in a matrix form
@@ -151,6 +157,7 @@ end
 
 %% 5. Compute the material matrices for each element
 % C = zeros(numElmnts, 3, 3);
+% C = zeros(numElmnts, 2, 2);
 % if strcmp(propAnalysis.type, 'planeStress')
 %     preFactor = propParameters.E/(1-propParameters.nue^2);
 %     CEl = preFactor*[1              propParameters.nue 0
@@ -162,6 +169,8 @@ end
 %                      propParameters.nue/(1 - propParameters.nue) 1                                   0
 %                      0                                   0                                   (1 - 2*propParameters.nue)/2/(1 - propParameters.nue)];
 % end
+% CEl = propParameters.k*[1 0
+%                         0 1];
 % for iElmnts = 1:numElmnts
 %     C(iElmnts, :, :) = CEl;
 % end
@@ -179,31 +188,45 @@ for iGP = 1:numGP
     detJxxi = 2*area;
         
 	%% 6iv. Form the basis functions matrix at the Gauss Point page-wise
-    N = zeros(numElmnts, 2, numDOFsEl);
+%     N = zeros(numElmnts, 2, numDOFsEl);
+%     for i = 1:numNodesEl
+%         N(:, 1, numDOFsPerNode*i - numDOFsPerNode + 1) = dN(:, i, 1);
+%         N(:, 2, numDOFsPerNode*i - numDOFsPerNode + 2) = dN(:, i, 1);
+%     end
+    N = zeros(numElmnts, 1, numDOFsEl);
     for i = 1:numNodesEl
-        N(:, 1, numDOFsPerNode*i - numDOFsPerNode + 1) = dN(:, i, 1);
-        N(:, 2, numDOFsPerNode*i - numDOFsPerNode + 2) = dN(:, i, 1);
+        N(:, 1, i) = dN(:, i, 1);
     end
     
     %% 6v. Form the B-Operator matrix for the plate in membrane action problem page-wise
-    B = zeros(numElmnts, 3, numDOFsEl);
+%     B = zeros(numElmnts, 3, numDOFsEl);
+%     for i = 1:numNodesEl
+%         B(:, 1, 2*i - 1) = dN(:, i, 2);
+%         B(:, 2, 2*i) = dN(:, i, 3);
+%         B(:, 3, 2*i - 1) = dN(:, i, 3);
+%         B(:, 3, 2*i) = dN(:, i, 2);
+%     end
+    B = zeros(numElmnts, 2, numDOFsEl);
     for i = 1:numNodesEl
-        B(:, 1, 2*i - 1) = dN(:, i, 2);
-        B(:, 2, 2*i) = dN(:, i, 3);
-        B(:, 3, 2*i - 1) = dN(:, i, 3);
-        B(:, 3, 2*i) = dN(:, i, 2);
+        B(:, 1, i) = dN(:, i, 2);
+        B(:, 2, i) = dN(:, i, 3);
+%         B(:, 3, 2*i - 1) = dN(:, i, 3);
+%         B(:, 3, 2*i) = dN(:, i, 2);
     end
+
     
     %% 6vi. Compute the element load vector due to body forces and add the contribution
     bF = computeBodyForces(xGP(:, 1), xGP(:, 2), xGP(:, 3));
-    FBodyEl = FBodyEl + pstimes(pmtimes(ptranspose(N), ptranspose(bF(:, :, 1:2)))*GW(iGP), detJxxi);
+%     FBodyEl = FBodyEl + pstimes(pmtimes(ptranspose(N), ptranspose(bF(:, :, 1:2)))*GW(iGP), detJxxi);
+    FBodyEl = FBodyEl + pstimes(pmtimes(ptranspose(N), ptranspose(bF(:, :, 1)))*GW(iGP), detJxxi);
     
     %% 6vii. Compute the stiffness matrix at the Gauss point and add the contribution
-    stiffMtxEl = stiffMtxEl + pstimes(pmtimes(pmtimes(ptranspose(B), C), B)*GW(iGP), detJxxi);
+%     stiffMtxEl = stiffMtxEl + pstimes(pmtimes(pmtimes(ptranspose(B), C), B)*GW(iGP), detJxxi);
+    stiffMtxEl = stiffMtxEl + propParameters.k * pstimes(pmtimes(ptranspose(B), B)*GW(iGP), detJxxi);
 end
 
 %% 7. Assemble to the global system matrices
-% [K,FBody] = assembleSparseMatricies(EFT,noDOFs,noDOFsEl,KEl,FBodyEl);
+% [K,FBody] = assembleSparseMatricies(EFT,numDOFs,numDOFsEl,KEl,FBodyEl);
 [K] = assembleSparseMatricies(EFT, numDOFs, numDOFsEl, stiffMtxEl);
 
 %% 8. Update the force vector with the body force contributions

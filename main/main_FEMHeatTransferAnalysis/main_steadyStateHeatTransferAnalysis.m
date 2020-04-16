@@ -79,7 +79,7 @@ graph.index = 1;
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
 
-%% Compute the load vector
+%% Compute the flux(load) vector
 t = 0;
 F = computeLoadVctFEMHeatTransferAnalysis ...
     (strMsh, propAnalysis, propNBC, t, propGaussInt, 'outputEnabled');
@@ -87,9 +87,6 @@ F = computeLoadVctFEMHeatTransferAnalysis ...
 %% Visualization of the configuration
 % graph.index = plot_referenceConfigurationFEMPlateInMembraneAction ...
 %     (strMsh, propAnalysis, F, homDOFs, [], graph, 'outputEnabled');
-
-%% Visualization of the configuration
-% graph.index = plot_referenceConfigurationFEMPlateInMembraneAction(strMsh,analysis,F,homDBC,graph,'outputEnabled');
 
 %% Initialize solution
 numNodes = length(strMsh.nodes(:,1));
@@ -104,9 +101,6 @@ dHat = zeros(numDOFs,1);
     caseName, pathToOutput, 'outputEnabled');
 
 %% Postprocessing
-% graph.visualization.geometry = 'reference_and_current';
-% resultant = 'stress';
-% component = 'y';
-% graph.index = plot_currentConfigurationAndResultants(strMsh,homDBC,dHat,parameters,analysis,resultant,component,graph);
+graph.index = plot_temperatureDistribution(strMsh,dHat,parameters,graph,'outputEnabled');
 
 %% END OF THE SCRIPT
