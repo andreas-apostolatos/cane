@@ -1,5 +1,6 @@
-function [x,hasConverged] = solve_LinearSystemGMResWithIncompleteLUPreconditioning...
-    (A,b,x)
+function [x, isConverged] = ...
+    solve_LinearSystemGMResWithIncompleteLUPreconditioning...
+    (A, b, x)
 %% Licensing
 %
 % License:         BSD License
@@ -12,13 +13,14 @@ function [x,hasConverged] = solve_LinearSystemGMResWithIncompleteLUPreconditioni
 % Returns the solution to a system of linear equations Ax=b using the GMRES 
 % (Generalized Minimal Residual) solver with an incomplete LU factorization
 %
-%	Input :
-%       A : The left hand side matrix
-%       b : The right hand side vector
-%       x : The initial guess of the GMRes iterations
+%       Input :
+%           A : The left hand side matrix
+%           b : The right hand side vector
+%           x : The initial guess of the GMRes iterations
 %
 %  Output :
-%       x : The solution vector
+%           x : The solution vector
+% isConverged : Flag on whether the linear solver has converged
 %
 %   Function layout :
 %
@@ -47,15 +49,15 @@ maxIt = 1e2;
 counterIter = 1;
 
 % Initialize convergence flag
-hasConverged = true;
+isConverged = true;
 
 %% 1. Perform the LU factorization
-[L,U] = ilu(sparse(A));
+[L, U] = ilu(sparse(A));
 
 %% 2. Loop over the GMRes iterations
 while counterIter < maxIt
     %% 2i. Solve the GMRes step
-    [x,~,relResidual] = gmres(A,b,[],tolerance,[],L,U,x);
+    [x, ~, relResidual] = gmres(A, b, [], tolerance, [], L, U, x);
     counterIter = counterIter + 1;
     
     %% 2ii. Check convergence criterion
@@ -65,9 +67,9 @@ while counterIter < maxIt
 end
 
 %% 3. Check if the GMRes solver conveged
-if counterIter == maxIt;
+if counterIter == maxIt
     warning( 'GMRes solver did not converge in the given number of iterations!' );
-    hasConverged = false;
+    isConverged = false;
 end
 
 end

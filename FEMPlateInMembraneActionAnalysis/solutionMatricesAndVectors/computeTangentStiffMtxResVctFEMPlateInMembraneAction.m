@@ -1,6 +1,9 @@
-function [tanMtx,resVct,minElASize] = computeTangentStiffMtxResVctFEMPlateInMembraneAction...
-    (analysis,u,uSaved,uDot,uDotSaved,uMeshALE,DOFNumbering,mesh,F,loadFactor,propStrDynamics,...
-    t,parameters,computeBodyForceVct,gaussInt)
+function [tanMtx, resVct, minElASize] = ...
+    computeTangentStiffMtxResVctFEMPlateInMembraneAction...
+    (propAnalysis, u, uSaved, uDot, uDotSaved, uMeshALE, ...
+    precompStiffMtx, precomResVct, DOFNumbering, strMsh, F, ...
+    loadFactor, computeBodyForceVct, propStrDynamics, t, ...
+    propParameters, gaussInt)
 %% Licensing
 %
 % License:         BSD License
@@ -16,7 +19,8 @@ function [tanMtx,resVct,minElASize] = computeTangentStiffMtxResVctFEMPlateInMemb
 % discretization.
 %
 %               Input :
-%            analysis : Information on the analysis type
+%        propAnalysis : Structure containing general information on the
+%                       analysis,
 %                           .type : Analysis type
 %                   u : The discrete solution field of the current time  
 %                       step
@@ -27,10 +31,15 @@ function [tanMtx,resVct,minElASize] = computeTangentStiffMtxResVctFEMPlateInMemb
 %           uDotSaved : The time derivative of the discrete solution field 
 %                       of the previous time step
 %            uMeshALE : Dummy array for this function
+%     precompStiffMtx : constant part of the stiffness matrix which can be
+%                       precomputed
+%        precomResVct : Constant part of the residual vector which can be
+%                       precomputed
 %        DOFNumbering : The global numbering of the DOFs
-%                mesh : The nodes and the elements of the underlying mesh
+%              strMsh : The nodes and the elements of the underlying mesh
 %                   F : Global load vector corresponding to surface tractions
 %          loadFactor : The load factor for the nonlinear steps
+% computeBodyForceVct : Function handle to body force vector computation
 %     propStrDynamics : Transient analysis parameters:
 %                         .method : Time integration method
 %                             .T0 : Start time of the simulation
@@ -38,9 +47,9 @@ function [tanMtx,resVct,minElASize] = computeTangentStiffMtxResVctFEMPlateInMemb
 %                             .nT : Number of time steps
 %                             .dt : Time step (numeric or adaptive)
 %                   t : The current time of the transient simulation
-%          parameters : The parameters the physical field
-% computeBodyForceVct : Function handle to body force vector computation
-%            gaussInt : On the spatial integration
+%      propParameters : The parameters the physical field
+%            gaussInt : Structure containing information on the numerical 
+%                       integration
 %                           .type : 'default', 'user'
 %                     .domainNoGP : Number of Gauss Points for the domain 
 %                                   integration
@@ -91,7 +100,7 @@ function [tanMtx,resVct,minElASize] = computeTangentStiffMtxResVctFEMPlateInMemb
 %% 0. Read input
 
 % Number of nodes in the mesh
-nNodes = length(mesh.nodes(:,1));
+nNodes = length(strMsh.nodes(:,1));
 
 % Number of DOFs in the mesh
 noDOFs = 2*nNodes;
@@ -104,26 +113,26 @@ noDOFsEl = 2*noNodesEl;
 
 
 % Initialize the minimum element size
-firstElementInMesh = mesh.elements(1,:);
-Node1 = mesh.nodes(firstElementInMesh(1,1),:);
-Node2 = mesh.nodes(firstElementInMesh(1,2),:);
-Node3 = mesh.nodes(firstElementInMesh(1,3),:);
+firstElementInMesh = strMsh.elements(1,:);
+Node1 = strMsh.nodes(firstElementInMesh(1,1),:);
+Node2 = strMsh.nodes(firstElementInMesh(1,2),:);
+Node3 = strMsh.nodes(firstElementInMesh(1,3),:);
 minElASize = 0.5*abs((Node3(1,1)-Node2(1,1))*(Node1(1,2)-Node2(1,2))-...
     (Node1(1,1)-Node2(1,1))*(Node3(1,2)-Node2(1,2)));
 
 % Compute the material matrix for the given problem
 
 % Compute the material matrix for the given problem
-if strcmp(analysis.type,'planeStress')
-    preFactor = parameters.E/(1-parameters.nue^2);
-    C = preFactor*[1             parameters.nue 0
-                   parameters.nue 1              0
-                   0              0             (1-parameters.nue)/2];
-elseif strcmp(analysis.type,'planeStrain')
-    preFactor = parameters.E*(1-parameters.nue)/(1+parameters.nue)/(1-2*parameters.nue);
-    C = preFactor*[1                                 parameters.nue/(1-parameters.nue) 0
-                   parameters.nue/(1-parameters.nue) 1                                 0
-                   0                                 0                                 (1-2*parameters.nue)/2/(1-parameters.nue)];
+if strcmp(propAnalysis.type,'planeStress')
+    preFactor = propParameters.E/(1-propParameters.nue^2);
+    C = preFactor*[1             propParameters.nue 0
+                   propParameters.nue 1              0
+                   0              0             (1-propParameters.nue)/2];
+elseif strcmp(propAnalysis.type,'planeStrain')
+    preFactor = propParameters.E*(1-propParameters.nue)/(1+propParameters.nue)/(1-2*propParameters.nue);
+    C = preFactor*[1                                 propParameters.nue/(1-propParameters.nue) 0
+                   propParameters.nue/(1-propParameters.nue) 1                                 0
+                   0                                 0                                 (1-2*propParameters.nue)/2/(1-propParameters.nue)];
 else
     error('Select a valid analysis type in analysis.type');
 end
@@ -149,14 +158,14 @@ end
 [GP,GW] = getGaussRuleOnCanonicalTriangle(noGP);
 
 %% 2. Loop over all the elements in the mesh
-for iEl = 1:length(mesh.elements(:,1))
+for iEl = 1:length(strMsh.elements(:,1))
     %% 2i. Get the element in the mesh
-    element = mesh.elements(iEl,:);
+    element = strMsh.elements(iEl,:);
     
     %% 2ii. Get the nodes in the element
-    Node1 = mesh.nodes(element(1,1),:);
-    Node2 = mesh.nodes(element(1,2),:);
-    Node3 = mesh.nodes(element(1,3),:);
+    Node1 = strMsh.nodes(element(1,1),:);
+    Node2 = strMsh.nodes(element(1,2),:);
+    Node3 = strMsh.nodes(element(1,3),:);
     
     %% 2iii. Create an Element Freedom Table (EFT)
     EFT = zeros(noDOFsEl,1);
@@ -194,7 +203,7 @@ for iEl = 1:length(mesh.elements(:,1))
         %% 2v.5. Compute the material, the geometric, the mass matrix, the internal residual and external body force vector at the Gauss point
         [KMaterialEl,KGeometricEl,resIntEl,FBodyEl] = ...
             computeElTangentStiffMtxResVctFEMPlateInMembraneAction...
-            (uEl,dN,bF,parameters,C,DetJxxi,GW(iGP,1));
+            (uEl,dN,bF,propParameters,C,DetJxxi,GW(iGP,1));
 
         %% 2v.6. Assemble the local matrices and vectors to the global ones via the EFT
         

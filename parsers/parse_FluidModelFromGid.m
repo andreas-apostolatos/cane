@@ -1,6 +1,7 @@
-function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,NBC,analysis,...
-    parameters,propNLinearAnalysis,propFldDynamics,propGaussInt,postProc] = ...
-    parse_FluidModelFromGid(pathToCase,caseName,outMsg)
+function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
+    propAnalysis, parameters, propNLinearAnalysis, propFldDynamics, ...
+    propGaussInt, postProc] = ...
+    parse_FluidModelFromGid(pathToCase, caseName, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -22,12 +23,12 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,NBC,analysis,...
 %              Output :
 %              fldMsh :     .nodes : The nodes in the FE mesh
 %                        .elements : The elements in the FE mesh
-%              homDBC : The global numbering of the nodes where homogeneous
+%             homDOFs : The global numbering of the nodes where homogeneous
 %                       Dirichlet boundary conditions are applied
-%            inhomDBC : The global numbering of the nodes where 
+%           inhomDOFs : The global numbering of the nodes where 
 %                       inhomogeneous Dirichlet boundary conditions are 
 %                       applied
-%      valuesInhomDBC : The prescribed values for the inhomogeneous 
+%     valuesInhomDOFs : The prescribed values for the inhomogeneous 
 %                       Dirichlet boundary conditions
 %             propALE : The nodes on the ALE boundary
 %                           .nodes : The coordinates of the nodes
@@ -42,9 +43,11 @@ function [fldMsh,homDBC,inhomDBC,valuesInhomDBC,propALE,NBC,analysis,...
 %                                    node for the computation of the load 
 %                                    vector (these functions are unde the 
 %                                    folder load)
-%            analysis : .type      : The analysis type
-%             .noSpatialDimensions : Number of spatial dimensions
-%                       .noFields  : Number of DOFs per node
+%        propAnalysis : Structure containing general information on the
+%                       analysis,
+%                                 .type      : The analysis type
+%                       .noSpatialDimensions : Number of spatial dimensions
+%                                 .noFields  : Number of DOFs per node
 %          parameters : Problem specific technical parameters
 % propNLinearAnalysis :     .method : The employed nonlinear method
 %                      .noLoadSteps : Number of load steps (typically used 
@@ -107,71 +110,69 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('Parsing data from GiD input file for a fluid boundary value\n');
     fprintf('problem has been initiated\n');
     fprintf('___________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
 %% 0. Read input
 
 % Initialize output arrays
-homDBC = [];
-inhomDBC = [];
-valuesInhomDBC = [];
+homDOFs = [];
+inhomDOFs = [];
+valuesInhomDOFs = [];
 
 %% 1. Load the input file from GiD
 fstring = fileread([pathToCase caseName '.dat']); 
 
 %% 2. Load the analysis type
-block = regexp(fstring,'FLUID_ANALYSIS','split');
+block = regexp(fstring, 'FLUID_ANALYSIS','split');
 block(1) = [];
-out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
-analysis.type = out{1}{2};
+out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
+propAnalysis.type = out{1}{2};
 
 % save the number of dimensions of the problem
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
-        analysis.noSpatialDimensions = 2;
-        analysis.noFields = 3;
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
-        analysis.noSpatialDimensions = 3;
-        analysis.noFields = 4;
+if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
+        propAnalysis.noSpatialDimensions = 2;
+        propAnalysis.noFields = 3;
+elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
+        propAnalysis.noSpatialDimensions = 3;
+        propAnalysis.noFields = 4;
 else
         error('Wrong analysis type selected');
 end
 
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Analysis type: %s \n',analysis.type);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Analysis type: %s \n', propAnalysis.type);
 end
 
 %% 3. Load the material properties
-block = regexp(fstring,'FLUID_MATERIAL_PROPERTIES','split');
+block = regexp(fstring, 'FLUID_MATERIAL_PROPERTIES', 'split');
 block(1) = [];
-out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
+out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
 parameters.rho = str2double(out{1}{2});
 parameters.nue = str2double(out{1}{4});
 
 %% 4. Load the nonlinear method
-block = regexp(fstring,'FLUID_NLINEAR_SCHEME','split');
+block = regexp(fstring, 'FLUID_NLINEAR_SCHEME', 'split');
 block(1) = [];
-out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
+out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
 propNLinearAnalysis.method = out{1}{2};
 propNLinearAnalysis.noLoadSteps = str2double(out{1}{4});
 propNLinearAnalysis.eps = str2double(out{1}{6});
 propNLinearAnalysis.maxIter = str2double(out{1}{8});
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Nonlinear method: %s \n',propNLinearAnalysis.method);
-    fprintf('\t>> No. load steps = %d \n',propNLinearAnalysis.noLoadSteps);
-    fprintf('\t>> Convergence tolerance = %d \n',propNLinearAnalysis.eps);
-    fprintf('\t>> Maximum number of iterations = %d \n',propNLinearAnalysis.maxIter);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Nonlinear method: %s \n', propNLinearAnalysis.method);
+    fprintf('\t>> No. load steps = %d \n', propNLinearAnalysis.noLoadSteps);
+    fprintf('\t>> Convergence tolerance = %d \n', propNLinearAnalysis.eps);
+    fprintf('\t>> Maximum number of iterations = %d \n', propNLinearAnalysis.maxIter);
 end
 
 %% 5. Load the time integration method
-block = regexp(fstring,'FLUID_TRANSIENT_ANALYSIS','split');
+block = regexp(fstring, 'FLUID_TRANSIENT_ANALYSIS','split');
 block(1) = [];
-out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
+out = textscan(block{1}, '%s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 propFldDynamics.timeDependence = out{1}{2};
 propFldDynamics.method = out{1}{4};
-if strcmp(propFldDynamics.method,'BOSSAK')
+if strcmp(propFldDynamics.method, 'BOSSAK')
     propFldDynamics.alphaBeta =  str2double(out{1}{6});
     propFldDynamics.gamma =  str2double(out{1}{8});
 end
@@ -180,61 +181,61 @@ propFldDynamics.TEnd = str2double(out{1}{12});
 propFldDynamics.noTimeSteps = str2double(out{1}{14});
 propFldDynamics.isAdaptive = out{1}{16};
 propFldDynamics.dt = (propFldDynamics.TEnd - propFldDynamics.T0)/propFldDynamics.noTimeSteps;
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Fluid dynamics: %s \n',propFldDynamics.timeDependence);
-    if ~strcmp(propFldDynamics.timeDependence,'STEADY_STATE')
-        fprintf('\t>> Time integration method: %s \n',propFldDynamics.method);
-        if strcmp(propFldDynamics.method,'BOSSAK')
-            fprintf('\t \t>> alphaBeta =  %s \n',propFldDynamics.alphaBeta);
-            fprintf('\t \t>> gamma =  %s \n',propFldDynamics.gamma);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Fluid dynamics: %s \n', propFldDynamics.timeDependence);
+    if ~strcmp(propFldDynamics.timeDependence, 'STEADY_STATE')
+        fprintf('\t>> Time integration method: %s \n', propFldDynamics.method);
+        if strcmp(propFldDynamics.method, 'BOSSAK')
+            fprintf('\t \t>> alphaBeta =  %s \n', propFldDynamics.alphaBeta);
+            fprintf('\t \t>> gamma =  %s \n', propFldDynamics.gamma);
         end
-        fprintf('\t>> Start time of the simulation: %f \n',propFldDynamics.T0);
-        fprintf('\t>> End time of the simulation: %f \n',propFldDynamics.TEnd);
-        fprintf('\t>> Number of time steps: %f \n',propFldDynamics.noTimeSteps);
-        fprintf('\t>> Time step size: %f \n',propFldDynamics.dt);
+        fprintf('\t>> Start time of the simulation: %f \n', propFldDynamics.T0);
+        fprintf('\t>> End time of the simulation: %f \n', propFldDynamics.TEnd);
+        fprintf('\t>> Number of time steps: %f \n', propFldDynamics.noTimeSteps);
+        fprintf('\t>> Time step size: %f \n', propFldDynamics.dt);
     end
 end
 
 %% 6. Load the Gauss Point integration method
-block = regexp(fstring,'FLUID_INTEGRATION','split');
+block = regexp(fstring, 'FLUID_INTEGRATION', 'split');
 block(1) = [];
-out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
+out = textscan(block{1}, '%s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 propGaussInt.type = out{1}{2};
-if strcmp(propGaussInt.type,'user')
+if strcmp(propGaussInt.type, 'user')
     propGaussInt.domainNoGP = str2double(out{1}{4});
     propGaussInt.boundaryNoGP = str2double(out{1}{6});
 end
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Gauss integration type: %s \n',propGaussInt.type);
-    if strcmp(propGaussInt.type,'user')
-        fprintf('\t>> No. Gauss Points for the domain integration: %d \n',propGaussInt.domainNoGP);
-        fprintf('\t>> No. Gauss Points for the boundary integration: %d \n',propGaussInt.boundaryNoGP);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Gauss integration type: %s \n', propGaussInt.type);
+    if strcmp(propGaussInt.type, 'user')
+        fprintf('\t>> No. Gauss Points for the domain integration: %d \n', propGaussInt.domainNoGP);
+        fprintf('\t>> No. Gauss Points for the boundary integration: %d \n', propGaussInt.boundaryNoGP);
     end
 end
 
 %% 7. Load the fluid nodes
-block = regexp(fstring,'FLUID_NODES','split'); 
+block = regexp(fstring,'FLUID_NODES', 'split'); 
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f %f %f %f','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f %f %f %f', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
 fldMsh.nodes = out(:,2:4);
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Number of nodes in the mesh: %d \n',length(fldMsh.nodes(:,1)));
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Number of nodes in the mesh: %d \n', length(fldMsh.nodes(:,1)));
 end
 
 %% 8. Load the fluid elements by connectivity arrays
-block = regexp(fstring,'FLUID_ELEMENTS','split');
+block = regexp(fstring,'FLUID_ELEMENTS', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    if strcmp(analysis.type,'NAVIER_STOKES_2D')
-        out{k} = textscan(block{k},'%f %f %f %f','delimiter',' ','MultipleDelimsAsOne', 1);
-    elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
-        out{k} = textscan(block{k},'%f %f %f %f %f','delimiter',' ','MultipleDelimsAsOne', 1);
+    if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
+        out{k} = textscan(block{k}, '%f %f %f %f', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
+    elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
+        out{k} = textscan(block{k}, '%f %f %f %f %f', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
     else
         error('Wrong analysis type selected');
     end
@@ -242,26 +243,26 @@ for k = 1:numel(block)
 end
 out = cell2mat(out);
 fldMsh.elements = out(:,2:end);
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Number of elements in the mesh: %d \n',length(fldMsh.elements));
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Number of elements in the mesh: %d \n', length(fldMsh.elements));
 end
 
 %% 9. Load the nodes on which homogeneous Dirichlet boundary conditions are applied
-block = regexp(fstring,'FLUID_DIRICHLET_NODES','split'); 
+block = regexp(fstring, 'FLUID_DIRICHLET_NODES', 'split'); 
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
 
 % Filter out the actual DOFs
 noDOFsPerNodeFromGiD = 4;
-if strcmp(analysis.type,'NAVIER_STOKES_2D')
+if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
     noDOFsPerNode = 3;
     noDOFsPerNodeArray = [1 2 4];
-elseif strcmp(analysis.type,'NAVIER_STOKES_3D')
+elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     noDOFsPerNode = 4;
     noDOFsPerNodeArray = [1 2 3 4];
 else
@@ -288,11 +289,11 @@ for i = 1:noDBCNodes
         presValue = out((noDOFsPerNodeFromGiD+1)*i-noDOFsPerNodeFromGiD+j);
         if ~isnan(presValue)
             if presValue == 0
-                homDBC(counterHomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+j;
+                homDOFs(counterHomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+jCounter;
                 counterHomDBC = counterHomDBC + 1;
             else
-                inhomDBC(counterInhomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+j;
-                valuesInhomDBC(counterInhomDBC) = presValue;
+                inhomDOFs(counterInhomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+jCounter;
+                valuesInhomDOFs(counterInhomDBC) = presValue;
                 counterInhomDBC = counterInhomDBC + 1;
             end
         end
@@ -300,16 +301,16 @@ for i = 1:noDBCNodes
 end
 
 % Sort out the vectors
-homDBC = sort(homDBC);
-[inhomDBC,indexSorting] = sort(inhomDBC);
-valuesInhomDBC = valuesInhomDBC(indexSorting);
+homDOFs = sort(homDOFs);
+[inhomDOFs,indexSorting] = sort(inhomDOFs);
+valuesInhomDOFs = valuesInhomDOFs(indexSorting);
 
 %% 10. Load the nodes on which ALE conditions are applied
-block = regexp(fstring,'FLUID_DIRICHLET_ALE_NODES','split'); 
+block = regexp(fstring, 'FLUID_DIRICHLET_ALE_NODES', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f %s %s','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f %s %s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 end
 if ~isempty(out)
     out = out{1};
@@ -321,16 +322,16 @@ else
     propALE = [];
 end
 
-if strcmp(outMsg,'outputEnabled') && ~isempty(out)
+if strcmp(outMsg, 'outputEnabled') && ~isempty(out)
     fprintf('>> Arbitrary Lagrangian-Eulerian method selected');
 end
 
 %% 11. Load the nodes, body names and function handles for post processing
-block = regexp(fstring,'FLUID_POST_PROC_NODES','split'); 
+block = regexp(fstring, 'FLUID_POST_PROC_NODES', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f %s %s','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f %s %s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 end
 
 if ~isempty(out)
@@ -360,62 +361,62 @@ else
 end
 
 %% 12. Load the nodes on the Neumann boundary together with the load application information
-block = regexp(fstring,'FLUID_FORCE_NODES','split'); 
+block = regexp(fstring, 'FLUID_FORCE_NODES', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f %s %s','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f %s %s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 end
 
 if ~isempty(out)
     out = out{1};
-    NBC.nodes = cell2mat(out(:,1));
+    propNBC.nodes = cell2mat(out(:,1));
     outLoadType = out(:,2);
-    NBC.loadType = cell2mat(outLoadType{1});
+    propNBC.loadType = cell2mat(outLoadType{1});
     outFctHandle = out(:,3);
-    NBC.fctHandle = cell2mat(outFctHandle{1});
+    propNBC.fctHandle = cell2mat(outFctHandle{1});
 end
 
 %% 13. Get edge connectivity arrays for the Neumann edges
 if ~isempty(out)
-    if strcmp(outMsg,'outputEnabled')
-        fprintf('>> Neumann boundary edges: %d \n',length(NBC.nodes)-1);
+    if strcmp(outMsg, 'outputEnabled')
+        fprintf('>> Neumann boundary edges: %d \n', length(propNBC.nodes) - 1);
     end
     
     % Initialize the Neumann boundary lines
-    NBC.lines = zeros(length(NBC.nodes)-1,3);
+    propNBC.lines = zeros(length(propNBC.nodes) - 1, 3);
 
     % Initialize line counter
     counterLines = 1;
 
     % Loop over each node pair
-    for i = 1:length(NBC.nodes)
-        for j = i:length(NBC.nodes)
+    for i = 1:length(propNBC.nodes)
+        for j = i:length(propNBC.nodes)
             % If we are not in the same node
             if i ~= j
                 % Get the node index in the element array
-                nodeI = NBC.nodes(i);
-                nodeJ = NBC.nodes(j);
+                nodeI = propNBC.nodes(i);
+                nodeJ = propNBC.nodes(j);
 
 
                 % Find the element indices to which the nodes belong
-                [indexI,~] = find(nodeI == fldMsh.elements);
-                [indexJ,~] = find(nodeJ == fldMsh.elements);
+                [indexI, ~] = find(nodeI == fldMsh.elements);
+                [indexJ, ~] = find(nodeJ == fldMsh.elements);
 
                 % For all the element indices to which indexJ belongs to
-                for k=1:length(indexJ)
+                for k = 1:length(indexJ)
                     % Find the common elements to which both nodes belong to
                     commonElmnts = find(indexJ(k) == indexI);
 
                     % If there are commont elements to which the nodes belong
-                    if norm(commonElmnts)~=0
+                    if norm(commonElmnts) ~= 0
                         % Get the common element index
                         elementIndex = indexI(commonElmnts);
 
                         % Store the line into the NBC.line array with the same
                         % ordering as the are stored in the element array
-                        NBC.lines(counterLines,:) = ...
-                            [NBC.nodes(i) NBC.nodes(j) elementIndex];
+                        propNBC.lines(counterLines,:) = ...
+                            [propNBC.nodes(i) propNBC.nodes(j) elementIndex];
 
                         % Update counter
                         counterLines = counterLines + 1;
@@ -425,15 +426,13 @@ if ~isempty(out)
         end
     end
 else
-    NBC = 'undefined';
+    propNBC = 'undefined';
 end
 
 %% 14. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
-    fprintf('\nParsing took %.2d seconds \n\n',computationalTime);
+    fprintf('\nParsing took %.2d seconds \n\n', computationalTime);
     fprintf('_______________________Parsing Ended_______________________\n');
     fprintf('###########################################################\n\n\n');
 end

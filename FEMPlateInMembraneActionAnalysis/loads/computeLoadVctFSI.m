@@ -1,4 +1,4 @@
-function load = computeConstantHorizontalLoad(x,y,z,t)
+function load = computeLoadVctFSI(x, y, z, t, propNBC)
 %% Licensing
 %
 % License:         BSD License
@@ -14,6 +14,8 @@ function load = computeConstantHorizontalLoad(x,y,z,t)
 %       Input :
 %       x,y,z : The physical location where the load is applied
 %           t : The time instance
+%     propNBC : Structure containing information on the Neumann boundary
+%               conditions
 %
 %      Output :
 %        load :  The load vector [loadx; loady; loadz]

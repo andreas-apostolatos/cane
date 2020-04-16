@@ -1,4 +1,5 @@
-function [x,hasConverged] = solve_LinearSystemMatlabBackslashSolver(A,b,x)
+function [x, hasConverged] = solve_LinearSystemMatlabBackslashSolver ...
+    (A, b, x)
 %% Licensing
 %
 % License:         BSD License

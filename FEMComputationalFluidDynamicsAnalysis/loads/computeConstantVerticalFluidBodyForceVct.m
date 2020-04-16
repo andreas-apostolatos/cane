@@ -1,4 +1,4 @@
-function b = computeConstantVerticalFluidBodyForceVct(x,y,z,t)
+function b = computeConstantVerticalFluidBodyForceVct(x, y, z, t)
 %% Licensing
 %
 % License:         BSD License
@@ -22,4 +22,3 @@ function b = computeConstantVerticalFluidBodyForceVct(x,y,z,t)
 b = zeros(3,1);
 
 end
-

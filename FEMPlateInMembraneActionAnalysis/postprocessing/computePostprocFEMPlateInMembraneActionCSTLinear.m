@@ -60,15 +60,15 @@ noElements = length(strMsh.elements);
 % multiplied by two so that it returns the true strain field and not the 
 % one needed for the computation of the internal virtual work)
 if strcmp(analysis.type,'planeStress')
-    preFactor = parameters.E/(1-parameters.nue^2);
-    C = preFactor*[1             parameters.nue  0
-                   parameters.nue 1              0
-                   0              0             (1-parameters.nue)/2];
+    preFactor = parameters.E/(1 - parameters.nue^2);
+    C = preFactor*[1              parameters.nue  0
+                   parameters.nue 1               0
+                   0              0               (1 - parameters.nue)/2];
 elseif strcmp(analysis.type,'planeStrain')
-    preFactor = materialProperties.E*(1-parameters.nue)/(1+parameters.nue)/(1-2*parameters.nue);
-    C = preFactor*[1                                 parameters.nue/(1-parameters.nue) 0
-                   parameters.nue/(1-parameters.nue) 1                                 0
-                   0                                 0                                 (1-2*parameters.nue)/2/(1-parameters.nue)];
+    preFactor = parameters.E*(1 - parameters.nue)/(1 + parameters.nue)/(1 - 2*parameters.nue);
+    C = preFactor*[1                                 parameters.nue/(1 - parameters.nue) 0
+                   parameters.nue/(1-parameters.nue) 1                                   0
+                   0                                 0                                   (1 - 2*parameters.nue)/2/(1 - parameters.nue)];
 end
 
 % Initialize output arrays

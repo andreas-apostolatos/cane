@@ -222,7 +222,7 @@ tq = a;
 [Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'outputEnabled');
 
 % Number of knots to exist in both directions
-refXi = 0; % 40
+refXi = 10; % 40
 refEta = 2*refXi;
 [Xi,Eta,CP] = knotRefineUniformlyBSplineSurface(p,Xi,q,Eta,CP,refXi,refEta,'outputEnabled');
 

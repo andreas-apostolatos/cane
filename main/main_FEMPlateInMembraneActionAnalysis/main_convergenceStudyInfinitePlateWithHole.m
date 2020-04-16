@@ -62,14 +62,19 @@ z = 0;
 nodeCoord = [x y z];
 
 % Function handle to the body force vector computation
-bodyForces = @computeConstantVecrticalBodyForceVct;
+computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Function handle to the linear equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
+% Output properties
+propOutput.isOutput = false;
+propOutput.writeOutputToFile = 'undefined';
+propOutput.VTKResultFile = 'undefined';
+
 % Function handle to the computation of the linear stiffness matrix
-% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
-computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
+computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
+% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
 
 % Geometry characteristics for the case
 internalRadius = 4;
@@ -94,9 +99,6 @@ forceAmplitude = 10;
 propError.resultant = 'stress';
 propError.component = '2norm';
 
-% Flag on whether the case is a unit test
-isUnitTest = false;
-
 % Initialize graphics index
 graph.index = 1;
 
@@ -113,15 +115,16 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/refinementStudy
 caseName = 'infinitePlateWithHoleQuadrilaterals';
 
 % Parse the case
-[strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,~,~] = ...
-    parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
+[strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
+    parameters, propNLinearAnalysis, ~, ~] = ...
+    parse_StructuralModelFromGid...
+    (pathToCase, caseName, 'outputEnabled');
 
 % Find the global numbering of the selected for postprocessing node
 for iNodes = 1:length(strMsh.nodes)
-    if strMsh.nodes(iNodes,1) == nodeCoord(1,1) && ...
-        strMsh.nodes(iNodes,2) == nodeCoord(1,2) && ...
-        strMsh.nodes(iNodes,3) == nodeCoord(1,3)
+    if strMsh.nodes(iNodes, 1) == nodeCoord(1, 1) && ...
+        strMsh.nodes(iNodes, 2) == nodeCoord(1, 2) && ...
+        strMsh.nodes(iNodes, 3) == nodeCoord(1, 3)
         nodeID = iNodes;
     end
 end
@@ -131,16 +134,22 @@ end
 
 % plot the reference configuration
 F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,analysis,NBC,0,intDomain,'outputEnabled');
+    (strMsh, propAnalysis, propNBC, 0, intDomain, 'outputEnabled');
 plot_referenceConfigurationFEMPlateInMembraneAction...
-    (strMsh,analysis,F,homDBC,graph,'outputEnabled');
+    (strMsh, propAnalysis, F, homDOFs, [], graph, 'outputEnabled');
+
+% Initialize solution
+numNodes = length(strMsh.nodes(:,1));
+numDOFs = 2*numNodes;
+dHat = zeros(numDOFs,1);
 
 % Solve for the discrete displacement field of the overkill solution
-[dHat,FComplete,minElEdgeSizeOverkill] = solve_FEMPlateInMembraneAction...
-    (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
-    parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-    propNLinearAnalysis,intDomain,caseName,pathToOutput,...
-    isUnitTest,'outputEnabled');
+[dHat, FComplete, minElEdgeSizeOverkill] = ...
+    solve_FEMPlateInMembraneAction...
+    (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    propNBC, computeBodyForces, parameters, computeStiffMtxLoadVct, ...
+    solve_LinearSystem, propNLinearAnalysis, intDomain, propOutput, ...
+    caseName, pathToOutput, 'outputEnabled');
 
 % Compute the displacement field of the selected for postprocessing node
 displacementOverkill = sqrt(dHat(2*nodeID - 1)^2 + dHat(2*nodeID)^2);
@@ -159,26 +168,27 @@ caseNames = {'infinitePlateWithHole_El36' 'infinitePlateWithHole_El52' ...
 noElemnts = [36; 52; 97; 252; 586; 1026];
 
 % Initialize arrays related to the graphs for the convergence study
-relErrorStress = zeros(noRef,1);
-relErrorDisplacement = zeros(noRef,1);
-minElEdgeSize = zeros(noRef,1);
-displacement = zeros(noRef,1);
+relErrorStress = zeros(noRef, 1);
+relErrorDisplacement = zeros(noRef, 1);
+minElEdgeSize = zeros(noRef, 1);
+displacement = zeros(noRef, 1);
 
 % Loop over all the refinement steps
 for iRefStep = 1:noRef
     % Get the corresponding case name
-    caseNameCurrent = strcat('refinementStudyInfinitePlateWithHole/',caseNames{iRefStep});
+    caseNameCurrent = strcat('refinementStudyInfinitePlateWithHole/', caseNames{iRefStep});
     
     % Parse the corresponding case
-    [strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-        propNLinearAnalysis,~,~] = ...
-        parse_StructuralModelFromGid(pathToCase,caseNameCurrent,'outputEnabled');
+    [strMsh,homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
+        parameters, propNLinearAnalysis, ~, ~, ~] = ...
+        parse_StructuralModelFromGid ...
+        (pathToCase, caseNameCurrent, 'outputEnabled');
     
     % Find the global node numbering of the slected for postprocessing node
     for iNodes = 1:length(strMsh.nodes)
-        if strMsh.nodes(iNodes,1) == nodeCoord(1,1) && ...
-            strMsh.nodes(iNodes,2) == nodeCoord(1,2) && ...
-            strMsh.nodes(iNodes,3) == nodeCoord(1,3)
+        if strMsh.nodes(iNodes, 1) == nodeCoord(1, 1) && ...
+            strMsh.nodes(iNodes, 2) == nodeCoord(1, 2) && ...
+            strMsh.nodes(iNodes, 3) == nodeCoord(1, 3)
             nodeID = iNodes;
         end
     end
@@ -186,26 +196,34 @@ for iRefStep = 1:noRef
         error('The node over which to compute the displacement field was not found');
     end
     
+    % Initialize solution
+    numNodes = length(strMsh.nodes(:,1));
+    numDOFs = 2*numNodes;
+    dHat = zeros(numDOFs,1);
+    
     % Solve the plane stress problem for the current refinement step
-    [dHat,FComplete,minElEdgeSize(iRefStep,1)] = solve_FEMPlateInMembraneAction...
-        (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
-        parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-        propNLinearAnalysis,intDomain,caseName,pathToOutput,...
-        isUnitTest,'outputEnabled');
+    [dHat, FComplete, minElEdgeSize(iRefStep,1)] = ...
+        solve_FEMPlateInMembraneAction ...
+        (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+        propNBC, computeBodyForces, parameters, computeStiffMtxLoadVct, ...
+        solve_LinearSystem, propNLinearAnalysis, intDomain, propOutput, ...
+        caseName, pathToOutput, 'outputEnabled');
     
     % Compute the displacement field for the slected for postprocessing node
-    displacement(iRefStep,1) = sqrt(dHat(2*nodeID - 1)^2 + dHat(2*nodeID)^2);
+    displacement(iRefStep, 1) = sqrt(dHat(2*nodeID - 1)^2 + dHat(2*nodeID)^2);
     
     % Compute the relative error for the selected for postprocessing node
     % in the displacement field
-    relErrorDisplacement(iRefStep,1) = ...
-        norm(displacement(iRefStep,1) - displacementOverkill)/norm(displacementOverkill);
+    relErrorDisplacement(iRefStep, 1) = ...
+        norm(displacement(iRefStep, 1) - displacementOverkill)/ ...
+        norm(displacementOverkill);
     
     % Compute the error in the L2-norm over the domain for the selected
     % resultant component
-    relErrorStress(iRefStep,1) = computeRelErrorL2InfinitePlateWithHoleFEMPlateInMembraneAction...
-        (strMsh,dHat,parameters,radiusHole,forceAmplitude,propError,intError,...
-        'outputEnabled');
+    relErrorStress(iRefStep, 1) = ...
+        computeRelErrorL2InfinitePlateWithHoleFEMPlateInMembraneAction...
+        (strMsh, dHat, parameters, radiusHole, forceAmplitude, propError, ...
+        intError, 'outputEnabled');
 end
 
 %% Plot the corresponding convergence graphs
@@ -213,7 +231,7 @@ end
 % Plot the relative error of the stresses in the L2-norm against the
 % minimum element edge size
 figure(graph.index)
-loglog(minElEdgeSize,relErrorStress);
+loglog(minElEdgeSize, relErrorStress);
 grid on;
 xlabel('Minimum element edge size');
 ylabel('Relative stress error in the L2 norm');
@@ -222,7 +240,7 @@ graph.index = graph.index + 1;
 % Plot the relative error of the displacement of the selected node against
 % the minimum element edge size
 figure(graph.index)
-loglog(minElEdgeSize,relErrorDisplacement);
+loglog(minElEdgeSize, relErrorDisplacement);
 grid on;
 xlabel('Minimum element edge size');
 ylabel('Relative displacement error');
@@ -230,11 +248,10 @@ graph.index = graph.index + 1;
 
 % Plot the displacememt of the selected node against the number of elements
 figure(graph.index)
-plot(noElemnts,displacement);
+plot(noElemnts, displacement);
 grid on;
 xlabel('No. elements');
 ylabel('Displacement');
 graph.index = graph.index + 1;
-return;
 
 %% END OF THE SCRIPT

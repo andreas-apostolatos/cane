@@ -1,23 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [Xir,Etar,CPr] = knotRefineUniformlyBSplineSurface(p,Xi,q,Eta,CP,noXi,noEta,outMsg)
+function [Xir, Etar, CPr] = knotRefineUniformlyBSplineSurface ...
+    (p, Xi, q, Eta, CP, noXi, noEta, outMsg)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Computes the CP's and U after equidistant knot insertion into the given
@@ -48,17 +37,15 @@ function [Xir,Etar,CPr] = knotRefineUniformlyBSplineSurface(p,Xi,q,Eta,CP,noXi,n
 % 2. Appendix
 %
 %% Function main body
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('________________________________________________________________\n');
     fprintf('################################################################\n');
     fprintf('Uniform Knot insertion for a B-Spline curve has been initiated \n\n');
-    fprintf('Number of knots before knot insertion in xi-direction nxi = %d\n',length(Xi));
-    fprintf('Number of knots after knot insertion in xi-direction nxi = %d\n',length(Xi)+noXi);
-    fprintf('Number of knots before knot insertion in eta-direction neta = %d\n',length(Eta));
-    fprintf('Number of knots after knot insertion in eta-direction neta = %d\n',length(Eta)+noEta);
+    fprintf('Number of knots before knot insertion in xi-direction nxi = %d\n', length(Xi));
+    fprintf('Number of knots after knot insertion in xi-direction nxi = %d\n', length(Xi) + noXi);
+    fprintf('Number of knots before knot insertion in eta-direction neta = %d\n', length(Eta));
+    fprintf('Number of knots after knot insertion in eta-direction neta = %d\n', length(Eta) + noEta);
     fprintf('________________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -80,12 +67,12 @@ for i = 1:noXi - 1
         noMultipleKnots = length(index);
         if noMultipleKnots == p
             if strcmp(outMsg,'outputEnabled')
-                warning('Knot vector Xi has already a %d multiplicity at knot %d creating discontinuity, no knot will be added',p,xiKnot);
+                warning('Knot vector Xi has already a %d multiplicity at knot %d creating discontinuity, no knot will be added', p, xiKnot);
             end
             isKnot2Add = false;
         elseif noMultipleKnots == p - 1
             if strcmp(outMsg,'outputEnabled')
-                warning('Knot vector Xi has already a %d multiplicity at knot %d creating interpolation, no knot will be added',p,xiKnot);
+                warning('Knot vector Xi has already a %d multiplicity at knot %d creating interpolation, no knot will be added', p, xiKnot);
             end
             isKnot2Add = false;
         end
@@ -106,12 +93,12 @@ for i = 1:noEta - 1
         noMultipleKnots = length(index);
         if noMultipleKnots == q
             if strcmp(outMsg,'outputEnabled')
-                warning('Knot vector Eta has already a %d multiplicity at knot %d creating discontinuity, no knot will be added',p,etaKnot);
+                warning('Knot vector Eta has already a %d multiplicity at knot %d creating discontinuity, no knot will be added', p, etaKnot);
             end
             isKnot2Add = false;
         elseif noMultipleKnots == q - 1
-            if strcmp(outMsg,'outputEnabled')
-                warning('Knot vector Eta has already a %d multiplicity at knot %d creating interpolation, no knot will be added',p,etaKnot);
+            if strcmp(outMsg, 'outputEnabled')
+                warning('Knot vector Eta has already a %d multiplicity at knot %d creating interpolation, no knot will be added', p, etaKnot);
             end
             isKnot2Add = false;
         end
@@ -123,13 +110,12 @@ for i = 1:noEta - 1
 end
 
 % Apply knot insertion onto the surface
-[Xir,Etar,CPr] = knotRefineBSplineSurface(p,Xi,q,Eta,CP,Rxi,Reta,'');
+[Xir, Etar, CPr] = knotRefineBSplineSurface ...
+    (p, Xi, q, Eta, CP, Rxi, Reta, '');
 
 %% 2. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-    
     fprintf('Knot insertion took %.2d seconds \n\n',computationalTime);
     fprintf('______________________Knot Insertion Ended______________________\n');
     fprintf('################################################################\n\n\n');

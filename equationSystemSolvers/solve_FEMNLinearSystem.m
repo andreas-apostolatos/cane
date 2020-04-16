@@ -1,9 +1,11 @@
-function [u,FComplete,hasConverged,minElASize] = solve_FEMNLinearSystem...
-    (analysis,uSaved,uDotSaved,uDDotSaved,mesh,F,bodyForces,parameters,u,...
-    uDot,uDDot,massMtx,dampMtx,computeNLinearMtrcsSteadyState,...
-    DOFNumbering,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,uMeshALE,...
-    solve_LinearSystem,propTransientAnalysis,t,propNLinearAnalysis,...
-    propGaussInt,tab,outMsg)
+function [u, FComplete, isConverged,minElASize] = ...
+    solve_FEMNLinearSystem ...
+    (propAnalysis, uSaved, uDotSaved, uDDotSaved, mesh, F, computeBodyForces, ...
+    propParameters, u, uDot, uDDot, massMtx, dampMtx, precompStiffMtx, ...
+    precomResVct, computeNLinearMtrcsSteadyState, DOFNumbering, ...
+    freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
+    solve_LinearSystem, propTransientAnalysis , t, propNLinearAnalysis, ...
+    propGaussInt, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -17,7 +19,8 @@ function [u,FComplete,hasConverged,minElASize] = solve_FEMNLinearSystem...
 % classical finite element discretization of the underlying field.
 %
 %                          Input :
-%                       analysis : Information on the analysis
+%                   propAnalysis : Structure containing information on the
+%                                  analysis,
 %                                       analysis.type : Analysis type
 %                         uSaved : The discrete solution field of the 
 %                                  previous time step
@@ -31,8 +34,9 @@ function [u,FComplete,hasConverged,minElASize] = solve_FEMNLinearSystem...
 %                           mesh : The nodes and the elements of the 
 %                                  underlying mesh
 %                              F : The boundary force vector
-%                     bodyForces : The body force vector
-%                     parameters : The parameters of the physical field
+%              computeBodyForces : Function handle to the computation of 
+%                                  the body force vector
+%                 propParameters : The parameters of the physical field
 %                              u : Initial guess for the primary field
 %                           uDot : Initial guess for the time derivative of 
 %                                  the primary field
@@ -40,6 +44,8 @@ function [u,FComplete,hasConverged,minElASize] = solve_FEMNLinearSystem...
 %                                  derivative of the primary field
 %                        massMtx : The mass matrix of the system
 %                        dampMtx : The damping matrix of the system
+%                precompStiffMtx : Precomputed part of the stiffness matrix
+%                   precomResVct : Precomputed part of the residual vector
 % computeNLinearMtrcsSteadyState : Function handle for the computation of 
 %                                  the matrices and vectors nessecary for 
 %                                  the update of the discrete solution 
@@ -96,7 +102,7 @@ function [u,FComplete,hasConverged,minElASize] = solve_FEMNLinearSystem...
 %                         Output :
 %                              u : The converged discrete solution vector
 %                      FComplete : The complete flux vector of the system
-%                   hasConverged : Flag on whether the nonlinear iterations 
+%                    isConverged : Flag on whether the nonlinear iterations 
 %                                  have converged
 %                     minElASize : The minimum element edge size in the mesh
 %
@@ -137,34 +143,38 @@ end
 %% 1. Loop over all load steps
 for iLS = 1:propNLinearAnalysis.noLoadSteps
     if strcmp(outMsg,'outputEnabled') && isLoadSteps
-        fprintf(strcat(tab,'Load step %d/%d \n'),iLS,propNLinearAnalysis.noLoadSteps);
-        fprintf(strcat(tab,'----------------\n'));
+        fprintf(strcat(tab, 'Load step %d/%d \n'), iLS, propNLinearAnalysis.noLoadSteps);
+        fprintf(strcat(tab, '----------------\n'));
         fprintf('\n');
     end
     %% 1i. Compute the load factor
     loadFactor = iLS/propNLinearAnalysis.noLoadSteps;
     
     %% 1ii. Loop over all the Newton-Rapson iterations
-    if strcmp(outMsg,'outputEnabled')
-        msgPNR = sprintf(strcat(tab,tabLoadSteps,'Looping over all the Newton iterations\n',tab,tabLoadSteps,'-------------------------------------- \n \n'));
+    if strcmp(outMsg, 'outputEnabled')
+        msgPNR = sprintf(strcat(tab, tabLoadSteps, 'Looping over all the Newton iterations\n', ...
+            tab, tabLoadSteps, '-------------------------------------- \n \n'));
         fprintf(msgPNR);
     end
     for iNR = 1:propNLinearAnalysis.maxIter
         %% 1ii.1. Compute the tangent stiffness matrix and the residual vector for the steady-state problem
-        [tanMtx,resVct,minElASize] = computeNLinearMtrcsSteadyState...
-            (analysis,u,uSaved,uDot,uDotSaved,uMeshALE,DOFNumbering,mesh,...
-            F,loadFactor,propTransientAnalysis,t,parameters,bodyForces,...
-            propGaussInt);
+        [tanMtx, resVct, minElASize] = computeNLinearMtrcsSteadyState ...
+            (propAnalysis, u, uSaved, uDot, uDotSaved, uMeshALE, ...
+            precompStiffMtx, precomResVct, DOFNumbering, mesh, F, ...
+            loadFactor, computeBodyForces, propTransientAnalysis, t, ...
+            propParameters, propGaussInt);
         
         %% 1ii.2. Compute the tangent stiffness matrix and the residual vector for the transient problem
-        if isfield(propTransientAnalysis,'timeDependence')
-            if ~strcmp(propTransientAnalysis.timeDependence,'STEADY_STATE')
-                if isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle')
-                    [tanMtx,resVct] = propTransientAnalysis.computeProblemMtrcsTransient...
-                        (u,uSaved,uDot,uDotSaved,uDDot,uDDotSaved,massMtx,dampMtx,...
-                        tanMtx,resVct,propTransientAnalysis);
-                elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
-                        ~(strcmp(propTransientAnalysis.timeDependence,'steadyState') || strcmp(propTransientAnalysis.timeDependence,'pseudotransient'))
+        if isfield(propTransientAnalysis, 'timeDependence')
+            if ~strcmp(propTransientAnalysis.timeDependence, 'STEADY_STATE')
+                if isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle')
+                    [tanMtx, resVct] = ...
+                        propTransientAnalysis.computeProblemMtrcsTransient...
+                        (u, uSaved, uDot, uDotSaved, uDDot, uDDotSaved, ...
+                        massMtx, dampMtx, tanMtx, resVct, ...
+                        propTransientAnalysis);
+                elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle') && ...
+                        ~(strcmp(propTransientAnalysis.timeDependence, 'steadyState') || strcmp(propTransientAnalysis.timeDependence, 'pseudotransient'))
                     error('Variable propTransientAnalysis.computeProblemMtrcsTransient is undefined but the simulation is transient')
                 end
             end
@@ -173,7 +183,7 @@ for iLS = 1:propNLinearAnalysis.noLoadSteps
         %% 1ii.3. Compute the right-hand side (RHS) residual vector in equation
         RHS = - resVct;
         if norm(valuesInhomDOFs) ~= 0 && iNR == 1
-            RHS = RHS + tanMtx(:,inhomDOFs)*loadFactor*valuesInhomDOFs';
+            RHS = RHS + tanMtx(:, inhomDOFs)*loadFactor*valuesInhomDOFs';
         end
 
         %% 1ii.4. Check condition for convergence on the residual vector
@@ -182,40 +192,40 @@ for iLS = 1:propNLinearAnalysis.noLoadSteps
         residualNorm = norm(resVct(freeDOFs));
 
         % Issue a message on the evolution of the residual vector
-        if strcmp(outMsg,'outputEnabled')
-            msgNR = sprintf(strcat(tab,tabLoadSteps,'\t||resVct|| = %d at nonlinear iteration No. = %d \n'),residualNorm,iNR);
+        if strcmp(outMsg, 'outputEnabled')
+            msgNR = sprintf(strcat(tab, tabLoadSteps, '\t||resVct|| = %d at nonlinear iteration No. = %d \n'), residualNorm,iNR);
             fprintf(msgNR);
         end
 
         % Check the convergence of the Newton iterations
         if residualNorm <= propNLinearAnalysis.eps && iNR ~= 1
-            if strcmp(outMsg,'outputEnabled')
-                msgANR = sprintf(strcat('\n',tab,tabLoadSteps,'\tNonlinear iterations converged! \n \n \n'));
+            if strcmp(outMsg, 'outputEnabled')
+                msgANR = sprintf(strcat('\n', tab, tabLoadSteps, '\tNonlinear iterations converged! \n \n \n'));
                 fprintf(msgANR);
             end
-            hasConverged = true;
+            isConverged = true;
             break;
         end
 
         % If the Newton iterations do not converge after specified limit:
         if iNR == propNLinearAnalysis.maxIter
-            if strcmp(outMsg,'outputEnabled')
+            if strcmp(outMsg, 'outputEnabled')
                 if ~ischar(propTransientAnalysis)
-                    warning('Nonlinear iterations did not converge for the fixed time step of %d',propTransientAnalysis.dt);
+                    warning('Nonlinear iterations did not converge for the fixed time step of %d', propTransientAnalysis.dt);
                 else
                     warning('Nonlinear iterations did not converge');
                 end
             end
 
             % Flag on the convergence of the Newton iterations
-            hasConverged = false;
+            isConverged = false;
         end
 
         %% 1ii.5. Solve the linearized equation system
-        [deltauRed,hasLinearSystemConverged] = solve_LinearSystem...
-            (tanMtx(freeDOFs,freeDOFs),RHS(freeDOFs),u(freeDOFs));
-        if ~hasLinearSystemConverged
-            error('Linear equation solver has not converged');
+        [deltauRed, isLinearSysConverged] = solve_LinearSystem ...
+            (tanMtx(freeDOFs, freeDOFs), RHS(freeDOFs), u(freeDOFs));
+        if ~isLinearSysConverged
+            error('Linear equation system solver has not converged');
         end
 
         %% 1ii.6. Re-assemble to the complete vector of unknowns
@@ -227,7 +237,7 @@ for iLS = 1:propNLinearAnalysis.noLoadSteps
     end
     
     %% 1iii. If the nonlinear iterations have not converged break the loop
-    if ~hasConverged
+    if ~isConverged
         break;
     end
 end

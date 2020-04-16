@@ -7,10 +7,9 @@
 %
 %% Script documentation
 % 
-% Task : Form-finding analysis over the four-point sail modelled with a
-%        single patch
+% Task : Form-finding analysis for a four-point sail
 %
-% Date : 11.01.2016
+% Date : 08.02.2020
 %
 %% Preamble
 clear;
@@ -24,17 +23,14 @@ addpath('../../../generalMath/');
 % Add general auxiliary functions
 addpath('../../../auxiliary/');
 
-% Add all linear equation system solvers
+% Add system solvers
 addpath('../../../equationSystemSolvers/');
 
-% Add all efficient computation functions
+% Add efficient computation functions
 addpath('../../../efficientComputation/');
 
-% Add graphics-related functions for the isogeometric mortar-based mapping
-addpath('../../../isogeometricMortarBasedMappingAnalysis/graphics/');
-
-% Add functions related to writting out
-addpath('../../../outputIBRACarat/');
+% Add transient analysis solvers
+addpath('../../../transientAnalysis/');
 
 % Add all functions related to the Computer-Aided Geometric Design (GACD) kernel
 addpath('../../../CAGDKernel/CAGDKernel_basisFunctions',...
@@ -44,7 +40,7 @@ addpath('../../../CAGDKernel/CAGDKernel_basisFunctions',...
         '../../../CAGDKernel/CAGDKernel_BSplineCurve/',...
         '../../../CAGDKernel/CAGDKernel_BSplineSurface/');
     
-% Add all functions related to the Isogeometric Kirchhoff-Love shell formulation
+% Add all functions related to the isogeometric Kirchhoff-Love shell formulation
 addpath('../../../isogeometricThinStructureAnalysis/graphicsSinglePatch/',...
         '../../../isogeometricThinStructureAnalysis/graphicsMultipatches/',...
         '../../../isogeometricThinStructureAnalysis/loads/',...
@@ -54,11 +50,24 @@ addpath('../../../isogeometricThinStructureAnalysis/graphicsSinglePatch/',...
         '../../../isogeometricThinStructureAnalysis/auxiliary/',...
         '../../../isogeometricThinStructureAnalysis/postprocessing/',...
         '../../../isogeometricThinStructureAnalysis/BOperatorMatrices/',...
+        '../../../isogeometricThinStructureAnalysis/penaltyDecompositionKLShell/',...
+        '../../../isogeometricThinStructureAnalysis/penaltyDecompositionMembrane/',...
+        '../../../isogeometricThinStructureAnalysis/lagrangeMultipliersDecompositionKLShell/',...
+        '../../../isogeometricThinStructureAnalysis/lagrangeMultipliersDecompositionMembrane/',...
+        '../../../isogeometricThinStructureAnalysis/nitscheDecompositionKLShell/',...
+        '../../../isogeometricThinStructureAnalysis/nitscheDecompositionMembrane/',...
+        '../../../isogeometricThinStructureAnalysis/errorComputation/',...
+        '../../../isogeometricThinStructureAnalysis/output/',...
+        '../../../isogeometricThinStructureAnalysis/transientAnalysis/',...
+        '../../../isogeometricThinStructureAnalysis/initialConditions/',...
         '../../../isogeometricThinStructureAnalysis/weakDBCMembrane/',...
-        '../../../isogeometricThinStructureAnalysis/formFindingAnalysis/',...
-        '../../../isogeometricThinStructureAnalysis/output/');
+        '../../../isogeometricThinStructureAnalysis/formFindingAnalysis/');
+    
+% Add functions related to the visualization of the multipatch geometry
+% related to the isogeometric mortar-based mapping
+addpath('../../../isogeometricMortarBasedMappingAnalysis/graphics/');
 
-%% NURBS parameters
+%% CAD modelling via NURBS
 
 % Global variables:
 Length = 20;
@@ -76,19 +85,18 @@ Eta = [0 0 1 1];
 % Control Point coordinates
 
 % x-coordinates
-CP(:,:,1) = [-Length/2 -Length/2
-             Length/2  Length/2];
+CP(:,:,1) = [-Length/2 Length/2
+             -Length/2 Length/2];
          
 % y-coordinates
-CP(:,:,2) = [-Width/2 Width/2
-             -Width/2 Width/2];
+CP(:,:,2) = [-Width/2 -Width/2
+             Width/2  Width/2];
          
 % z-coordinates
-CP(:,:,3) = [0      Height
-             Height 0];
+CP(:,:,3) = [Height 0    
+             0      Height];
        
 % Weights
-weight = sqrt(2)/2;
 CP(:,:,4) = [1 1
              1 1];
 
@@ -96,8 +104,8 @@ CP(:,:,4) = [1 1
 isNURBS = 0;
 nxi = length(CP(:,1,1));
 neta = length(CP(1,:,1));
-for i= 1:nxi
-    for j=1:neta
+for i = 1:nxi
+    for j = 1:neta
         if CP(i,j,4)~=1
             isNURBS = 1;
             break;
@@ -110,52 +118,78 @@ end
 
 %% Material constants
 
+% general parameters
+EYoung = 8e+8;
+nue = .4;
+thickness = 1e-3;
+sigma0 = 3e+3;
+prestress.voigtVector = [sigma0/thickness
+                         sigma0/thickness
+                         0];
+density = 8050;
+
 % Young's modulus
-parameters.E = 8e+8;
+parameters.E = EYoung;
 
 % Poisson ratio
-parameters.nue = .4;
+parameters.nue = nue;
 
-% Thickness
-parameters.t = 1e-3;
+% Thickness of the membrane
+parameters.t = thickness;
 
-% Density (used only for dynamics)
-parameters.rho = 8050;
+% Density of the membrane
+parameters.rho = density;
 
-% Prestress for the membrane
-sigma0 = 3e+3/parameters.t; % 
-parameters.prestress.voigtVector = [sigma0
-                                    sigma0
-                                    0];
+% Prestress of the membrane
+parameters.prestress = prestress;
 
-% Cable parameters
+% Cable :
+% _______
+
 parametersCable.E = 1.6e+11;
 parametersCable.radiusCS = 12e-3/2;
 parametersCable.areaCS = pi*parametersCable.radiusCS^2;
 parametersCable.rho = 8050;
 parametersCable.prestress = 6e+4/parametersCable.areaCS;
-cables.parameters = {parametersCable parametersCable parametersCable parametersCable};
 
 %% GUI
+
+% Case name
+caseName = 'SinglePatchFourPointSail';
 
 % Analysis type
 analysis.type = 'isogeometricMembraneAnalysis';
 
-% Case name
-caseName = 'FoFiFourPointSail';
-
-% Define linear equation system solver
+% Define equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % Integration scheme
 % type = 'default' : default FGI integration element-wise
-% type = 'manual' : manual choice of the number of Gauss points
+% type = 'user' : manual choice of the number of Gauss points
+
 int.type = 'default';
 if strcmp(int.type,'user')
     int.xiNGP = 6;
     int.etaNGP = 6;
     int.xiNGPForLoad = 6;
-    int.xetaNGPForLoad = 6;
+    int.etaNGPForLoad = 6;
+    int.nGPForLoad = 6;
+    int.nGPError = 12;
+end
+
+% Interface integration :
+% _______________________
+
+intC.type = 'user';
+intC.method = 'Nitsche';
+if strcmp(intC.type,'user')
+    if strcmp(intC.method,'lagrangeMultipliers')
+        intC.nGP1 = 16;
+        intC.nGP2 = 16;
+    else
+        intC.noGPs = 16;
+    end
+    intC.nGPError = 16;
 end
 
 % On the graphics
@@ -163,49 +197,90 @@ graph.index = 1;
 
 % On the postprocessing:
 % .postprocConfig : 'reference','current','referenceCurrent'
-graph.postprocConfig = 'current';
+graph.postprocConfig = 'referenceCurrent';
 
 % Plot strain or stress field
 % .resultant: 'displacement','strain','curvature','force','moment','shearForce'
 graph.resultant = 'displacement';
 
 % Component of the resultant to plot
-% .component: 'x', 'y','z','2norm','1','2','12','1Principal','2Principal'
+% .component: 'x','y','z','2norm','1','2','12','1Principal','2Principal'
 graph.component = '2norm';
+
+% Define the coupling properties
+
+% Patch 1 :
+% _________
+
+Dm = parameters.E*parameters.t/(1 - parameters.nue^2)*...
+      [1              parameters.nue 0
+       parameters.nue 1              0
+       0               0              (1-parameters.nue)/2];
+
+% Assign the penalty factors
+
+% Function handle to writing out the results
+% writeOutput = @writeResults4Carat;
+% writeOutput = @writeResults4GiD;
+writeOutput = 'undefined';
+
+% Postprocessing
+propPostproc.resultant = {'displacement'};
+propPostproc.computeResultant = {'computeDisplacement'};
 
 %% Refinement
 
-% Degree by which to elevate
-a = 0; % 2
+% Select p-refinement level
+iPRef = 1; % Coarse : 1 || Fine : 2
+
+%%%%%%%%%%%%%%%%%%%%
+% Degree elevation %
+%%%%%%%%%%%%%%%%%%%%
+
+a = 1;
 tp = a;
 tq = a;
-[Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'outputEnabled');
+[Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'');
 
-% Number of knots to exist in both directions
-scaling = 10; % 50
-refXi = scaling;
-refEta = scaling;
-[Xi,Eta,CP] = knotRefineUniformlyBSplineSurface(p,Xi,q,Eta,CP,refXi,refEta,'outputEnabled');
+%%%%%%%%%%%%%%%%%%%%
+% Knot insertion   %
+%%%%%%%%%%%%%%%%%%%%
 
-%% Dirichlet and Neumann boundary conditions 
+noKnotsXi = 0;
+noKnotsEta = 0;
+[Xi,Eta,CP] = knotRefineUniformlyBSplineSurface...
+    (p,Xi,q,Eta,CP,noKnotsXi,noKnotsEta,'');
 
-% supports (Dirichlet boundary conditions)
+%% Boundary conditions
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dirichlet boundary conditions %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Patch 1 :
+% _________
+
+% Homogeneous Dirichlet boundary conditions
 homDOFs = [];
-xiSup = [0 0];   etaSup = [0 0];
-for dirSupp = 1:3
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xisup = [0 0];   etasup = [0 0];
+for dir = 1:3
+    homDOFs = findDofs3D...
+        (homDOFs,xisup,etasup,dir,CP);
 end
-xiSup = [0 0];   etaSup = [1 1];
-for dirSupp = 1:3
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xisup = [1 1];   etasup = [0 0];
+for dir = 1:3
+    homDOFs = findDofs3D...
+        (homDOFs,xisup,etasup,dir,CP);
 end
-xiSup = [1 1];   etaSup = [0 0];
-for dirSupp = 1:3
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xisup = [0 0];   etasup = [1 1];
+for dir = 1:3
+    homDOFs = findDofs3D...
+        (homDOFs,xisup,etasup,dir,CP);
 end
-xiSup = [1 1];   etaSup = [1 1];
-for dirSupp = 1:3
-    homDOFs = findDofs3D(homDOFs,xiSup,etaSup,dirSupp,CP);
+xisup = [1 1];   etasup = [1 1];
+for dir = 1:3
+    homDOFs = findDofs3D...
+        (homDOFs,xisup,etasup,dir,CP);
 end
 
 % Inhomogeneous Dirichlet boundary conditions
@@ -214,47 +289,55 @@ valuesInhomDOFs = [];
 
 % Weak homogeneous Dirichlet boundary conditions
 weakDBC.noCnd = 0;
-% % weakDBC.method = 'nitsche';
-% weakDBC.method = 'penalty';
-% weakDBC.estimationStabilPrm = false;
-% weakDBC.alpha = 1e11;
-% weakDBC.xiExtension = {[0 0] [0 0] [1 1] [1 1]};
-% weakDBC.etaExtension = {[0 0] [1 1] [0 0] [1 1]};
-% weakDBC.int.type = 'default';
-% weakDBC.int.noGPs = 16;
 
 % Embedded cables
 cables.No = 4;
-cables.xiExtension = {[0 0] [0 1] [0 1] [1 1]};
-cables.etaExtension = {[0 1] [0 0] [1 1] [0 1]};
+cables.xiExtension = {[0 1] [0 1] [0 0] [1 1]};
+cables.etaExtension = {[0 0] [1 1] [0 1] [0 1]};
+cables.parameters = {parametersCable parametersCable parametersCable parametersCable};
 cables.int.type = 'default';
-% cables.int.type = 'user';
+% cables1.int.type = 'user';
 cables.int.noGPs = 16;
 
-% load (Neuman boundary conditions)
-FAmp = 0;
-xib = [0 1];   etab = [0 1];   dirForce = 'z';
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Neumann boundary conditions   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% General parameter
+loadAmplitude = 0;
+
+% Patch 1 :
+% _________
+
+FAmp = loadAmplitude;
 NBC.noCnd = 1;
+xib = [0 1];   etab = [0 1];   dirForce = 'z';
 NBC.xiLoadExtension = {xib};
 NBC.etaLoadExtension = {etab};
-windLoad = {@(x,y,z,t) FAmp*sin(2*pi()*x/Length/1e0)*sin(2*pi()*z/Height/1e0)};
-NBC.loadAmplitude(1,1) = windLoad;
+NBC.loadAmplitude = {FAmp};
 NBC.loadDirection = {dirForce};
-NBC.computeLoadVct{1} = 'computeLoadVctAreaIGAThinStructure';
-NBC.isFollower(1,1) = false;
-NBC.isTimeDependent(1,1) = true;
+NBC.computeLoadVct = {'computeLoadVctAreaIGAThinStructure'};
+NBC.isFollower = false;
+NBC.isTimeDependent = true;
 
-%% Create the B-Spline patch array
+%% Fill up the arrays for the patches
 BSplinePatch = fillUpPatch...
-    (analysis,p,Xi,q,Eta,CP,isNURBS,parameters,homDOFs,inhomDOFs,valuesInhomDOFs,...
-    weakDBC,cables,NBC,[],[],[],[],[],int);
+    (analysis,p,Xi,q,Eta,CP,isNURBS,parameters,homDOFs,...
+    inhomDOFs,valuesInhomDOFs,weakDBC,cables,NBC,[],[],[],[],[],int);
 BSplinePatches = {BSplinePatch};
 noPatches = length(BSplinePatches);
-connections = [];
+connections.No = 0;
 
-%% Plot the distribution of the determinant of the geometrical Jacobian
+%% Plot the distribution of the determinant of the geometrical Jacobian for the multipatch geometry
 % figure(graph.index)
-% plot_postprocBSplineSurfaceGeometricJacobian(p,q,Xi,Eta,CP,isNURBS);
+% for iPatches = 1:noPatches
+%     plot_postprocBSplineSurfaceGeometricJacobian(BSplinePatches{iPatches}.p,...
+%         BSplinePatches{iPatches}.q,BSplinePatches{iPatches}.Xi,...
+%         BSplinePatches{iPatches}.Eta,BSplinePatches{iPatches}.CP,...
+%         BSplinePatches{iPatches}.isNURBS);
+%     hold on;
+% end
+% hold off;
 % shading interp;
 % colormap('jet');
 % camlight left;
@@ -262,6 +345,14 @@ connections = [];
 % colorbar;
 % axis equal;
 % graph.index = graph.index + 1;
+
+%% Plot the multipatch geometry with the patch numbering
+% color = [217 218 219]/255;
+% msh.nodes = [];
+% msh.elements = [];
+% labelsEnabled = true;
+% graph.index = plot_referenceConfigIGAMortarMapping...
+%     (BSplinePatches,msh,labelsEnabled,color,graph);
 
 %% Compute the load vector for the visualization of the reference configuration
 for iPatches = 1:noPatches
@@ -283,48 +374,41 @@ end
 
 %% Plot the reference configuration for the multipatch geometry before the form-finding analysis
 color = [217 218 219]/255;
+% color = 'none';
 graph.index = plot_referenceConfigurationIGAThinStructureMultipatches...
     (BSplinePatches,connections,color,graph,'outputEnabled');
-az = -40;
-el = 40;
+az = 260;
+el = 30;
 view(az,el);
-axis off;
-title('');
-camlight left;
+camlight(30,70);
 lighting phong;
 
-%% Nonlinear analysis properties
+%% Load a Finite Element solution
+% nodes = importdata('../../../preComputedData/isogeometricMembraneAnalysis/4ptSail/referenceFEMSolution/nodes');
+% elements = importdata('../../../preComputedData/isogeometricMembraneAnalysis/4ptSail/referenceFEMSolution/elements');
+% displacement = importdata('../../../preComputedData/isogeometricMembraneAnalysis/4ptSail/referenceFEMSolution/displacements');
+% mesh.elements = elements(:,1:3);
+% for iNodes = 1:length(nodes(:,1))
+%     [index,~] = find(displacement(iNodes,1) == nodes(:,1));
+%     nodes(index,2:4) = nodes(index,2:4) + displacement(iNodes,2:4);
+% end
+% mesh.nodes = nodes;
 
-% % number of load steps for the non-linear analysis
-% propNLinearAnalysis.method = 'newtonRapshon';
-% 
-% % number of load steps for the non-linear analysis
-% propNLinearAnalysis.noLoadSteps = 1;
-% 
-% % Assign a tolerance for the Newton iterations
-% propNLinearAnalysis.eps = 1.0e-9;
-% 
-% % Assign the maximum number of iterations
-% propNLinearAnalysis.maxIter = 1000;
+%% Plot the form-found geometry using classical Finite Elements
+% color = [217 218 219]/255;
+% labelsEnabled = false;
+% graph.index = plot_referenceConfigIGAMortarMapping...
+%     (BSplinePatches,mesh,labelsEnabled,color,graph);
+% az = 30;
+% el = 45;
+% view([az el]);
+% camlight(20,40);
+% % camlight left;
+% lighting phong;
 
-%% Solve the system applying nonlinear analysis
-% % plot_IGANLinear = @plot_postprocIGAMembraneNLinear;
-% plot_IGANLinear = '';
-% [dHatNLinear,CPHistory,resHistory,hasConverged,minElArea] = solve_IGAMembraneNLinear...
-%     (BSplinePatch,propNLinearAnalysis,solve_LinearSystem,plot_IGANLinear,...
-%     graph,'outputEnabled');
-% scaling = 1;
-% graph.index = plot_postprocIGAMembraneNLinear...
-%     (BSplinePatch,scaling*dHatNLinear,graph,'outputEnabled');
-% return;
-
-%% Output the initial geometry as a Carat++ input file
-% pathToOutput = '../../../inputCarat/';
-% writeOutMultipatchBSplineSurface4Carat(BSplinePatches,pathToOutput,caseName);
-
-%% Perform a form finding analysis to find the shape of the membrane
-propFormFinding.tolerance = 1e-4;
-propFormFinding.maxNoIter = 100; % 100
+%% Perform a form finding analysis to find the shape of the multipatch membrane with the Nitsche method
+propFormFinding.tolerance = 1e-5;
+propFormFinding.maxNoIter = 1e2;
 [BSplinePatch,CPHistory,resHistory,hasConverged,noIter] = ...
     solve_formFindingIGAMembrane(BSplinePatch,propFormFinding,...
     solve_LinearSystem,'outputEnabled');
@@ -332,46 +416,28 @@ BSplinePatches = {BSplinePatch};
 % save data_FoFiFourPointSailCoarse.mat;
 % return;
 
-%% Compute the load vector for the visualization of the reference configuration
-FGamma = [];
-for iNBC = 1:NBC.noCnd
-    funcHandle = str2func(NBC.computeLoadVct{iNBC});
-    FGamma = funcHandle(FGamma,BSplinePatch,NBC.xiLoadExtension{iNBC},...
-                    NBC.etaLoadExtension{iNBC},...
-                    NBC.loadAmplitude{iNBC},...
-                    NBC.loadDirection{iNBC},...
-                    NBC.isFollower(iNBC,1),0,int,'outputEnabled');
-end
-
-%% Compute the load vector for the visualization of the reference configuration
-for iPatches = 1:noPatches
-    BSplinePatches{iPatches}.FGamma = ...
-        zeros(3*BSplinePatches{iPatches}.noCPs,1);
-%     for iNBC = 1:NBC{iPatches}.noCnd
-%         funcHandle = str2func(NBC{iPatches}.computeLoadVct{iNBC});
-%         BSplinePatches{iPatches}.FGamma = funcHandle...
-%             (BSplinePatches{iPatches}.FGamma,...
-%             BSplinePatches{iPatches},...
-%             NBC{iPatches}.xiLoadExtension{iNBC},...
-%             NBC{iPatches}.etaLoadExtension{iNBC},...
-%             NBC{iPatches}.loadAmplitude{iNBC},...
-%             NBC{iPatches}.loadDirection{iNBC},...
-%             NBC{iPatches}.isFollower(iNBC,1),0,...
-%             BSplinePatches{iPatches}.int,'outputEnabled');
-%     end
-end
+%% Compute the relative error from the reference results
+% referenceData = importdata('../../../preComputedData/isogeometricMembraneAnalysis/referenceSolution_fourPointSailp3q3Xi50Eta50.mat');
+% propReferenceSolution.referenceBSplinePatch = referenceData.BSplinePatch;
+% propNewtonRapshon.eps = 1e-9;
+% propNewtonRapshon.maxIt = 10;
+% propError.noSamplingPoints = 10;
+% propError.tolClose = 1e-4;
+% propInt.type = 'default';
+% [relGeoDomainErrL2,relGeoInterfaceErrL2] = ....
+%     computeDomainAndInterfaceErrorInL2NormMembraneFormFiding...
+%     (BSplinePatches,connections,propReferenceSolution,propNewtonRapshon,...
+%     propError,propInt,'outputEnabled');
 
 %% Plot the reference configuration for the multipatch geometry after the form-finding analysis
 color = [217 218 219]/255;
 % color = 'none';
 graph.index = plot_referenceConfigurationIGAThinStructureMultipatches...
     (BSplinePatches,connections,color,graph,'outputEnabled');
-az = 260; % 160
-el = 30; % 30
+az = 260;
+el = 30;
 view(az,el);
-camlight(30,70); % (30,60)
+camlight(30,70);
 lighting phong;
-axis off;
-title('');
 
-%% End
+%% END

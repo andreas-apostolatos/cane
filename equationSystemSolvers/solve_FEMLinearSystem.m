@@ -1,9 +1,10 @@
-function [u,FComplete,hasConverged,minElSize] = solve_FEMLinearSystem...
-    (analysis,uSaved,uDotSaved,uDDotSaved,mesh,F,bodyForces,parameters,u,...
-    uDot,uDDot,massMtx,dampMtx,computeProblemMatricesSteadyState,...
-    DOFNumbering,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,uMeshALE,...
-    solve_LinearSystem,propTransientAnalysis,propNLinearAnalysis,...
-    int,tab,outMsg)
+function [u, FComplete, hasConverged, minElSize] = solve_FEMLinearSystem...
+    (propAnalysis, uSaved, uDotSaved, uDDotSaved, mesh, F, computeBodyForces, ...
+    propParameters, u, uDot, uDDot, massMtx, dampMtx, precompStiffMtx, ...
+    precomResVct, computeProblemMatricesSteadyState, DOFNumbering, ...
+    freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
+    solve_LinearSystem, propTransientAnalysis, t, propNLinearAnalysis, ...
+    propGaussInt, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -17,7 +18,9 @@ function [u,FComplete,hasConverged,minElSize] = solve_FEMLinearSystem...
 % classical finite element discretization of the underlying field.
 %
 %                             Input :
-%                          analysis : .type : Analysis type
+%                      propAnalysis : Structure containing general 
+%                                     information about the analysis,
+%                                       .type : The analysis type
 %                            uSaved : The discrete solution field of the 
 %                                     previous time step
 %                         uDotSaved : The time derivative of the discrete 
@@ -30,14 +33,20 @@ function [u,FComplete,hasConverged,minElSize] = solve_FEMLinearSystem...
 %                              mesh : Nodes and elements of the underlying 
 %                                     mesh
 %                                 F : The boundary force vector
-%                        bodyForces : The body force vector
-%                        parameters : The parameters of the physical field
+%                 computeBodyForces : The body force vector
+%                    propParameters : The parameters of the physical field
 %                                 u : Initial guess for the primary field 
 %                                     (just an emtpy array must be given to 
 %                                      this function)
 %                              uDot : Initial guess for the time derivative 
 %                                     of the primary field (dummy input for 
 %                                     this function)
+%                           massMtx : Mass matrix
+%                           dampMtx : Damping matrix
+%                   precompStiffMtx : Precomputed part of the stiffness 
+%                                     matrix
+%                      precomResVct : Precomputed part of the residual 
+%                                     vector
 % computeProblemMatricesSteadyState : Function handle for the computation 
 %                                     of the matrices and vectors nessecary 
 %                                     for computing the solution vector
@@ -69,9 +78,11 @@ function [u,FComplete,hasConverged,minElSize] = solve_FEMLinearSystem...
 %                                                   simulation
 %                                           .TEnd : End time of the 
 %                                                   simulation
-%                                             .nT : Number of time steps
+%                                    .noTimeSteps : Number of time steps
 %                                             .dt : Time step (numeric or 
 %                                                   adaptive)
+%                                 t : The current time of the transient 
+%                                     simulation
 %               propNLinearAnalysis : Nonlinear analysis parameters (dummy 
 %                                     input variable for this function)
 %                                       .scheme : The nonlinear solution 
@@ -79,7 +90,7 @@ function [u,FComplete,hasConverged,minElSize] = solve_FEMLinearSystem...
 %                                    .tolerance : The residual tolerance
 %                                      .maxIter : The maximum number of 
 %                                                 nonlinear iterations
-%                               int : On the spatial integration
+%                      propGaussInt : On the spatial integration
 %                                           .type : 'default' or 'manual'
 %                                  .parentElement : 'tri', 'quad', usw.
 %                                         .noXiGP : if .parentElement == 
@@ -129,22 +140,41 @@ loadFactor = 'undefined';
 hasConverged = 'undefined';
 
 %% 1. Compute the linear matrices of the steady-state problem
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Computing the stiffness matrix of the system\n'));
+if isa(computeProblemMatricesSteadyState, 'function_handle')
+    if strcmp(outMsg,'outputEnabled')
+        fprintf(strcat(tab, '>> Computing the stiffness matrix of the system\n'));
+    end
+    [stiffMtx, resVct, minElSize] = computeProblemMatricesSteadyState...
+        (propAnalysis, u, uSaved, uDot, uDotSaved, uMeshALE, ...
+        precompStiffMtx, precomResVct, DOFNumbering, mesh, F, ...
+        loadFactor, computeBodyForces, propTransientAnalysis, t, ...
+        propParameters, propGaussInt);
+    if ~ischar(precompStiffMtx)
+        stiffMtx = stiffMtx + precompStiffMtx;
+    end
+    if ~ischar(precomResVct)
+        resVct = resVct + precomResVct;
+    end
+else
+    minElSize = 'undefined';
+    if ~ischar(precompStiffMtx)
+        stiffMtx = precompStiffMtx;
+    end
+    if ~ischar(precomResVct)
+        resVct = precomResVct;
+    end
 end
-[stiffMtx,resVct,minElSize] = computeProblemMatricesSteadyState(analysis,u,uSaved,uDot,uDotSaved, ...
-    DOFNumbering,mesh,F,loadFactor,bodyForces,propTransientAnalysis,parameters,int);
 
 %% 2. Compute the stiffness matrix and the residual vector for the transient problem
-if isfield(propTransientAnalysis,'timeDependence')
-    if ~strcmp(propTransientAnalysis.timeDependence,'STEADY-STATE')
-        if isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
-            ~propTransientAnalysis.isStaticStep
-            [stiffMtx,resVct] = propTransientAnalysis.computeProblemMtrcsTransient...
-                (u,uSaved,uDot,uDotSaved,uDDot,uDDotSaved,massMtx,dampMtx,...
-                stiffMtx,resVct,propTransientAnalysis);
-        elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient,'function_handle') && ...
-                ~(strcmp(propTransientAnalysis.timeDependence,'steadyState') || strcmp(propTransientAnalysis.timeDependence,'pseudotransient'))
+if isfield(propTransientAnalysis, 'timeDependence')
+    if ~strcmp(propTransientAnalysis.timeDependence, 'steadyState')
+        if isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle')
+            [stiffMtx, resVct] = ...
+                propTransientAnalysis.computeProblemMtrcsTransient...
+                (u, uSaved, uDot, uDotSaved, uDDot, uDDotSaved, massMtx, ...
+                dampMtx, stiffMtx, resVct, propTransientAnalysis);
+        elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle') && ...
+                ~(strcmp(propTransientAnalysis.timeDependence, 'steadyState') || strcmp(propTransientAnalysis.timeDependence, 'pseudotransient'))
             error('Variable propTransientAnalysis.computeProblemMtrcsTransient is undefined but the simulation is transient')
         end
     end
@@ -152,15 +182,15 @@ end
 
 %% 3. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
 if norm(valuesInhomDOFs) ~= 0
-    resVct = resVct - stiffMtx(:,inhomDOFs)*valuesInhomDOFs';
+    resVct = resVct - stiffMtx(:, inhomDOFs)*valuesInhomDOFs';
 end
 
 %% 4. Solve the linear equation system
 if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Solving the linear system of %d equations\n'),length(freeDOFs));
+    fprintf(strcat(tab, '>> Solving the linear system of %d equations\n'), length(freeDOFs));
 end
-[uRed,hasLinearSystemConverged] = ...
-    solve_LinearSystem(stiffMtx(freeDOFs,freeDOFs),resVct(freeDOFs),u(freeDOFs));
+[uRed, hasLinearSystemConverged] = ...
+    solve_LinearSystem(stiffMtx(freeDOFs, freeDOFs),resVct(freeDOFs), u(freeDOFs));
 if ~hasLinearSystemConverged
     error('Linear equation solver has not converged');
 end
@@ -171,8 +201,8 @@ u(homDOFs) = 0;
 u(inhomDOFs) = valuesInhomDOFs;
 
 %% 6. Compute the complete flux vector
-if strcmp(outMsg,'outputEnabled')
-    fprintf(strcat(tab,'>> Computing the complete force vector\n'));
+if strcmp(outMsg, 'outputEnabled')
+    fprintf(strcat(tab, '>> Computing the complete force vector\n'));
 end
 FComplete = stiffMtx*u;
 

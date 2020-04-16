@@ -60,21 +60,26 @@ pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 caseName = 'NACA2412_AoA5_CSD';
 
 % Parse the data from the GiD input file
-[strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics,propGaussInt] = ...
-    parse_StructuralModelFromGid(pathToCase,caseName,'outputEnabled');
+[strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
+    parameters, propNLinearAnalysis, propStrDynamics, propGaussInt] = ...
+    parse_StructuralModelFromGid(pathToCase, caseName, 'outputEnabled');
 
 %% GUI
 
 % On the body forces
-bodyForces = @computeConstantVerticalStructureBodyForceVct;
-
-% Initialize graphics index
-graph.index = 1;
+computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Choose solver for the linear equation system
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
+
+% Output properties
+propVTK.isOutput = true;
+propVTK.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
+propVTK.VTKResultFile = 'undefined';
+
+% Initialize graphics index
+graph.index = 1;
 
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
@@ -82,12 +87,17 @@ pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 %% Visualization of the configuration
 % graph.index = plot_referenceConfigurationFEMPlateInMembraneAction(strMsh,analysis,F,homDBC,graph,'outputEnabled');
 
+%% Initialize solution
+numNodes = length(strMsh.nodes(:,1));
+numDOFs = 2*numNodes;
+dHat = zeros(numDOFs,1);
+
 %% Solve the plate in membrane action problem
-[dHat,FComplete,minElSize] = ...
+[dHat, FComplete, minElSize] = ...
     solve_FEMPlateInMembraneActionNLinear...
-    (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
-    parameters,solve_LinearSystem,propNLinearAnalysis,propGaussInt,caseName,...
-    pathToOutput,'outputEnabled');
+    (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
+    computeBodyForces, parameters, solve_LinearSystem, propNLinearAnalysis, ...
+    propGaussInt, propVTK, caseName, pathToOutput, 'outputEnabled');
 
 %% Postprocessing
 % graph.visualization.geometry = 'reference_and_current';

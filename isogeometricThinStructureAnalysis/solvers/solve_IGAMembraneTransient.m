@@ -1,8 +1,8 @@
-function [dHatHistory,resHistory,BSplinePatches,minElAreaSize] = ...
+function [dHatHistory, resHistory, BSplinePatches, minElAreaSize] = ...
     solve_IGAMembraneTransient...
-    (BSplinePatches,computeInitCnds,propNLinearAnalysis,propStrDynamics,...
-    propPostproc,solve_LinearSystem,propOutput,pathToOutput,caseName,...
-    propEmpireCoSimulation,outMsg)
+    (BSplinePatches, computeInitCnds, propNLinearAnalysis, ...
+    propStrDynamics, propPostproc, solve_LinearSystem, propOutput, ...
+    pathToOutput, caseName, propEmpireCoSimulation, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -152,17 +152,17 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('__________________________________________________________________\n');
     fprintf('##################################################################\n');
     fprintf('Transient analysis for an isogeometric membrane has been initiated\n\n');
-    if isfield(BSplinePatches{1},'weakDBC')
+    if isfield(BSplinePatches{1}, 'weakDBC')
         if BSplinePatches{1}.weakDBC.noCnd > 0
-            fprintf('Weak boundary conditions using the %s method are applied \n',BSplinePatches{1}.weakDBC.method);
-            fprintf('over %d boundaries of the B-Spline patch:\n',BSplinePatches{1}.weakDBC.noCnd);
-            if strcmp(BSplinePatches{1}.weakDBC.method,'Nitsche')
+            fprintf('Weak boundary conditions using the %s method are applied \n', BSplinePatches{1}.weakDBC.method);
+            fprintf('over %d boundaries of the B-Spline patch:\n', BSplinePatches{1}.weakDBC.noCnd);
+            if strcmp(BSplinePatches{1}.weakDBC.method, 'Nitsche')
                 if BSplinePatches{1}.weakDBC.estimationStabilPrm == true
                     fprintf('Automatic estimation of the stabilization parameter is enabled \n');
                 end
-                if isfield(BSplinePatches{1}.weakDBC,'computeConstMtx')
-                    if isfield(BSplinePatches{1}.weakDBC,'alpha')
-                        fprintf('Manual stabilization parameter chosen as %d\n',BSplinePatches{1}.weakDBC.alpha)
+                if isfield(BSplinePatches{1}.weakDBC, 'computeConstMtx')
+                    if isfield(BSplinePatches{1}.weakDBC, 'alpha')
+                        fprintf('Manual stabilization parameter chosen as %d\n', BSplinePatches{1}.weakDBC.alpha)
                     else
                         fprintf('Manual stabilization parameter weakDBC.alpha needs to be assigned\n');
                     end
@@ -171,28 +171,28 @@ if strcmp(outMsg,'outputEnabled')
             fprintf('\n');
         end
     end
-    if strcmp(propNLinearAnalysis.method,'undefined')
+    if strcmp(propNLinearAnalysis.method, 'undefined')
         fprintf('Geometrically linear analysis chosen \n');
     else
-        fprintf('Geometrically nonlinear analysis using the %s method \n',propNLinearAnalysis.method);
+        fprintf('Geometrically nonlinear analysis using the %s method \n', ...
+            propNLinearAnalysis.method);
         fprintf('chosen:\n');
     end
-    fprintf('Number of load steps = %d \n',propNLinearAnalysis.noLoadSteps);
-    fprintf('Residual tolerance = %d \n',propNLinearAnalysis.eps);
-    fprintf('Maximum number of nonlinear iterations = %d \n\n',propNLinearAnalysis.maxIter);
+    fprintf('Number of load steps = %d \n', propNLinearAnalysis.noLoadSteps);
+    fprintf('Residual tolerance = %d \n', propNLinearAnalysis.eps);
+    fprintf('Maximum number of nonlinear iterations = %d \n\n', propNLinearAnalysis.maxIter);
     if propEmpireCoSimulation.isCoSimulation
         fprintf('Co-simulation through Empire \n');
         fprintf('---------------------------- \n\n');
         if isempty(propEmpireCoSimulation.strMatlabXml)
             error('No xml file for the Matlab code is provided');
         else
-            fprintf('Matlab xml file for connection to Empire: %s.xml\n',propEmpireCoSimulation.strMatlabXml);
+            fprintf('Matlab xml file for connection to Empire: %s.xml\n', ...
+                propEmpireCoSimulation.strMatlabXml);
         end
         fprintf('\n');
     end
     fprintf('__________________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -208,11 +208,13 @@ else
     title = 'Geometrically linear transient isogeometric membrane analysis';
 end
 
-% Initialize the dummy arrays
+% Assign dummy variables
 propCoupling = 'undefined';
-nodesALE = 'undefined';
+propNodesALE = 'undefined';
 connections = 'undefined';
 computeUpdatedMesh = 'undefined';
+updateInhomDOFs = 'undefined';
+propIDBC = 'undefined';
 
 % Flag on whether the reference configuration is updated
 isReferenceUpdated = false;
@@ -220,7 +222,7 @@ isReferenceUpdated = false;
 % On the application of weak Dirichlet boundary conditions
 isWeakDBC = false;
 if ~isempty(BSplinePatches{1}.weakDBC)
-    if isfield(BSplinePatches{1}.weakDBC,'noCnd')
+    if isfield(BSplinePatches{1}.weakDBC, 'noCnd')
         if BSplinePatches{1}.weakDBC.noCnd > 0
             isWeakDBC = true;
         end
@@ -249,19 +251,19 @@ computeUpdatedGeometry = @computeUpdatedGeometryIGAThinStructureMultipatches;
 % Compute constant problem matrices in case of the application of weak
 % boundary conditions
 if isWeakDBC
-    if isfield(BSplinePatches{1}.weakDBC,'method')
-        if strcmp(BSplinePatches{1}.weakDBC.method,'penalty') || ...
-                (strcmp(BSplinePatches{1}.weakDBC.method,'nitsche') && ...
+    if isfield(BSplinePatches{1}.weakDBC, 'method')
+        if strcmp(BSplinePatches{1}.weakDBC.method, 'penalty') || ...
+                (strcmp(BSplinePatches{1}.weakDBC.method, 'nitsche') && ...
                 ~BSplinePatches{1}.weakDBC.estimationStabilPrm)
             computeConstantProblemMatrices = @computeWeakDBCMtxPenaltyIGAMembrane;
-        elseif strcmp(BSplinePatches{1}.weakDBC.method,'lagrangeMultipliers')
+        elseif strcmp(BSplinePatches{1}.weakDBC.method, 'lagrangeMultipliers')
             computeConstantProblemMatrices = @computeWeakDBCMtxLagrangeMultipliersIGAMembrane;
-        elseif strcmp(BSplinePatches{1}.weakDBC.method,'nitsche') && ...
+        elseif strcmp(BSplinePatches{1}.weakDBC.method, 'nitsche') && ...
                 BSplinePatches{1}.weakDBC.estimationStabilPrm
             computeConstantProblemMatrices = 'undefined';
-        elseif ~strcmp(BSplinePatches{1}.weakDBC.method,'penalty') && ...
-                ~strcmp(BSplinePatches{1}.weakDBC.method,'lagrangeMultipliers') && ...
-                ~strcmp(BSplinePatches{1}.weakDBC.method,'nitsche')
+        elseif ~strcmp(BSplinePatches{1}.weakDBC.method, 'penalty') && ...
+                ~strcmp(BSplinePatches{1}.weakDBC.method, 'lagrangeMultipliers') && ...
+                ~strcmp(BSplinePatches{1}.weakDBC.method, 'nitsche')
             error('Define a valid method in BSplinePatches{1}.weakDBC.method');
         end
     else
@@ -276,7 +278,7 @@ end
 % Assign an EFT for each Lagrange Multipliers field
 noDOFsPatchLM = 0;
 if isWeakDBC
-    if strcmp(BSplinePatches{1}.weakDBC.method,'lagrangeMultipliers')
+    if strcmp(BSplinePatches{1}.weakDBC.method, 'lagrangeMultipliers')
         for iCnd = 1:BSplinePatches{1}.weakDBC.noCnd
             noDOFsPatchLMCnd = 3*length(BSplinePatches{1}.weakDBC.lambda{iCnd}.CP(:,1));
             noDOFsPatchLM = noDOFsPatchLM + noDOFsPatchLMCnd;
@@ -303,20 +305,20 @@ BSplinePatches{1}.EFTPatches = 1:BSplinePatches{1}.noDOFs;
 
 % Create a DOF numbering for each Lagrange Multipliers field of the patch
 if isWeakDBC
-    if strcmp(BSplinePatches{1}.weakDBC.method,'lagrangeMultipliers')
+    if strcmp(BSplinePatches{1}.weakDBC.method, 'lagrangeMultipliers')
         for iCnd = 1:BSplinePatches{1}.weakDBC.noCnd
             % Get the number of Control Points
             nxiLambda = length(BSplinePatches{1}.weakDBC.lambda{iCnd}.Xi);
 
             % Initialize the field of the DOF numbering
-            BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering = zeros(nxiLambda,3);
+            BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering = zeros(nxiLambda, 3);
 
              % Compute the entries of the DOF numbering array
             k = 1;
             for cpi = 1:nxiLambda
-                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,1) = k;
-                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,2) = k + 1;
-                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi,3) = k + 2;
+                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 1) = k;
+                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 2) = k + 1;
+                BSplinePatches{1}.weakDBC.lambda{iCnd}.DOFNumbering(cpi, 3) = k + 2;
 
                 % Update counter
                 k = k + 3;
@@ -337,41 +339,38 @@ homDOFs = BSplinePatches{1}.homDOFs;
 
 % Clear the inhomogeneous Dirichlet boundary conditions from the
 % homogeneous
-homDOFs(ismember(homDOFs,inhomDOFs)) = [];
+homDOFs(ismember(homDOFs, inhomDOFs)) = [];
 
 % Find the numbering of the free DOFs
-freeDOFs = zeros(noDOFs,1);
+freeDOFs = zeros(noDOFs, 1);
 for i = 1:noDOFs
-    freeDOFs(i,1) = i;
+    freeDOFs(i, 1) = i;
 end
-freeDOFs(ismember(freeDOFs,homDOFs)) = [];
-freeDOFs(ismember(freeDOFs,inhomDOFs)) = [];
+freeDOFs(ismember(freeDOFs, homDOFs)) = [];
+freeDOFs(ismember(freeDOFs, inhomDOFs)) = [];
 
 % Master and slave DOFs
 masterDOFs = [];
 slaveDOFs = [];
 
 %% 4. Solve the transient problem
-[dHatHistory,resHistory,BSplinePatches,~,minElAreaSize] = ...
-    solve_IGATransientAnalysis...
-    (analysis,BSplinePatches,connections,freeDOFs,homDOFs,inhomDOFs,...
-    valuesInhomDOFs,masterDOFs,slaveDOFs,nodesALE,computeInitCnds,...
-    @solve_IGANLinearSystem,computeConstantProblemMatrices,...
-    computeMassMtx,computeProblemMtrcsSteadyState,computeUpdatedMesh,...
-    computeUpdatedGeometry,solve_LinearSystem,propCoupling,...
-    propStrDynamics,propNLinearAnalysis,propPostproc,caseName,...
-    pathToOutput,title,propOutput,isReferenceUpdated,...
-    propEmpireCoSimulation,tab,outMsg);
+[dHatHistory, resHistory, BSplinePatches, ~, minElAreaSize] = ...
+    solve_IGATransientAnalysis ...
+    (analysis,BSplinePatches, connections, freeDOFs, homDOFs, inhomDOFs, ...
+    valuesInhomDOFs, updateInhomDOFs, masterDOFs, slaveDOFs, propNodesALE, ...
+    computeInitCnds, @solve_IGANLinearSystem,computeConstantProblemMatrices, ...
+    computeMassMtx, computeProblemMtrcsSteadyState, computeUpdatedMesh, ...
+    computeUpdatedGeometry, solve_LinearSystem, propCoupling, ...
+    propStrDynamics, propNLinearAnalysis, propPostproc, propIDBC, ...
+    caseName, pathToOutput, title, propOutput, isReferenceUpdated, ...
+    propEmpireCoSimulation, tab, outMsg);
 
 %% 5. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
     fprintf('Transient nonlinear analysis took %.2d seconds \n\n',computationalTime);
     fprintf('________________Transient Nonlinear Analysis Ended________________\n');
     fprintf('##################################################################\n\n\n');
 end
 
 end
-

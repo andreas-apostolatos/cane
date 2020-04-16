@@ -1,6 +1,8 @@
-function [K,F,minElEdgeSize] = computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed...
-    (analysis,u,uSaved,uDot,uDotSaved,DOFNumbering,strMsh,F,loadFactor,bodyForces,...
-    strDynamics,parameters,int)
+function [K, F, minElEdgeSize] = ...
+    computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed...
+    (propAnalysis, u, uSaved, uDot, uDotSaved, uMeshALE, precompStiffMtx, ...
+    precomResVct, DOFNumbering, strMsh, F, loadFactor, computeBodyForces, ...
+    propStrDynamics, t, propParameters, propInt)
 %% Licensing
 %
 % License:         BSD License
@@ -14,29 +16,39 @@ function [K,F,minElEdgeSize] = computeStiffMtxAndLoadVctFEMPlateInMembraneAction
 % plate in membrane action analysis using both linear triangles and
 % quadrilaterals for the discretization of the meduim.
 %
-%           Input :
-%        analysis : .type : Analysis type
-%          uSaved : The discrete solution field of the previous 
-%                   time step
-%       uDotSaved : The time derivative of the discrete solution 
-%                   field of the previous time step
-%      uDDotSaved : The second order time derivative of the 
-%                   discrete solution field of the previous time (dummy 
-%                   variable for this function)
-%          strMsh : Nodes and elements in the mesh
-%               F : The global load vector corresponding to surface
-%                   tractions
-%      loadFactor : Load factor, nessecary for nonlinear computations 
-%                   (dummy variable for this function)
-%      bodyForces : Function handle to body force vector computation
-%      parameters : Problem specific technical parameters
-%             int : On the quadrature (numnerical integration)
+%             Input :
+%      propAnalysis : Structure containing general information on the 
+%                     analysis,
+%                       .type : Analysis type
+%                 u : The solution of the previous iteration
+%            uSaved : The discrete solution field of the previous 
+%                     time step
+%              uDot : The time derivative of the solution of the previous 
+%                     iteration
+%         uDotSaved : The time derivative of the discrete solution 
+%                     field of the previous time step
+%          uMeshALE : Dummy variable for this function
+%   precompStiffMtx : Constant part of the stiffness matrix which can be
+%                     precomputed
+%      precomResVct : Constant part of the residual vector which can be
+%                     precomputed
+%      DOFNumbering : Dummy variable for this function
+%            strMsh : Nodes and elements in the mesh
+%                 F : The global load vector corresponding to surface
+%                     tractions
+%        loadFactor : Load factor, nessecary for nonlinear computations 
+%                     (dummy variable for this function)
+% computeBodyForces : Function handle to body force vector computation
+%   propStrDynamics : Dummy variable for this function
+%                 t : Time instance
+%    propParameters : Problem specific technical parameters
+%           propInt : On the numerical quadrature
 %
-%          Output :
-%               K : The master stiffness matrix of the system
-%               F : The updated load vector accounting also for the body
-%                   forces
-%   minElEdgeSize : The minimum element edge size in the mesh
+%            Output :
+%                 K : The master stiffness matrix of the system
+%                 F : The updated load vector accounting also for the body
+%                     forces
+%     minElEdgeSize : The minimum element edge size in the mesh
 %
 % Function layout :
 %
@@ -103,16 +115,16 @@ elseif strcmp(elementType,'bilinearQuadrilateral')
 end
 
 % Compute the material matrix for the given problem
-if strcmp(analysis.type,'planeStress')
-    preFactor = parameters.E/(1-parameters.nue^2);
-    C = preFactor*[1             parameters.nue 0
-                   parameters.nue 1              0
-                   0              0             (1-parameters.nue)/2];
-elseif strcmp(analysis.type,'planeStrain')
-    preFactor = parameters.E*(1-parameters.nue)/(1+parameters.nue)/(1-2*parameters.nue);
-    C = preFactor*[1                                 parameters.nue/(1-parameters.nue) 0
-                   parameters.nue/(1-parameters.nue) 1                                 0
-                   0                                 0                                 (1-2*parameters.nue)/2/(1-parameters.nue)];
+if strcmp(propAnalysis.type,'planeStress')
+    preFactor = propParameters.E/(1-propParameters.nue^2);
+    C = preFactor*[1             propParameters.nue 0
+                   propParameters.nue 1              0
+                   0              0             (1-propParameters.nue)/2];
+elseif strcmp(propAnalysis.type,'planeStrain')
+    preFactor = propParameters.E*(1-propParameters.nue)/(1+propParameters.nue)/(1-2*propParameters.nue);
+    C = preFactor*[1                                 propParameters.nue/(1-propParameters.nue) 0
+                   propParameters.nue/(1-propParameters.nue) 1                                 0
+                   0                                 0                                 (1-2*propParameters.nue)/2/(1-propParameters.nue)];
 end
 
 % Initialize output array
@@ -121,18 +133,18 @@ K = zeros(noDOFs,noDOFs);
 %% 1. Choose the numnerical quadrature rule
 
 % Choose the integration rule for a triangle element
-if strcmp(int.type,'default')
+if strcmp(propInt.type,'default')
     noGPTriangle = 1;
-elseif strcmp(int.type,'user')
-    noGPTriangle = int.noGP;
+elseif strcmp(propInt.type,'user')
+    noGPTriangle = propInt.noGP;
 end
 [GPTriangle,GWTriangle] = getGaussRuleOnCanonicalTriangle(noGPTriangle);
 
 % Choose the integration rule for a quadrilateral element
-if strcmp(int.type,'default')
+if strcmp(propInt.type,'default')
     noGPQuadrilateral = 2;
-elseif strcmp(int.type,'user')
-    noGPQuadrilateral = int.nGP;
+elseif strcmp(propInt.type,'user')
+    noGPQuadrilateral = propInt.nGP;
 end
 [GPQuad,GWQuad] = getGaussPointsAndWeightsOverUnitDomain...
     (noGPQuadrilateral);

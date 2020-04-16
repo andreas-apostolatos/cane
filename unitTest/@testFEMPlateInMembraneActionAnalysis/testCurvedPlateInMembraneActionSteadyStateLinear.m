@@ -31,25 +31,30 @@ function testCurvedPlateInMembraneActionSteadyStateLinear(testCase)
 
 % Absolute tolerances
 absTol = 1e-15;
+absTol2 = 1e-15*1e2;
+absTol4 = absTol2*1e2;
 
 %% 1. Parse data from GiD input file
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 caseName = 'unitTest_curvedPlateTipShearPlaneStress';
-[strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,analysis,parameters,...
-    propNLinearAnalysis,propStrDynamics] = ...
-    parse_StructuralModelFromGid(pathToCase,caseName,'');
+[strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
+    parameters, propNLinearAnalysis, ~, ~, ~] = ...
+    parse_StructuralModelFromGid(pathToCase, caseName, '');
 
 %% 2. GUI
 
-% Analysis
-analysis.type = 'planeStress';
+% Analysis type
+propAnalysis.type = 'planeStress';
 
 % On the body forces
-bodyForces = @computeConstantVecrticalBodyForceVct;
+computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Choose equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = solve_LinearSystemGMResWithIncompleteLUPreconditioning;
+
+% Output properties
+propOutput.isOutput = false;
 
 % Choose computation of the stiffness matrix
 computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
@@ -57,20 +62,22 @@ computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
 
 % On the numerical integration
 % 'default', 'user'
-gaussInt.type = 'default';
-
-% On whether the case is a unit test
-isUnitTest = true;
+propGaussInt.type = 'default';
 
 % Path to output
 pathToOutput = 'undefined';
 
+%% Initialize solution
+numNodes = length(strMsh.nodes(:,1));
+numDOFs = 2*numNodes;
+dHat = zeros(numDOFs,1);
+
 %% 3. Solve the plate in membrane action problem
-[dHat,FComplete,minElSize] = solve_FEMPlateInMembraneAction...
-    (analysis,strMsh,homDBC,inhomDBC,valuesInhomDBC,NBC,bodyForces,...
-    parameters,computeStiffMtxLoadVct,solve_LinearSystem,...
-    propNLinearAnalysis,propStrDynamics,gaussInt,caseName,pathToOutput,...
-    isUnitTest,'');
+[dHat, FComplete, minElSize] = solve_FEMPlateInMembraneAction ...
+    (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    propNBC, computeBodyForces, parameters, computeStiffMtxLoadVct, ...
+    solve_LinearSystem, propNLinearAnalysis, propGaussInt, propOutput, ...
+    caseName, pathToOutput, '');
 
 %% 4. Define the expected solution
 
@@ -84,8 +91,8 @@ expSolForceVct = [-0.350965271696548;0.0140276240032068;2.77555756156289e-17;3.4
 expSolMinElSize = 0.020545851162705;
 
 %% 5. Verify the results
-testCase.verifyEqual(dHat,expSolDisp,'AbsTol',absTol);
-testCase.verifyEqual(FComplete,expSolForceVct,'AbsTol',absTol);
+testCase.verifyEqual(dHat,expSolDisp,'AbsTol',absTol2);
+testCase.verifyEqual(FComplete,expSolForceVct,'AbsTol',absTol4);
 testCase.verifyEqual(minElSize,expSolMinElSize,'AbsTol',absTol);
 
 end

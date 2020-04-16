@@ -16522,7 +16522,6 @@ FLUID_DIRICHLET_NODES
     8229 0.2  0.0  NaN  NaN  
     8230 0.2  0.0  NaN  NaN  
 
-FLUID_DIRICHLET_ALE_NODES
 FLUID_POST_PROC_NODES
     6524 body1 computeResultingTotalForceOnSelectedDomain
     6525 body1 computeResultingTotalForceOnSelectedDomain

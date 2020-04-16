@@ -1,5 +1,5 @@
-function [dHat,FComplete,minElSize] = solve_IGAKirchhoffLoveShellLinear...
-    (BSplinePatch,solve_LinearSystem,outMsg)
+function [dHat, FComplete, minElSize] = solve_IGAKirchhoffLoveShellLinear ...
+    (BSplinePatch, solve_LinearSystem, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -38,14 +38,12 @@ function [dHat,FComplete,minElSize] = solve_IGAKirchhoffLoveShellLinear...
 % 2. Appendix
 %
 %% Function main body
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('_________________________________________________________\n');
     fprintf('#########################################################\n');
     fprintf('Static linear analysis for an isogeometric Kirchhoff-Love\n');
     fprintf('shell has been initiated\n');
     fprintf('_________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -54,7 +52,7 @@ end
 % Define analysis
 analysis.type = 'isogeometricKirchhoffLoveShellAnalysis';
 
-% Initialize the dummy arrays
+% Assign dummy variables
 dHatSaved = 'undefined';
 dHatDotSaved = 'undefined';
 dHatDDotSaved = 'undefined';
@@ -67,9 +65,14 @@ KConstant = 'undefined';
 computeUpdatedGeometry = 'undefined';
 masterDOFs = 'undefined';
 slaveDOFs = 'undefined';
-plot_IGANLinear = 'undefined';
-graph = 'undefined';
 massMtx = 'undefined';
+dampMtx = 'undefined';
+updateDirichletBCs = 'undefined';
+propIDBC = 'undefined';
+isReferenceUpdated = 'undefined';
+isCosimulationWithEmpire = 'undefined';
+graph = 'undefined';
+plot_IGANLinear = 'undefined';
 
 % The applied analysis is steady-state
 propTransientAnalysis.timeDependence = 'steadyState';
@@ -84,17 +87,17 @@ tab = '\t';
 CP = BSplinePatch.CP;
 
 % Number of Control Points in xi,eta-direction
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+numCPs_xi = length(CP(:, 1, 1));
+numCPs_eta = length(CP(1, :, 1));
 
 % Create an element freedom table for the patch in the array
-BSplinePatch.DOFNumbering = zeros(nxi,neta,3);
+BSplinePatch.DOFNumbering = zeros(numCPs_xi, numCPs_eta, 3);
 k = 1;
-for cpj = 1:neta
-    for cpi = 1:nxi
-        BSplinePatch.DOFNumbering(cpi,cpj,1) = k;
-        BSplinePatch.DOFNumbering(cpi,cpj,2) = k + 1;
-        BSplinePatch.DOFNumbering(cpi,cpj,3) = k + 2;
+for cpj = 1:numCPs_eta
+    for cpi = 1:numCPs_xi
+        BSplinePatch.DOFNumbering(cpi, cpj, 1) = k;
+        BSplinePatch.DOFNumbering(cpi, cpj, 2) = k + 1;
+        BSplinePatch.DOFNumbering(cpi, cpj, 3) = k + 2;
 
         % Update counter
         k = k + 3;
@@ -109,15 +112,15 @@ BSplinePatch.EFTPatches = 1:3*BSplinePatch.noCPs;
 BSplinePatches = {BSplinePatch};
 
 % Get number of DOFs
-noDOFs = 3*nxi*neta;
+numDOFs = 3*numCPs_xi*numCPs_eta;
 
 % Find the numbering of the DOFs where homogeneous Dirichlet conditions are
 % prescribed
 homDOFs = BSplinePatch.homDOFs;
 
 % Find the numbering of the free DOFs
-freeDOFs = zeros(noDOFs,1);
-for i=1:noDOFs
+freeDOFs = zeros(numDOFs,1);
+for i=1:numDOFs
     freeDOFs(i,1) = i;
 end
 freeDOFs(ismember(freeDOFs,homDOFs)) = [];
@@ -127,23 +130,24 @@ inhomDOFs = BSplinePatch.inhomDOFs;
 valuesInhomDOFs = BSplinePatch.valuesInhomDOFs;
 
 % Initialize the displacement field
-dHat = zeros(noDOFs,1);
+dHat = zeros(numDOFs, 1);
 
 %% 1. Solve the linear system
-[dHat,~,~,~,FComplete,~,~,~,~,minElSize] = solve_IGALinearSystem...
-    (analysis,dHatSaved,dHatDotSaved,dHatDDotSaved,BSplinePatches,connections,...
-    dHat,dHatDot,dHatDDot,KConstant,massMtx,@computeStiffMtxAndLoadVctIGAKirchhoffLoveShellLinear,...
-    computeUpdatedGeometry,freeDOFs,homDOFs,inhomDOFs,valuesInhomDOFs,...
-    masterDOFs,slaveDOFs,solve_LinearSystem,t,propCoupling,...
-    propTransientAnalysis,propNLinearAnalysis,plot_IGANLinear,tab,...
-    graph,outMsg);
+[dHat, ~, ~, ~, FComplete, ~, ~, ~, ~, ~, minElSize] = ...
+    solve_IGALinearSystem ...
+    (analysis, dHatSaved, dHatDotSaved, dHatDDotSaved, BSplinePatches, ...
+    connections, dHat, dHatDot, dHatDDot, KConstant, massMtx, dampMtx, ...
+    @computeStiffMtxAndLoadVctIGAKirchhoffLoveShellLinear, ...
+    computeUpdatedGeometry, freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    updateDirichletBCs, masterDOFs, slaveDOFs, solve_LinearSystem, t, ...
+    propCoupling, propTransientAnalysis, propNLinearAnalysis, propIDBC, ...
+    plot_IGANLinear, isReferenceUpdated, isCosimulationWithEmpire, ...
+    tab, graph, outMsg);
 
 %% 2. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
-    fprintf('Static linear analysis took %.2d seconds \n\n',computationalTime);
+    fprintf('Static linear analysis took %.2d seconds \n\n', computationalTime);
     fprintf('______________Static Linear Analysis Ended_______________\n');
     fprintf('#########################################################\n\n\n');
 end

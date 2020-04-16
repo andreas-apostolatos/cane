@@ -1,1 +1,1 @@
-~/../../usr/local/MATLAB/R2018b/bin/matlab -r main_runUnitTests -nodesktop -nojvm &
+~/../../usr/local/MATLAB/R2020a/bin/matlab -r main_runUnitTests -nodesktop -nojvm &
