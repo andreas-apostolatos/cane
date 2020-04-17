@@ -162,7 +162,7 @@ computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
 %% Postporcessing
 
 % Compute the forces acting on the domain of interest
-if isstruct(propPostproc)
+if isstruct(propPostproc) && ~ischar(FHistory)
     forcesOnCylinder = zeros(propFldDynamics.noTimeSteps + 1, 2);
     for iTimeStep = 1:propFldDynamics.noTimeSteps + 1
         propPostproc = computePostProc ...

@@ -103,10 +103,10 @@ end
 % Define the expected solution in terms of the forces acting on the
 % cylinder
 expSolForcesOnCylinder = [ 0                   0
-                          -0.015679093695312  -0.000045980271542
-                           0.027009475069121  -0.000023780449891
-                           0.001235463820661   0.000007137558898
-                          -0.019415271861986  -0.000125997913955];
+                          -0.016293801990609  -0.000024126839194
+                           0.029057899770606  -0.000043536620584
+                           0.000494914703848   0.000052630463257
+                          -0.020386818589783  -0.000056030925075];
                       
 % Define the expected solution in terms of the minimum element area size
 expSolMinElSize = 0.002;

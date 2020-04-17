@@ -1,12 +1,12 @@
-BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/gid_cases/unitTest_ALE.gid/unitTest_ALE.vv
-   x -0.208413258194923401 2.34392595291137695
-   y 0.952393770217895508 -0.733851730823516846
+BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/unitTest_ALE.gid/unitTest_ALE.vv
+   x -0.438442081212997437 2.43108391761779785
+   y 1.09569203853607178 -0.800108075141906738
    z -3.64828729629516602 3.64828729629516602
    e 1.21609580516815186
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 1.09725213050842285 0.204407468438148499 0
+   c 1.09733343124389648 0.204413652420043945 0
    pd 0
    pno 0
    pfo 0
@@ -29,7 +29,7 @@ BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/gid_cases/unitTest_ALE.
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/gid_cases/unitTest_ALE.gid/unitTest_ALE.vv
+EndZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/unitTest_ALE.gid/unitTest_ALE.vv
 
 BeginMirror
    Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
