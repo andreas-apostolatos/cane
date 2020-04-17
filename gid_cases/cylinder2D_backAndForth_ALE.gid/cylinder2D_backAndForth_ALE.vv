@@ -1,6 +1,6 @@
-BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/gid_cases/cylinder2D_backAndForth_ALE.gid/cylinder2D_backAndForth_ALE.vv
-   x -0.265936702489852905 2.34900498390197754
-   y 1.0849069356918335 -0.642698049545288086
+BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/cylinder2D_backAndForth_ALE.gid/cylinder2D_backAndForth_ALE.vv
+   x -0.297600984573364258 2.38066935539245605
+   y 1.10582637786865234 -0.663617491722106934
    z -3.64828729629516602 3.64828729629516602
    e 1.21609580516815186
    v 0 0 0
@@ -12,7 +12,7 @@ BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/gid_cases/cylinder2D_ba
    pfo 0
    pf 4
    pv 0
-   NowUse 1
+   NowUse 0
    DrawingType 0
    LightVector 90 90 150 0
    OGLShadow(UseShadows) 0
@@ -29,7 +29,7 @@ BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/gid_cases/cylinder2D_ba
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/gid_cases/cylinder2D_backAndForth_ALE.gid/cylinder2D_backAndForth_ALE.vv
+EndZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/cylinder2D_backAndForth_ALE.gid/cylinder2D_backAndForth_ALE.vv
 
 BeginMirror
    Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror

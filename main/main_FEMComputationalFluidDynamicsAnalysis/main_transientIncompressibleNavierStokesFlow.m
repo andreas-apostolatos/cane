@@ -86,7 +86,7 @@ caseName = 'cylinder2D_backAndForth_ALE';
 computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
 
 % On the writing the output function
-propVTK.isOutput = false;
+propVTK.isOutput = true;
 propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
 propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
