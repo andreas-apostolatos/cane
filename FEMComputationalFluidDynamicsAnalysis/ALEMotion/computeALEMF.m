@@ -1,5 +1,5 @@
 function [dx,dy,dz] = ...
-    computeALEMF(x,y,z,t,varargin)
+    computeALEMF(x, y, z, t, varargin)
 %% Licensing
 %
 % License:         BSD License
@@ -22,7 +22,7 @@ function [dx,dy,dz] = ...
 %                       dx : movement in x coordinate of the current node
 %                       dy : movement in y coordinate of the current node
 %                       dz : movement in z coordinate of the current node
-
+%
 %% Function main body
 % amplification = 1e-4;
 % if (-4.0<=x) && (x<=4.0)

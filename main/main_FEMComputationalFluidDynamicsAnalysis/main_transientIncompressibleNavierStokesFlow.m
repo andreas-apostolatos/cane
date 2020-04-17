@@ -44,7 +44,7 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/
         '../../FEMComputationalFluidDynamicsAnalysis/initialConditions',...
         '../../FEMComputationalFluidDynamicsAnalysis/solvers/',...
         '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/output/',...
+        '../../FEMComputationalFluidDynamicsAnalysis/postProcessing/',...
         '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
         '../../FEMComputationalFluidDynamicsAnalysis/transientAnalysis/');
 
@@ -65,7 +65,8 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 % caseName = 'flowAroundCylinderAdaptive'; % best case I have
 % caseName = 'flowAroundCylinderAdaptiveFine';
 % caseName = 'BenchmarkHigStrRefined';
-caseName = 'flowAroundCylinderAdaptiveALE';
+% caseName = 'flowAroundCylinderAdaptiveALE';
+caseName = 'cylinder2D_backAndForth_ALE';
 % caseName = 'NACA2412_AoA5_CFD';
 % caseName = 'flowAroundCylinder3D'; % need to find the case
 % caseName = 'unitTest_semisphere';
@@ -74,9 +75,9 @@ caseName = 'flowAroundCylinderAdaptiveALE';
 % caseName = 'flowAroundSquareObjectBoundaryLayerPowerLaw'; % problemZero, needs then ALE module
 
 % Parse the data
-[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesALE, propNBC, ...
+[fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
     propAnalysis, parameters, propNLinearAnalysis, propFldDynamics, ...
-    propGaussInt] = parse_FluidModelFromGid...
+    propGaussInt, propPostproc] = parse_FluidModelFromGid...
     (pathToCase, caseName, 'outputEnabled');
 
 %% UI
@@ -85,7 +86,7 @@ caseName = 'flowAroundCylinderAdaptiveALE';
 computeBodyForces = @computeConstantVerticalFluidBodyForceVct;
 
 % On the writing the output function
-propVTK.isOutput = true;
+propVTK.isOutput = false;
 propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
 propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
@@ -151,11 +152,23 @@ computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
 % computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE;
 
 %% Solve the CFD problem
-[upHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI ...
+[upHistory, FHistory, minElSize] = solve_FEMVMSStabTransientNSEBossakTI ...
     (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, updateInhomDOFs, ...
-    nodesALE, parameters, computeBodyForces, propAnalysis, ...
+    propALE, parameters, computeBodyForces, propAnalysis, ...
     computeInitialConditions, solve_LinearSystem, propFldDynamics, ...
     propNLinearAnalysis, propIDBC, propGaussInt, propVTK, caseName, ...
     'outputEnabled');
+
+%% Postporcessing
+
+% Compute the forces acting on the domain of interest
+if isstruct(propPostproc)
+    forcesOnCylinder = zeros(propFldDynamics.noTimeSteps + 1, 2);
+    for iTimeStep = 1:propFldDynamics.noTimeSteps + 1
+        propPostproc = computePostProc ...
+            (FHistory(:, iTimeStep), propAnalysis, parameters, propPostproc);
+        forcesOnCylinder(iTimeStep, :) = propPostproc.valuePostProc{1}'; 
+    end
+end
 
 %% END OF THE SCRIPT
