@@ -1,4 +1,4 @@
-function load = computeConstantLoad(x, y, z, t)
+function load = computeConstantFlux(x, y, z, t,propNBC)
 %% Licensing
 %
 % License:         BSD License
@@ -21,7 +21,7 @@ function load = computeConstantLoad(x, y, z, t)
 %        load :  The load vector [loadx; loady; loadz]
 %
 %% Function main body
-load = [1e5; 0; 0];
+load = [propNBC.tractionLoadVct(1); 0; 0];
 
 end
 

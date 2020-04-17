@@ -120,9 +120,11 @@ end
 block = regexp(fstring,'HEAT_MATERIAL_PROPERTIES','split');
 block(1) = [];
 out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
-parameters.rho = str2double(out{1}{2});
-parameters.k = str2double(out{1}{4});
-parameters.cp = str2double(out{1}{6});
+parameters.rho = str2double(out{1}{2}); % density
+parameters.k = str2double(out{1}{4});   % thermal conductivity
+parameters.cp = str2double(out{1}{6});  % specific heat
+% compute thermal diffusivity
+parameters.alpha = parameters.k / (parameters.rho*parameters.cp);
 
 %% 4. Load the nonlinear method
 block = regexp(fstring,'HEAT_NLINEAR_SCHEME','split');
@@ -145,7 +147,7 @@ block(1) = [];
 out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
 propStrDynamics.timeDependence = out{1}{2};
 propStrDynamics.method = out{1}{4};
-if strcmp(propStrDynamics.method,'bossak')
+if strcmp(propStrDynamics.method,'BOSSAK')
     propStrDynamics.alphaBeta =  str2double(out{1}{6});
     propStrDynamics.gamma =  str2double(out{1}{8});
 end

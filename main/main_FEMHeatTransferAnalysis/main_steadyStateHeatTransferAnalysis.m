@@ -48,7 +48,8 @@ addpath('../../FEMHeatTransferAnalysis/solvers/',...
 pathToCase = '../../inputGiD/FEMHeatTransferAnalysis/';
 %caseName = 'steadyStateBenchmark_1w1h';
 %caseName = 'steadyStateBenchmark_2w1h';
-caseName = 'plateWithTwoHoles';
+caseName = 'rectangularPlateWithTwoHoles';
+
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
@@ -64,7 +65,7 @@ computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 
-% Output properties
+% On the writing the output function
 propVTK.isOutput = true;
 propVTK.writeOutputToFile = @writeOutputFEMHeatTransferAnalysisToVTK;
 propVTK.VTKResultFile = 'undefined';
@@ -79,6 +80,7 @@ propStrDynamics = 'undefined';
 graph.index = 1;
 
 % Assign load
+propNBC.tractionLoadVct = [1e5; 0; 0];
 %computeConstantFlux
 
 %% Output data to a VTK format
@@ -88,10 +90,6 @@ pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
 t = 0;
 F = computeLoadVctFEMHeatTransferAnalysis ...
     (strMsh, propAnalysis, propNBC, t, propGaussInt, 'outputEnabled');
-
-%% Visualization of the configuration
-% graph.index = plot_referenceConfigurationFEMPlateInMembraneAction ...
-%     (strMsh, propAnalysis, F, homDOFs, [], graph, 'outputEnabled');
 
 %% Initialize solution
 numNodes = length(strMsh.nodes(:,1));

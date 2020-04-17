@@ -248,6 +248,8 @@ elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     noDOFs = 4*noNodes;
 elseif strcmp(propAnalysis.type, 'planeStress') || strcmp(propAnalysis.type, 'planeStrain')
     noDOFs = 2*noNodes;
+elseif strcmp(propAnalysis.type, 'HEAT_TRANSFER_2D')
+    noDOFs = noNodes;
 else
     error('Select a valid analysis type in analysis.type');
 end
