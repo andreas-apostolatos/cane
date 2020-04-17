@@ -91,7 +91,7 @@ nDOFs = noNodes;
 DOFNumbering = 1:nDOFs;
 
 % Path where to write the output
-pathToOutput = '../outputVTK/FEMHeatTransferAnalysis/';
+pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
 
 % Write output to VTK
 if isUnitTest
@@ -104,7 +104,6 @@ end
 tab = '\t'; 
 
 % Assign dummy variables
-%VTKResultFile = 'undefined';
 computeConstantProblemMatrices = 'undefined';
 propALE = 'undefined';
 computeUpdatedMesh = 'undefined';

@@ -123,12 +123,12 @@ HEAT_NLINEAR_SCHEME
 
 HEAT_TRANSIENT_ANALYSIS
  SOLVER TRANSIENT
- TIME_INTEGRATION BOSSAK
+ TIME_INTEGRATION EXPLICIT_EULER
  ALPHA_BETA -0.1
  GAMMA 0.6
  START_TIME 0
- END_TIME 10
- NUMBER_OF_TIME_STEPS 100
+ END_TIME 360
+ NUMBER_OF_TIME_STEPS 30
  ADAPTIVE_TIME_STEPPING true
  
 HEAT_INTEGRATION
@@ -1724,105 +1724,101 @@ HEAT_ELEMENTS
     1023    528   527     511
     1024    527   509     511
 HEAT_DIRICHLET_NODES
-       1 400  
-       2 400  
-       5 400  
-      10 400  
-      16 400  
-      25 400  
-      34 400  
-      45 400  
-      58 400  
-      72 400  
-      87 400  
-     106 400  
-     123 400  
-     145 400  
-     168 400  
-     191 400  
-     215 400  
-     527 200  
-     528 200  
-     530 200  
-     531 200  
-     534 200  
-     537 200  
-     538 200  
-     542 200  
-     544 200  
-     547 200  
-     549 200  
-     552 200  
-     555 200  
-     557 200  
-     559 200  
-     560 200  
-     561 200  
-HEAT_FLUX_NODES
-       1 boundaryFlux computeConstantFlux
-       3 boundaryFlux computeConstantFlux
-       6 boundaryFlux computeConstantFlux
-      11 boundaryFlux computeConstantFlux
-      17 boundaryFlux computeConstantFlux
-      23 boundaryFlux computeConstantFlux
-      35 boundaryFlux computeConstantFlux
-      44 boundaryFlux computeConstantFlux
-      57 boundaryFlux computeConstantFlux
-      73 boundaryFlux computeConstantFlux
-      88 boundaryFlux computeConstantFlux
-     105 boundaryFlux computeConstantFlux
-     122 boundaryFlux computeConstantFlux
-     146 boundaryFlux computeConstantFlux
-     167 boundaryFlux computeConstantFlux
-     192 boundaryFlux computeConstantFlux
-     215 boundaryFlux computeConstantFlux
-     216 boundaryFlux computeConstantFlux
-     218 boundaryFlux computeConstantFlux
-     222 boundaryFlux computeConstantFlux
-     225 boundaryFlux computeConstantFlux
-     231 boundaryFlux computeConstantFlux
-     237 boundaryFlux computeConstantFlux
-     240 boundaryFlux computeConstantFlux
-     247 boundaryFlux computeConstantFlux
-     253 boundaryFlux computeConstantFlux
-     262 boundaryFlux computeConstantFlux
-     264 boundaryFlux computeConstantFlux
-     271 boundaryFlux computeConstantFlux
-     283 boundaryFlux computeConstantFlux
-     285 boundaryFlux computeConstantFlux
-     297 boundaryFlux computeConstantFlux
-     305 boundaryFlux computeConstantFlux
-     306 boundaryFlux computeConstantFlux
-     321 boundaryFlux computeConstantFlux
-     324 boundaryFlux computeConstantFlux
-     333 boundaryFlux computeConstantFlux
-     343 boundaryFlux computeConstantFlux
-     345 boundaryFlux computeConstantFlux
-     357 boundaryFlux computeConstantFlux
-     363 boundaryFlux computeConstantFlux
-     371 boundaryFlux computeConstantFlux
-     381 boundaryFlux computeConstantFlux
-     385 boundaryFlux computeConstantFlux
-     398 boundaryFlux computeConstantFlux
-     400 boundaryFlux computeConstantFlux
-     413 boundaryFlux computeConstantFlux
-     420 boundaryFlux computeConstantFlux
-     427 boundaryFlux computeConstantFlux
-     438 boundaryFlux computeConstantFlux
-     443 boundaryFlux computeConstantFlux
-     455 boundaryFlux computeConstantFlux
-     456 boundaryFlux computeConstantFlux
-     471 boundaryFlux computeConstantFlux
-     473 boundaryFlux computeConstantFlux
-     487 boundaryFlux computeConstantFlux
-     491 boundaryFlux computeConstantFlux
-     503 boundaryFlux computeConstantFlux
-     509 boundaryFlux computeConstantFlux
-     519 boundaryFlux computeConstantFlux
-     527 boundaryFlux computeConstantFlux
-     533 boundaryFlux computeConstantFlux
-     546 boundaryFlux computeConstantFlux
-     553 boundaryFlux computeConstantFlux
-     558 boundaryFlux computeConstantFlux
-     561 boundaryFlux computeConstantFlux 
+       1 300  
+       2 300  
+       3 400  
+       5 300  
+       6 400  
+      10 300  
+      11 400  
+      16 300  
+      17 400  
+      23 400  
+      25 300  
+      34 300  
+      35 400  
+      44 400  
+      45 300  
+      57 400  
+      58 300  
+      72 300  
+      73 400  
+      87 300  
+      88 400  
+     105 400  
+     106 300  
+     122 400  
+     123 300  
+     145 300  
+     146 400  
+     167 400  
+     168 300  
+     191 300  
+     192 400  
+     215 300  
+     216 400  
+     218 300  
+     222 300  
+     225 300  
+     231 300  
+     237 300  
+     240 400  
+     247 300  
+     253 300  
+     262 300  
+     264 400  
+     271 300  
+     283 300  
+     285 400  
+     297 300  
+     305 300  
+     306 400  
+     321 300  
+     324 400  
+     333 300  
+     343 300  
+     345 400  
+     357 300  
+     363 400  
+     371 300  
+     381 400  
+     385 300  
+     398 300  
+     400 400  
+     413 300  
+     420 400  
+     427 300  
+     438 400  
+     443 300  
+     455 400  
+     456 300  
+     471 300  
+     473 400  
+     487 300  
+     491 400  
+     503 300  
+     509 400  
+     519 300  
+     527 300  
+     528 300  
+     530 300  
+     531 300  
+     533 300  
+     534 300  
+     537 300  
+     538 300  
+     542 300  
+     544 300  
+     546 300  
+     547 300  
+     549 300  
+     552 300  
+     553 300  
+     555 300  
+     557 300  
+     558 300  
+     559 300  
+     560 300  
+     561 300  
+HEAT_FLUX_NODES 
  

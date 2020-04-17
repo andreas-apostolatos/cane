@@ -77,9 +77,9 @@ numNodes = length(strMsh.nodes(:,1));
 numDOFs = numNodes;
 
 % Assign the initial conditions
-u(numDOFs,1) = propTransientAnalysis.initialTemperature;
-uDot(numDOFs,1) = 0;
-uDDot(numDOFs,1) = 0;
+u = propTransientAnalysis.initialTemperature * ones(numDOFs,1);
+uDot = zeros(numDOFs,1);
+uDDot = zeros(numDOFs,1);
 
 
 % Modify structure of transient analysis properties

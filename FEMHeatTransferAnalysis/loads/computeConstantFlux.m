@@ -1,4 +1,4 @@
-function load = computeConstantFlux(x, y, z, t,propNBC)
+function load = computeConstantFlux(x, y, z, t, propNBC)
 %% Licensing
 %
 % License:         BSD License

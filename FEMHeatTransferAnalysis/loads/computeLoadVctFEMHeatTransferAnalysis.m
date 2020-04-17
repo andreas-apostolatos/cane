@@ -183,7 +183,7 @@ for iElmnt = 1:length(propNBC.lines(:,1))
         %% 2v.4. Compute the applied load onto the Gauss Point
         tractionOnGP = squeeze(loadFctHandle(xGP(1,1),xGP(1,2),xGP(1,3),t,propNBC));
 %         tractionOnGP2D = tractionOnGP(1:2,1);
-        tractionOnGP2D = tractionOnGP(1);
+        tractionOnGP2D = tractionOnGP(1,1);
         
         %% 2v.5. Compute the determinant of the transformation from the physical space to the parameter space
         

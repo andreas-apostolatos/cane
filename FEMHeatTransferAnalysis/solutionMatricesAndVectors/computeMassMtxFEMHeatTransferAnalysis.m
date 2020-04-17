@@ -1,4 +1,4 @@
-function [massMtx] = computeMassMtxFEMHeatTransferAnalysis...
+function massMtx = computeMassMtxFEMHeatTransferAnalysis...
     (analysis,mesh,parameters,gaussInt)
 %% Licensing
 %
@@ -6,6 +6,7 @@ function [massMtx] = computeMassMtxFEMHeatTransferAnalysis...
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
 %
 %% Function documentation
 %
@@ -119,7 +120,7 @@ for iElmnts = 1:length(mesh.elements(:,1))
         %% 2iv.4. Compute the element mass matrix at the Gauss Point
 %         NMtx = [dN(1,1) 0       dN(2,1) 0       dN(3,1) 0
 %                 0       dN(1,1) 0       dN(2,1) 0       dN(3,1)];
-        NMtx = [dN(1,1), dN(1,1), dN(1,1)];
+        NMtx = [dN(1,1), dN(2,1), dN(3,1)];
         
         %% 2iv.5. Assemble the local mass matrix global mass matrix via the EFT
 %         massMtx(EFT,EFT) = massMtx(EFT,EFT) + parameters.rho*(NMtx'*NMtx)*DetJxxi*GW;
