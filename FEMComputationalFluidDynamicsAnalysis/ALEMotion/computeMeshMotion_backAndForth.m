@@ -1,5 +1,5 @@
 function [dx, dy, dz] = ...
-    computeMeshMotion_ALE_unitTest(x, y, z, t, varargin)
+    computeMeshMotion_backAndForth(x, y, z, t, varargin)
 %% Licensing
 %
 % License:         BSD License
