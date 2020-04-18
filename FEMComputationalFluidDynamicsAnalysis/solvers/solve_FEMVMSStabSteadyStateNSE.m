@@ -90,13 +90,11 @@ function [up, FComplete, isConverged, minElSize] = ...
 %
 % 1. Find the prescribed and the free DOFs of the system
 %
-% 2. Solve the mesh motion problem and update the mesh node locations and velocities
+% 2. Solve the steady-state nonlinear Navier-Stokes stabilized finite element equation system
 %
-% 3. Solve the steady-state nonlinear Navier-Stokes stabilized finite element equation system
+% 3. Write out the results into a VTK file
 %
-% 4. Write out the results into a VTK file
-%
-% 5. Appendix
+% 4. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')

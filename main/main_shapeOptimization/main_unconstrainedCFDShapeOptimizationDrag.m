@@ -57,7 +57,7 @@ addpath('../../efficientComputation/');
 
 %% Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
-caseName = 'unitTest_Cylinder2D_SensitivityCheck';
+caseName = 'cylinder2D_CFD_unconstrainedOptimization';
 
 %% Parse the data from the GiD input file
 [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ~, propAnalysis, ...
@@ -92,7 +92,7 @@ propVTK_false.isOutput = false;
 propVTK_false.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
 
 % Maximum optimization iterations and drag tolerance
-maxIter = 30;
+maxIter = 10;
 tolDrag = 1e-4;
 
 % Perturbation size and design update scaling
@@ -106,6 +106,9 @@ djdp1_ = @(djdp1_, p1) djdp1_;
 nodesSaved = 'undefined';
 uMeshALE = 'undefined';
 
+% Graphics
+propGraph.index = 1;
+
 %% Choose the equation system solver
 if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
@@ -114,14 +117,6 @@ elseif strcmp(propAnalysis.type,'NAVIER_STOKES_3D')
 else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
 end
-
-%% Input parameters
-% max input velocity defined in the reference paper
-Umax = .1;
-
-%% Change input velocity to have the parabolic distribution for each randomized input
-% valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
-valuesInhomDBCModified = valuesInhomDOFs;
 
 %% Get the center of the cylinder in flow
 propALE.propUser.x0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 1));
@@ -137,6 +132,9 @@ up = computeNullInitialConditionsFEM4NSE ...
 
 % Initialize objective and design history
 optHistory = zeros(maxIter, 2);
+
+% Initialize the minimum element edge size history
+minElSizeHistory = zeros(maxIter, 1);
 
 % Initialize the design update
 dr = 0;
@@ -159,14 +157,15 @@ while counterOpt <= maxIter
     propALE.propUser.dr = dr;
     radius = radius + dr;
     [fldMsh, ~, ~, ~, ~, ~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
-        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, freeDOFs, ...
-        nodesSaved, propALE, solve_LinearSystem, propFldDynamics, counterOpt);
+        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, freeDOFs, nodesSaved, ...
+        propALE, solve_LinearSystem, propFldDynamics, counterOpt);
     fldMsh.initialNodes = fldMsh.nodes;
     
     %% Solve the nominal steady-state CFD problem
-    [up, FComplete, ~, ~] = solve_FEMVMSStabSteadyStateNSE ...
-        (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDBCModified, ...
-        uMeshALE, propParameters, computeBodyForces, propAnalysis, ...
+    [up, FComplete, ~, minElSizeHistory(counterOpt, 1)] = ...
+        solve_FEMVMSStabSteadyStateNSE ...
+        (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
+        propParameters, computeBodyForces, propAnalysis, ...
         solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
         counterOpt, propGaussInt, propVTK_true, caseName, '');
     
@@ -187,14 +186,14 @@ while counterOpt <= maxIter
     propALE.propUser.dr = epsilonTilde;
     [fldMsh_p1, ~, ~, ~, ~, ~] = ...
         computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
-        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, freeDOFs, ...
-        nodesSaved, propALE, solve_LinearSystem, propFldDynamics, counterOpt);
+        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, freeDOFs, nodesSaved, ....
+        propALE, solve_LinearSystem, propFldDynamics, counterOpt);
     fldMsh_p1.initialNodes = fldMsh_p1.nodes;
     
     %% Solve the perturbed steady-state CFD problem
     [~, FComplete, ~, ~] = solve_FEMVMSStabSteadyStateNSE ...
-        (fldMsh_p1, up, homDOFs, inhomDOFs, valuesInhomDBCModified, ...
-        uMeshALE, propParameters, computeBodyForces, propAnalysis, ...
+        (fldMsh_p1, up, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
+        propParameters, computeBodyForces, propAnalysis, ...
         solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
         counterOpt, propGaussInt, propVTK_false, caseName, '');
     
@@ -212,7 +211,6 @@ while counterOpt <= maxIter
     
     %% Compute the design update
     dr = -alphaTilde*djd1;
-    
 
     %% Increment iteration counter
     counterOpt = counterOpt + 1;
@@ -228,6 +226,7 @@ disp(['Elapsed time: ', num2str(toc)]);
 optHistory(counterOpt + 1:end,:) = [];
 
 % Plot the history of the objective and the design
+figure(propGraph.index)
 yyaxis left
 plot(1:counterOpt - 1, optHistory(:, 1));
 ylabel('Objective');
@@ -237,5 +236,15 @@ ylabel('Design');
 axis on;
 grid on;
 xlabel('Optimization iteration');
+propGraph.index = propGraph.index + 1;
+
+% Plot the history of the minimum element edge size
+figure(propGraph.index)
+plot(1:counterOpt - 1, minElSizeHistory(:, 1));
+xlabel('Optimization iteration');
+ylabel('');
+axis on;
+grid on;
+propGraph.index = propGraph.index + 1;
 
 %% END OF THE SCRIPT
