@@ -1,70 +1,79 @@
+function testFEMSteadyStateCFDUnconstrainedShapeOptimization(testCase)
 %% Licensing
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Andreas Apostolatos
-%                  Matthew Keller
 %
-%% Script documentation
+%% Function documentation
 %
-% Task : Analyzes sensitivity action of a cylindrical object in 2D, steady 
-%        state, incompressible Navier Stokes, channel flow. The design 
-%        parameter is the cylinder radius. The sensitivities are computed 
-%        using Finite Differencing whereas a gradient-based descend 
-%        optimization algorithm is employed.
+% Tests the unconstrained shape optimization algorithm using the steepest
+% descent method on the case of a 2D cylinder in flow with object function
+% the drag force on the cylinder and one design variable which is the
+% radius of the cylinder. The expected solution is the radius to converge
+% to zero.
 %
-% Date : 18.04.2020
+% Function layout :
 %
-%% Preamble
-clear;
-clc;
-close all;
+% 0. Read input
+%
+% 1. Parse the data from the GiD input file
+%
+% 2. UI
+%
+% 3. Choose the equation system solver
+%
+% 4. Get the center of the cylinder in flow
+%
+% 5. Initializations
+%
+% 6. Loop over all the optimization iterations
+% ->
+%    6i. Update the mesh for the nominal state according to the updated design
+%
+%   6ii. Solve the nominal steady-state CFD problem
+%
+%  6iii. Compute the nominal drag force
+%
+%   6iv. Check if the objective function is below a threshold
+%
+%    6v. Move the mesh according to the prescribed perturbation
+%
+%   6vi. Solve the perturbed steady-state CFD problem
+%
+%  6vii. Compute the perturbed drag force
+%
+% 6viii. Compute sensitivity via finite differencing
+%
+%   6ix. Compute Hessian of the system
+%
+%    6x. Compute the design update5
+%
+%   6xi. Increment iteration counter
+% <-
+%
+% 7. Define the expected solutions
+%
+% 8. Verify the results
+%
+%% Function main body
 
-%% Includes
-% Add functions related to equation system solvers
-addpath('../../equationSystemSolvers/');
+%% 0. Read input
 
-% Add general math functions
-addpath('../../generalMath/');
+% Define absolute tolerance
+absTol = 1e-15;
 
-% Add the classical finite element basis functions
-addpath('../../basisFunctions/');
-
-% Add all functions related to plate in membrane action analysis
-addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
-        '../../FEMPlateInMembraneActionAnalysis/solutionMatricesAndVectors/',...
-        '../../FEMPlateInMembraneActionAnalysis/loads/',...
-        '../../FEMPlateInMembraneActionAnalysis/graphics/',...
-        '../../FEMPlateInMembraneActionAnalysis/output/',...
-        '../../FEMPlateInMembraneActionAnalysis/postprocessing/');
-
-% Add all functions related to the Finite Element Methods for Computational
-% Fluid Dynamics problems
-addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/initialConditions',...
-        '../../FEMComputationalFluidDynamicsAnalysis/boundaryConditions/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/solvers/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/loads/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
-        '../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
-
-% Add all functions related to parsing
-addpath('../../parsers/');
-
-% Add all functions related to the efficient computation functions
-addpath('../../efficientComputation/');
-
-%% Define the path to the case
+% Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
-caseName = 'cylinder2D_CFD_unconstrainedOptimization';
+caseName = 'unitTest_cylinder2D_CFD_unconstrainedOptimization';
 
-%% Parse the data from the GiD input file
+%% 1. Parse the data from the GiD input file
 [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ~, propAnalysis, ...
     propParameters, propNLinearAnalysis, propFldDynamics, propGaussInt, ...
     propPostproc] = parse_FluidModelFromGid(pathToCase, caseName, '');
 
-%% UI
+%% 2. UI
 
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
@@ -86,10 +95,8 @@ prescribedDOFs = unique(prescribedDOFs);
 freeDOFs(ismember(freeDOFs, prescribedDOFs)) = [];
 
 % Define the name of the vtk file from where to resume the simulation
-propVTK_true.isOutput = true;
-propVTK_true.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
-propVTK_false.isOutput = false;
-propVTK_false.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+propOutput.isOutput = false;
+propOutput.writeOutputToFile = 'undefined';
 
 % Maximum optimization iterations and drag tolerance
 maxIter = 10;
@@ -106,10 +113,7 @@ djdp1_ = @(djdp1_, p1) djdp1_;
 nodesSaved = 'undefined';
 uMeshALE = 'undefined';
 
-% Graphics
-propGraph.index = 1;
-
-%% Choose the equation system solver
+%% 3. Choose the equation system solver
 if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
     solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 elseif strcmp(propAnalysis.type,'NAVIER_STOKES_3D')
@@ -118,12 +122,12 @@ else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
 end
 
-%% Get the center of the cylinder in flow
+%% 4. Get the center of the cylinder in flow
 propALE.propUser.x0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 1));
 propALE.propUser.y0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 2));
 radiusInit = max(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 1)) - propALE.propUser.x0;
 
-%% Initializations
+%% 5. Initializations
 
 % Initialize the solution of the state equations
 up = computeNullInitialConditionsFEM4NSE ...
@@ -145,15 +149,9 @@ radius = radiusInit + dr;
 % Initialize the optimization counter
 counterOpt = 1;
 
-% Print progress dots
-fprintf(['\n' repmat('.',1,maxIter) '\n\n']);
-
-% Start time count
-tic;
-
-%% Loop over all the optimization iterations
+%% 6. Loop over all the optimization iterations
 while counterOpt <= maxIter
-    %% Update the mesh for the nominal state according to the updated design
+    %% 6i. Update the mesh for the nominal state according to the updated design
     propALE.propUser.dr = dr;
     radius = radius + dr;
     [fldMsh, ~, ~, ~, ~, ~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
@@ -161,28 +159,28 @@ while counterOpt <= maxIter
         propALE, solve_LinearSystem, propFldDynamics, counterOpt);
     fldMsh.initialNodes = fldMsh.nodes;
     
-    %% Solve the nominal steady-state CFD problem
+    %% 6ii. Solve the nominal steady-state CFD problem
     [up, FComplete, ~, minElSizeHistory(counterOpt, 1)] = ...
         solve_FEMVMSStabSteadyStateNSE ...
         (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
         propParameters, computeBodyForces, propAnalysis, ...
         solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
-        counterOpt, propGaussInt, propVTK_true, caseName, '');
+        counterOpt, propGaussInt, propOutput, caseName, '');
     
-    %% Compute the nominal drag force
+    %% 6iii. Compute the nominal drag force
     postProc_update = computePostProc ...
         (FComplete, propAnalysis, propParameters, propPostproc);
     forcesOnDomain = postProc_update.valuePostProc{1};
     drag_nom = forcesOnDomain(1, 1);
     
-    %% Check if the objective function is below a threshold
+    %% 6iv. Check if the objective function is below a threshold
     optHistory(counterOpt, 1) = drag_nom;
     optHistory(counterOpt, 2) = radius;
     if abs(drag_nom) < tolDrag
         break;
     end
  
-    %% Move the mesh according to the prescribed perturbation
+    %% 6v. Move the mesh according to the prescribed perturbation
     propALE.propUser.dr = epsilonTilde;
     [fldMsh_p1, ~, ~, ~, ~, ~] = ...
         computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
@@ -190,61 +188,60 @@ while counterOpt <= maxIter
         propALE, solve_LinearSystem, propFldDynamics, counterOpt);
     fldMsh_p1.initialNodes = fldMsh_p1.nodes;
     
-    %% Solve the perturbed steady-state CFD problem
+    %% 6vi. Solve the perturbed steady-state CFD problem
     [~, FComplete, ~, ~] = solve_FEMVMSStabSteadyStateNSE ...
         (fldMsh_p1, up, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
         propParameters, computeBodyForces, propAnalysis, ...
         solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
-        counterOpt, propGaussInt, propVTK_false, caseName, '');
+        counterOpt, propGaussInt, propOutput, caseName, '');
     
-    %% Compute the perturbed drag force
+    %% 6vii. Compute the perturbed drag force
     postProc_update = computePostProc ...
         (FComplete, propAnalysis, propParameters, propPostproc);
     forcesOnDomain = postProc_update.valuePostProc{1};
     drag = forcesOnDomain(1, 1);
 
-    %% Compute sensitivity via finite differencing
+    %% 6viii. Compute sensitivity via finite differencing
     drag_dp1 = (drag - drag_nom)/epsilonTilde;
     
-    %% Compute Hessian of the system
+    %% 6ix. Compute Hessian of the system
     djd1 = djdp1_(drag_dp1);
     
-    %% Compute the design update
+    %% 6x. Compute the design update
     dr = -alphaTilde*djd1;
 
-    %% Increment iteration counter
+    %% 6xi. Increment iteration counter
     counterOpt = counterOpt + 1;
-        
-    %% Update progress bar
-    fprintf('\b|\n');
 end
-disp(['Elapsed time: ', num2str(toc)]);
 
-%% Postprocessing
+%% 7. Define the expected solutions
 
-% Clean the optimization history from zero values
-optHistory(counterOpt + 1:end,:) = [];
+% Define the expected solution in terms of the drag and radius history
+expSolOptHistory = [   0.009744743326393   0.050000000000000
+                       0.009066984758399   0.047193504458965
+                       0.008476041739562   0.044566754172162
+                       0.007954501804678   0.042095712459956
+                       0.007493423224948   0.039775482244403
+                       0.007082681925176   0.037588870546007
+                       0.006713976333818   0.035520761373707
+                       0.006380851272066   0.033558144886823
+                       0.006077626927841   0.031690435787415
+                       0.005800091172037   0.029907505557754];
+                   
+% Define the expected solution in terms of the minimum element edge size
+expSolMinElEdgeSizeHistory = [ 0.015641201999846
+                               0.014763258266501
+                               0.013941543455398
+                               0.013168538277109
+                               0.012442710800144
+                               0.011758682619875
+                               0.011111725066889
+                               0.010497768329589
+                               0.009913501055488
+                               0.009355754784654];
 
-% Plot the history of the objective and the design
-figure(propGraph.index)
-yyaxis left
-plot(1:counterOpt - 1, optHistory(:, 1));
-ylabel('Objective');
-yyaxis right
-plot(1:counterOpt - 1, optHistory(:, 2));
-ylabel('Design');
-axis on;
-grid on;
-xlabel('Optimization iteration');
-propGraph.index = propGraph.index + 1;
+%% 8. Verify the results
+testCase.verifyEqual(optHistory, expSolOptHistory, 'AbsTol', absTol);
+testCase.verifyEqual(minElSizeHistory, expSolMinElEdgeSizeHistory, 'AbsTol', absTol);
 
-% Plot the history of the minimum element edge size
-figure(propGraph.index)
-plot(1:counterOpt - 1, minElSizeHistory(:, 1));
-xlabel('Optimization iteration');
-ylabel('');
-axis on;
-grid on;
-propGraph.index = propGraph.index + 1;
-
-%% END OF THE SCRIPT
+end

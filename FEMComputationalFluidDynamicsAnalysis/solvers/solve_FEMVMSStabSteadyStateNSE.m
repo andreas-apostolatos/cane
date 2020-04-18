@@ -133,7 +133,6 @@ massMtx = 'undefined';
 dampMtx = 'undefined';
 precompStiffMtx = 'undefined';
 precomResVct = 'undefined';
-nodesSaved = 'undefined';
 t = 'undefined';
 
 % Define tabulation for the output to the command window
