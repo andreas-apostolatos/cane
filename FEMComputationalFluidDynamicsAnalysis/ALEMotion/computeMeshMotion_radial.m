@@ -23,6 +23,14 @@ function [dx, dy, dz] = ...
 %    Output :
 %  dx,dy,dz : Displacement in x-,y- and z-direction of the point
 %
+% Function layout :
+%
+% 0. Check input
+%
+% 1. Compute the angle by which the point is turned on the circle
+%
+% 2. Compute the displacement along x- and y-direction given the incremental radial displacement
+%
 %% Function main body
 
 %% 0. Check input
