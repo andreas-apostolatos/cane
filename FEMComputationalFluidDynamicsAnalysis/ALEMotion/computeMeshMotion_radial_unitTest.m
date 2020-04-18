@@ -1,5 +1,5 @@
 function [dx, dy, dz] = ...
-    computeMeshMotion_radial(x, y, z, t, propUser)
+    computeMeshMotion_radial_unitTest(x, y, z, t, propUser)
 %% Licensing
 %
 % License:         BSD License
