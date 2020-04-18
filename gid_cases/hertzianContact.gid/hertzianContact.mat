@@ -1,0 +1,40 @@
+BOOK:Solids
+NUMBER: 1 MATERIAL: Steel
+QUESTION: Type#CB#(Lin-Elast-Isotropic,whatever)
+VALUE: Lin-Elast-Isotropic
+DEPENDENCIES: (Lin-Elast-Isotropic,RESTORE,Young_Modulus,#CURRENT#,RESTORE,Density,#CURRENT#,RESTORE,Poisson_Ratio,#CURRENT#)
+DEPENDENCIES: (whatever,HIDE,Young_Modulus,#CURRENT#,HIDE,Density,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#)
+QUESTION: Young_Modulus
+VALUE: 1e5
+QUESTION: Density
+VALUE: 1.0
+QUESTION: Poisson_Ratio
+VALUE: 0.3
+QUESTION: Thickness
+VALUE: 1.0
+END MATERIAL
+NUMBER: 2 MATERIAL: Aluminium
+QUESTION: Type#CB#(Lin-Elast-Isotropic,whatever)
+VALUE: Lin-Elast-Isotropic
+DEPENDENCIES: (Lin-Elast-Isotropic,RESTORE,Young_Modulus,#CURRENT#,RESTORE,Density,#CURRENT#,RESTORE,Poisson_Ratio,#CURRENT#)
+DEPENDENCIES: (whatever,HIDE,Young_Modulus,#CURRENT#,HIDE,Density,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#)
+QUESTION: Young_Modulus
+VALUE: 70000
+QUESTION: Density
+VALUE: 1.0
+QUESTION: Poisson_Ratio
+VALUE: 0.333
+QUESTION: Thickness
+VALUE: 1.0
+END MATERIAL
+BOOK:Fluids
+NUMBER: 3 MATERIAL: Water
+QUESTION: Type#CB#(Newtonian,whatever)
+VALUE: Newtonian
+DEPENDENCIES: (Newtonian,RESTORE,Density,#CURRENT#,RESTORE,Dynamic_Viscosity,#CURRENT#)
+DEPENDENCIES: (whatever,HIDE,Density,#CURRENT#,HIDE,Dynamic_Viscosity,#CURRENT#)
+QUESTION: Density
+VALUE: 1.0
+QUESTION: Dynamic_Viscosity
+VALUE: 1e-3
+END MATERIAL

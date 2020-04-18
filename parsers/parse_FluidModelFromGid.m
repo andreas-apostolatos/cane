@@ -310,13 +310,14 @@ block = regexp(fstring, 'FLUID_DIRICHLET_ALE_NODES', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k}, '%f %s %s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f %s %d', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 end
 if ~isempty(out)
     out = out{1};
     propALE.nodes = cell2mat(out(:,1));
     outFctHandle = out(:,2);
-    propALE.fctHandle = cell2mat(outFctHandle{1});
+    propALE.fctHandle = outFctHandle{1};
+    propALE.isFree = cell2mat(out(:,3));
     fldMsh.initialNodes = fldMsh.nodes;
 else
     propALE = [];
