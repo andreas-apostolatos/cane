@@ -1,9 +1,9 @@
 function [up, FComplete, isConverged, minElSize] = ...
     solve_FEMVMSStabSteadyStateNSE ...
-    (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propParameters, ...
-    computeBodyForces, propAnalysis, solve_LinearSystem, propFldDynamics, ...
-    propNLinearAnalysis, numIterStep, propGaussInt, propOutput, caseName, ...
-    outMsg)
+    (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
+    propParameters, computeBodyForces, propAnalysis, solve_LinearSystem, ...
+    propFldDynamics, propNLinearAnalysis, numIterStep, propGaussInt, ...
+    propOutput, caseName, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -27,12 +27,8 @@ function [up, FComplete, isConverged, minElSize] = ...
 %                       applied
 %     valuesInhomDOFs : Prescribed values on the nodes where inhomogeneous
 %                       Dirichlet boundary conditions are applied
-%             propALE : Structure containing information on the nodes along
-%                       the ALE boundary,
-%                           .nodes : The sequence of the nodal coordinates
-%                                    on the ALE boundary
-%                       .fcthandle : Function handle to the computation of
-%                                    the ALE motion
+%            uMeshALE : mesh velocity related to the Arbitrary
+%                       Lagrangian-Eulerian method
 %      propParameters : Flow parameters
 %   computeBodyForces : Function handle to the computation of the body
 %                       force vector
@@ -169,17 +165,7 @@ prescribedDoFs = unique(prescribedDoFs);
 freeDOFs = DOFNumbering;
 freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 
-%% 2. Solve the mesh motion problem and update the mesh node locations and velocities
-if ~ischar(propALE) && ~isempty(propALE)
-    [fldMsh, uMeshALE, inhomDOFs, valuesInhomDOFs] = ...
-        computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
-        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesSaved, ...
-        propALE, solve_LinearSystem, propFldDynamics, t);
-else
-    uMeshALE = 'undefined';
-end
-
-%% 3. Solve the steady-state nonlinear Navier-Stokes stabilized finite element equation system
+%% 2. Solve the steady-state nonlinear Navier-Stokes stabilized finite element equation system
 [up, FComplete, isConverged, minElSize] = solve_FEMNLinearSystem ...
     (propAnalysis, uSaved, uDotSaved, uDDotSaved, fldMsh, F, ...
     computeBodyForces, propParameters, up, uDot, uDDot, massMtx, ...
@@ -189,7 +175,7 @@ end
     solve_LinearSystem, propFldDynamics, t, propNLinearAnalysis, ...
     propGaussInt, tab, outMsg);
 
-%% 4. Write out the results into file
+%% 3. Write out the results into file
 if isfield(propOutput, 'isOutput')
     if isa(propOutput.isOutput, 'logical')
         if propOutput.isOutput
@@ -216,7 +202,7 @@ if isfield(propOutput, 'isOutput')
     end
 end
 
-%% 5. Appendix
+%% 4. Appendix
 if strcmp(outMsg,'outputEnabled')
     computationalTime = toc;
     fprintf('Steady-state nonlinear analysis took %.2d seconds \n\n',computationalTime);

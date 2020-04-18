@@ -14,7 +14,7 @@
 %        using Finite Differencing whereas a gradient-based descend 
 %        optimization algorithm is employed.
 %
-% Date : 11.3.2020
+% Date : 18.04.2020
 %
 %% Preamble
 clear;
@@ -61,14 +61,11 @@ caseName = 'unitTest_Cylinder2D_SensitivityCheck';
 
 %% Parse the data from the GiD input file
 [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ~, propAnalysis, ...
-    propParameters, propNLinearAnalysis, propFldDynamics, gaussInt, ...
-    postProc] = parse_FluidModelFromGid(pathToCase, caseName, '');
+    propParameters, propNLinearAnalysis, propFldDynamics, propGaussInt, ...
+    propPostproc] = parse_FluidModelFromGid(pathToCase, caseName, '');
 
-% Manually set up the nonlinear analysis properties
-propNLinearAnalysis.maxIter = 10;
-propNLinearAnalysis.eps = 1e-5;
+%% UI
 
-%% GUI
 % On the body forces
 computeBodyForces = @computeConstantVerticalBodyForceVct;
 
@@ -80,8 +77,34 @@ if strcmp(propFldDynamics.method,'bossak')
         @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
 end
 
+% Free DOFs of the system (actual DOFs over which the solution is computed)
+numNodes = length(fldMsh.nodes(:, 1));
+numDOFs = propAnalysis.noFields*numNodes;
+freeDOFs = 1:numDOFs;
+prescribedDOFs = mergesorted(homDOFs, inhomDOFs);
+prescribedDOFs = unique(prescribedDOFs);
+freeDOFs(ismember(freeDOFs, prescribedDOFs)) = [];
+
+% Define the name of the vtk file from where to resume the simulation
+propVTK_true.isOutput = true;
+propVTK_true.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+propVTK_false.isOutput = false;
+propVTK_false.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
+
+% Maximum optimization iterations and drag tolerance
+maxIter = 30;
+tolDrag = 1e-4;
+
+% Perturbation size and design update scaling
+epsilonTilde = 1e-2;
+alphaTilde = 1e-2;
+
+% Function handle for the computation of the Hessian
+djdp1_ = @(djdp1_, p1) djdp1_;
+
 % Dummy parameters
 nodesSaved = 'undefined';
+uMeshALE = 'undefined';
 
 %% Choose the equation system solver
 if strcmp(propAnalysis.type,'NAVIER_STOKES_2D')
@@ -92,12 +115,6 @@ else
     error('Neither NAVIER_STOKES_2D or NAVIER_STOKES_3D has been chosen');
 end
 
-%% Define the name of the vtk file from where to resume the simulation
-propVTK_true.isOutput = true;
-propVTK_true.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
-propVTK_false.isOutput = false;
-propVTK_false.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
-
 %% Input parameters
 % max input velocity defined in the reference paper
 Umax = .1;
@@ -106,131 +123,119 @@ Umax = .1;
 % valuesInhomDBCModified = computeInletVelocityPowerLaw(fldMsh, inhomDOFs, valuesInhomDOFs, Umax);
 valuesInhomDBCModified = valuesInhomDOFs;
 
-%% Variable initialization
-i = 1; % Counter initialization for iteration search
-iterationLimit = 15; % Limit search iterations
-design_penalization = 1e4; % Design penalty used in gradient calculations
+%% Get the center of the cylinder in flow
+propALE.propUser.x0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 1));
+propALE.propUser.y0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 2));
+radiusInit = max(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 1)) - propALE.propUser.x0;
 
-% Initialize abstract function containers
-djdp1 = [];
-p1_hist = [];
+%% Initializations
 
-% Initialize accuracy parameters
-djd1 = 1; % Initial accuracy of parameter 1
-propALE.propUser.delta_p1 = .01; % Perturbation of parameter 1
-propALE.propUser.iterate_p1 = 0;
-gamma = 1e-4;
-
-%Initialize state values
-[x_Min,y_Min,p1_0] = computeStructureBoundary_Cylinder(fldMsh,propALE); % Minimum cylinder center coordinates and initial radius
-
-% Initialize parameter states
-p1 = p1_0;
-propALE.propUser.x_Mid = x_Min + p1_0;
-propALE.propUser.y_Mid = y_Min + p1_0;
-
-% Parameters (I/O)
-PlotFlag = 'False';
-
-%% Define abstract base functions and logging process
-djdp1_ = @(djdp1_, p1) djdp1_;
-
-% Set up progress bar
-fprintf(['\n' repmat('.',1,iterationLimit) '\n\n']);
-
-%Start time count
-tic
-
-%% Initialize the solution
+% Initialize the solution of the state equations
 up = computeNullInitialConditionsFEM4NSE ...
     (propAnalysis, fldMsh, 'undefined', 'undefined', 'undefined', ... 
     'undefined', 'undefined', 'undefined');
 
-%% Main loop to solve CFD problem for each Monte Carlo random sampling and optimization processes
-while (abs(djd1) > 1e-4 && i <= iterationLimit)
-    %% Update internal variables with updated values from previous iteration
-    propALE.propUser.p1 = p1;
-     
-    %% Solve the CFD problem in nominal state   
+% Initialize objective and design history
+optHistory = zeros(maxIter, 2);
+
+% Initialize the design update
+dr = 0;
+
+% Initialize the design
+radius = radiusInit + dr;
+
+% Initialize the optimization counter
+counterOpt = 1;
+
+% Print progress dots
+fprintf(['\n' repmat('.',1,maxIter) '\n\n']);
+
+% Start time count
+tic;
+
+%% Loop over all the optimization iterations
+while counterOpt <= maxIter
+    %% Update the mesh for the nominal state according to the updated design
+    propALE.propUser.dr = dr;
+    radius = radius + dr;
+    [fldMsh, ~, ~, ~, ~, ~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
+        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, freeDOFs, ...
+        nodesSaved, propALE, solve_LinearSystem, propFldDynamics, counterOpt);
+    fldMsh.initialNodes = fldMsh.nodes;
+    
+    %% Solve the nominal steady-state CFD problem
     [up, FComplete, ~, ~] = solve_FEMVMSStabSteadyStateNSE ...
-        (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDBCModified, 'undefined', ...
-        propParameters, computeBodyForces, propAnalysis, solve_LinearSystem, ...
-        propFldDynamics, propNLinearAnalysis, i, gaussInt, propVTK_true, ...
-        caseName, 'outputEnabled');
+        (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDBCModified, ...
+        uMeshALE, propParameters, computeBodyForces, propAnalysis, ...
+        solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
+        counterOpt, propGaussInt, propVTK_true, caseName, '');
     
-    % Calculate drag and lift force from the nodal forces
-    postProc_update = computePostProc(FComplete, propAnalysis, propParameters, postProc);
-
-    % Retrieve Fx and Fy from post processing
+    %% Compute the nominal drag force
+    postProc_update = computePostProc ...
+        (FComplete, propAnalysis, propParameters, propPostproc);
     forcesOnDomain = postProc_update.valuePostProc{1};
-    Fx = forcesOnDomain(1,1);
-    Fy = forcesOnDomain(2,1);
-
-    % Set drag and lift
-    lift = Fy;
-    drag = Fx;
-
-    % Write nominal output vector
-    output_Nom(i,:) = [i, p1, lift, drag];
-    referenceDrag_Nom = drag; % Define reference drag of nominal state for accuracy calculations
- 
-    %% Solve the CFD problem with perturbed p1   
-    p1 = propALE.propUser.p1 + propALE.propUser.delta_p1; % Adjust user-defined parameter 1
-    propALE.propUser.Perturb_Flag = 'perturb';
-   
-    % Update the mesh for perturbed state 1
-    [fldMsh_p1, ~, ~, ~] = ...
-        computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
-        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesSaved, ...
-        propALE, solve_LinearSystem, propFldDynamics, i);
+    drag_nom = forcesOnDomain(1, 1);
     
+    %% Check if the objective function is below a threshold
+    optHistory(counterOpt, 1) = drag_nom;
+    optHistory(counterOpt, 2) = radius;
+    if abs(drag_nom) < tolDrag
+        break;
+    end
+ 
+    %% Move the mesh according to the prescribed perturbation
+    propALE.propUser.dr = epsilonTilde;
+    [fldMsh_p1, ~, ~, ~, ~, ~] = ...
+        computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
+        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, freeDOFs, ...
+        nodesSaved, propALE, solve_LinearSystem, propFldDynamics, counterOpt);
     fldMsh_p1.initialNodes = fldMsh_p1.nodes;
     
-    [~, FComplete,~,~] = solve_FEMVMSStabSteadyStateNSE ...
+    %% Solve the perturbed steady-state CFD problem
+    [~, FComplete, ~, ~] = solve_FEMVMSStabSteadyStateNSE ...
         (fldMsh_p1, up, homDOFs, inhomDOFs, valuesInhomDBCModified, ...
-        propALE, propParameters, computeBodyForces, propAnalysis, ...
+        uMeshALE, propParameters, computeBodyForces, propAnalysis, ...
         solve_LinearSystem, propFldDynamics, propNLinearAnalysis, ...
-        i, gaussInt, propVTK_false, caseName, '');
-
+        counterOpt, propGaussInt, propVTK_false, caseName, '');
+    
+    %% Compute the perturbed drag force
     postProc_update = computePostProc ...
-        (FComplete, propAnalysis, propParameters, postProc);
-
+        (FComplete, propAnalysis, propParameters, propPostproc);
     forcesOnDomain = postProc_update.valuePostProc{1};
-    Fx = forcesOnDomain(1,1);
-    Fy = forcesOnDomain(2,1);
+    drag = forcesOnDomain(1, 1);
 
-    lift = Fy;
-    drag = Fx;
-
-    % Write output vector
-    output_p1(i,:) = [i p1 lift drag];  
-
-    % Compute sensitivities via finite differencing
-    drag_dp1 = (drag - referenceDrag_Nom) / propALE.propUser.delta_p1;
-              
-    %% Compute gradient
-    djd1 = djdp1_(drag_dp1,propALE.propUser.p1); % Compute gradient for parameter 1
-
-    propALE.propUser.iterate_p1 = djd1*propALE.propUser.delta_p1;
-    p1 = propALE.propUser.p1 - propALE.propUser.iterate_p1;
+    %% Compute sensitivity via finite differencing
+    drag_dp1 = (drag - drag_nom)/epsilonTilde;
     
-    propALE.propUser.Perturb_Flag = 'set_final';
-
-    %% Update the mesh for the adjusted nominal state  
-    [fldMsh, ~, ~, ~] = computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
-        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesSaved, ...
-        propALE, solve_LinearSystem, propFldDynamics, i);
+    %% Compute Hessian of the system
+    djd1 = djdp1_(drag_dp1);
     
-    fldMsh.initialNodes = fldMsh.nodes;
+    %% Compute the design update
+    dr = -alphaTilde*djd1;
+    
 
     %% Increment iteration counter
-    i = i + 1;
+    counterOpt = counterOpt + 1;
         
     %% Update progress bar
     fprintf('\b|\n');
-        
 end
+disp(['Elapsed time: ', num2str(toc)]);
 
-%End time count
-disp(['Elapsed time: ', num2str(toc)])
+%% Postprocessing
+
+% Clean the optimization history from zero values
+optHistory(counterOpt + 1:end,:) = [];
+
+% Plot the history of the objective and the design
+yyaxis left
+plot(1:counterOpt - 1, optHistory(:, 1));
+ylabel('Objective');
+yyaxis right
+plot(1:counterOpt - 1, optHistory(:, 2));
+ylabel('Design');
+axis on;
+grid on;
+xlabel('Optimization iteration');
+
 %% END OF THE SCRIPT
