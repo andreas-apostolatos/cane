@@ -37,8 +37,8 @@ function testFrictionlessSignoriniContactBridge2D(testCase)
 
 % Define tolerances for both cases
 absTol = 1e-15;
-absTol2 = 1e-15*1e2;
-absTol4 = absTol2*1e2;
+absTol1 = absTol*1e1;
+absTol6 = absTol1*1e5;
 
 %% 1. Parse data from GiD input file
 
@@ -119,10 +119,10 @@ expNumIter = 9;
 expMinElSize = 0.112134865675222;
 
 %% 7. Verify the results
-testCase.verifyEqual(contactLength, expContactLength, 'AbsTol', absTol);
-testCase.verifyEqual(contactForce, expContactForce, 'AbsTol', absTol4);
-testCase.verifyEqual(maxContactPressure, expMaxContactPressure, 'AbsTol', absTol4);
-testCase.verifyEqual(numIter, expNumIter, 'AbsTol', absTol);
-testCase.verifyEqual(minElSize, expMinElSize, 'AbsTol', absTol);
+testCase.verifyEqual(contactLength, expContactLength, 'AbsTol', absTol1);
+testCase.verifyEqual(contactForce, expContactForce, 'AbsTol', absTol6);
+testCase.verifyEqual(maxContactPressure, expMaxContactPressure, 'AbsTol', absTol6);
+testCase.verifyEqual(numIter, expNumIter, 'AbsTol', absTol1);
+testCase.verifyEqual(minElSize, expMinElSize, 'AbsTol', absTol1);
 
 end

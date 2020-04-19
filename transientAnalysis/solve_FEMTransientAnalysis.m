@@ -1,4 +1,4 @@
-function [uHistory, minElSize] = solve_FEMTransientAnalysis ...
+function [uHistory, FHistory, minElSize] = solve_FEMTransientAnalysis ...
     (propAnalysis, msh, DOFNumbering, freeDOFs, homDOFs, inhomDOFs, ...
     valuesInhomDOFs, updateInhomDOFs, propALE, computeInitCnds, ...
     computeBodyForceVct, propNBC, computeLoadVct, propParameters, ...
@@ -16,9 +16,9 @@ function [uHistory, minElSize] = solve_FEMTransientAnalysis ...
 %
 %% Function documentation
 %
-% Returns the history of the primary variable and the load vector of a
+% Returns the history of the primary variable and the complete force of a
 % transient analysis over a field which it discrezed with a classical
-% finite element basis.
+% finite elemens.
 %
 %                            Input :
 %                     propAnalysis : Structure containing general 
@@ -145,6 +145,9 @@ function [uHistory, minElSize] = solve_FEMTransientAnalysis ...
 %                           Output :
 %                         uHistory : The history of the primary field
 %                                    throughout the transient analysis
+%                         FHistory : The history of the complete force
+%                                    vector throughout the transient
+%                                    analysis
 %                        minElSize : The minimum element edge size in the
 %                                    mesh
 %
@@ -239,45 +242,80 @@ end
 %% 0. Read input
 
 % Compute the number of nodes in the fluid mesh
-noNodes = length(msh.nodes(:,1));
+numNodes = length(msh.nodes(:,1));
 
 % Compute the number of degrees of freedom
 if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
-    noDOFs = 3*noNodes;
+    numDOFs = 3*numNodes;
 elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
-    noDOFs = 4*noNodes;
+    numDOFs = 4*numNodes;
 elseif strcmp(propAnalysis.type, 'planeStress') || strcmp(propAnalysis.type, 'planeStrain')
-    noDOFs = 2*noNodes;
-elseif strcmp(propAnalysis.type, 'HEAT_TRANSFER_2D')
-    noDOFs = noNodes;
+    numDOFs = 2*numNodes;
 else
     error('Select a valid analysis type in analysis.type');
 end
 
-% Initialize the scalar concetration history
-FHistory = sparse(noDOFs,propTransientAnalysis.noTimeSteps + 1);
+% Check the function handle for the computation of the updated time
+% derivatives of the field
+if ~isa(propTransientAnalysis.computeUpdatedVct, 'function_handle')
+    error('Function handle propTransientAnalysis.computeUpdatedVct undefined');
+end
 
-% Initialize the output array for the state variable
+% Initialize the output arrays according to whether the values are saved in
+% the workspace or not
+isWriteOutVariables = false;
 if isfield(propOutput, 'isOutput')
     if isa(propOutput.isOutput, 'logical')
         if propOutput.isOutput
             if isfield(propOutput, 'writeOutputToFile')
                 if isa(propOutput.writeOutputToFile, 'function_handle')
-                    uHistory = 'undefined';
+                    isWriteOutVariables = true;
                 else
                     error('Variable propVTK.writeOutputToFile should define a function handle');
                 end
             else
                 error('Structure propVTK should define variable writeOutputToFile');
             end
-        else
-            uHistory = zeros(noDOFs,propTransientAnalysis.noTimeSteps + 1); 
         end
     else
         error('Structure propVTK.isOutput should be a boolean');
     end
 else
     error('Structure propVTK should define boolean isOutput');
+end
+if isWriteOutVariables
+    uHistory = 'undefined';
+    FHistory = 'undefined';
+else
+    uHistory = zeros(numDOFs, propTransientAnalysis.noTimeSteps + 1);
+    FHistory = zeros(numDOFs,propTransientAnalysis.noTimeSteps + 1);
+end
+
+% On the ALE motion
+isALE = false;
+if ~ischar(propALE)
+    if isstruct(propALE)
+        if ~isfield(propALE, 'nodes')
+            error('Structure propALE must defined member variable nodes');
+        else
+            numNodesALE = length(propALE.nodes(:, 1));
+        end
+        if ~isfield(propALE, 'fctHandle')
+            error('Structure propALE must defined member variable fctHandle');
+        else
+            numFctHandlesALE = length(propALE.fctHandle);
+        end
+        if ~isfield(propALE, 'isFree')
+            error('Structure propALE must defined member variable isFree');
+        else
+            numIsFreeALE = length(propALE.isFree(:, 1));
+        end
+        if numNodesALE ~= numFctHandlesALE || numNodesALE ~= numIsFreeALE || ...
+                numFctHandlesALE ~= numIsFreeALE
+            error('Arrays propALE.nodes, propALE.fctHandle and propALE.isFree must have the same length');
+        end
+        isALE = true;
+    end
 end
 
 %% 1. Get the initial values for the discrete solution vector and its first and second order rate
@@ -297,17 +335,13 @@ end
 t = propTransientAnalysis.dt*numTimeStep;
 
 %% 3. Write out the initial conditions to a file
-if propOutput.isOutput
-    if isa(propOutput.writeOutputToFile, 'function_handle')
-        propOutput.writeOutputToFile(propAnalysis, propNLinearAnalysis, ...
-            propTransientAnalysis, msh, propParameters, u, uDot, uDDot, ...
-            DOF4Output, caseName, pathToOutput, title, numTimeStep);
-    else
-        error('%s should define a function handle', ...
-            propOutput.writeOutputToFile);
-    end
+numTimeStep = numTimeStep + 1;
+if isWriteOutVariables
+    propOutput.writeOutputToFile ...
+        (propAnalysis, propNLinearAnalysis, propTransientAnalysis, ...
+        msh, propParameters, u, uDot, uDDot, DOF4Output, caseName, ...
+        pathToOutput, title, numTimeStep);
 else
-    numTimeStep = numTimeStep + 1;
     uHistory(:,numTimeStep) = u;
 end
 
@@ -371,22 +405,23 @@ while t < propTransientAnalysis.TEnd && numTimeStep <= propTransientAnalysis.noT
     end
     
     %% 7v. Solve the mesh motion problem and update the mesh node locations and velocities
-    nodesSaved = msh.nodes;
-    if ~ischar(propALE) && ~isempty(propALE)
-        [msh, uMeshALE, inhomDOFs, valuesInhomDOFs] = ...
+    if isALE
+        nodesSaved = msh.nodes;
+        [msh, uMeshALE, homDOFs, inhomDOFs, valuesInhomDOFs, freeDOFs] = ...
             computeUpdatedMesh...
-            (msh, homDOFs, inhomDOFs, valuesInhomDOFs, nodesSaved, ...
-            propALE, solve_LinearSystem, propTransientAnalysis, t);
+            (msh, homDOFs, inhomDOFs, valuesInhomDOFs, freeDOFs, ...
+            nodesSaved, propALE, solve_LinearSystem, ...
+            propTransientAnalysis, t);
     else
         uMeshALE = 'undefined';
     end
     
     %% 7vi. Compute the load vector at the current time step
-    if ~ischar(computeLoadVct)
-        FHistory(:, numTimeStep) = computeLoadVct ... 
+    if isa(computeLoadVct, 'function_handle')
+        F = computeLoadVct ... 
             (msh, propAnalysis, propNBC, t, propGaussInt, '');
-    elseif strcmp(computeLoadVct,'undefined')
-        FHistory(:, numTimeStep) = zeros(noDOFs, 1);
+    else
+        F = zeros(numDOFs, 1);
     end
         
     %% 7vii. Save the discrete primary field and its first and second time derivatives
@@ -395,34 +430,29 @@ while t < propTransientAnalysis.TEnd && numTimeStep <= propTransientAnalysis.noT
     uDDotSaved = uDDot;
     
     %% 7viii. Solve the equation system
-    [u, ~, isConverged, minElSize] = solve_FEMEquationSystem...
+    [u, FRes, ~, minElSize] = solve_FEMEquationSystem...
         (propAnalysis, uSaved, uDotSaved, uDDotSaved, msh, ...
-        FHistory(:, numTimeStep), computeBodyForceVct, propParameters, ...
-        u, uDot, uDDot, massMtx, dampMtx, precompStiffMtx, precomResVct, ...
-        computeProblemMatricesSteadyState, DOFNumbering, freeDOFs, ...
-        homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
-        solve_LinearSystem, propTransientAnalysis, t, ...
-        propNLinearAnalysis, propGaussInt, strcat(tab,'\t'), ...
+        F, computeBodyForceVct, propParameters, u, uDot, uDDot, ...
+        massMtx, dampMtx, precompStiffMtx, precomResVct, ...
+        computeProblemMatricesSteadyState, DOFNumbering, ...
+        freeDOFs, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+        uMeshALE, solve_LinearSystem, propTransientAnalysis, ...
+        t, propNLinearAnalysis, propGaussInt, strcat(tab,'\t'), ...
         outMsg);
     
     %% 7ix. Update the time derivatives of the field
-    if isConverged
-        if isa(propTransientAnalysis.computeUpdatedVct, 'function_handle')
-            [uDot, uDDot] = propTransientAnalysis.computeUpdatedVct ...
-                (u, uSaved, uDotSaved, uDDotSaved, propTransientAnalysis);
-        else
-            error('Function handle propTransientAnalysis.computeUpdatedVct undefined');
-        end
-    end
+    [uDot, uDDot] = propTransientAnalysis.computeUpdatedVct ...
+        (u, uSaved, uDotSaved, uDDotSaved, propTransientAnalysis);
     
     %% 7x. Write out the results into a VTK file or save them into an output variable
-    if isa(propOutput.writeOutputToFile, 'function_handle')
-        propOutput.writeOutputToFile...
+    if isWriteOutVariables
+        propOutput.writeOutputToFile ...
             (propAnalysis, propNLinearAnalysis, propTransientAnalysis, ...
             msh, propParameters, u, uDot, uDDot, DOF4Output, caseName, ...
             pathToOutput, title, numTimeStep);
     else
-        uHistory(:,numTimeStep) = u;
+        uHistory(:, numTimeStep) = u;
+        FHistory(:, numTimeStep) = FRes;
     end
 end
 

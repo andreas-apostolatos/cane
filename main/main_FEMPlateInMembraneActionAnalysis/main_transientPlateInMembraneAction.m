@@ -76,7 +76,7 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 computeInitCnds = @computeInitCndsFEMPlateInMembraneAction;
 
 % Define the amplitude of the externally applied load and time duration
-propNBC.tractionVector = [-1e5; 0; 0];
+propNBC.tractionVector = [-1e2; 0; 0];
 propNBC.endTime = 1;
 
 % Assign the function handles for the computation of the stiffness matrix 

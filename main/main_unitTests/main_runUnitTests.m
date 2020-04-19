@@ -16,8 +16,9 @@
 %        - Finite element formulation of the frictionless Signorini problem
 %        - Stabilized isogeometric analysis for incompressible flows
 %        - Stabilized finite element analysis for the Navier-Stokes problem
+%        - Shape optimization analysis
 %
-% Date : 04.04.2020
+% Date : 18.04.2020
 %
 %% Clear memnory and command window
 clc;
@@ -208,8 +209,17 @@ if isLight
         (HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4TransientTaylorGreenVortices2D') | ...
         HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesSteadyState2D') | ...
         HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesSteadyStateFlowAroundCylinder2D') | ...
+        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesTransientALE2D') | ...
         HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesTransientBossak3D'));
 end
 resultFEM4CFD = run(suiteClassFEM4CFD);
+
+%% Run the unit test cases for shape optimization analysis
+suiteClassShapeOptimization = TestSuite.fromClass(?testShapeOptimizationAnalysis);
+if isLight
+    suiteClassShapeOptimization = suiteClassShapeOptimization.selectIf...
+        (HasName('testShapeOptimizationAnalysis/testFEMSteadyStateCFDUnconstrainedShapeOptimization'));
+end
+resultShapeOptimization = run(suiteClassShapeOptimization);
 
 %% END OF SCRIPT

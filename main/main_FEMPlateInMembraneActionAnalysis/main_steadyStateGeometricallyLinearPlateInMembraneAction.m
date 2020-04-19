@@ -67,7 +67,7 @@ caseName = 'cantileverBeamPlaneStress';
 %% GUI
 
 % On the body forces
-computeBodyForces = @computeConstantVerticalBodyForceVct;
+computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 
 % Choose equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;

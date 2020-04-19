@@ -1,9 +1,9 @@
 function [up, FComplete, isConverged, minElSize] = ...
     solve_FEMVMSStabSteadyStateNSE ...
-    (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propParameters, ...
-    computeBodyForces, propAnalysis, solve_LinearSystem, propFldDynamics, ...
-    propNLinearAnalysis, numIterStep, propGaussInt, propOutput, caseName, ...
-    outMsg)
+    (fldMsh, up, homDOFs, inhomDOFs, valuesInhomDOFs, uMeshALE, ...
+    propParameters, computeBodyForces, propAnalysis, solve_LinearSystem, ...
+    propFldDynamics, propNLinearAnalysis, numIterStep, propGaussInt, ...
+    propOutput, caseName, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -27,12 +27,8 @@ function [up, FComplete, isConverged, minElSize] = ...
 %                       applied
 %     valuesInhomDOFs : Prescribed values on the nodes where inhomogeneous
 %                       Dirichlet boundary conditions are applied
-%             propALE : Structure containing information on the nodes along
-%                       the ALE boundary,
-%                           .nodes : The sequence of the nodal coordinates
-%                                    on the ALE boundary
-%                       .fcthandle : Function handle to the computation of
-%                                    the ALE motion
+%            uMeshALE : mesh velocity related to the Arbitrary
+%                       Lagrangian-Eulerian method
 %      propParameters : Flow parameters
 %   computeBodyForces : Function handle to the computation of the body
 %                       force vector
@@ -94,13 +90,11 @@ function [up, FComplete, isConverged, minElSize] = ...
 %
 % 1. Find the prescribed and the free DOFs of the system
 %
-% 2. Solve the mesh motion problem and update the mesh node locations and velocities
+% 2. Solve the steady-state nonlinear Navier-Stokes stabilized finite element equation system
 %
-% 3. Solve the steady-state nonlinear Navier-Stokes stabilized finite element equation system
+% 3. Write out the results into a VTK file
 %
-% 4. Write out the results into a VTK file
-%
-% 5. Appendix
+% 4. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
@@ -168,17 +162,7 @@ prescribedDoFs = unique(prescribedDoFs);
 freeDOFs = DOFNumbering;
 freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 
-%% 2. Solve the mesh motion problem and update the mesh node locations and velocities
-if ~ischar(propALE) && ~isempty(propALE)
-    [fldMsh, uMeshALE, inhomDOFs, valuesInhomDOFs] = ...
-        computeUpdatedMeshAndVelocitiesPseudoStrALE2D ...
-        (fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, ...
-        solve_LinearSystem, propFldDynamics, t);
-else
-    uMeshALE = 'undefined';
-end
-
-%% 3. Solve the steady-state nonlinear Navier-Stokes stabilized finite element equation system
+%% 2. Solve the steady-state nonlinear Navier-Stokes stabilized finite element equation system
 [up, FComplete, isConverged, minElSize] = solve_FEMNLinearSystem ...
     (propAnalysis, uSaved, uDotSaved, uDDotSaved, fldMsh, F, ...
     computeBodyForces, propParameters, up, uDot, uDDot, massMtx, ...
@@ -188,13 +172,15 @@ end
     solve_LinearSystem, propFldDynamics, t, propNLinearAnalysis, ...
     propGaussInt, tab, outMsg);
 
-%% 4. Write out the results into file
+%% 3. Write out the results into file
 if isfield(propOutput, 'isOutput')
     if isa(propOutput.isOutput, 'logical')
         if propOutput.isOutput
             if isfield(propOutput, 'writeOutputToFile')
                 if isa(propOutput.writeOutputToFile, 'function_handle')
-                    fprintf('>> Writting out the results to "%s"\n\n',strcat(pathToOutput, caseName, '/'));
+                    if strcmp(outMsg,'outputEnabled')
+                        fprintf('>> Writting out the results to "%s"\n\n',strcat(pathToOutput, caseName, '/'));
+                    end
                     DOF4Output = [1:3:numDOFs - 2
                                   2:3:numDOFs - 1
                                   3:3:numDOFs];
@@ -213,7 +199,7 @@ if isfield(propOutput, 'isOutput')
     end
 end
 
-%% 5. Appendix
+%% 4. Appendix
 if strcmp(outMsg,'outputEnabled')
     computationalTime = toc;
     fprintf('Steady-state nonlinear analysis took %.2d seconds \n\n',computationalTime);

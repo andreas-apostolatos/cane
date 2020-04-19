@@ -37,8 +37,8 @@ function testFrictionlessSignoriniContactWedge2D(testCase)
 % Define tolerances
 absTol = 1e-15;
 absTol0 = absTol*0;
-absTol1 = 1e-15*1e1;
-absTol6 = absTol1*1e5;
+absTol2 = absTol*1e2;
+absTol7 = absTol2*1e5;
 
 %% 1. Parse data from GiD input file
 
@@ -125,8 +125,8 @@ expNumIter = 14;
 expMinElSize = 0.079594036208751;
 
 %% 7. Verify the results
-testCase.verifyEqual(contactLength, expContactLength, 'AbsTol', absTol1);
-testCase.verifyEqual(contactForce, expContactForce, 'AbsTol', absTol6);
+testCase.verifyEqual(contactLength, expContactLength, 'AbsTol', absTol2);
+testCase.verifyEqual(contactForce, expContactForce, 'AbsTol', absTol7);
 testCase.verifyEqual(maxContactPressure, expMaxContactPressure, 'AbsTol', absTol0);
 testCase.verifyEqual(numIter, expNumIter, 'AbsTol', absTol);
 testCase.verifyEqual(minElSize, expMinElSize, 'AbsTol', absTol);

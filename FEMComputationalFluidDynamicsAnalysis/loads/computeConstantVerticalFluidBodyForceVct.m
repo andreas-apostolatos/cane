@@ -22,4 +22,3 @@ function b = computeConstantVerticalFluidBodyForceVct(x, y, z, t)
 b = zeros(3,1);
 
 end
-
