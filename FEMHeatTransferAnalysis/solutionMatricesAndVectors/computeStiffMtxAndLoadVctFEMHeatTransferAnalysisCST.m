@@ -64,28 +64,26 @@ function [K, F, minElEdgeSize] = ...
 %
 % 4. Numnerical quadrature
 %
-% 5. Compute the material matrices for each element
-%
-% 6. Loop over all the quadrature points
+% 5. Loop over all the quadrature points
 % ->
-%    6i. Transform the Gauss Point location from the parameter to the physical space
+%    5i. Transform the Gauss Point location from the parameter to the physical space
 %
-%   6ii. Compute the basis functions and their derivatives at the Gauss Point
+%   5ii. Compute the basis functions and their derivatives at the Gauss Point
 %
-%  6iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
+%  5iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
 %
-%   6iv. Form the basis functions matrix at the Gauss Point page-wise
+%   5iv. Form the basis functions matrix at the Gauss Point page-wise
 %
-%    6v. Form the B-Operator matrix for the plate in membrane action problem page-wise
+%    5v. Form the B-Operator matrix for the plate in membrane action problem page-wise
 %
-%   6vi. Compute the element load vector due to body forces and add the contribution
+%   5vi. Compute the element load vector due to body forces and add the contribution
 %
-%  6vii. Compute the stiffness matrix at the Gauss point and add the contribution
+%  5vii. Compute the stiffness matrix at the Gauss point and add the contribution
 % <-
 %
-% 7. Add the contribution from the Gauss Point and assemble to the global system
+% 6. Add the contribution from the Gauss Point and assemble to the global system
 %
-% 8. Update the force vector with the body force contributions
+% 7. Update the force vector with the body force contributions
 %
 %% Functions main body
 
@@ -100,11 +98,7 @@ numDOFs = numNodes;
 % Number of nodes at the element level
 numNodesEl = 3;
 
-% Number of DOFs per node
-% numDOFsPerNode = 1;
-
 % Number of degrees of freedom per element
-% numDOFsEl = numDOFsPerNode*numNodesEl;
 numDOFsEl = numNodesEl;
 
 % Total number of elements in the mesh
@@ -115,15 +109,6 @@ stiffMtxEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
 FBodyEl = zeros(numElmnts, numDOFsEl, 1);
 
 %% 1. Create the element freedom tables for all elements at once
-% EFT = zeros(numDOFsEl, numElmnts);
-% for iEFT = 1:numNodesEl
-%     for counterDOFsPerNode = 1:numDOFsPerNode - 1
-%         EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT)';
-%         EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - counterDOFsPerNode), :) = ...
-%             EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - counterDOFsPerNode);
-%     end
-% end
-
 EFT = zeros(numDOFsEl, numElmnts);
 for iEFT = 1:numNodesEl
         EFT(iEFT, :) = strMsh.elements(:, iEFT)';
@@ -155,81 +140,44 @@ elseif strcmp(propInt.type, 'user')
 end
 [GP, GW] = getGaussRuleOnCanonicalTriangle(numGP);
 
-%% 5. Compute the material matrices for each element
-% C = zeros(numElmnts, 3, 3);
-% C = zeros(numElmnts, 2, 2);
-% if strcmp(propAnalysis.type, 'planeStress')
-%     preFactor = propParameters.E/(1-propParameters.nue^2);
-%     CEl = preFactor*[1              propParameters.nue 0
-%                      propParameters.nue 1              0
-%                      0              0             (1 - propParameters.nue)/2];
-% elseif strcmp(propAnalysis.type, 'planeStrain')
-%     preFactor = propParameters.E*(1 - propParameters.nue)/(1+propParameters.nue)/(1 - 2*propParameters.nue);
-%     CEl = preFactor*[1                                   propParameters.nue/(1 - propParameters.nue) 0
-%                      propParameters.nue/(1 - propParameters.nue) 1                                   0
-%                      0                                   0                                   (1 - 2*propParameters.nue)/2/(1 - propParameters.nue)];
-% end
-% CEl = propParameters.k*[1 0
-%                         0 1];
-% for iElmnts = 1:numElmnts
-%     C(iElmnts, :, :) = CEl;
-% end
-
-%% 6. Loop over all the quadrature points
+%% 5. Loop over all the quadrature points
 for iGP = 1:numGP
-    %% 6i. Transform the Gauss Point location from the parameter to the physical space
+    %% 5i. Transform the Gauss Point location from the parameter to the physical space
     xGP = GP(iGP, 1)*nodes1 + GP(iGP, 2)*nodes2 + (1 - GP(iGP, 1) - GP(iGP, 2))*nodes3;
     
-    %% 6ii. Compute the basis functions and their derivatives at the Gauss Point
+    %% 5ii. Compute the basis functions and their derivatives at the Gauss Point
     [dN, area] = computeCST2DBasisFunctionsAndFirstDerivatives ...
             (nodes1, nodes2, nodes3, xGP(:, 1, :), xGP(:, 2, :));
         
-    %% 6iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
+    %% 5iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
     detJxxi = 2*area;
         
-	%% 6iv. Form the basis functions matrix at the Gauss Point page-wise
-%     N = zeros(numElmnts, 2, numDOFsEl);
-%     for i = 1:numNodesEl
-%         N(:, 1, numDOFsPerNode*i - numDOFsPerNode + 1) = dN(:, i, 1);
-%         N(:, 2, numDOFsPerNode*i - numDOFsPerNode + 2) = dN(:, i, 1);
-%     end
+	%% 5iv. Form the basis functions matrix at the Gauss Point page-wise
     N = zeros(numElmnts, 1, numDOFsEl);
     for i = 1:numNodesEl
         N(:, 1, i) = dN(:, i, 1);
     end
     
-    %% 6v. Form the B-Operator matrix for the plate in membrane action problem page-wise
-%     B = zeros(numElmnts, 3, numDOFsEl);
-%     for i = 1:numNodesEl
-%         B(:, 1, 2*i - 1) = dN(:, i, 2);
-%         B(:, 2, 2*i) = dN(:, i, 3);
-%         B(:, 3, 2*i - 1) = dN(:, i, 3);
-%         B(:, 3, 2*i) = dN(:, i, 2);
-%     end
+    %% 5v. Form the B-Operator matrix for the plate in membrane action problem page-wise
     B = zeros(numElmnts, 2, numDOFsEl);
     for i = 1:numNodesEl
         B(:, 1, i) = dN(:, i, 2);
         B(:, 2, i) = dN(:, i, 3);
-%         B(:, 3, 2*i - 1) = dN(:, i, 3);
-%         B(:, 3, 2*i) = dN(:, i, 2);
     end
-
-    
-    %% 6vi. Compute the element load vector due to body forces and add the contribution
+ 
+    %% 5vi. Compute the element load vector due to body forces and add the contribution
     bF = computeBodyForces(xGP(:, 1), xGP(:, 2), xGP(:, 3));
-%     FBodyEl = FBodyEl + pstimes(pmtimes(ptranspose(N), ptranspose(bF(:, :, 1:2)))*GW(iGP), detJxxi);
     FBodyEl = FBodyEl + pstimes(pmtimes(ptranspose(N), ptranspose(bF(:, :, 1)))*GW(iGP), detJxxi);
     
-    %% 6vii. Compute the stiffness matrix at the Gauss point and add the contribution
-%     stiffMtxEl = stiffMtxEl + pstimes(pmtimes(pmtimes(ptranspose(B), C), B)*GW(iGP), detJxxi);
+    %% 5vii. Compute the stiffness matrix at the Gauss point and add the contribution
     stiffMtxEl = stiffMtxEl + propParameters.k * pstimes(pmtimes(ptranspose(B), B)*GW(iGP), detJxxi);
 end
 
-%% 7. Assemble to the global system matrices
+%% 6. Assemble to the global system matrices
 % [K,FBody] = assembleSparseMatricies(EFT,numDOFs,numDOFsEl,KEl,FBodyEl);
 [K] = assembleSparseMatricies(EFT, numDOFs, numDOFsEl, stiffMtxEl);
 
-%% 8. Update the force vector with the body force contributions
+%% 7. Update the force vector with the body force contributions
 % F = F + FBody;
 
 end

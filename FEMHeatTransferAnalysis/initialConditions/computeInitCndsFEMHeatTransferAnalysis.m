@@ -80,17 +80,14 @@ numDOFs = numNodes;
 u = propTransientAnalysis.initialTemperature * ones(numDOFs,1);
 uDot = zeros(numDOFs,1);
 uDDot = zeros(numDOFs,1);
+%uDDot = 'undefined';
 
 
 % Modify structure of transient analysis properties
-% propTransientAnalysis.dt = propTransientAnalysis.noTimeSteps;
-%propTransientAnalysis.dt = 0.1;
-%propTransientAnalysis.dt =nTSteps
 Tint = propTransientAnalysis.TEnd - propTransientAnalysis.T0;
 propTransientAnalysis.dt = propTransientAnalysis.noTimeSteps;
 propTransientAnalysis.noTimeSteps = Tint / propTransientAnalysis.dt;
 
 noTimeStep = propTransientAnalysis.T0/propTransientAnalysis.dt;
-% if(noTimeStep == 0)
-%     noTimeStep = 1;
+
 end

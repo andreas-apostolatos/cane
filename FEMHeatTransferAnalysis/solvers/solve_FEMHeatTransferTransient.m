@@ -108,21 +108,6 @@ computeConstantProblemMatrices = 'undefined';
 propALE = 'undefined';
 computeUpdatedMesh = 'undefined';
 
-% Assign dummy variables
-% uSaved = 'undefined';
-% uDot = 'undefined';
-% uDDot = 'undefined';
-% uDotSaved = 'undefined';
-% uDDotSaved = 'undefined';
-% dDot = 'undefined';
-% dDDot = 'undefined';
-% uMeshALE = 'undefined';
-% massMtx = 'undefined';
-% dampMtx = 'undefined';
-% precomStiffMtx = 'undefined';
-% precomResVec = 'undefined';
-% propStrDynamics = 'undefined';
-
 % Title for the output file
 title = 'linear transient 2D heat transfer analysis';
 
@@ -150,21 +135,13 @@ freeDOFs = DOFNumbering;
 freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
 
 %% 2. Solve the transient problem
-
-% computeBodyForceVct = @computeConstantVerticalBodyForceVct;
-%solve_FEMEquationSystem = @solve_FEMLinearSystem;
-% @solve_FEMNLinearSystem
-
-computeMassMtx = @computeMassMtxFEMHeatTransferAnalysis;
-% @computeTangentStiffMtxResVctFEMHeat2D
-
-
 [dHistory, minElSize] = solve_FEMTransientAnalysis ...
     (propAnalysis, strMsh, DOFNumbering, freeDOFs, homDOFs, inhomDOFs, ...
     valuesInhomDOFs, updateInhomDOFs, propALE, computeInitCnds, ...
     computeBodyForceVct, propNBC, computeLoadVct, propParameters, ...
     solve_FEMSystem, computeConstantProblemMatrices, ...
-    computeMassMtx, computeProblemMatricesSteadyState, computeUpdatedMesh, ...
+    @computeMassMtxFEMHeatTransferAnalysis, ...
+    computeProblemMatricesSteadyState, computeUpdatedMesh, ...
     solve_LinearSystem, propStrDynamics, propNLinearAnalysis, ...
     propIDBC, propGaussInt, propVTK, caseName, pathToOutput, title, ...
     DOF4Output, tab, outMsg);

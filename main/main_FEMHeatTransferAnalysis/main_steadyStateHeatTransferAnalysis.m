@@ -80,8 +80,7 @@ propStrDynamics = 'undefined';
 graph.index = 1;
 
 % Assign load
-propNBC.tractionLoadVct = [1e5; 0; 0];
-%computeConstantFlux
+propNBC.tractionLoadVct = [1e5; 0; 0]; %computeConstantFlux
 
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';

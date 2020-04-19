@@ -251,6 +251,8 @@ elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     numDOFs = 4*numNodes;
 elseif strcmp(propAnalysis.type, 'planeStress') || strcmp(propAnalysis.type, 'planeStrain')
     numDOFs = 2*numNodes;
+elseif strcmp(propAnalysis.type, 'HEAT_TRANSFER_2D')
+    numDOFs = numNodes;
 else
     error('Select a valid analysis type in analysis.type');
 end
@@ -356,6 +358,10 @@ else
     error('Variable computeMassMtx is not defining a function handle as expected');
 end
 
+% debug
+% debug = sum(massMtx,'all')
+% analytical = propParameters.rho * propParameters.cp * 2;
+
 %% 5. Compute part of the residual vector and the stiffness matrix which stays constant throughout the transient analysis
 if ~ischar(computeConstantProblemMatrices)
     [precompStiffMtx, precomResVct] = computeConstantProblemMatrices();
@@ -439,7 +445,7 @@ while t < propTransientAnalysis.TEnd && numTimeStep <= propTransientAnalysis.noT
         uMeshALE, solve_LinearSystem, propTransientAnalysis, ...
         t, propNLinearAnalysis, propGaussInt, strcat(tab,'\t'), ...
         outMsg);
-    
+   
     %% 7ix. Update the time derivatives of the field
     [uDot, uDDot] = propTransientAnalysis.computeUpdatedVct ...
         (u, uSaved, uDotSaved, uDDotSaved, propTransientAnalysis);

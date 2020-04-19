@@ -127,19 +127,10 @@ parameters.cp = str2double(out{1}{6});  % specific heat
 parameters.alpha = parameters.k / (parameters.rho*parameters.cp);
 
 %% 4. Load the nonlinear method
-block = regexp(fstring,'HEAT_NLINEAR_SCHEME','split');
-block(1) = [];
-out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
-propNLinearAnalysis.method = out{1}{2};
-propNLinearAnalysis.noLoadSteps = str2double(out{1}{4});
-propNLinearAnalysis.eps = str2double(out{1}{6});
-propNLinearAnalysis.maxIter = str2double(out{1}{8});
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Nonlinear method: %s \n',propNLinearAnalysis.method);
-    fprintf('\t>> No. load steps = %d \n',propNLinearAnalysis.noLoadSteps);
-    fprintf('\t>> Convergence tolerance = %d \n',propNLinearAnalysis.eps);
-    fprintf('\t>> Maximum number of iterations = %d \n',propNLinearAnalysis.maxIter);
-end
+propNLinearAnalysis.method = 'UNDEFINED';
+propNLinearAnalysis.noLoadSteps = [];
+propNLinearAnalysis.eps = [];
+propNLinearAnalysis.maxIter = 1;
 
 %% 5. Load the time integration method
 block = regexp(fstring,'HEAT_TRANSIENT_ANALYSIS','split');
@@ -147,23 +138,16 @@ block(1) = [];
 out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
 propStrDynamics.timeDependence = out{1}{2};
 propStrDynamics.method = out{1}{4};
-if strcmp(propStrDynamics.method,'BOSSAK')
-    propStrDynamics.alphaBeta =  str2double(out{1}{6});
-    propStrDynamics.gamma =  str2double(out{1}{8});
-end
-propStrDynamics.T0 = str2double(out{1}{10});
-propStrDynamics.TEnd = str2double(out{1}{12});
-propStrDynamics.noTimeSteps = str2double(out{1}{14});
-propStrDynamics.isAdaptive = out{1}{16};
+propStrDynamics.T0 = str2double(out{1}{6});
+propStrDynamics.TEnd = str2double(out{1}{8});
+propStrDynamics.noTimeSteps = str2double(out{1}{10});
+propStrDynamics.isAdaptive = out{1}{12};
 propStrDynamics.dt = (propStrDynamics.TEnd - propStrDynamics.T0)/propStrDynamics.noTimeSteps;
+
 if strcmp(outMsg,'outputEnabled')
     fprintf('>> Structural dynamics: %s \n',propStrDynamics.timeDependence);
     if ~strcmp(propStrDynamics.timeDependence,'STEADY_STATE')
         fprintf('\t>> Time integration method: %s \n',propStrDynamics.method);
-        if strcmp(propStrDynamics.method,'bossak')
-            fprintf('\t \t>> alphaBeta =  %s \n',propStrDynamics.alphaBeta);
-            fprintf('\t \t>> gamma =  %s \n',propStrDynamics.gamma);
-        end
         fprintf('\t>> Start time of the simulation: %f \n',propStrDynamics.T0);
         fprintf('\t>> End time of the simulation: %f \n',propStrDynamics.TEnd);
         fprintf('\t>> Number of time steps: %f \n',propStrDynamics.noTimeSteps);

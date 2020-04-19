@@ -77,7 +77,7 @@ massMtx = zeros(numDOFs,numDOFs);
 
 %% 1. Numnerical quadrature
 if strcmp(gaussInt.type,'default')
-    noGP = 2;
+    noGP = 1;
 elseif strcmp(gaussInt.type,'user')
     noGP = gaussInt.domainNoGP;
 end

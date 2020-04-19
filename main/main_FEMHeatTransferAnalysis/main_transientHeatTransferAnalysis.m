@@ -75,29 +75,6 @@ propStrDynamics.initialTemperature = 300;
 propNBC.tractionLoadVct = [1e5; 0; 0];
 %computeConstantFlux
 
-% Assign the function handles for the computation of the stiffness matrix 
-% and choose solver for the finite element system based on whether the 
-% analysis is linear or nonlinear
-isLinear = true;
-if ~isempty(propNLinearAnalysis)
-    if ~ischar(propNLinearAnalysis)
-        if isfield(propNLinearAnalysis, 'method')
-            if strcmp(propNLinearAnalysis.method, 'NEWTON_RAPHSON')
-                isLinear = false;
-            end
-        else
-            error('Structure propNLinearAnalysis should define member variable method')
-        end
-    end
-end
-if isLinear
-    computeProblemMatricesSteadyState = @computeStiffMtxAndLoadVctFEMHeatTransferAnalysisCST;
-    solve_FEMSystem = @solve_FEMLinearSystem;
-else
-    computeProblemMatricesSteadyState = @computeTangentStiffMtxResVctFEMPlateInMembraneAction; % fix
-    solve_FEMSystem = @solve_FEMNLinearSystem;
-end
-
 % On the writing the output function
 propVTK.isOutput = true;
 propVTK.writeOutputToFile = @writeOutputFEMHeatTransferAnalysisToVTK;
@@ -110,27 +87,25 @@ propIDBC = [];
 % Not a unit test case
 isUnitTest = false;
 
-% Choose the matric computation corresponding to the chosen time
-% integration scheme
-if strcmp(propStrDynamics.method,'EXPLICIT_EULER')
+% Choose the appropriate matrix update computation corresponding to the
+% chosen time integration scheme
+if strcmp(propStrDynamics.method,'IMPLICIT_EULER')
     propStrDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsExplicitEuler;
+        @computeProblemMtrcsImplicitEuler;
     propStrDynamics.computeUpdatedVct = ...
         @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propStrDynamics.method,'BOSSAK')
-    propStrDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsBossak;
+elseif strcmp(propStrDynamics.method,'GALERKIN')
+    propStrDynamics.computeProblemMtrcsTransient =  ...
+        @computeProblemMtrcsGalerkin;
     propStrDynamics.computeUpdatedVct = ...
-        @computeBossakTransientUpdatedVctAccelerationField;
+        @computeBETITransientUpdatedVctAccelerationField;
+elseif strcmp(propStrDynamics.method,'CRANK_NICOLSON')
+    propStrDynamics.computeProblemMtrcsTransient = ...
+        @computeProblemMtrcsCrankNicolson;
+    propStrDynamics.computeUpdatedVct = ...
+        @computeBETITransientUpdatedVctAccelerationField;
 else
     error('Invalid time integration method selected in propStrDynamics.method as %s',propStrDynamics.method);
-end
-
-% Choose time integration scheme parameters
-if strcmp(propStrDynamics.method,'BOSSAK')
-    propStrDynamics.alphaB = -.1; % -.1
-    propStrDynamics.betaB = .5; % .5
-    propStrDynamics.gammaB = .6; % .6
 end
 
 % Initialize graphics index
@@ -141,9 +116,10 @@ graph.index = 1;
     (strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     updateInhomDOFs, propNBC, @computeLoadVctFEMHeatTransferAnalysis, ...
     propParameters, computeBodyForces, propAnalysis, computeInitCnds, ...
-    computeProblemMatricesSteadyState, propNLinearAnalysis, propIDBC, ...
-    propStrDynamics, solve_LinearSystem, solve_FEMSystem, propGaussInt, ...
-    propVTK, caseName, isUnitTest, 'outputEnabled');
+    @computeStiffMtxAndLoadVctFEMHeatTransferAnalysisCST,...
+    propNLinearAnalysis, propIDBC, propStrDynamics, solve_LinearSystem, ...
+    @solve_FEMLinearSystem, propGaussInt, propVTK, caseName, ...
+    isUnitTest, 'outputEnabled');
 
 %% Postprocessing
 

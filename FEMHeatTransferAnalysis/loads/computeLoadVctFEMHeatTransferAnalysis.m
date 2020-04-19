@@ -143,8 +143,6 @@ for iElmnt = 1:length(propNBC.lines(:,1))
     %% 2iv. Assemble the Element Freedome Table (EFT)
     EFT = zeros(noDOFsEl,1);
     for counterEFT = 1: noNodesEl
-%         EFT(2*counterEFT-1) = 2*element(counterEFT)-1;
-%         EFT(2*counterEFT) = 2*element(counterEFT);
         EFT(counterEFT) = element(counterEFT);
     end
     
@@ -175,14 +173,11 @@ for iElmnt = 1:length(propNBC.lines(:,1))
         %% 2v.3. Sort the basis functions into the basis functions array
         N = zeros(1,noDOFsEl);
         for counterBasisFunctions = 1:noNodesEl
-%             N(1,2*counterBasisFunctions-1) = basisFctOnGP(counterBasisFunctions,1);
-%             N(2,2*counterBasisFunctions) = basisFctOnGP(counterBasisFunctions,1);
             N(1, counterBasisFunctions) = basisFctOnGP(counterBasisFunctions,1);
         end
         
         %% 2v.4. Compute the applied load onto the Gauss Point
         tractionOnGP = squeeze(loadFctHandle(xGP(1,1),xGP(1,2),xGP(1,3),t,propNBC));
-%         tractionOnGP2D = tractionOnGP(1:2,1);
         tractionOnGP2D = tractionOnGP(1,1);
         
         %% 2v.5. Compute the determinant of the transformation from the physical space to the parameter space
