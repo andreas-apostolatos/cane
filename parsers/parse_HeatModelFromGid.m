@@ -1,5 +1,5 @@
 function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
-    propAnalysis, parameters, propNLinearAnalysis, propStrDynamics, ...
+    propAnalysis, parameters, propNLinearAnalysis, propHeatDynamics, ...
     propGaussInt] = parse_HeatModelFromGid(pathToCase, caseName, outMsg)
 %% Licensingprop
 %
@@ -127,6 +127,7 @@ parameters.cp = str2double(out{1}{6});  % specific heat
 parameters.alpha = parameters.k / (parameters.rho*parameters.cp);
 
 %% 4. Load the nonlinear method
+% heat transfer without internal heat generation is always linear
 propNLinearAnalysis.method = 'UNDEFINED';
 propNLinearAnalysis.noLoadSteps = [];
 propNLinearAnalysis.eps = [];
@@ -136,22 +137,24 @@ propNLinearAnalysis.maxIter = 1;
 block = regexp(fstring,'HEAT_TRANSIENT_ANALYSIS','split');
 block(1) = [];
 out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
-propStrDynamics.timeDependence = out{1}{2};
-propStrDynamics.method = out{1}{4};
-propStrDynamics.T0 = str2double(out{1}{6});
-propStrDynamics.TEnd = str2double(out{1}{8});
-propStrDynamics.noTimeSteps = str2double(out{1}{10});
-propStrDynamics.isAdaptive = out{1}{12};
-propStrDynamics.dt = (propStrDynamics.TEnd - propStrDynamics.T0)/propStrDynamics.noTimeSteps;
+propHeatDynamics.timeDependence = out{1}{2};
+if ~strcmp(propHeatDynamics.timeDependence,'STEADY_STATE')
+    propHeatDynamics.method = out{1}{4};
+    propHeatDynamics.T0 = str2double(out{1}{6});
+    propHeatDynamics.TEnd = str2double(out{1}{8});
+    propHeatDynamics.noTimeSteps = str2double(out{1}{10});
+    propHeatDynamics.isAdaptive = out{1}{12};
+    propHeatDynamics.dt = (propHeatDynamics.TEnd - propHeatDynamics.T0)/propHeatDynamics.noTimeSteps;
+end
 
 if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Structural dynamics: %s \n',propStrDynamics.timeDependence);
-    if ~strcmp(propStrDynamics.timeDependence,'STEADY_STATE')
-        fprintf('\t>> Time integration method: %s \n',propStrDynamics.method);
-        fprintf('\t>> Start time of the simulation: %f \n',propStrDynamics.T0);
-        fprintf('\t>> End time of the simulation: %f \n',propStrDynamics.TEnd);
-        fprintf('\t>> Number of time steps: %f \n',propStrDynamics.noTimeSteps);
-        fprintf('\t>> Time step size: %f \n',propStrDynamics.dt);
+    fprintf('>> Structural dynamics: %s \n',propHeatDynamics.timeDependence);
+    if ~strcmp(propHeatDynamics.timeDependence,'STEADY_STATE')
+        fprintf('\t>> Time integration method: %s \n',propHeatDynamics.method);
+        fprintf('\t>> Start time of the simulation: %f \n',propHeatDynamics.T0);
+        fprintf('\t>> End time of the simulation: %f \n',propHeatDynamics.TEnd);
+        fprintf('\t>> Number of time steps: %f \n',propHeatDynamics.noTimeSteps);
+        fprintf('\t>> Time step size: %f \n',propHeatDynamics.dt);
     end
 end
 

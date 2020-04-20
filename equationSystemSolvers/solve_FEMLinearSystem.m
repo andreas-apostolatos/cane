@@ -167,14 +167,14 @@ end
 
 %% 2. Compute the stiffness matrix and the residual vector for the transient problem
 if isfield(propTransientAnalysis, 'timeDependence')
-    if ~strcmp(propTransientAnalysis.timeDependence, 'steadyState')
+    if ~strcmp(propTransientAnalysis.timeDependence, 'STEADY_STATE')
         if isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle')
             [stiffMtx, resVct] = ...
                 propTransientAnalysis.computeProblemMtrcsTransient...
                 (u, uSaved, uDot, uDotSaved, uDDot, uDDotSaved, massMtx, ...
                 dampMtx, stiffMtx, resVct, propTransientAnalysis);
         elseif ~isa(propTransientAnalysis.computeProblemMtrcsTransient, 'function_handle') && ...
-                ~(strcmp(propTransientAnalysis.timeDependence, 'steadyState') || strcmp(propTransientAnalysis.timeDependence, 'pseudotransient'))
+                ~(strcmp(propTransientAnalysis.timeDependence, 'STEADY_STATE') || strcmp(propTransientAnalysis.timeDependence, 'pseudotransient'))
             error('Variable propTransientAnalysis.computeProblemMtrcsTransient is undefined but the simulation is transient')
         end
     end

@@ -37,6 +37,9 @@ addpath('../../efficientComputation/');
 % Include functions related to transient analysis
 addpath('../../transientAnalysis/');
 
+% Add all functions related to body forces
+addpath('../../FEMPlateInMembraneActionAnalysis/loads/');
+ 
 % Add all functions related to heat transfer analysis
 addpath('../../FEMHeatTransferAnalysis/solvers/',...
         '../../FEMHeatTransferAnalysis/solutionMatricesAndVectors/',...
@@ -44,18 +47,19 @@ addpath('../../FEMHeatTransferAnalysis/solvers/',...
         '../../FEMHeatTransferAnalysis/graphics/',...
         '../../FEMHeatTransferAnalysis/output/',...
         '../../FEMHeatTransferAnalysis/initialConditions/',...
-        '../../FEMHeatTransferAnalysis/postprocessing/');
+        '../../FEMHeatTransferAnalysis/postProcessing/');
 
 %% Parse data from GiD input file
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMHeatTransferAnalysis/';
-caseName = 'transient_test';
+% caseName = 'transientSquareCavity';
+caseName = 'transientWallConduction';
 
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
-    propParameters, propNLinearAnalysis, propStrDynamics, propGaussInt] = ...
+    propParameters, propNLinearAnalysis, propHeatDynamics, propGaussInt] = ...
     parse_HeatModelFromGid(pathToCase, caseName, 'outputEnabled');
 
 %% UI
@@ -67,13 +71,8 @@ computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 
-% Function handle to the computation of the initial conditions
-computeInitCnds = @computeInitCndsFEMHeatTransferAnalysis;
-propStrDynamics.initialTemperature = 300;
-
 % Assign load
-propNBC.tractionLoadVct = [1e5; 0; 0];
-%computeConstantFlux
+propNBC.tractionLoadVct = [0; 0; 0]; %computeConstantFlux
 
 % On the writing the output function
 propVTK.isOutput = true;
@@ -89,38 +88,90 @@ isUnitTest = false;
 
 % Choose the appropriate matrix update computation corresponding to the
 % chosen time integration scheme
-if strcmp(propStrDynamics.method,'IMPLICIT_EULER')
-    propStrDynamics.computeProblemMtrcsTransient = ...
+if strcmp(propHeatDynamics.method,'IMPLICIT_EULER')
+    propHeatDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsImplicitEuler;
-    propStrDynamics.computeUpdatedVct = ...
+    propHeatDynamics.computeUpdatedVct = ...
         @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propStrDynamics.method,'GALERKIN')
-    propStrDynamics.computeProblemMtrcsTransient =  ...
+elseif strcmp(propHeatDynamics.method,'GALERKIN')
+    propHeatDynamics.computeProblemMtrcsTransient =  ...
         @computeProblemMtrcsGalerkin;
-    propStrDynamics.computeUpdatedVct = ...
+    propHeatDynamics.computeUpdatedVct = ...
         @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propStrDynamics.method,'CRANK_NICOLSON')
-    propStrDynamics.computeProblemMtrcsTransient = ...
+elseif strcmp(propHeatDynamics.method,'CRANK_NICOLSON')
+    propHeatDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsCrankNicolson;
-    propStrDynamics.computeUpdatedVct = ...
+    propHeatDynamics.computeUpdatedVct = ...
         @computeBETITransientUpdatedVctAccelerationField;
 else
-    error('Invalid time integration method selected in propStrDynamics.method as %s',propStrDynamics.method);
+    error('Invalid time integration method selected in propStrDynamics.method as %s',propHeatDynamics.method);
 end
 
 % Initialize graphics index
-graph.index = 1;
+propGraph.index = 1;
+
+%% Define the initial condition function
+computeInitialConditions = @computeInitCndsFEMHeatTransferAnalysis;
+if strcmp(caseName, 'transientSquareCavity')
+    propHeatDynamics.initialTemperature = 300;
+elseif strcmp(caseName, 'transientWallConduction')
+    propHeatDynamics.initialTemperature = 200;
+end
 
 %% Solve the transient heat transfer problem
 [dHistory, minElSize] = solve_FEMHeatTransferTransient ...
     (strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     updateInhomDOFs, propNBC, @computeLoadVctFEMHeatTransferAnalysis, ...
-    propParameters, computeBodyForces, propAnalysis, computeInitCnds, ...
+    propParameters, computeBodyForces, propAnalysis, computeInitialConditions, ...
     @computeStiffMtxAndLoadVctFEMHeatTransferAnalysisCST,...
-    propNLinearAnalysis, propIDBC, propStrDynamics, solve_LinearSystem, ...
+    propNLinearAnalysis, propIDBC, propHeatDynamics, solve_LinearSystem, ...
     @solve_FEMLinearSystem, propGaussInt, propVTK, caseName, ...
     isUnitTest, 'outputEnabled');
 
-%% Postprocessing
+%% Define a function to compute analytical results 
+if strcmp(caseName, 'transientSquareCavity')
+    propPostproc.computeAnalytical = @(x,y,t,propPostproc) ...
+        propPostproc.T1+(propPostproc.T2-propPostproc.T1) * (2/pi) * ...
+        sum( ((( (-1).^( (1:propPostproc.k) +1) )+1)./ (1:propPostproc.k) ) .* ...
+        sin(( (1:propPostproc.k) *pi*x)/propPostproc.width) .* ...
+        ( sinh(( (1:propPostproc.k) *pi*y)/propPostproc.width) ./ ...
+        sinh(( (1:propPostproc.k) *pi*propPostproc.height)/propPostproc.width) ) );
+elseif strcmp(caseName, 'transientWallConduction')
+    
+    
+    
+    
+    
+    
+    
+    
+    
+end
+
+%% Visualize analytical solution
+propGraph.index = plot_steadyStateBenchmarkProblemAnalyticalSolution...
+    (strMsh,valuesInhomDOFs,propPostproc,propGraph,'outputEnabled');
+
+%% Compute the selected resultant at the chosen Cartesian location over time                                
+x = 0.6;
+y = 0.6;
+[timeSpaceDiscrete, resultantNumerical, resultantAnalytical] = ...
+    computeResultantAtPointOverTime...
+    (x, y, strMsh, valuesInhomDOFs, dHistory, ...
+    propHeatDynamics, propPostproc, 'outputEnabled');
+
+%% Plot the selected resultant at the chosen Cartesian location over time
+figure(propGraph.index)
+if ~ischar(resultantAnalytical)
+    plot(timeSpaceDiscrete, resultantAnalytical, 'black',...
+         timeSpaceDiscrete, resultantNumerical, 'blue');
+    legend('Analytical', 'FEM', 'Orientation', 'horizontal', 'Location', 'southoutside');
+else
+    plot(timeSpaceDiscrete, resultantNumerical, 'blue');
+end
+xlabel('Time [seconds]');
+ylabel('Temperature');
+title(sprintf('Evolution of Temperature at point X = (%d, %d)', x, y));
+propGraph.index = propGraph.index + 1;
 
 %% END OF THE SCRIPT

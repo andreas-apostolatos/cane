@@ -278,17 +278,9 @@ HEAT_MATERIAL_PROPERTIES
 *endif
 *end loop
 
-HEAT_NLINEAR_SCHEME
- NLINEAR_SCHEME,*GenData(HT_Non-Linear_Solver_Type)
- NO_LOAD_STEPS,*GenData(HT_Number_of_Steps)
- TOLERANCE,*GenData(HT_Tolerance)
- MAX_ITERATIONS,*GenData(HT_Max_Iterations)
-
 HEAT_TRANSIENT_ANALYSIS
  SOLVER *GenData(HT_Time_Analysis_Type)
  TIME_INTEGRATION *GenData(HT_Time_Integration_Scheme)
- ALPHA_BETA *GenData(HT_AlphaBeta)
- GAMMA *GenData(HT_Gamma)
  START_TIME *GenData(HT_Start_Time)
  END_TIME *GenData(HT_End_Time)
  NUMBER_OF_TIME_STEPS *GenData(HT_Number_of_Time_Steps)

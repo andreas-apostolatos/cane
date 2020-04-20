@@ -34,6 +34,9 @@ addpath('../../equationSystemSolvers/');
 % Add all the efficient computation functions
 addpath('../../efficientComputation/');
 
+% Add all functions related to body forces
+addpath('../../FEMPlateInMembraneActionAnalysis/loads/');
+
 % Add all functions related to heat transfer analysis
 addpath('../../FEMHeatTransferAnalysis/solvers/',...
         '../../FEMHeatTransferAnalysis/solutionMatricesAndVectors/',...
@@ -46,9 +49,10 @@ addpath('../../FEMHeatTransferAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMHeatTransferAnalysis/';
-%caseName = 'steadyStateBenchmark_1w1h';
-%caseName = 'steadyStateBenchmark_2w1h';
-caseName = 'rectangularPlateWithTwoHoles';
+caseName = 'steadyStateSquareCavity';
+%caseName = 'steadyStateWallConduction';
+%caseName = 'rectangularPlateWithTwoHoles';
+%caseName = 'rectangularPlateWithCenterHole';
 
 
 % Parse the data from the GiD input file
@@ -74,13 +78,13 @@ propVTK.VTKResultFile = 'undefined';
 computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMHeatTransferAnalysisCST;
 
 % Linear analysis
-propStrDynamics = 'undefined';
+propHeatDynamics = 'undefined';
 
 % Initialize graphics index
 graph.index = 1;
 
 % Assign load
-propNBC.tractionLoadVct = [1e5; 0; 0]; %computeConstantFlux
+propNBC.tractionLoadVct = [5e4; 0; 0]; %computeConstantFlux
 
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
@@ -102,11 +106,22 @@ dHat = zeros(numDOFs,1);
     solve_LinearSystem, propNLinearAnalysis, propGaussInt, propVTK, ...
     caseName, pathToOutput, 'outputEnabled');
 
-%% Postprocessing
+%% Define a function to compute analytical results 
+if strcmp(caseName, 'steadyStateSquareCavity')
+    propPostproc.computeAnalytical = @(x,y,t,propPostproc) ...
+        propPostproc.T1+(propPostproc.T2-propPostproc.T1) * (2/pi) * ...
+        sum( ((( (-1).^( (1:propPostproc.k) +1) )+1)./ (1:propPostproc.k) ) .* ...
+        sin(( (1:propPostproc.k) *pi*x)/propPostproc.width) .* ...
+        ( sinh(( (1:propPostproc.k) *pi*y)/propPostproc.width) ./ ...
+        sinh(( (1:propPostproc.k) *pi*propPostproc.height)/propPostproc.width) ) );
+elseif strcmp(caseName, 'steadyStateWallConduction')
+    
+end
 
-% Show analytical solution if we have a benchmark case
-if strcmp(caseName, 'steadyStateBenchmark_1w1h') || strcmp(caseName, 'steadyStateBenchmark_2w1h')
-    graph.index = plot_steadyStateBenchmarkProblemAnalyticalSolution(strMsh,valuesInhomDOFs,graph,'outputEnabled');
+%% Visualize analytical solution
+if strcmp(caseName, 'steadyStateSquareCavity') || strcmp(caseName, 'steadyStateWallConduction')
+    graph.index = plot_steadyStateBenchmarkProblemAnalyticalSolution...
+        (strMsh,valuesInhomDOFs,propPostproc,graph,'outputEnabled');
 end
 
 %% END OF THE SCRIPT

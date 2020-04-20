@@ -61,7 +61,7 @@ addpath('../../efficientComputation/');
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 %caseName = 'taylorGreenVortices_pi_domain';
-% caseName = 'taylorGreenVortices_2pi_domain';
+%caseName = 'taylorGreenVortices_2pi_domain';
 caseName = 'unitTest_taylorGreenVortices_2pi_domain';
 
 % Parse the data

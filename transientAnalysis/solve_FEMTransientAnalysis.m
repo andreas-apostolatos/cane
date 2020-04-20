@@ -245,10 +245,10 @@ end
 numNodes = length(msh.nodes(:,1));
 
 % Compute the number of degrees of freedom
-if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
-    numDOFs = 3*numNodes;
-elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
+if strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
     numDOFs = 4*numNodes;
+elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
+    numDOFs = 3*numNodes;
 elseif strcmp(propAnalysis.type, 'planeStress') || strcmp(propAnalysis.type, 'planeStrain')
     numDOFs = 2*numNodes;
 elseif strcmp(propAnalysis.type, 'HEAT_TRANSFER_2D')

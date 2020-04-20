@@ -1,5 +1,5 @@
 function index = plot_steadyStateBenchmarkProblemAnalyticalSolution ... 
-    (mesh, valuesInhomDOFs, propGraph, outMsg)
+    (mesh, valuesInhomDOFs, propPostproc, propGraph, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -55,7 +55,7 @@ end
 %% 0. Read input
 
 % Define the number of infinite series sum
-numSeries = 200;
+propPostproc.k = 200;
 
 % Define the grid sizes
 numGridPts_x = 49;
@@ -78,12 +78,12 @@ dx = (x1 - x0)/numGridPts_x;
 dy = (x2 - x0)/numGridPts_y;
 
 % Get height and width
-height = abs(x2(2)-x0(2));
-width = abs(x1(1)-x0(1));
+propPostproc.height = abs(x2(2)-x0(2));
+propPostproc.width = abs(x1(1)-x0(1));
 
 % Get temperatures
-T1 = min(valuesInhomDOFs);
-T2 = max(valuesInhomDOFs);
+propPostproc.T1 = min(valuesInhomDOFs);
+propPostproc.T2 = max(valuesInhomDOFs);
 
 %% 1. Initialize the arrays
 
@@ -103,16 +103,7 @@ for n = 1:numGridPts_x + 1
         PCartesian(n, m, 1:2) = x;
 
         %% 2ii. Compute the resultant on the evaluation 
-        coefficient = 0;
-        
-        % Loop over the number of infinite sum series
-        for k = 1:numSeries
-            coefficient = coefficient + ((( (-1)^(k+1) )+1)/k) * sin((k*pi*x(1))/width) * ...
-                     ( sinh((k*pi*x(2))/width) / sinh((k*pi*height)/width) );
-        end
-        
-        % Assign the computed temperature to the resultant
-        resultant(n, m) = T1+(T2-T1)*(2/pi)*coefficient;
+        resultant(n, m) = propPostproc.computeAnalytical(x(1),x(2),0,propPostproc);
         
         %% 2iii. Update the Cartesian location along the x-direction
         x = x + dx;
@@ -140,7 +131,7 @@ xlabel('x', 'FontSize', 14);
 ylabel('y', 'FontSize', 14);
 
 % Graph title
-title('Temperature distribution');
+title('Temperature distribution - Steady State');
 hold off;
 
 % Update the graph index
