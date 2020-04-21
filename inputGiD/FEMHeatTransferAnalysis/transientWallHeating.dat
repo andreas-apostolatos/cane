@@ -117,10 +117,10 @@ HEAT_MATERIAL_PROPERTIES
 
 HEAT_TRANSIENT_ANALYSIS
  SOLVER TRANSIENT
- TIME_INTEGRATION GALERKIN
+ TIME_INTEGRATION CRANK_NICOLSON
  START_TIME 0
- END_TIME 18000
- NUMBER_OF_TIME_STEPS 30
+ END_TIME 36000
+ NUMBER_OF_TIME_STEPS 50
  ADAPTIVE_TIME_STEPPING true
  
 HEAT_INTEGRATION
@@ -2500,39 +2500,39 @@ HEAT_ELEMENTS
     1535    808   807     791
     1536    807   790     791
 HEAT_DIRICHLET_NODES
-       1 400  
-       3 400  
-       6 400  
-      11 400  
-      16 400  
-      25 400  
-      35 400  
-      45 400  
-      57 400  
-      73 400  
-      87 400  
-     106 400  
-     123 400  
-     145 400  
-     167 400  
-     193 400  
-     215 400  
-     807 200  
-     808 200  
-     809 200  
-     812 200  
-     813 200  
-     814 200  
-     816 200  
-     819 200  
-     820 200  
-     823 200  
-     824 200  
-     826 200  
-     828 200  
-     830 200  
-     831 200  
-     832 200  
-     833 200  
+       1 500  
+       3 500  
+       6 500  
+      11 500  
+      16 500  
+      25 500  
+      35 500  
+      45 500  
+      57 500  
+      73 500  
+      87 500  
+     106 500  
+     123 500  
+     145 500  
+     167 500  
+     193 500  
+     215 500  
+     807 500  
+     808 500  
+     809 500  
+     812 500  
+     813 500  
+     814 500  
+     816 500  
+     819 500  
+     820 500  
+     823 500  
+     824 500  
+     826 500  
+     828 500  
+     830 500  
+     831 500  
+     832 500  
+     833 500  
 HEAT_FLUX_NODES 
  

@@ -114,14 +114,18 @@ if strcmp(caseName, 'steadyStateSquareCavity')
         sin(( (1:propPostproc.k) *pi*x)/propPostproc.width) .* ...
         ( sinh(( (1:propPostproc.k) *pi*y)/propPostproc.width) ./ ...
         sinh(( (1:propPostproc.k) *pi*propPostproc.height)/propPostproc.width) ) );
-elseif strcmp(caseName, 'steadyStateWallConduction')
     
+    % Assign temperatures
+    propPostproc.T1 = min(valuesInhomDOFs);
+    propPostproc.T2 = max(valuesInhomDOFs);
 end
 
 %% Visualize analytical solution
-if strcmp(caseName, 'steadyStateSquareCavity') || strcmp(caseName, 'steadyStateWallConduction')
-    graph.index = plot_steadyStateBenchmarkProblemAnalyticalSolution...
-        (strMsh,valuesInhomDOFs,propPostproc,graph,'outputEnabled');
+if strcmp(caseName, 'steadyStateSquareCavity')
+    % At steady state time is infinite
+    t = inf;
+    graph.index = plot_analyticalSolutionAtTimeInstance...
+        (strMsh,t,propPostproc,graph,'outputEnabled');
 end
 
 %% END OF THE SCRIPT

@@ -1,5 +1,5 @@
-function index = plot_steadyStateBenchmarkProblemAnalyticalSolution ... 
-    (mesh, valuesInhomDOFs, propPostproc, propGraph, outMsg)
+function index = plot_analyticalSolutionAtTimeInstance ... 
+    (mesh, t, propPostproc, propGraph, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -10,13 +10,15 @@ function index = plot_steadyStateBenchmarkProblemAnalyticalSolution ...
 %
 %% Function documentation
 %
-% Plots the analytical solution of the Taylor-Green vortices for the 
-% chosen time and chosen domain for a 2D incompressible flow.
+% Plots the analytical solution specified in the function handle for 2D
+% heat transfer analysis
 %
 %             Input :
-%            fldMsh : Nodes and elements for the fluid mesh
-%        parameters : The parameters of the flow (density, viscosity)
+%              mesh : Nodes and elements for the fluid mesh
 %                 t : Real time at which we want to visualize the results
+%      propPostproc : Structure containing information on postprocessing
+%                      .computeAnalytical : Function handle to computation 
+%                                           of the analtical resultant
 %         propGraph : Structure containing information on the graphics
 %            outMsg : Enables outputting information in the command window 
 %                     when selected as 'outputEnabled'
@@ -81,10 +83,6 @@ dy = (x2 - x0)/numGridPts_y;
 propPostproc.height = abs(x2(2)-x0(2));
 propPostproc.width = abs(x1(1)-x0(1));
 
-% Get temperatures
-propPostproc.T1 = min(valuesInhomDOFs);
-propPostproc.T2 = max(valuesInhomDOFs);
-
 %% 1. Initialize the arrays
 
 % Initialize the field arrays
@@ -103,7 +101,7 @@ for n = 1:numGridPts_x + 1
         PCartesian(n, m, 1:2) = x;
 
         %% 2ii. Compute the resultant on the evaluation 
-        resultant(n, m) = propPostproc.computeAnalytical(x(1),x(2),0,propPostproc);
+        resultant(n, m) = propPostproc.computeAnalytical(x(1),x(2),t,propPostproc);
         
         %% 2iii. Update the Cartesian location along the x-direction
         x = x + dx;
@@ -131,7 +129,7 @@ xlabel('x', 'FontSize', 14);
 ylabel('y', 'FontSize', 14);
 
 % Graph title
-title('Temperature distribution - Steady State');
+title(['Temperature distribution at t = ',num2str(t),' s']);
 hold off;
 
 % Update the graph index

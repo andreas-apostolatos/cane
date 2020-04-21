@@ -1,6 +1,6 @@
 function [timeSpaceDiscrete, resultantNumerical, resultantAnalytical] = ...
     computeResultantAtPointOverTime ...
-    (x, y, mesh, valuesInhomDOFs, upHistory, propHeatDynamics, ...
+    (x, y, mesh, upHistory, propHeatDynamics, ...
     propPostproc, outMsg)
 %% Licensing
 %
@@ -125,10 +125,6 @@ x2(2) = max(mesh.nodes(:,2));
 % Get height and width
 propPostproc.height = abs(x2(2)-x0(2));
 propPostproc.width = abs(x1(1)-x0(1));
-
-% Get temperatures
-propPostproc.T1 = min(valuesInhomDOFs);
-propPostproc.T2 = max(valuesInhomDOFs);
 
 %% 1. Find the mesh element from cartesian coordinates
 for iElement = 1:size(mesh.elements,1)
