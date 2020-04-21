@@ -1,5 +1,6 @@
-function [F,tanMtx] = computeLoadVctLineIGAThinStructure...
-    (FOutdated,BSplinePatch,xib,etab,FAmp,direction,isFollower,t,int,outMsg)
+function [F, tanMtx] = computeLoadVctLineIGAThinStructure ...
+    (FOutdated, BSplinePatch, xib, etab, FAmp, direction, isFollower, ...
+    t, propInt, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -34,7 +35,8 @@ function [F,tanMtx] = computeLoadVctLineIGAThinStructure...
 %                      'normal' : normal to the surface -> FAmp*n
 %     isFollower : Flag on whether the applied load is a follower load
 %              t : The time instance
-%            int : On the quadrature,
+%        propInt : Structure containing information on the numerical
+%                  quadrature,
 %                           .type : 'user' or 'default'
 %                   .xiNGPForLoad : Number of Gauss Points along xi
 %                  .etaNGPForLoad : Number of Gauss Points along eta
@@ -88,7 +90,7 @@ function [F,tanMtx] = computeLoadVctLineIGAThinStructure...
 % 5. Appendix
 %
 %% Function main body
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('_______________________________________________________\n');
     fprintf('#######################################################\n');
     if isvector(FOutdated)
@@ -99,14 +101,14 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('boundary load for the isogeometric Kirchhoff-Love shell\n');
     fprintf('problem has been initiated\n\n');
     if isnumeric(FAmp)
-        fprintf('Constant boundary load is assumed with amplitude = %.2d\n',FAmp);
+        fprintf('Constant boundary load is assumed with amplitude = %.2d\n', FAmp);
     else
         fprintf('Varying boundary load is assumed\n');
     end
-    if strcmp(direction,'x') || strcmp(direction,'y') || strcmp(direction,'z') ...
-            || strcmp(direction,'theta1') || strcmp(direction,'theta2') ...
-            || strcmp(direction,'normal')
-        fprintf('Load direction is chosen as %s',direction);
+    if strcmp(direction, 'x') || strcmp(direction, 'y') || strcmp(direction, 'z') ...
+            || strcmp(direction, 'theta1') || strcmp(direction, 'theta2') ...
+            || strcmp(direction, 'normal')
+        fprintf('Load direction is chosen as %s', direction);
     else
         error('Select a valid direction for the load');
     end
@@ -124,18 +126,16 @@ if strcmp(outMsg,'outputEnabled')
         error('Both load extensions xib and etab cannot have simultaneously vactor values for a line load');
     end
     if isscalar(xib)
-        fprintf('Load extension in xi parametric direction = [%.2d,%.2d]\n',xib,xib);
+        fprintf('Load extension in xi parametric direction = [%.2d,%.2d]\n', xib, xib);
     else
-        fprintf('Load extension in xi parametric direction = [%.2d,%.2d]\n',xib(1),xib(2));
+        fprintf('Load extension in xi parametric direction = [%.2d,%.2d]\n', xib(1), xib(2));
     end
     if isscalar(etab)
-        fprintf('Load extension in eta parametric direction = [%.2d,%.2d]\n',etab,etab);
+        fprintf('Load extension in eta parametric direction = [%.2d,%.2d]\n', etab, etab);
     else
-        fprintf('Load extension in eta parametric direction = [%.2d,%.2d]\n',etab(1),etab(2));
+        fprintf('Load extension in eta parametric direction = [%.2d,%.2d]\n', etab(1), etab(2));
     end
     fprintf('_______________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -147,36 +147,42 @@ q = BSplinePatch.q;
 Xi = BSplinePatch.Xi;
 Eta = BSplinePatch.Eta;
 CP = BSplinePatch.CP;
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+numCPs_xi = length(CP(:, 1, 1));
+numCPs_eta = length(CP(1, :, 1));
 if isFollower
     CPd = BSplinePatch.CPd;
 end
 isNURBS = BSplinePatch.isNURBS;
 
 % Number of Control Points affecting each element
-noCPsEl = (p + 1)*(q + 1);
+numCPsEl = (p + 1)*(q + 1);
 
 % Number of DOFs per Control Point
-noDOFsCP = 3;
+numDOFsCP = 3;
 
 % Number of DOFs per element
-noDOFsEl = noDOFsCP*noCPsEl;
+numDOFsEl = numDOFsCP*numCPsEl;
+
+% Number of derivatives for the B-Spline basis functions
+numDrvsBasisFcts = 1;
+
+% Number of derivatives for the base vectors
+numDrvsBaseVcts = 0;
 
 % Number of DOFs for the patch
-if isfield(BSplinePatch,'noDOFs')
-    noDOFs = BSplinePatch.noDOFs;
+if isfield(BSplinePatch, 'noDOFs')
+    numDOFs = BSplinePatch.noDOFs;
 else
-    noDOFs = noDOFsCP*nxi*neta;
+    numDOFs = numDOFsCP*numCPs_xi*numCPs_eta;
 end
 
 % Initialize auxiliary arrays
-RMtx = zeros(noDOFsCP,noDOFsEl);
+RMtx = zeros(numDOFsCP, numDOFsEl);
 
 % Initialize output arrays
-F = zeros(noDOFs,1);
+F = zeros(numDOFs, 1);
 if isFollower
-    tanMtx = zeros(noDOFs);
+    tanMtx = zeros(numDOFs);
 else
     tanMtx = 'undefined';
 end
@@ -190,7 +196,7 @@ if isscalar(xib)
     xi = xib;
     
     % Find the knot span index of the fixed parameter
-    xiKnotSpan = findKnotSpan(xi,Xi,nxi);
+    xiKnotSpan = findKnotSpan(xi, Xi,  numCPs_xi);
     
     % Get the knot vector over which the integration takes place
     thetaKnotVct = Eta; 
@@ -198,9 +204,9 @@ if isscalar(xib)
     % Set the starting and ending parametric coordinates for the 
     % integration
     thetaStart = etab(1);
-    thetaStartKnotSpan = findKnotSpan(thetaStart,Eta,neta);
+    thetaStartKnotSpan = findKnotSpan(thetaStart, Eta, numCPs_eta);
     thetaEnd = etab(2);
-    thetaEndKnotSpan = findKnotSpan(thetaEnd,Eta,neta);
+    thetaEndKnotSpan = findKnotSpan(thetaEnd, Eta, numCPs_eta);
 else
     % Set the flag on whether the integration takes place along xi to true
     isOnXi = true;
@@ -209,36 +215,43 @@ else
     eta = etab;
     
     % Find the knot span index of the fixed parameter
-    etaKnotSpan = findKnotSpan(eta,Eta,neta);
+    etaKnotSpan = findKnotSpan(eta, Eta, numCPs_eta);
     
     % Get the knot vector over which the integration takes place
-    thetaKnotVct = Xi; 
+    thetaKnotVct = Xi;
     
     % Set the starting and ending parametric coordinates for the 
     % integration
     thetaStart = xib(1);
-    thetaStartKnotSpan = findKnotSpan(thetaStart,Xi,nxi);
+    thetaStartKnotSpan = findKnotSpan(thetaStart, Xi, numCPs_xi);
     thetaEnd = xib(2);
-    thetaEndKnotSpan = findKnotSpan(thetaEnd,Xi,nxi);
+    thetaEndKnotSpan = findKnotSpan(thetaEnd, Xi, numCPs_xi);
 end
 
 %% 2. Get a quadrature rule
-if strcmp(int.type,'default')
-    if isOnXi
-        noGPs = ceil(2*p - 1);
-    else
-        noGPs = ceil(2*q - 1);
+if isstruct(propInt)
+    if ~isfield(propInt, 'type')
+        error('propInt must define a type')
     end
-elseif strcmp(int.type,'user')
-    if isOnXi
-        noGPs = int.xiNGPForLoad;
+    if strcmp(propInt.type, 'default')
+        if isOnXi
+            numGPs = ceil(2*p - 1);
+        else
+            numGPs = ceil(2*q - 1);
+        end
+    elseif strcmp(propInt.type, 'user')
+        if isOnXi
+            numGPs = propInt.xiNGPForLoad;
+        else
+            numGPs = propInt.etaNGPForLoad;
+        end
     else
-        noGPs = int.etaNGPForLoad;
+        error('Select a valid integration type int.type');
     end
 else
-    error('Select a valid integration type int.type')
+    error('propInt must be a structure');
 end
-[GP,GW] = getGaussPointsAndWeightsOverUnitDomain(noGPs);
+[GP, GW] = getGaussPointsAndWeightsOverUnitDomain(numGPs);
 
 %% 3. Loop over all elements at the boundary where the load is applied
 for iKnotSpan = thetaStartKnotSpan:thetaEndKnotSpan
@@ -252,34 +265,33 @@ for iKnotSpan = thetaStartKnotSpan:thetaEndKnotSpan
         else
             etaKnotSpan = iKnotSpan;
         end
-        noElmnt = BSplinePatch.knotSpan2ElmntNo(xiKnotSpan,etaKnotSpan);
-        EFT = BSplinePatch.EFT(:,noElmnt);
+        noElmnt = BSplinePatch.knotSpan2ElmntNo(xiKnotSpan, etaKnotSpan);
+        EFT = BSplinePatch.EFT(:, noElmnt);
         
         %% 3iii. Loop over all the Gauss Points
-        for iGP = 1:noGPs
+        for iGP = 1:numGPs
             %% 3iii.1. Compute the parametric coordinate of the Gauss Point
             theta = (thetaKnotVct(iKnotSpan + 1) + thetaKnotVct(iKnotSpan) + GP(iGP)*(thetaKnotVct(iKnotSpan + 1) - thetaKnotVct(iKnotSpan)))/2;
             
             %% 3iii.2. Compute the IGA basis functions at the Gauss Point
             if isOnXi
                 xi = theta;
-                xiKnotSpan = findKnotSpan(xi,Xi,nxi);
+                xiKnotSpan = findKnotSpan(xi, Xi, numCPs_xi);
             else
                 eta = theta;
-                etaKnotSpan = findKnotSpan(eta,Eta,neta);
+                etaKnotSpan = findKnotSpan(eta, Eta, numCPs_eta);
             end
-            noDrv = 1;
-            dR = computeIGABasisFunctionsAndDerivativesForSurface...
-                (xiKnotSpan,p,xi,Xi,etaKnotSpan,q,eta,Eta,CP,isNURBS,noDrv);
+            dR = computeIGABasisFunctionsAndDerivativesForSurface ...
+                (xiKnotSpan, p, xi, Xi, etaKnotSpan, q, eta, Eta, CP, ...
+                isNURBS, numDrvsBasisFcts);
             
             %% 3iii.3. Compute the base vectors and their derivatives
-            noDrv = 0;
             if isFollower
-                [a1,a2] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                    (xiKnotSpan,p,etaKnotSpan,q,CPd,noDrv,dR);
+                [a1, a2] = computeBaseVectorsAndDerivativesForBSplineSurface ...
+                    (xiKnotSpan, p, etaKnotSpan, q, CPd, numDrvsBaseVcts, dR);
             else
-                [A1,A2] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                    (xiKnotSpan,p,etaKnotSpan,q,CP,noDrv,dR);
+                [A1, A2] = computeBaseVectorsAndDerivativesForBSplineSurface ...
+                    (xiKnotSpan, p, etaKnotSpan, q, CP, numDrvsBaseVcts, dR);
             end
             
             %% 3iii.4. Compute the determinant of the Jacobian of the transformation from the Cartesian to the paramter space
@@ -299,10 +311,10 @@ for iKnotSpan = thetaStartKnotSpan:thetaEndKnotSpan
             
             %% 3iii.5. Compute the normal to the surface vector
             if isFollower
-                a3Tilde = cross(a1(:,1),a2(:,1));
-                a3 = a3Tilde/norm(a3Tilde) ; 
+                a3Tilde = cross(a1(:, 1), a2(:, 1));
+                a3 = a3Tilde/norm(a3Tilde);
             else
-                A3Tilde = cross(A1(:,1),A2(:,1));
+                A3Tilde = cross(A1(:, 1), A2(:, 1));
                 A3 = A3Tilde/norm(A3Tilde);
             end
             
@@ -311,36 +323,42 @@ for iKnotSpan = thetaStartKnotSpan:thetaEndKnotSpan
             % Compute the amplitude of the force if it is spatially 
             % dependent
             if ~isnumeric(FAmp)
-                X = computeCartesianCoordinatesOfAPointOnBSplineSurface...
-                    (iXiSpan,p,xi,Xi,iEtaSpan,q,eta,Eta,CP,dR(:,1));
-                if  ischar(FAmp) && ~isa(FAmp,'function_handle')
+                X = computeCartesianCoordinatesOfAPointOnBSplineSurface ...
+                    (iXiSpan, p, xi, Xi, iEtaSpan, q, eta, Eta, CP, dR(:, 1));
+                if  ischar(FAmp) && ~isa(FAmp, 'function_handle')
                     FAmp = str2func(FAmp);
                 end
-                FAmplitude = FAmp(X(1,1),X(2,1),X(3,1),t);
+                FAmplitude = FAmp(X(1, 1), X(2, 1), X(3, 1), t);
             else
                 FAmplitude = FAmp;
             end
 
             % Decide upon the direction
-            if strcmp(direction,'x')
-                dirVct = [1; 0; 0];
-            elseif strcmp(direction,'y')
-                dirVct = [0; 1; 0];
-            elseif strcmp(direction,'z')
-                dirVct = [0; 0; 1];
-            elseif strcmp(direction,'theta1')
+            if strcmp(direction, 'x')
+                dirVct = [1
+                          0
+                          0];
+            elseif strcmp(direction, 'y')
+                dirVct = [0
+                          1
+                          0];
+            elseif strcmp(direction, 'z')
+                dirVct = [0 
+                          0
+                          1];
+            elseif strcmp(direction, 'theta1')
                 if isFollower
-                    dirVct = a1(:,1)/norm(a1(:,1));
+                    dirVct = a1(:, 1)/norm(a1(:, 1));
                 else
-                    dirVct = A1(:,1)/norm(A1(:,1));
+                    dirVct = A1(:, 1)/norm(A1(:, 1));
                 end
-            elseif strcmp(direction,'theta2')
+            elseif strcmp(direction, 'theta2')
                 if isFollower
-                    dirVct = a2(:,1)/norm(a2(:,1));
+                    dirVct = a2(:,1)/norm(a2(:, 1));
                 else
-                    dirVct = A2(:,1)/norm(A2(:,1));
+                    dirVct = A2(:,1)/norm(A2(:, 1));
                 end
-            elseif strcmp(direction,'normal')
+            elseif strcmp(direction, 'normal')
                 if isFollower
                     dirVct = a3;
                 else
@@ -352,10 +370,10 @@ for iKnotSpan = thetaStartKnotSpan:thetaEndKnotSpan
             tractionVct = FAmplitude*dirVct;
             
             %% 3iii.7. Compute the matrices containing the basis functions and their parametric derivatives
-            for iCPs = 1:noCPsEl
-                RMtx(1,3*iCPs - 2) = dR(iCPs,1);
-                RMtx(2,3*iCPs - 1) = dR(iCPs,1);
-                RMtx(3,3*iCPs) = dR(iCPs,1);
+            for iCPs = 1:numCPsEl
+                RMtx(1, 3*iCPs - 2) = dR(iCPs, 1);
+                RMtx(2, 3*iCPs - 1) = dR(iCPs, 1);
+                RMtx(3, 3*iCPs) = dR(iCPs, 1);
             end
             
             %% 3iii.8. Compute the elementary area content at the Gauss Point
@@ -369,20 +387,18 @@ end
 
 %% 4. Update by the existing load vector
 if isvector(FOutdated)  
-    F = F + FOutdated;   
+    F = F + FOutdated;
 end
 
 %% 5. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
     if isvector(FOutdated)
-        fprintf('Load vector update took %.2d seconds \n\n',computationalTime);
+        fprintf('Load vector update took %.2d seconds \n\n', computationalTime);
         fprintf('________________Load Vector Update Ended_______________\n');
         fprintf('#######################################################\n\n\n');
     else
-        fprintf('Load vector computation took %.2d seconds \n\n',computationalTime);
+        fprintf('Load vector computation took %.2d seconds \n\n', computationalTime);
         fprintf('____________Load Vector Computation Ended______________\n');
         fprintf('#######################################################\n\n\n');
     end

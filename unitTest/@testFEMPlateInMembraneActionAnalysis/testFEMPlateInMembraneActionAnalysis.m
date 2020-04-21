@@ -15,6 +15,5 @@ classdef testFEMPlateInMembraneActionAnalysis < matlab.unittest.TestCase
     methods (Test)
         testCurvedPlateInMembraneActionSteadyStateLinear(testCase)
         testCantileverBeamTransient(testCase)
-        
     end
 end
