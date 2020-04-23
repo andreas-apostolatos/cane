@@ -53,8 +53,8 @@ addpath('../../FEMHeatTransferAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMHeatTransferAnalysis/';
-caseName = 'transientSquareCavity';
-%caseName = 'transientWallHeating';
+% caseName = 'transientSquareCavity';
+caseName = 'transientWallHeating';
 
 
 % Parse the data from the GiD input file

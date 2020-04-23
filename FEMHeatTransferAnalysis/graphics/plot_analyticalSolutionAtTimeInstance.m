@@ -121,7 +121,8 @@ pcolor(PCartesian(:,:,1), PCartesian(:,:,2), resultant(:,:));
 
 % Graph properties
 hold on;
-colorbar('Location','EastOutside');
+colorbar('Location', 'EastOutside');
+colormap('jet');
 axis tight;
 shading interp;
 axis equal;
