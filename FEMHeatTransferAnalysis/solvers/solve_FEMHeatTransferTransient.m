@@ -4,12 +4,20 @@ function [dHistory,minElSize] = solve_FEMHeatTransferTransient...
     propParameters, computeBodyForceVct, propAnalysis, computeInitCnds, ...
     computeProblemMatricesSteadyState, propNLinearAnalysis, propIDBC, ...
     propHeatDynamics, solve_LinearSystem, solve_FEMSystem, propGaussInt, ...
-    propVTK, caseName, isUnitTest, outMsg)
+    propVTK, caseName, outMsg)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
+%
 %% Function documentation
 %
-% Returns the displacement field and the minimum element area size
-% corresponding to the solution of the plate in membrane action problem
-% considering a geometrically nonlinear transient analysis.
+% Returns the temperature field and the minimum element area size
+% corresponding to the solution of the 2D heat transfer analysis problem
+% considering a linear transient analysis.
 %
 %              Input :
 %           analysis : Information on the analysis type
@@ -50,7 +58,6 @@ function [dHistory,minElSize] = solve_FEMHeatTransferTransient...
 %                      .boundaryNoGP : Number of Gauss Points for the
 %                                      evaluation of the boundary integrals
 %            caseName : The name of the case in the inputGiD case folder
-%          isUnitTest : Flag on whether the case is a unit test case
 %              outMsg : On outputting information
 %
 %              Output :
@@ -94,10 +101,10 @@ DOFNumbering = 1:nDOFs;
 pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
 
 % Write output to VTK
-if isUnitTest
-    propVTK.writeOutputToFile = 'undefined';
-else
+if propVTK.isOutput
     propVTK.writeOutputToFile = @writeOutputFEMHeatTransferAnalysisToVTK;
+else
+    propVTK.writeOutputToFile = 'undefined';
 end
 
 % Define tabulation for outputting on the command window
@@ -113,14 +120,6 @@ title = 'linear transient 2D heat transfer analysis';
 
 % Get the DOF numbering for each component of the temperature field
 DOF4Output = 1:nDOFs;
-
-% Make directory to write out the results of the analysis
-if ~isUnitTest
-    isExistent = exist(strcat('../../outputVTK/FEMHeatTransferAnalysis/',caseName),'dir');
-    if ~isExistent
-        mkdir(strcat('../../outputVTK/FEMHeatTransferAnalysis/',caseName));
-    end
-end
 
 %% 1. Find the prescribed and the free DOFs of the system
 

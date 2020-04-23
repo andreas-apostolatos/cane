@@ -53,8 +53,8 @@ addpath('../../FEMHeatTransferAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMHeatTransferAnalysis/';
-% caseName = 'transientSquareCavity';
-caseName = 'transientWallHeating';
+caseName = 'transientSquareCavity';
+%caseName = 'transientWallHeating';
 
 
 % Parse the data from the GiD input file
@@ -79,9 +79,6 @@ propVTK.VTKResultFile = 'undefined';
 % On transient inhomogeneous Dirichlet boundary conditions
 updateInhomDOFs = 'undefined';
 propIDBC = [];
-
-% Not a unit test case
-isUnitTest = false;
 
 % Choose the appropriate matrix update computation corresponding to the
 % chosen time integration scheme
@@ -121,7 +118,6 @@ propNBC.tractionLoadVct = [0; 0; 0]; %computeConstantFlux
     propParameters, computeBodyForces, propAnalysis, computeInitialConditions, ...
     @computeStiffMtxAndLoadVctFEMHeatTransferAnalysisCST,...
     propNLinearAnalysis, propIDBC, propHeatDynamics, solve_LinearSystem, ...
-    @solve_FEMLinearSystem, propGaussInt, propVTK, caseName, ...
-    isUnitTest, 'outputEnabled');
+    @solve_FEMLinearSystem, propGaussInt, propVTK, caseName,'outputEnabled');
 
 %% END OF THE SCRIPT

@@ -12,7 +12,7 @@ function [tanMtx,resVct] = computeProblemMtrcsImplicitEuler...
 %% Function documentation
 %
 % Returns the system matrix and right hand side vector corresponding to the
-% explicit Euler time integration scheme.
+% implicit Euler time integration scheme.
 %
 %                 input :
 %                     u : Solution of the primary field from the previous 

@@ -24,8 +24,7 @@ function writeOutputFEMHeatTransferAnalysisToVTK...
 %                         variable for this function)
 %                strMsh : Nodes and elements in the mesh
 %            parameters : The technical parameters of the problem
-%                     d : The displacement field arranged into a 2D array 
-%                         [[x-comp y-comp],noNodes]
+%                     d : The solution (temperature) field
 %            dDot,dDDot : Dummy variables
 %            DOF4Output : Arrangment of the DOFs for writing out the 
 %                         results
@@ -41,13 +40,11 @@ function writeOutputFEMHeatTransferAnalysisToVTK...
 %
 % 0. Read input
 %
-% 1. Compute the strain [3,[epsilonXX epsilonYY epsilonXY]] and stress vectors [3,[sigmaXX sigmaYY sigmaXY]]
+% 1. Re-arrange the solution vector into a 2D array as [[x-comp y-comp z-comp],noNodes]
 %
-% 2. Re-arrange the solution vector into a 2D array as [[x-comp y-comp z-comp],noNodes]
+% 2. Write out the data for the color plots
 %
-% 3. Write out the data for the color plots
-%
-% 4. Close files
+% 3. Close files
 %
 %% Function main body
 
@@ -75,10 +72,10 @@ XYZ = strMsh.nodes(1:noNodes,:)';
 elements = zeros(elementOrder,noElements);
 elements(1:elementOrder,1:noElements) = strMsh.elements(1:noElements,1:elementOrder)' - 1;
 
-%% 2. Re-arrange the solution vector into a 2D array as [[x-comp y-comp z-comp],noNodes]
+%% 1. Re-arrange the solution vector into a 2D array as [[x-comp y-comp z-comp],noNodes]
 nodalTemperature = [d(DOF4Output(1,:))'; zeros(1, noNodes); zeros(1,noNodes)];
 
-%% 3. Write out the data for the color plots
+%% 2. Write out the data for the color plots
 
 % Write out the preamble
 fprintf(output, '# vtk DataFile Version 2.0\n');
@@ -158,7 +155,7 @@ for elementID = 1:noElements
     end
 end
 
-% Write out the displacement vector field at each node
+% Write out the temperature field at each node
 fprintf(output,'POINT_DATA %d\n',noNodes);
 fprintf(output,'SCALARS temperatures double\n');
 fprintf(output, 'LOOKUP_TABLE default\n');
@@ -166,7 +163,7 @@ for nodeID = 1:noNodes
     fprintf(output,'  %f\n', nodalTemperature(1,nodeID));
 end
 
-%% 4. Close files
+%% 3. Close files
 fclose(output);
 
 return;

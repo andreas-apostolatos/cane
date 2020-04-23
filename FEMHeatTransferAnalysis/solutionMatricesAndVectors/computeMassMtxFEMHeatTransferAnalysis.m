@@ -96,8 +96,6 @@ for iElmnts = 1:length(mesh.elements(:,1))
     %% 2iii. Create an Element Freedom Table (EFT)
     EFT = zeros(numDOFsEl,1);
     for counterEFT = 1:numNodesEl
-%         EFT(2*counterEFT-1) = 2*element(1,counterEFT)-1;
-%         EFT(2*counterEFT) = 2*element(1,counterEFT);
         EFT(counterEFT) = element(1,counterEFT);
     end
     
@@ -118,12 +116,9 @@ for iElmnts = 1:length(mesh.elements(:,1))
         DetJxxi = 2*Area;
         
         %% 2iv.4. Compute the element mass matrix at the Gauss Point
-%         NMtx = [dN(1,1) 0       dN(2,1) 0       dN(3,1) 0
-%                 0       dN(1,1) 0       dN(2,1) 0       dN(3,1)];
         NMtx = [dN(1,1), dN(2,1), dN(3,1)];
         
         %% 2iv.5. Assemble the local mass matrix global mass matrix via the EFT
-%         massMtx(EFT,EFT) = massMtx(EFT,EFT) + parameters.rho*(NMtx'*NMtx)*DetJxxi*GW;
         massMtx(EFT,EFT) = massMtx(EFT,EFT) + parameters.cp*parameters.rho * (NMtx'*NMtx)*DetJxxi*GW;
     end
 end

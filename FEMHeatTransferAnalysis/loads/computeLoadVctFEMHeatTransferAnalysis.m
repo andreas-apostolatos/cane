@@ -122,13 +122,6 @@ for iElmnt = 1:length(propNBC.lines(:,1))
     element(index) = [];
     noNodesEl = length(element);
     noDOFsEl = noNodesEl;
-    if noNodesEl == 3
-        elementType = 'linearTriangle';
-    elseif noNodesEl == 4
-        elementType = 'bilinearQuadrilateral'; % Not needed
-    else
-        error('The load vector computation for a %d-noded element is not yet implemented',noNodesEl);
-    end
     nodes = strMsh.nodes(element,:);
     
     %% 2iii. Get the function handle for this type of loading
@@ -152,24 +145,12 @@ for iElmnt = 1:length(propNBC.lines(:,1))
         xGP = (1 - GP(counterGP))*x1/2 + (1 + GP(counterGP))*x2/2;
         
         %% 2v.2. Compute the basis functions at the Gauss Point
-        if strcmp(elementType,'linearTriangle')
-            [basisFctOnGP,isInside] = computeCST2DBasisFunctions...
-                (nodes(1,1:2),nodes(2,1:2),nodes(3,1:2),xGP(1,1),xGP(1,2));
-            if ~isInside
-                error('The computation of the natural coordinates in the CST triangle has failed');
-            end
-        elseif strcmp(elementType,'bilinearQuadrilateral')
-            [uv,hasConverged] = computePointCoordinatesOnCanonicalBilinearQuadrilateral...
-                (xGP(1,1:2)',nodes(:,1:2)',newtonRapshon);
-            if ~hasConverged
-                error('The computation of the natural coordinates in the bilinear quadrilateral space has failed');
-            end
-            [basisFctOnGP,isInside] = computeBilinearBasisFunctions(uv(1,1),uv(2,1));
-            if ~isInside
-                error('Gauss point coordinates found outside the bilinear quadrilateral');
-            end
+        [basisFctOnGP,isInside] = computeCST2DBasisFunctions...
+            (nodes(1,1:2),nodes(2,1:2),nodes(3,1:2),xGP(1,1),xGP(1,2));
+        if ~isInside
+            error('The computation of the natural coordinates in the CST triangle has failed');
         end
-            
+        
         %% 2v.3. Sort the basis functions into the basis functions array
         N = zeros(1,noDOFsEl);
         for counterBasisFunctions = 1:noNodesEl
