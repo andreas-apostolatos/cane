@@ -1,6 +1,6 @@
-function [KpDispI,KpRotI,CpDispI,CpRotI,KpDispJ,KpRotJ] = ...
+function [KpDispI, KpRotI, CpDispI, CpRotI, KpDispJ, KpRotJ] = ...
     computeDDMPenaltyMtcesIGAThinStructure...
-    (patchI,patchJ,alphaD,alphaR,haveSameOrientation,int)
+    (patchI, patchJ, alphaD, alphaR, haveSameOrientation, int)
 %% Licensing
 %
 % License:         BSD License
@@ -108,18 +108,18 @@ CPI = patchI.CP;
 isNURBSI = patchI.isNURBS;
 xicoupI = patchI.xicoup;
 etacoupI = patchI.etacoup;
-nDOFsI = patchI.noDOFs;
+numDOFsI = patchI.noDOFs;
 
 % Get the DOF numbering
 DOFNumberingI = patchI.DOFNumbering;
 
 % Number of Control Points in xi-,eta- directions
-nxiI = length(CPI(:,1,1));
-netaI = length(CPI(1,:,1));
+numCPs_xiI = length(CPI(:, 1, 1));
+numCPs_etaI = length(CPI(1, :, 1));
 
 % Number of local DOFs
-nNodesLocI = (pI+1)*(qI+1);
-nDOFsLocI = 3*nNodesLocI;
+numCPsElI = (pI + 1)*(qI + 1);
+numDOFsElI = 3*numCPsElI;
 
 % For patch J :
 % _____________
@@ -132,38 +132,38 @@ CPJ = patchJ.CP;
 isNURBSJ = patchJ.isNURBS;
 xicoupJ = patchJ.xicoup;
 etacoupJ = patchJ.etacoup;
-nDOFsJ = patchJ.noDOFs;
+numDOFsJ = patchJ.noDOFs;
 
 % Get the DOF numbering
 DOFNumberingJ = patchJ.DOFNumbering;
 
 % Number of Control Points in xi-,eta- directions
-nxiJ = length(CPJ(:,1,1));
-netaJ = length(CPJ(1,:,1));
+numCPs_xiJ = length(CPJ(:, 1, 1));
+numCPs_etaJ = length(CPJ(1, :, 1));
 
 % Number of local DOFs
-nNodesLocJ = (pJ+1)*(qJ+1);
-nDOFsLocJ = 3*nNodesLocJ;
+numCPsElJ = (pJ + 1)*(qJ + 1);
+numDOFsElJ = 3*numCPsElJ;
 
 % Initialize the element freedom tables
-EFTI = zeros(1,nDOFsLocI);
-EFTJ = zeros(1,nDOFsLocJ);
+EFTI = zeros(1, numDOFsElI);
+EFTJ = zeros(1, numDOFsElJ);
 
 % Initialize auxiliary arrays
-BDisplacementsGCI = zeros(3,nDOFsLocI);
-BDisplacementsGCJ = zeros(3,nDOFsLocJ);
-dRdxiI = zeros(3,nDOFsLocI);
-dRdxiJ = zeros(3,nDOFsLocJ);
-dRdetaI = zeros(3,nDOFsLocI);
-dRdetaJ = zeros(3,nDOFsLocJ);
+BDisplacementsGCI = zeros(3, numDOFsElI);
+BDisplacementsGCJ = zeros(3, numDOFsElJ);
+dRdxiI = zeros(3, numDOFsElI);
+dRdxiJ = zeros(3, numDOFsElJ);
+dRdetaI = zeros(3, numDOFsElI);
+dRdetaJ = zeros(3, numDOFsElJ);
 
 % Initialize the output arrays
-KpDispI = zeros(nDOFsI,nDOFsI);
-KpRotI = zeros(nDOFsI,nDOFsI);
-KpDispJ = zeros(nDOFsJ,nDOFsJ);
-KpRotJ = zeros(nDOFsJ,nDOFsJ);
-CpDispI = zeros(nDOFsI,nDOFsJ);
-CpRotI = zeros(nDOFsI,nDOFsJ);
+KpDispI = zeros(numDOFsI, numDOFsI);
+KpRotI = zeros(numDOFsI, numDOFsI);
+KpDispJ = zeros(numDOFsJ, numDOFsJ);
+KpRotJ = zeros(numDOFsJ, numDOFsJ);
+CpDispI = zeros(numDOFsI, numDOFsJ);
+CpRotI = zeros(numDOFsI, numDOFsJ);
 
 %% 1. Get the running and the fixed parameters on the patch interface and the coupling region
 
@@ -175,8 +175,8 @@ if etacoupI(1) == etacoupI(2)
     couplingRegionI = xicoupI;
     
     % Find the correct spans for the coupled region
-    spanStartI = findKnotSpan(couplingRegionI(1),XiI,nxiI);
-    spanEndI = findKnotSpan(couplingRegionI(2),XiI,nxiI)+1;
+    spanStartI = findKnotSpan(couplingRegionI(1), XiI, numCPs_xiI);
+    spanEndI = findKnotSpan(couplingRegionI(2), XiI, numCPs_xiI) + 1;
     
     % Corresponding to the coupled region knot span
     couplingRegionOnKnotVectorI = XiI(spanStartI:spanEndI);
@@ -185,7 +185,7 @@ if etacoupI(1) == etacoupI(2)
     etaI = etacoupI(1);
     
     % Find the span where xiEta it lies in
-    etaSpanI = findKnotSpan(etaI,EtaI,netaI);
+    etaSpanI = findKnotSpan(etaI, EtaI, numCPs_etaI);
     
     % Flag on whether the coupling line is over xi
     isOnXiI = true;
@@ -194,8 +194,8 @@ else
     couplingRegionI = etacoupI;
     
     % Find the correct spans for the coupled region
-    spanStartI = findKnotSpan(couplingRegionI(1),EtaI,netaI);   
-    spanEndI = findKnotSpan(couplingRegionI(2),EtaI,netaI)+1;   
+    spanStartI = findKnotSpan(couplingRegionI(1), EtaI, numCPs_etaI);   
+    spanEndI = findKnotSpan(couplingRegionI(2), EtaI, numCPs_etaI) + 1;   
     
     % Corresponding to the coupled region knot span
     couplingRegionOnKnotVectorI = EtaI(spanStartI:spanEndI);
@@ -204,7 +204,7 @@ else
     xiI = xicoupI(1);
     
     % Find the span where uv it lies in
-    xiSpanI = findKnotSpan(xiI,XiI,nxiI);
+    xiSpanI = findKnotSpan(xiI, XiI, numCPs_xiI);
     
     % Flag on whether the coupling line is over eta
     isOnXiI = false;
@@ -218,8 +218,8 @@ if etacoupJ(1) == etacoupJ(2)
     couplingRegionJ = xicoupJ;
     
     % Find the correct spans for the coupled region
-    spanStartJ = findKnotSpan(couplingRegionJ(1),XiJ,nxiJ);   
-    spanEndJ = findKnotSpan(couplingRegionJ(2),XiJ,nxiJ)+1; 
+    spanStartJ = findKnotSpan(couplingRegionJ(1), XiJ, numCPs_xiJ);
+    spanEndJ = findKnotSpan(couplingRegionJ(2), XiJ, numCPs_xiJ) + 1;
     
     % Corresponding to the coupled region knot span
     couplingRegionOnKnotVectorJ = XiJ(spanStartJ:spanEndJ);
@@ -228,7 +228,7 @@ if etacoupJ(1) == etacoupJ(2)
     etaJ = etacoupJ(1);
     
     % Find the span where xiEta it lies in
-    etaSpanJ = findKnotSpan(etaJ,EtaJ,netaJ);
+    etaSpanJ = findKnotSpan(etaJ, EtaJ, numCPs_etaJ);
     
     % Flag on whether the coupling line is over xi
     isOnXiJ = true;
@@ -237,8 +237,8 @@ else
     couplingRegionJ = etacoupJ;
     
     % Find the correct spans for the coupled region
-    spanStartJ = findKnotSpan(couplingRegionJ(1),EtaJ,netaJ);   
-    spanEndJ = findKnotSpan(couplingRegionJ(2),EtaJ,netaJ)+1;
+    spanStartJ = findKnotSpan(couplingRegionJ(1), EtaJ, numCPs_etaJ);
+    spanEndJ = findKnotSpan(couplingRegionJ(2), EtaJ, numCPs_etaJ) + 1;
     
     % Corresponding to the coupled region knot span
     couplingRegionOnKnotVectorJ = EtaJ(spanStartJ:spanEndJ);
@@ -247,7 +247,7 @@ else
     xiJ = xicoupJ(1);
     
     % Find the span where uv it lies in
-    xiSpanJ = findKnotSpan(xiJ,XiJ,nxiJ);
+    xiSpanJ = findKnotSpan(xiJ, XiJ, numCPs_xiJ);
     
     % Flag on whether the coupling line is over eta
     isOnXiJ = false;
@@ -270,41 +270,51 @@ end
 % end
 
 % Merge the two knot vectors into one for integration purposes:
-couplingRegionOnKnotVector = mergesorted(couplingRegionOnKnotVectorI,couplingRegionOnKnotVectorJ);
+couplingRegionOnKnotVector = mergesorted(couplingRegionOnKnotVectorI, couplingRegionOnKnotVectorJ);
 
 % Delete double entries
 couplingRegionOnKnotVector = unique(couplingRegionOnKnotVector);
 
 %% 3. Issue Gauss Point coordinates and weights
-if strcmp(int.type,'default')
-    if isOnXiI
-        pDegreeI = pI + 1;
+if isstruct(int)
+    if isfield(int, 'type')
+        if strcmp(int.type, 'default')
+            if isOnXiI
+                pDegreeI = pI + 1;
+            else
+                pDegreeI = qI + 1;
+            end
+            if isOnXiJ
+                pDegreeJ = pJ + 1;
+            else
+                pDegreeJ = qJ + 1;
+            end
+            numGPs = ceil((pDegreeI + pDegreeJ + 1)/2);
+        elseif strcmp(int.type,'user')
+            numGPs = int.noGPs;
+        else
+            error('int must define the to type to be either "default" or "user"');
+        end
     else
-        pDegreeI = qI + 1;
+        error('int must define variable type');
     end
-    if isOnXiJ
-        pDegreeJ = pJ + 1;
-    else
-        pDegreeJ = qJ + 1;
-    end
-    noGPs = ceil((pDegreeI + pDegreeJ + 1)/2);
-elseif strcmp(int.type,'user')
-    noGPs = int.noGPs;
+else
+    error('int must be a structure');
 end
-[GP,GW] = getGaussPointsAndWeightsOverUnitDomain(noGPs);
+[GP,GW] = getGaussPointsAndWeightsOverUnitDomain(numGPs);
 GP = fliplr(GP);
 GW = fliplr(GW);
 
 %% 4. Loop over the elements on the coupling interface
 for i = 1:length(couplingRegionOnKnotVector)-1
-    if couplingRegionOnKnotVector(i) ~= couplingRegionOnKnotVector(i+1)
+    if couplingRegionOnKnotVector(i) ~= couplingRegionOnKnotVector(i + 1)
         %% 4i. Compute the determinant of the Jacobian of the transformation from the parent to the integation domain
-        detJxizeta = (couplingRegionOnKnotVector(i+1)-couplingRegionOnKnotVector(i))/2;
+        detJxizeta = (couplingRegionOnKnotVector(i + 1) - couplingRegionOnKnotVector(i))/2;
 
         %% 4iii. Loop over the Gauss points
-        for j = 1:noGPs
+        for j = 1:numGPs
             %% 4iii.1. Transform the Gauss Point coordinate from the bi-unit interval to the knot span
-            xiEta = ((1-GP(j))*couplingRegionOnKnotVector(i)+(1+GP(j))*couplingRegionOnKnotVector(i+1))/2;
+            xiEta = ((1 - GP(j))*couplingRegionOnKnotVector(i) + (1 + GP(j))*couplingRegionOnKnotVector(i + 1))/2;
 
             %% 4iii.2. Compute the NURBS basis functions
             
@@ -313,13 +323,13 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             
             if isOnXiI
                 xiI = xiEta;
-                xiSpanI = findKnotSpan(xiI,XiI,nxiI);
+                xiSpanI = findKnotSpan(xiI, XiI, numCPs_xiI);
             else
                 etaI = xiEta;
-                etaSpanI = findKnotSpan(etaI,EtaI,netaI);
+                etaSpanI = findKnotSpan(etaI, EtaI, numCPs_etaI);
             end
-            dRI = computeIGABasisFunctionsAndDerivativesForSurface...
-                (xiSpanI,pI,xiI,XiI,etaSpanI,qI,etaI,EtaI,CPI,isNURBSI,2);
+            dRI = computeIGABasisFunctionsAndDerivativesForSurface ...
+                (xiSpanI, pI, xiI, XiI, etaSpanI, qI, etaI, EtaI, CPI, isNURBSI, 2);
             
             % For patch J :
             % _____________
@@ -329,16 +339,16 @@ for i = 1:length(couplingRegionOnKnotVector)-1
                 if ~haveSameOrientation
                     xiJ = XiJ(length(XiJ)) - xiJ;
                 end
-                xiSpanJ = findKnotSpan(xiJ,XiJ,nxiJ);
+                xiSpanJ = findKnotSpan(xiJ, XiJ, numCPs_xiJ);
             else
                 etaJ = xiEta;
                 if ~haveSameOrientation
                     etaJ = EtaJ(length(EtaJ)) - etaJ;
                 end
-                etaSpanJ = findKnotSpan(etaJ,EtaJ,netaJ);
+                etaSpanJ = findKnotSpan(etaJ, EtaJ, numCPs_etaJ);
             end
             dRJ = computeIGABasisFunctionsAndDerivativesForSurface...
-                (xiSpanJ,pJ,xiJ,XiJ,etaSpanJ,qJ,etaJ,EtaJ,CPJ,isNURBSJ,2);
+                (xiSpanJ, pJ, xiJ, XiJ, etaSpanJ, qJ, etaJ, EtaJ, CPJ, isNURBSJ, 2);
             
             %% 4iii.3. Create the element freedom tables
             
@@ -349,11 +359,11 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             rI = 1;
 
             % Relation global-local DoFs
-            for cpj = etaSpanI-qI:etaSpanI
-                for cpi = xiSpanI-pI:xiSpanI
-                    EFTI(rI)   = DOFNumberingI(cpi,cpj,1);
-                    EFTI(rI+1) = DOFNumberingI(cpi,cpj,2);
-                    EFTI(rI+2) = DOFNumberingI(cpi,cpj,3);
+            for cpj = etaSpanI - qI:etaSpanI
+                for cpi = xiSpanI - pI:xiSpanI
+                    EFTI(rI) = DOFNumberingI(cpi, cpj, 1);
+                    EFTI(rI + 1) = DOFNumberingI(cpi, cpj, 2);
+                    EFTI(rI + 2) = DOFNumberingI(cpi, cpj, 3);
 
                     % update counter
                     rI = rI + 3;
@@ -367,11 +377,11 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             rJ = 1;
 
             % Relation global-local DoFs
-            for cpj = etaSpanJ-qJ:etaSpanJ
-                for cpi = xiSpanJ-pJ:xiSpanJ
-                    EFTJ(rJ)   = DOFNumberingJ(cpi,cpj,1);
-                    EFTJ(rJ+1) = DOFNumberingJ(cpi,cpj,2);
-                    EFTJ(rJ+2) = DOFNumberingJ(cpi,cpj,3);
+            for cpj = etaSpanJ - qJ:etaSpanJ
+                for cpi = xiSpanJ - pJ:xiSpanJ
+                    EFTJ(rJ) = DOFNumberingJ(cpi, cpj, 1);
+                    EFTJ(rJ + 1) = DOFNumberingJ(cpi, cpj, 2);
+                    EFTJ(rJ + 2) = DOFNumberingJ(cpi, cpj, 3);
 
                     % update counter
                     rJ = rJ + 3;
@@ -383,27 +393,27 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             % For patch I :
             % _____________
             
-            [dA1I,dA2I] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                (xiSpanI,pI,etaSpanI,qI,CPI,1,dRI);
+            [dA1I, dA2I] = computeBaseVectorsAndDerivativesForBSplineSurface ...
+                (xiSpanI, pI, etaSpanI, qI, CPI, 1, dRI);
             
             % For patch J :
             % _____________
             
-            [dA1J,dA2J] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                (xiSpanJ,pJ,etaSpanJ,qJ,CPJ,1,dRJ);
+            [dA1J, dA2J] = computeBaseVectorsAndDerivativesForBSplineSurface ...
+                (xiSpanJ, pJ, etaSpanJ, qJ, CPJ, 1, dRJ);
             
             %% 4iii.5. Compute the surface normal vectors
             
             % For patch I :
             % _____________
             
-            A3TildeI = cross(dA1I(:,1),dA2I(:,1));
+            A3TildeI = cross(dA1I(:, 1), dA2I(:, 1));
             A3I = A3TildeI/norm(A3TildeI);
             
             % For patch J :
             % _____________
             
-            A3TildeJ = cross(dA1J(:,1),dA2J(:,1));
+            A3TildeJ = cross(dA1J(:, 1), dA2J(:, 1));
             A3J = A3TildeJ/norm(A3TildeJ);
             
             % Assign a flag on the surface normal orientation
@@ -422,54 +432,54 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             % For patch I :
             % _____________
             
-            [dA3I,~] = computeParametricDrvsSurfaceNormalOnBSplineSurface...
-                ([dA1I(:,1) dA2I(:,1)],[dA1I(:,2) dA2I(:,2) dA1I(:,3)],...
-                A3I,norm(A3TildeI));
+            [dA3I, ~] = computeParametricDrvsSurfaceNormalOnBSplineSurface ...
+                ([dA1I(:, 1) dA2I(:, 1)], [dA1I(:, 2) dA2I(:, 2) dA1I(:, 3)], ...
+                A3I, norm(A3TildeI));
             
             % For patch J :
             % _____________
             
-            [dA3J,~] = computeParametricDrvsSurfaceNormalOnBSplineSurface...
-                ([dA1J(:,1) dA2J(:,1)],[dA1J(:,2) dA2J(:,2) dA1J(:,3)],...
-                A3J,norm(A3TildeJ));
+            [dA3J, ~] = computeParametricDrvsSurfaceNormalOnBSplineSurface ...
+                ([dA1J(:, 1) dA2J(:, 1)], [dA1J(:, 2) dA2J(:, 2) dA1J(:, 3)], ...
+                A3J, norm(A3TildeJ));
             
             %% 4iii.7. Compute the normal to the boundary vector
             
             % For patch I :
             % _____________
             
-            [nI,tI] = computeNormalAndTangentVectorsToBSplineBoundary...
-                (xiI,XiI,etaI,EtaI,dA1I(:,1),dA2I(:,1),A3I,isOnXiI);
+            [nI, tI] = computeNormalAndTangentVectorsToBSplineBoundary ...
+                (xiI, XiI, etaI, EtaI, dA1I(:, 1), dA2I(:, 1), A3I, isOnXiI);
             
             % For patch J :
             % _____________
             
-            [nJ,tJ] = computeNormalAndTangentVectorsToBSplineBoundary...
-                (xiJ,XiJ,etaJ,EtaJ,dA1J(:,1),dA2J(:,1),A3J,isOnXiJ);
+            [nJ, tJ] = computeNormalAndTangentVectorsToBSplineBoundary ...
+                (xiJ, XiJ, etaJ, EtaJ, dA1J(:, 1), dA2J(:, 1), A3J, isOnXiJ);
             
             %% 4iii.8. Compute the covariant metric coefficients
             
             % For patch I :
             % _____________
             
-            AabCovI = [dA1I(:,1) dA2I(:,1)]'*[dA1I(:,1) dA2I(:,1)];
+            AabCovI = [dA1I(:, 1) dA2I(:, 1)]'*[dA1I(:, 1) dA2I(:, 1)];
             
             % For patch J :
             % _____________
             
-            AabCovJ = [dA1J(:,1) dA2J(:,1)]'*[dA1J(:,1) dA2J(:,1)];
+            AabCovJ = [dA1J(:, 1) dA2J(:, 1)]'*[dA1J(:, 1) dA2J(:, 1)];
             
             %% 4iii.9. Compute the contravariant base vectors
             
             % For patch I :
             % _____________
             
-            AContravariantI = (AabCovI\[dA1I(:,1) dA2I(:,1)]')';
+            AContravariantI = (AabCovI\[dA1I(:, 1) dA2I(:, 1)]')';
             
             % For patch J :
             % _____________
             
-            AContravariantJ = (AabCovJ\[dA1J(:,1) dA2J(:,1)]')';
+            AContravariantJ = (AabCovJ\[dA1J(:, 1) dA2J(:, 1)]')';
             
             %% 4iii.10. Compute the basis functions matrix and their derivatives and the determinant of the Jacobian to the transformation from the physical space (x-y) to the NURBS parameter space (xi-eta)
             
@@ -487,20 +497,20 @@ for i = 1:length(couplingRegionOnKnotVector)-1
                     kI = kI + 1;
                     
                     % Matrix containing the basis functions
-                    BDisplacementsGCI(1,3*kI-2) = dRI(kI,1);
-                    BDisplacementsGCI(2,3*kI-1) = dRI(kI,1);
-                    BDisplacementsGCI(3,3*kI) = dRI(kI,1);
+                    BDisplacementsGCI(1,3*kI - 2) = dRI(kI, 1);
+                    BDisplacementsGCI(2,3*kI - 1) = dRI(kI, 1);
+                    BDisplacementsGCI(3,3*kI) = dRI(kI, 1);
 
                     % Matrix containing the derivatives of the basis functions
                     % With respect to xi:
-                    dRdxiI(1,3*kI-2) = dRI(kI,2);
-                    dRdxiI(2,3*kI-1) = dRI(kI,2);
-                    dRdxiI(3,3*kI) = dRI(kI,2);
+                    dRdxiI(1, 3*kI - 2) = dRI(kI, 2);
+                    dRdxiI(2, 3*kI - 1) = dRI(kI, 2);
+                    dRdxiI(3, 3*kI) = dRI(kI, 2);
 
                     % With respect to eta:
-                    dRdetaI(1,3*kI-2) = dRI(kI,4);
-                    dRdetaI(2,3*kI-1) = dRI(kI,4);
-                    dRdetaI(3,3*kI) = dRI(kI,4);
+                    dRdetaI(1,3*kI - 2) = dRI(kI, 4);
+                    dRdetaI(2,3*kI - 1) = dRI(kI, 4);
+                    dRdetaI(3,3*kI) = dRI(kI, 4);
                 end
             end
             
@@ -518,20 +528,20 @@ for i = 1:length(couplingRegionOnKnotVector)-1
                     kJ = kJ + 1;
                     
                     % Matrix containing the basis functions
-                    BDisplacementsGCJ(1,3*kJ-2) = dRJ(kJ,1);
-                    BDisplacementsGCJ(2,3*kJ-1) = dRJ(kJ,1);
-                    BDisplacementsGCJ(3,3*kJ) = dRJ(kJ,1);
+                    BDisplacementsGCJ(1, 3*kJ - 2) = dRJ(kJ, 1);
+                    BDisplacementsGCJ(2, 3*kJ - 1) = dRJ(kJ, 1);
+                    BDisplacementsGCJ(3, 3*kJ) = dRJ(kJ, 1);
 
                     % Matrix containing the derivatives of the basis functions
                     % With respect to xi:
-                    dRdxiJ(1,3*kJ-2) = dRJ(kJ,2);
-                    dRdxiJ(2,3*kJ-1) = dRJ(kJ,2);
-                    dRdxiJ(3,3*kJ) = dRJ(kJ,2);
+                    dRdxiJ(1, 3*kJ - 2) = dRJ(kJ, 2);
+                    dRdxiJ(2, 3*kJ - 1) = dRJ(kJ, 2);
+                    dRdxiJ(3, 3*kJ) = dRJ(kJ, 2);
 
                     % With respect to eta:
-                    dRdetaJ(1,3*kJ-2) = dRJ(kJ,4);
-                    dRdetaJ(2,3*kJ-1) = dRJ(kJ,4);
-                    dRdetaJ(3,3*kJ) = dRJ(kJ,4);
+                    dRdetaJ(1, 3*kJ - 2) = dRJ(kJ, 4);
+                    dRdetaJ(2, 3*kJ - 1) = dRJ(kJ, 4);
+                    dRdetaJ(3, 3*kJ) = dRJ(kJ, 4);
                 end
             end
             
@@ -554,38 +564,38 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             % For patch I :
             % _____________
             
-            BVI = [dA1I(:,2) dA2I(:,2) dA1I(:,3)]'*A3I;
+            BVI = [dA1I(:, 2) dA2I(:, 2) dA1I(:, 3)]'*A3I;
             
             % For patch J :
             % _____________
             
-            BVJ = [dA1J(:,2) dA2J(:,2) dA1J(:,3)]'*A3J;
+            BVJ = [dA1J(:, 2) dA2J(:, 2) dA1J(:, 3)]'*A3J;
             
             %% 4iii.13. Compute the B-operator matrices for the rotations
             
             % For patch I :
             % _____________
             
-            [BtI,BnI,~,~] = computeBOperatorMatrix4RotationsIGAKirchhoffLoveShell...
-                (BDisplacementsGCI,dRdxiI,dRdetaI,A3I,dA3I,...
-                AContravariantI,BVI,nCovariantI,tCovariantI);
+            [BtI, BnI, ~, ~] = computeBOperatorMatrix4RotationsIGAKirchhoffLoveShell ...
+                (BDisplacementsGCI, dRdxiI, dRdetaI, A3I, dA3I, ...
+                AContravariantI, BVI, nCovariantI, tCovariantI);
             BRotationsI = [BtI
                            BnI];
             
             % For patch J :
             % _____________
             
-            [BtJ,BnJ,~,~] = computeBOperatorMatrix4RotationsIGAKirchhoffLoveShell...
-                (BDisplacementsGCJ,dRdxiJ,dRdetaJ,A3J,dA3J,...
-                AContravariantJ,BVJ,nCovariantJ,tCovariantJ);
+            [BtJ, BnJ, ~, ~] = computeBOperatorMatrix4RotationsIGAKirchhoffLoveShell ...
+                (BDisplacementsGCJ, dRdxiJ, dRdetaJ, A3J, dA3J, ...
+                AContravariantJ, BVJ, nCovariantJ, tCovariantJ);
             BRotationsJ = [BtJ
                            BnJ];
                        
             %% 4iii.14. Compute the determinant of the Jacobian of the transformation from the physical to the parent domain on the GP
             if isOnXiI
-                detJxxi = norm(dA1I(:,1));
+                detJxxi = norm(dA1I(:, 1));
             else
-                detJxxi = norm(dA2I(:,1));
+                detJxxi = norm(dA2I(:, 1));
             end
             
             %% 4iii.16. Compute the element length at the GP
@@ -597,14 +607,14 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             % _____________
             
             % Compute the displacement stiffness matrix
-            if ~strcmp(alphaD,'undefined')
-                KpDispI(EFTI,EFTI) = KpDispI(EFTI,EFTI) + ...
+            if ~strcmp(alphaD, 'undefined')
+                KpDispI(EFTI, EFTI) = KpDispI(EFTI, EFTI) + ...
                     alphaD*(BDisplacementsGCI'*BDisplacementsGCI)*elementLengthOnGP;
             end
             
             % Compute the rotations stiffness matrix
-            if ~strcmp(alphaR,'undefined')
-                KpRotI(EFTI,EFTI) = KpRotI(EFTI,EFTI) + ...
+            if ~strcmp(alphaR, 'undefined')
+                KpRotI(EFTI, EFTI) = KpRotI(EFTI, EFTI) + ...
                     alphaR*(BRotationsI'*BRotationsI)*elementLengthOnGP;
             end
             
@@ -612,32 +622,32 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             % _____________
             
             % Compute the displacement stiffness matrix
-            if ~strcmp(alphaD,'undefined')
-                KpDispJ(EFTJ,EFTJ) = KpDispJ(EFTJ,EFTJ) + ...
+            if ~strcmp(alphaD, 'undefined')
+                KpDispJ(EFTJ, EFTJ) = KpDispJ(EFTJ, EFTJ) + ...
                     alphaD*(BDisplacementsGCJ'*BDisplacementsGCJ)*elementLengthOnGP;
             end
             
             % Compute the rotations stiffness matrix
-             if ~strcmp(alphaR,'undefined')
-                KpRotJ(EFTJ,EFTJ) = KpRotJ(EFTJ,EFTJ) + ...
+             if ~strcmp(alphaR, 'undefined')
+                KpRotJ(EFTJ, EFTJ) = KpRotJ(EFTJ,EFTJ) + ...
                     alphaR*(BRotationsJ'*BRotationsJ)*elementLengthOnGP;
              end
             
             %% 4iii.18. Compute the element coupling matrices at the GP
         
             % Compute the displacement coupling matrix
-            if ~strcmp(alphaD,'undefined')
-                CpDispI(EFTI,EFTJ) = CpDispI(EFTI,EFTJ) - ...
+            if ~strcmp(alphaD, 'undefined')
+                CpDispI(EFTI, EFTJ) = CpDispI(EFTI, EFTJ) - ...
                     alphaD*(BDisplacementsGCI'*BDisplacementsGCJ)*elementLengthOnGP;
             end
 
             % Compute the rotation coupling matrix
-            if ~strcmp(alphaR,'undefined')
+            if ~strcmp(alphaR, 'undefined')
                 if haveSurfaceNormalsSameOrientation
-                    CpRotI(EFTI,EFTJ) = CpRotI(EFTI,EFTJ) + ...
+                    CpRotI(EFTI, EFTJ) = CpRotI(EFTI, EFTJ) + ...
                         alphaR*(BRotationsI'*BRotationsJ)*elementLengthOnGP;
                 else
-                    CpRotI(EFTI,EFTJ) = CpRotI(EFTI,EFTJ) - ...
+                    CpRotI(EFTI, EFTJ) = CpRotI(EFTI, EFTJ) - ...
                         alphaR*(BRotationsI'*BRotationsJ)*elementLengthOnGP;
                 end
             end

@@ -16,7 +16,7 @@ classdef testFEMComputationalFluidDynamicsAnalysis < matlab.unittest.TestCase
         testFEM4TransientTaylorGreenVortices2D(testCase)
         testFEM4NavierStokesSteadyState2D(testCase)
         testFEM4NavierStokesSteadyStateFlowAroundCylinder2D(testCase)
-        testFEM4NavierTransientALE2D(testCase)
+        testFEM4NavierStokesTransientALE2D(testCase)
         testFEM4NavierStokesTransientBossak3D(testCase)
     end
 end

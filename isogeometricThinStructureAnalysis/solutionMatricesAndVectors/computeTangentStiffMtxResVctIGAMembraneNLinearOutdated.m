@@ -1,9 +1,9 @@
-function [tanStiffMtx,resVct,BSplinePatch,propCoupling,minElAreaSize] = ...
-    computeTangentStiffMtxResVctIGAMembraneNLinearOutdated...
-    (constMtx,tanMtxLoad,dHat,dHatSaved,dHatDot,dHatDotSaved,BSplinePatch,...
-    connections,propCoupling,loadFactor,noPatch,noTimeStep,...
-    noNonlinearIteration,noWeakDBCCnd,t,propTransientAnalysis,...
-    isReferenceUpdated,tab,outMsg)
+function [tanStiffMtx, resVct, BSplinePatch, propCoupling, minElAreaSize] = ...
+    computeTangentStiffMtxResVctIGAMembraneNLinearOutdated ...
+    (constMtx, tanMtxLoad, dHat, dHatSaved, dHatDot, dHatDotSaved, ...
+    BSplinePatch, connections, propCoupling, loadFactor, noPatch, ...
+    noTimeStep, noNonlinearIteration, noWeakDBCCnd, t, ...
+    propTransientAnalysis, isReferenceUpdated, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -184,25 +184,26 @@ DOFNumbering = BSplinePatch.DOFNumbering;
 parameters = BSplinePatch.parameters;
 thickness = parameters.t; 
 prestress = parameters.prestress;
-int = BSplinePatch.int;
+propInt = BSplinePatch.int;
 
 % Number of knots in xi-,eta-direction
-mxi = length(Xi);
-meta = length(Eta);
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+numKnots_xi = length(Xi);
+numKnots_eta = length(Eta);
+numCPs_xi = length(CP(:, 1, 1));
+numCPs_eta = length(CP(1, :, 1));
 
 % Assign dummy arrays
 minElAreaSize = 'undefined';
 
 % Check input
-checkInputForBSplineSurface(p,mxi,nxi,q,meta,neta);
+checkInputForBSplineSurface ...
+    (p, numKnots_xi, numCPs_xi, q, numKnots_eta, numCPs_eta);
 
 % Number of degrees of freedom for the whole structure
-noDOFs = length(dHat);
+numDOFs = length(dHat);
 
 % Number of degrees of freedom for the element
-noDOFsEl = 3*(p+1)*(q+1);
+numDOFsEl = 3*(p + 1)*(q + 1);
 
 % On the computation of the element tangent matrix and residual vector
 % computeElTanMtxLoadVct = @computeIGAElTangentStiffMtxResVctMembraneNLinearOutdated;
@@ -217,9 +218,9 @@ if ~isempty(BSplinePatch.weakDBC)
 end
 
 % Initialize global stiffness matrix and internal force vector
-tanStiffMtx = zeros(noDOFs,noDOFs);
+tanStiffMtx = zeros(numDOFs, numDOFs);
 if ~ischar(loadFactor)
-    resVct = zeros(noDOFs,1);
+    resVct = zeros(numDOFs, 1);
 else
     resVct = 'undefined';
 end
@@ -228,28 +229,28 @@ end
 Dm = parameters.E*parameters.t/(1-parameters.nue^2)*...
     [1              parameters.nue 0
 	 parameters.nue 1              0
-     0              0              (1-parameters.nue)/2];
+     0              0              (1 - parameters.nue)/2];
  
 %% 1. Get the function handle for the computation of the tangent stiffness and the residual load vector corresponding to the application of weak Dirichlet boundary conditions
 if isWeakDBC
-    if isfield(BSplinePatch.weakDBC,'method')
-        if isfield(BSplinePatch.weakDBC,'imposedMotion')    
-            if strcmp(BSplinePatch.weakDBC.method,'penalty')
+    if isfield(BSplinePatch.weakDBC, 'method')
+        if isfield(BSplinePatch.weakDBC, 'imposedMotion')    
+            if strcmp(BSplinePatch.weakDBC.method, 'penalty')
                 computeTangMtxResVct = @computeWeakDBCTangMtxResVctPenaltyIGAMembrane;
-            elseif strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers')
+            elseif strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers')
                 computeTangMtxResVct = @computeWeakDBCTangMtxResVctLagrangeMultipliersIGAMembrane;
             end
         else
-            if strcmp(BSplinePatch.weakDBC.method,'penalty') || ...
-                    strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers')
+            if strcmp(BSplinePatch.weakDBC.method, 'penalty') || ...
+                    strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers')
                 computeTangMtxResVct = 'undefined';
             end
         end
-        if strcmp(BSplinePatch.weakDBC.method,'nitsche')
+        if strcmp(BSplinePatch.weakDBC.method, 'nitsche')
             computeTangMtxResVct = @computeWeakDBCTangMtxResVctNitscheIGAMembrane;
-        elseif ~strcmp(BSplinePatch.weakDBC.method,'penalty') && ...
-               ~strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers') && ...
-               ~strcmp(BSplinePatch.weakDBC.method,'nitsche')
+        elseif ~strcmp(BSplinePatch.weakDBC.method, 'penalty') && ...
+               ~strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers') && ...
+               ~strcmp(BSplinePatch.weakDBC.method, 'nitsche')
             error('Define a valid method for the application of weak Dirichlet boundary conditions in BSplinePatch.weakDBC.method')
         end
     else
@@ -257,34 +258,39 @@ if isWeakDBC
     end
 end
 isWeakDBCTangent = false;
-if isWeakDBC && isa(computeTangMtxResVct,'function_handle')
+if isWeakDBC && isa(computeTangMtxResVct, 'function_handle')
     isWeakDBCTangent = true;
 end
 
 %% 2. Choose an integration rule
-
-% Select the integration scheme
-if strcmp(int.type,'default')
-    xiNGP = p + 1;
-    etaNGP = q + 1;
-elseif strcmp(int.type,'user')
-    xiNGP = int.xiNGP;
-    etaNGP = int.etaNGP;
+if isstruct(propInt)
+    if ~isfield(propInt, 'type')
+        error('propInt must define a type')
+    end
+    if strcmp(propInt.type, 'default')
+        numGPs_xi = p + 1;
+        numGPs_eta = q + 1;
+    elseif strcmp(propInt.type, 'user')
+        numGPs_xi = propInt.xiNGP;
+        numGPs_eta = propInt.etaNGP;
+    else
+        error('Select a valid integration type int.type');
+    end
+else
+    error('propInt must be a structure');
 end
-
-% Issue the Gauss Point coordinates and weights
-[xiGP,xiGW] = getGaussPointsAndWeightsOverUnitDomain(xiNGP);
-[etaGP,etaGW] = getGaussPointsAndWeightsOverUnitDomain(etaNGP);
+[GP_xi, GW_xi] = getGaussPointsAndWeightsOverUnitDomain(numGPs_xi);
+[GP_eta, GW_eta] = getGaussPointsAndWeightsOverUnitDomain(numGPs_eta);
 
 %% 3. loops over elements
-for j = q+1:meta-q-1
-    for i = p+1:mxi-p-1
+for j = q + 1:numKnots_eta - q - 1
+    for i = p + 1:numKnots_xi - p - 1
         % check if element is greater than zero
-        if Xi(i+1) ~= Xi(i) && Eta(j+1) ~= Eta(j)
+        if Xi(i + 1) ~= Xi(i) && Eta(j + 1) ~= Eta(j)
             %% 3i. Create an element freedom table
             
             % Initialize element freedome table
-            EFT = zeros(1,noDOFsEl);
+            EFT = zeros(1, numDOFsEl);
             
             % initialize counter
             k = 1;
@@ -292,9 +298,9 @@ for j = q+1:meta-q-1
             % relation global-local dof
             for cpj = j-q:j
                 for cpi = i-p:i
-                    EFT(k) = DOFNumbering(cpi,cpj,1);
-                    EFT(k+1) = DOFNumbering(cpi,cpj,2);
-                    EFT(k+2) = DOFNumbering(cpi,cpj,3);
+                    EFT(k) = DOFNumbering(cpi, cpj, 1);
+                    EFT(k + 1) = DOFNumbering(cpi, cpj, 2);
+                    EFT(k + 2) = DOFNumbering(cpi, cpj, 3);
                     
                     % Update counter
                     k = k + 3;
@@ -310,43 +316,43 @@ for j = q+1:meta-q-1
             %         |                  eta_j+1 - eta_j |
             %         |        0         --------------- |
             %         |                          2       |
-            detJxiu = (Xi(i+1)-Xi(i))*(Eta(j+1)-Eta(j))/4;
+            detJxiu = (Xi(i + 1) - Xi(i))*(Eta(j + 1) - Eta(j))/4;
             
             %% 3iii. Loop over all Gauss points
-            for cEta = 1:etaNGP
-                for cXi = 1:xiNGP
+            for cEta = 1:numGPs_eta
+                for cXi = 1:numGPs_xi
                     %% 3iii.1. Compute the NURBS coordinates xi,eta of the Gauss Point coordinates in the bi-unit interval [-1, 1]
-                    xi = ( Xi(i+1)+Xi(i) + xiGP(cXi)*(Xi(i+1)-Xi(i)) )/2;
-                    eta = ( Eta(j+1)+Eta(j) + etaGP(cEta)*(Eta(j+1)-Eta(j)) )/2;
+                    xi = (Xi(i + 1) + Xi(i) + GP_xi(cXi)*(Xi(i + 1) - Xi(i)))/2;
+                    eta = (Eta(j + 1) + Eta(j) + GP_eta(cEta)*(Eta(j + 1) - Eta(j)))/2;
                     
                     %% 3iii.2. Compute the NURBS basis functions and their first derivatives at the Gauss Point
                     dR = computeIGABasisFunctionsAndDerivativesForSurface...
-                        (i,p,xi,Xi,j,q,eta,Eta,CP,isNURBS,1);
+                        (i, p, xi, Xi, j, q, eta, Eta, CP, isNURBS, 1);
                     
                     %% 3iii.3. Compute the covariant base vectors of the reference configuration at the Gauss point
-                    [A1,A2] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                        (i,p,j,q,CP,0,dR);
+                    [A1, A2] = computeBaseVectorsAndDerivativesForBSplineSurface...
+                        (i, p, j, q, CP, 0, dR);
                  
                     %% 3iii.4. Compute the surface normal of the reference configuration at the Gauss point (third covariant base vector not normalized)
-                    A3Tilde = cross(A1(:,1),A2(:,1));
+                    A3Tilde = cross(A1(:, 1), A2(:, 1));
                     
                     %% 3iii.5. Compute the legth of G3Tilde at the Gauss point (= area dA of the undeformed configuration)
                     dA = norm(A3Tilde);
                     
                     %% 3iii.6. Compute covariant base vectors of the current configuration at the Gauss point
-                    [a1,a2] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                        (i,p,j,q,CPd,0,dR);
+                    [a1, a2] = computeBaseVectorsAndDerivativesForBSplineSurface ...
+                        (i, p, j, q, CPd, 0, dR);
                     
                     %% 3iii.7. Compute element tangent stiffness matrix and residual internal load vector at the Gauss point
-                    [tanMtxElOnGP,resVctElOnGP] = computeElTanMtxLoadVct...
-                        (i,p,xi,Xi,j,q,eta,Eta,CP,dR,[A1(:,1) A2(:,1)],...
-                        [a1(:,1) a2(:,1)],thickness,Dm,prestress);
+                    [tanMtxElOnGP, resVctElOnGP] = computeElTanMtxLoadVct ...
+                        (i, p, xi, Xi, j, q, eta, Eta, CP, dR, [A1(:, 1) A2(:, 1)], ...
+                        [a1(:, 1) a2(:, 1)], thickness, Dm, prestress);
                     
                     %% 3iii.8. Compute the element area on the Gauss Point
-                    elementAreaOnGP = dA*detJxiu*xiGW(cXi)*etaGW(cEta);
+                    elementAreaOnGP = dA*detJxiu*GW_xi(cXi)*GW_eta(cEta);
                     
                     %% 3iii.9. Add the contributions from the Gauss Point to the global matrix
-                    tanStiffMtx(EFT,EFT) = tanStiffMtx(EFT,EFT) + tanMtxElOnGP*elementAreaOnGP;
+                    tanStiffMtx(EFT, EFT) = tanStiffMtx(EFT, EFT) + tanMtxElOnGP*elementAreaOnGP;
                     if ~ischar(loadFactor)
                         resVct(EFT) = resVct(EFT) + resVctElOnGP*elementAreaOnGP;
                     end
@@ -357,10 +363,10 @@ for j = q+1:meta-q-1
 end
 
 %% 4. Re-assemble the tangent stiffness matrix into a full matrix if only half of it is computed
-if strcmp(func2str(computeElTanMtxLoadVct),'computeIGAElTangentStiffMtxResVctMembraneNLinearOutdatedKiendl')
+if strcmp(func2str(computeElTanMtxLoadVct), 'computeIGAElTangentStiffMtxResVctMembraneNLinearOutdatedKiendl')
     tanMtxT = tanStiffMtx';
-    for iCounter = 1:noDOFs
-        tanStiffMtx(iCounter,iCounter) = 0;
+    for iCounter = 1:numDOFs
+        tanStiffMtx(iCounter, iCounter) = 0;
     end
     tanStiffMtx = tanStiffMtx + tanMtxT;
 end
@@ -384,21 +390,22 @@ if ~ischar(constMtx) && ~ischar(loadFactor)
 end
 
 %% 8. Compute the tangent stiffness matrix and residual load vector resulting from embedded into the patch cables
-if isfield(BSplinePatch,'cables')
+if isfield(BSplinePatch, 'cables')
     if BSplinePatch.cables.No > 0
-        [tanMtxCables,resVctCables] = computeTangentStiffMtxResVctCablesInThinStructureAnalysis...
-            (BSplinePatch,noDOFs);
+        [tanMtxCables, resVctCables] = ...
+            computeTangentStiffMtxResVctCablesInThinStructureAnalysis...
+            (BSplinePatch, numDOFs);
     end
 else
     tanMtxCables = 'undefined';
     resVctCables = 'undefined';
 end
-if isfield(BSplinePatch,'cables')
+if isfield(BSplinePatch, 'cables')
     if BSplinePatch.cables.No > 0
         tanStiffMtx = tanStiffMtx + tanMtxCables;
     end
 end
-if isfield(BSplinePatch,'cables') && ~ischar(loadFactor)
+if isfield(BSplinePatch, 'cables') && ~ischar(loadFactor)
     if BSplinePatch.cables.No > 0
         resVct = resVct + resVctCables;
     end
@@ -406,10 +413,10 @@ end
 
 %% 9. Compute the tangent matrix and residual vector contributions due to the application of weak boundary conditions
 if isWeakDBCTangent
-    [tanMtxWeakDBC,resVctWeakDBC,BSplinePatch] = computeTangMtxResVct...
-        (BSplinePatch,dHat,connections,noDOFs,propCoupling,tanStiffMtx,...
-        noPatch,noTimeStep,noNonlinearIteration,noWeakDBCCnd,...
-        thickness,t,propTransientAnalysis,tab,outMsg);
+    [tanMtxWeakDBC, resVctWeakDBC, BSplinePatch] = computeTangMtxResVct ...
+        (BSplinePatch, dHat, connections, numDOFs, propCoupling, tanStiffMtx, ...
+        noPatch, noTimeStep, noNonlinearIteration, noWeakDBCCnd, ...
+        thickness, t,propTransientAnalysis, tab, outMsg);
 else
     tanMtxWeakDBC = 'undefined';
     resVctWeakDBC = 'undefined';

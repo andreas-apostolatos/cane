@@ -1,4 +1,4 @@
-function lm = fillUpLagrangeMultipliers(p,Xi,CP,isNURBS)
+function lm = fillUpLagrangeMultipliers(p, Xi, CP, isNURBS)
 %% Licensing
 %
 % License:         BSD License

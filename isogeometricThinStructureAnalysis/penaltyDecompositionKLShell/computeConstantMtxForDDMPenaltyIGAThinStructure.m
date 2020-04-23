@@ -1,5 +1,5 @@
 function KPenalty = computeConstantMtxForDDMPenaltyIGAThinStructure...
-    (BSplinePatches,connections,noDOFs,propCoupling)
+    (BSplinePatches, connections, numDOFs, propCoupling)
 %% Licensing
 %
 % License:         BSD License
@@ -20,7 +20,7 @@ function KPenalty = computeConstantMtxForDDMPenaltyIGAThinStructure...
 %                            .No : Number of connections
 %                     .xiEtaCoup : [patchID1 patchID2 xi12 eta12 xi21 eta21
 %                                 ...      ...    ...   ...  ...   ...]
-%               noDOFs : The complete number of DOFs
+%              numDOFs : The complete number of DOFs
 %         propCoupling : Properties of the multipatch coupling
 %                           .alphaD : Vector containing the penalty factor
 %                                     for the displacements and for each 
@@ -59,7 +59,7 @@ function KPenalty = computeConstantMtxForDDMPenaltyIGAThinStructure...
 %% 0. Read input
 
 % Initialize the master penalty matrix of the multi-patch system
-KPenalty = zeros(noDOFs,noDOFs);
+KPenalty = zeros(numDOFs, numDOFs);
 
 % Get the interface quadrature structure
 intC = propCoupling.intC;
@@ -68,14 +68,16 @@ intC = propCoupling.intC;
 isDisplacementCoupling = false;
 if isfield(propCoupling,'alphaD')
     if length(propCoupling.alphaD) ~= connections.No
-        error('The number of the penalty parameters in propCoupling.alphaD (%d) must be equal to the number of connections (%d)',length(propCoupling.alphaD),connections.No);
+        error('The number of the penalty parameters in propCoupling.alphaD (%d) must be equal to the number of connections (%d)', ...
+            length(propCoupling.alphaD), connections.No);
     end
     isDisplacementCoupling = true;
 end
 isRotationCoupling = false;
 if isfield(propCoupling,'alphaR')
     if length(propCoupling.alphaR) ~= connections.No
-        error('The number of the penalty parameters in propCoupling.alphaR (%d) must be equal to the number of connections (%d)',length(propCoupling.alphaD),connections.No);
+        error('The number of the penalty parameters in propCoupling.alphaR (%d) must be equal to the number of connections (%d)', ...
+            length(propCoupling.alphaD), connections.No);
     end
     isRotationCoupling = true;
 end
@@ -87,16 +89,16 @@ for iConnections = 1:connections.No
     % Patch 1 :
     % _________
     
-    ID1 = connections.xiEtaCoup(iConnections,1);
+    ID1 = connections.xiEtaCoup(iConnections, 1);
     
     % Patch 2 :
     % _________
     
-    ID2 = connections.xiEtaCoup(iConnections,2);
+    ID2 = connections.xiEtaCoup(iConnections, 2);
     
     %% 1ii. Get the penalty factors for the current patch pair
     if isDisplacementCoupling
-        alphaDIJ = propCoupling.alphaD(iConnections,1);
+        alphaDIJ = propCoupling.alphaD(iConnections, 1);
         if alphaDIJ == 0
             alphaDIJ = 'undefined';
         end
@@ -104,7 +106,7 @@ for iConnections = 1:connections.No
         alphaDIJ = 'undefined';
     end
     if isRotationCoupling
-        alphaRIJ = propCoupling.alphaR(iConnections,1);
+        alphaRIJ = propCoupling.alphaR(iConnections, 1);
         if alphaRIJ == 0
             alphaRIJ = 'undefined';
         end
@@ -117,24 +119,30 @@ for iConnections = 1:connections.No
     % Patch 1 :
     % _________
     
-    BSplinePatches{ID1}.xicoup = connections.xiEtaCoup(iConnections,3:4);
-    BSplinePatches{ID1}.etacoup = connections.xiEtaCoup(iConnections,5:6);
+    BSplinePatches{ID1}.xicoup = connections.xiEtaCoup(iConnections, 3:4);
+    BSplinePatches{ID1}.etacoup = connections.xiEtaCoup(iConnections, 5:6);
     
 	% Patch 2 :
     % _________
     
-    BSplinePatches{ID2}.xicoup = connections.xiEtaCoup(iConnections,7:8);
-    BSplinePatches{ID2}.etacoup = connections.xiEtaCoup(iConnections,9:10);
+    BSplinePatches{ID2}.xicoup = connections.xiEtaCoup(iConnections, 7:8);
+    BSplinePatches{ID2}.etacoup = connections.xiEtaCoup(iConnections, 9:10);
     
     %% 1iv. Determine the interface orientation
-    haveSameDirection = findSubdomainInterfaceOrientation...
-        (BSplinePatches{ID1}.p,BSplinePatches{ID1}.Xi,BSplinePatches{ID1}.q,BSplinePatches{ID1}.Eta,BSplinePatches{ID1}.CP,BSplinePatches{ID1}.isNURBS,BSplinePatches{ID1}.xicoup,BSplinePatches{ID1}.etacoup,...
-        BSplinePatches{ID2}.p,BSplinePatches{ID2}.Xi,BSplinePatches{ID2}.q,BSplinePatches{ID2}.Eta,BSplinePatches{ID2}.CP,BSplinePatches{ID2}.isNURBS,BSplinePatches{ID2}.xicoup,BSplinePatches{ID2}.etacoup);
+    isSameOrientation = findSubdomainInterfaceOrientation ...
+        (BSplinePatches{ID1}.p, BSplinePatches{ID1}.Xi, BSplinePatches{ID1}.q, ...
+        BSplinePatches{ID1}.Eta, BSplinePatches{ID1}.CP, BSplinePatches{ID1}.isNURBS, ...
+        BSplinePatches{ID1}.xicoup, BSplinePatches{ID1}.etacoup, ...
+        BSplinePatches{ID2}.p,BSplinePatches{ID2}.Xi,BSplinePatches{ID2}.q, ...
+        BSplinePatches{ID2}.Eta, BSplinePatches{ID2}.CP, BSplinePatches{ID2}.isNURBS, ...
+        BSplinePatches{ID2}.xicoup, BSplinePatches{ID2}.etacoup);
     
     %% 1v. Compute the penalty contributions to the coupled system 
-    [K1PenaltyDisplacements,K1PenaltyRotations,C1PenaltyDisplacements,C1PenaltyRotations,K2PenaltyDisplacements,K2PenaltyRotations] = ....
-        computeDDMPenaltyMtcesIGAThinStructure...
-        (BSplinePatches{ID1},BSplinePatches{ID2},alphaDIJ,alphaRIJ,haveSameDirection,intC);
+    [K1PenaltyDisplacements, K1PenaltyRotations, C1PenaltyDisplacements, ...
+        C1PenaltyRotations, K2PenaltyDisplacements, K2PenaltyRotations] = ....
+        computeDDMPenaltyMtcesIGAThinStructure ...
+        (BSplinePatches{ID1}, BSplinePatches{ID2}, alphaDIJ, alphaRIJ, ...
+        isSameOrientation, intC);
     
     % We can use the transpose of C1PenaltyDisplacements and
     % C1PenaltyRotations see below the assembly to the global coupling 

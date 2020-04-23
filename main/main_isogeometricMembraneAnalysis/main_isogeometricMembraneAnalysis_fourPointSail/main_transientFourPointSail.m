@@ -63,7 +63,8 @@ addpath('../../../transientAnalysis/');
 
 % Read the data
 % FoFiGeo = importdata('./data_FoFiPool/data_FoFiFourPointSailp1q1Xi50Eta50.mat');
-FoFiGeo = importdata('./data_FoFiPool/data_FoFiFourPointSailp3q3Xi50Eta50.mat');
+% FoFiGeo = importdata('./data_FoFiPool/data_FoFiFourPointSailp3q3Xi50Eta50.mat');
+FoFiGeo = importdata('./data_FoFiPool/data_FoFiFourPointSailp1q1Xi10Eta10.mat');
 
 % Global variables:
 Length = FoFiGeo.Length;

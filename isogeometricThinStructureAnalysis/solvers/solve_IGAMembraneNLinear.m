@@ -147,7 +147,6 @@ if BSplinePatch.noElmnts ~= 1
 else
     computeTangentStiffMtxesVct = @computeTangentStiffMtxResVctIGAMembraneNLinearOutdated;
 end
-% computeTangentStiffMtxesVct = @computeTangentStiffMtxResVctIGAMembraneNLinearOutdated;
 
 % Adjust tabulation
 tab = '\t';

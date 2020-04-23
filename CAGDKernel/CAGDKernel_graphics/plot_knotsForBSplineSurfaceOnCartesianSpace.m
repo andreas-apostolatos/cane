@@ -1,24 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function plot_knotsForBSplineSurfaceOnCartesianSpace...
-    (p,q,Xi,Eta,CP,isNURBS,isDeformed,xiGrid,etaGrid)
+    (p, q, Xi, Eta, CP, isNURBS, isDeformed, xiGrid, etaGrid)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Draws the element edges for the NURBS surface, i.e the knots on the
@@ -56,8 +44,8 @@ mxi = length(Xi);
 meta = length(Eta);
 
 % Number of Control Points in u,v-direction
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
 
 % Make the knot vectors unique
 XiUnique = unique(Xi);
@@ -74,14 +62,17 @@ eps = 1e-9;
 % Initialize counter
 l = 1;
 
+% Number of derivatives for the B-Spline basis functions
+numDrv = 0;
+
 % Compute step size in xi-direction
-dxi = (Xi(mxi)-Xi(1))/xiGrid;
+dxi = (Xi(mxi) - Xi(1))/xiGrid;
 
 % Compute step size in eta-direction
-deta = (Eta(meta)-Eta(1))/etaGrid; 
+deta = (Eta(meta) - Eta(1))/etaGrid; 
 
 % Initialize plotting array
-P = zeros(xiGrid,etaGrid,3);
+P = zeros(xiGrid, etaGrid, 3);
 
 %% 1. Plot the edges in xi-direction
 for j2 = 1:length(EtaUnique)
@@ -89,7 +80,7 @@ for j2 = 1:length(EtaUnique)
     eta = EtaUnique(j2);
     
     % Find the span in eta-direction
-    etaSpan = findKnotSpan(eta,Eta,neta);
+    etaSpan = findKnotSpan(eta, Eta, neta);
     
     % Get the starting coordinate in xi-direction
     xi = XiUnique(1);
@@ -100,16 +91,15 @@ for j2 = 1:length(EtaUnique)
     % Loop over all the coordinates in xi-direction
     while xi <= XiUnique(end) + eps
         % Find the span in xi-direction
-        xiSpan = findKnotSpan(xi,Xi,nxi);
+        xiSpan = findKnotSpan(xi, Xi, nxi);
         
         % Compute the IGA basis functions in xi-direction
-        nDrv = 0;
-        R = computeIGABasisFunctionsAndDerivativesForSurface...
-            (xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,isNURBS,nDrv);
+        R = computeIGABasisFunctionsAndDerivativesForSurface ...
+            (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, isNURBS, numDrv);
         
         % Compute the Cartesian image of the parametric point (xi,eta)
-        P(k,l,1:3) = computeCartesianCoordinatesOfAPointOnBSplineSurface...
-            (xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,R);
+        P(k, l, 1:3) = computeCartesianCoordinatesOfAPointOnBSplineSurface ...
+            (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, R);
         
         % Update counter for the edges in xi-direction
         k = k + 1;
@@ -127,7 +117,7 @@ for i2 = 1:length(XiUnique)
     xi = XiUnique(i2);
     
     % Find the span in xi-direction
-    xiSpan = findKnotSpan(xi,Xi,nxi);
+    xiSpan = findKnotSpan(xi, Xi, nxi);
     
     % Get the starting coordinate in eta-direction
     eta = EtaUnique(1);
@@ -138,16 +128,15 @@ for i2 = 1:length(XiUnique)
     % Loop over all the coordinates in eta-direction
     while eta <= EtaUnique(end) + eps
         % Find the span in eta-direction
-        etaSpan = findKnotSpan(eta,Eta,neta);
+        etaSpan = findKnotSpan(eta, Eta, neta);
         
         % Compute the IGA basis functions in xi-direction
-        nDrv = 0;
-        R = computeIGABasisFunctionsAndDerivativesForSurface...
-            (xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,isNURBS,nDrv);
+        R = computeIGABasisFunctionsAndDerivativesForSurface ...
+            (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, isNURBS, numDrv);
         
         % Compute the Cartesian image of the parametric point (xi,eta)
-        P(k,l,1:3) = computeCartesianCoordinatesOfAPointOnBSplineSurface...
-            (xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,R);
+        P(k,l,1:3) = computeCartesianCoordinatesOfAPointOnBSplineSurface ...
+            (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, R);
         
         % Update counter for the edges in eta-direction
         k = k + 1;
@@ -160,15 +149,15 @@ for i2 = 1:length(XiUnique)
 end
 
 %% 3. Plot all the element edges
-if isDeformed == 0
-    plot3(P(:,:,1),P(:,:,2),P(:,:,3),'Color',colorEdge,'LineWidth',.01);
+if ~isDeformed
+    plot3(P(:, :, 1), P(:, :, 2) ,P(:, :, 3), 'Color', colorEdge, 'LineWidth', .01);
 else
-    plot3(P(:,:,1),P(:,:,2),P(:,:,3),'Color',coloeEdge,'LineStyle','-.');
+    plot3(P(:, :, 1), P(:, :, 2), P(:, :, 3), 'Color', coloeEdge, 'LineStyle', '-.');
 end
 % axis equal;
 grid on;
-xlabel('x','FontSize',18);
-ylabel('y','FontSize',18);
-zlabel('z','FontSize',18);
+xlabel('x', 'FontSize', 18);
+ylabel('y', 'FontSize', 18);
+zlabel('z', 'FontSize', 18);
     
 end

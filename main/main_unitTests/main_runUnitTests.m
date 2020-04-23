@@ -44,8 +44,9 @@ addpath('../../equationSystemSolvers/');
 % Add the classical finite element basis functions
 addpath('../../basisFunctions/');
 
-% Add all functions related to the Computer-Aided Geometric Design (GACD) kernel
-addpath('../../CAGDKernel/CAGDKernel_basisFunctions',...
+% Add all functions related to the Computer-Aided Geometric Design (GACD) 
+% kernel
+addpath('../../CAGDKernel/CAGDKernel_basisFunctions/',...
         '../../CAGDKernel/CAGDKernel_geometryResolutionRefinement/',...
         '../../CAGDKernel/CAGDKernel_baseVectors/',...
         '../../CAGDKernel/CAGDKernel_graphics/',...
@@ -175,51 +176,22 @@ resultIGAKLShell = run(suiteClassIGAKLShell);
 
 %% Run the unit test cases for the finite element formulation of the plate in membrane action analysis
 suiteClassFEMPlateInMembraneAction = TestSuite.fromClass(?testFEMPlateInMembraneActionAnalysis);
-if isLight
-    suiteClassFEMPlateInMembraneAction = suiteClassFEMPlateInMembraneAction.selectIf...
-        (HasName('testFEMPlateInMembraneActionAnalysis/testCurvedPlateInMembraneActionSteadyStateLinear') | ...
-        HasName('testFEMPlateInMembraneActionAnalysis/testCantileverBeamTransient'));
-end
 resultFEMPlateInMembraneAction = run(suiteClassFEMPlateInMembraneAction);
 
 %% Run the unit test cases for the finite element formulation of the contact mechanics analysis
 suiteClassFEMContactMechanics = TestSuite.fromClass(?testFEMContactMechanicsAnalysis);
-if isLight
-    suiteClassFEMContactMechanics = suiteClassFEMContactMechanics.selectIf...
-        (HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactBridge2D') | ...
-        HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactCantileverBeam2D') | ...
-        HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactWedge2D') | ...
-        HasName('testFEMContactMechanicsAnalysis/testFrictionlessSignoriniContactHertz2D'));
-end
 resultContactMechanicsAnalysis = run(suiteClassFEMContactMechanics);
 
 %% Run the unit test cases for the stabilized isogeometric incompressible flow equations
 suiteClassIGA4CFD = TestSuite.fromClass(?testIGAComputationalFluidDynamicsAnalysis);
-if isLight
-    suiteClassIGA4CFD = suiteClassIGA4CFD.selectIf...
-        (HasName('testIGAComputationalFluidDynamicsAnalysis/testIGA4StokesSteadyState2D') | ...
-        HasName('testIGAComputationalFluidDynamicsAnalysis/testIGA4TransientTaylorGreenVortices2D'));
-end
 resultIGA4CFD = run(suiteClassIGA4CFD);
 
 %% Run the unit test cases for stabilized finite element formulation for the Navier-Stokes problem
 suiteClassFEM4CFD = TestSuite.fromClass(?testFEMComputationalFluidDynamicsAnalysis);
-if isLight
-    suiteClassFEM4CFD = suiteClassFEM4CFD.selectIf...
-        (HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4TransientTaylorGreenVortices2D') | ...
-        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesSteadyState2D') | ...
-        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesSteadyStateFlowAroundCylinder2D') | ...
-        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesTransientALE2D') | ...
-        HasName('testFEMComputationalFluidDynamicsAnalysis/testFEM4NavierStokesTransientBossak3D'));
-end
 resultFEM4CFD = run(suiteClassFEM4CFD);
 
 %% Run the unit test cases for shape optimization analysis
 suiteClassShapeOptimization = TestSuite.fromClass(?testShapeOptimizationAnalysis);
-if isLight
-    suiteClassShapeOptimization = suiteClassShapeOptimization.selectIf...
-        (HasName('testShapeOptimizationAnalysis/testFEMSteadyStateCFDUnconstrainedShapeOptimization'));
-end
 resultShapeOptimization = run(suiteClassShapeOptimization);
 
 %% END OF SCRIPT

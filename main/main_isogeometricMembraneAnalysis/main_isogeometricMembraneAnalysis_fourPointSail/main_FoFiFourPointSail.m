@@ -246,8 +246,8 @@ tq = a;
 % Knot insertion   %
 %%%%%%%%%%%%%%%%%%%%
 
-noKnotsXi = 0;
-noKnotsEta = 0;
+noKnotsXi = 10;
+noKnotsEta = 10;
 [Xi,Eta,CP] = knotRefineUniformlyBSplineSurface...
     (p,Xi,q,Eta,CP,noKnotsXi,noKnotsEta,'');
 
