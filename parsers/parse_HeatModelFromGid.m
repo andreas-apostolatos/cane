@@ -30,7 +30,9 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %                       applied
 %     valuesInhomDOFs : The prescribed values for the inhomogeneous 
 %                       Dirichlet boundary conditions
-%             propNBC :     .nodes : The nodes where Neumann boundary 
+%             propNBC : Structure containing information on the Neumann
+%                       boundary conditions (fluxes)
+%                           .nodes : The nodes where Neumann boundary 
 %                                    conditions are applied
 %                        .loadType : The type of the load for each Neumann 
 %                                    node
@@ -67,7 +69,7 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %
 % 3. Load the material properties
 %
-% 4. Load the nonlinear method
+% 4. Load the nonlinear method (heat transfer without internal heat generation is always linear)
 %
 % 5. Load the time integration method
 %
@@ -87,13 +89,11 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
-    fprintf('________________________________________________________________\n');
-    fprintf('################################################################\n');
-    fprintf('Parsing data from GiD input file for a structural boundary value\n');
-    fprintf('problem has been initiated\n');
-    fprintf('________________________________________________________________\n\n');
-
-    % start measuring computational time
+    fprintf('_____________________________________________________________\n');
+    fprintf('#############################################################\n');
+    fprintf('Parsing data from GiD input file for a heat transfer boundary\n');
+    fprintf('value problem has been initiated\n');
+    fprintf('_____________________________________________________________\n\n');
     tic;
 end
 
@@ -108,37 +108,43 @@ valuesInhomDOFs = [];
 fstring = fileread([pathToCase caseName '.dat']); 
 
 %% 2. Load the analysis type
-block = regexp(fstring,'HEAT_ANALYSIS','split');
+block = regexp(fstring, 'HEAT_ANALYSIS', 'split');
 block(1) = [];
 out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
 propAnalysis.type = out{1}{2};
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Analysis type: %s \n',propAnalysis.type);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Analysis type: %s \n', propAnalysis.type);
 end
 
 %% 3. Load the material properties
-block = regexp(fstring,'HEAT_MATERIAL_PROPERTIES','split');
+block = regexp(fstring, 'HEAT_MATERIAL_PROPERTIES','split');
 block(1) = [];
-out = textscan(block{1},'%s','delimiter',',','MultipleDelimsAsOne', 1);
-parameters.rho = str2double(out{1}{2}); % density
-parameters.k = str2double(out{1}{4});   % thermal conductivity
-parameters.cp = str2double(out{1}{6});  % specific heat
-% compute thermal diffusivity
-parameters.alpha = parameters.k / (parameters.rho*parameters.cp);
+out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
 
-%% 4. Load the nonlinear method
-% heat transfer without internal heat generation is always linear
+% Read material density
+parameters.rho = str2double(out{1}{2});
+
+% Read thermal conductivity
+parameters.k = str2double(out{1}{4});
+
+% Read specific heat
+parameters.cp = str2double(out{1}{6});
+
+% Compute thermal diffusivity
+parameters.alpha = parameters.k/(parameters.rho*parameters.cp);
+
+%% 4. Load the nonlinear method (heat transfer without internal heat generation is always linear)
 propNLinearAnalysis.method = 'UNDEFINED';
 propNLinearAnalysis.noLoadSteps = [];
 propNLinearAnalysis.eps = [];
 propNLinearAnalysis.maxIter = 1;
 
 %% 5. Load the time integration method
-block = regexp(fstring,'HEAT_TRANSIENT_ANALYSIS','split');
+block = regexp(fstring, 'HEAT_TRANSIENT_ANALYSIS','split');
 block(1) = [];
-out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
+out = textscan(block{1}, '%s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 propHeatDynamics.timeDependence = out{1}{2};
-if ~strcmp(propHeatDynamics.timeDependence,'STEADY_STATE')
+if ~strcmp(propHeatDynamics.timeDependence, 'STEADY_STATE')
     propHeatDynamics.method = out{1}{4};
     propHeatDynamics.T0 = str2double(out{1}{6});
     propHeatDynamics.TEnd = str2double(out{1}{8});
@@ -146,78 +152,77 @@ if ~strcmp(propHeatDynamics.timeDependence,'STEADY_STATE')
     propHeatDynamics.isAdaptive = out{1}{12};
     propHeatDynamics.dt = (propHeatDynamics.TEnd - propHeatDynamics.T0)/propHeatDynamics.noTimeSteps;
 end
-
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Structural dynamics: %s \n',propHeatDynamics.timeDependence);
-    if ~strcmp(propHeatDynamics.timeDependence,'STEADY_STATE')
-        fprintf('\t>> Time integration method: %s \n',propHeatDynamics.method);
-        fprintf('\t>> Start time of the simulation: %f \n',propHeatDynamics.T0);
-        fprintf('\t>> End time of the simulation: %f \n',propHeatDynamics.TEnd);
-        fprintf('\t>> Number of time steps: %f \n',propHeatDynamics.noTimeSteps);
-        fprintf('\t>> Time step size: %f \n',propHeatDynamics.dt);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Structural dynamics: %s \n', propHeatDynamics.timeDependence);
+    if ~strcmp(propHeatDynamics.timeDependence, 'STEADY_STATE')
+        fprintf('\t>> Time integration method: %s \n', propHeatDynamics.method);
+        fprintf('\t>> Start time of the simulation: %f \n', propHeatDynamics.T0);
+        fprintf('\t>> End time of the simulation: %f \n', propHeatDynamics.TEnd);
+        fprintf('\t>> Number of time steps: %f \n', propHeatDynamics.noTimeSteps);
+        fprintf('\t>> Time step size: %f \n', propHeatDynamics.dt);
     end
 end
 
 %% 6. Load the Gauss Point integration method
-block = regexp(fstring,'HEAT_INTEGRATION','split');
+block = regexp(fstring, 'HEAT_INTEGRATION','split');
 block(1) = [];
-out = textscan(block{1},'%s','delimiter',' ','MultipleDelimsAsOne', 1);
+out = textscan(block{1}, '%s','delimiter', ' ', 'MultipleDelimsAsOne', 1);
 propGaussInt.type = out{1}{2};
-if strcmp(propGaussInt.type,'user')
+if strcmp(propGaussInt.type, 'user')
     propGaussInt.domainNoGP = str2double(out{1}{4});
     propGaussInt.boundaryNoGP = str2double(out{1}{6});
 end
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Gauss integration type: %s \n',propGaussInt.type);
-    if strcmp(propGaussInt.type,'user')
-        fprintf('\t>> No. Gauss Points for the domain integration: %d \n',propGaussInt.domainNoGP);
-        fprintf('\t>> No. Gauss Points for the boundary integration: %d \n',propGaussInt.boundaryNoGP);
+    if strcmp(propGaussInt.type, 'user')
+        fprintf('\t>> No. Gauss Points for the domain integration: %d \n', propGaussInt.domainNoGP);
+        fprintf('\t>> No. Gauss Points for the boundary integration: %d \n', propGaussInt.boundaryNoGP);
     end
 end
 
 %% 7. Load the structural nodes
-block = regexp(fstring,'HEAT_NODES','split'); 
+block = regexp(fstring, 'HEAT_NODES', 'split'); 
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f %f %f %f','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f %f %f %f', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
 strMsh.nodes = out(:,2:4);
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Number of nodes in the mesh: %d \n',length(strMsh.nodes(:,1)));
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Number of nodes in the mesh: %d \n', length(strMsh.nodes(:, 1)));
 end
 
 %% 8. Load the structural elements by connectivity arrays
-block = regexp(fstring,'HEAT_ELEMENTS','split'); 
+block = regexp(fstring, 'HEAT_ELEMENTS', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f %f %f %f %f','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f %f %f %f %f', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
-noNodes = length(out(1,:));
-strMsh.elements = out(:,2:noNodes);
-if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Number of elements in the mesh: %d \n',length(strMsh.elements));
+noNodes = length(out(1, :));
+strMsh.elements = out(:, 2:noNodes);
+if strcmp(outMsg, 'outputEnabled')
+    fprintf('>> Number of elements in the mesh: %d \n', length(strMsh.elements));
 end
 
 %% 9. Load the nodes on which homogeneous Dirichlet boundary conditions are applied
-block = regexp(fstring,'HEAT_DIRICHLET_NODES','split'); 
+block = regexp(fstring, 'HEAT_DIRICHLET_NODES', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
 
 % Filter out the actual DOFs
-nDOFsPerNodeFromGiD = 1;
-if strcmp(propAnalysis.type,'HEAT_TRANSFER_2D')
-    nDOFsPerNode = 1;
+numDOFsPerNodeFromGiD = 1;
+if strcmp(propAnalysis.type, 'HEAT_TRANSFER_2D')
+    numDOFsPerNode = 1;
 end
 
 % Initialize counter
@@ -225,21 +230,22 @@ counterHomDBC = 1;
 counterInhomDBC = 1;
 
 % Find the number of nodes where Dirichlet boundary conditions are applied
-nDBCNodes = length(out)/(nDOFsPerNodeFromGiD+1);
+numDBCNodes = length(out)/(numDOFsPerNodeFromGiD + 1);
 
-for i = 1:nDBCNodes
+% Loop overll all nodes where Dirchlet boundary conditions are applied
+for i = 1:numDBCNodes
     % Get the Dirichlet node ID
-    nodeID = out((nDOFsPerNodeFromGiD+1)*i-nDOFsPerNodeFromGiD);
+    nodeID = out((numDOFsPerNodeFromGiD + 1)*i - numDOFsPerNodeFromGiD);
     
     % Get the x-component of the prescribed value
-    for j = 1:nDOFsPerNode
-        presValue = out((nDOFsPerNodeFromGiD+1)*i-nDOFsPerNodeFromGiD+j);
+    for j = 1:numDOFsPerNode
+        presValue = out((numDOFsPerNodeFromGiD + 1)*i - numDOFsPerNodeFromGiD + j);
         if ~isnan(presValue)
             if presValue == 0
-                homDOFs(counterHomDBC) = nDOFsPerNode*nodeID-nDOFsPerNode+j;
+                homDOFs(counterHomDBC) = numDOFsPerNode*nodeID - numDOFsPerNode + j;
                 counterHomDBC = counterHomDBC + 1;
             else
-                inhomDOFs(counterInhomDBC) = nDOFsPerNode*nodeID-nDOFsPerNode+j;
+                inhomDOFs(counterInhomDBC) = numDOFsPerNode*nodeID - numDOFsPerNode + j;
                 valuesInhomDOFs(counterInhomDBC) = presValue;
                 counterInhomDBC = counterInhomDBC + 1;
             end
@@ -249,34 +255,32 @@ end
 
 % Sort out the vectors
 homDOFs = sort(homDOFs);
-[inhomDOFs,indexSorting] = sort(inhomDOFs);
+[inhomDOFs, indexSorting] = sort(inhomDOFs);
 valuesInhomDOFs = valuesInhomDOFs(indexSorting);
 
 %% 10. Load the nodes on the Neumann boundary together with the load application information
-block = regexp(fstring,'HEAT_FLUX_NODES','split'); 
+block = regexp(fstring,'HEAT_FLUX_NODES', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k},'%f %s %s','delimiter',' ','MultipleDelimsAsOne', 1);
+    out{k} = textscan(block{k}, '%f %s %s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 end
-
 if ~isempty(out)
     out = out{1};
-    propNBC.nodes = cell2mat(out(:,1));
-    outLoadType = out(:,2);
+    propNBC.nodes = cell2mat(out(:, 1));
+    outLoadType = out(:, 2);
     propNBC.loadType = cell2mat(outLoadType{1});
-    outFctHandle = out(:,3);
+    outFctHandle = out(:, 3);
     propNBC.fctHandle = cell2mat(outFctHandle{1});
 end
 
 %% 11. Get edge connectivity arrays for the Neumann edges
-
 if strcmp(outMsg,'outputEnabled')
-    fprintf('>> Neumann boundary edges: %d \n',length(propNBC.nodes) - 1);
+    fprintf('>> Neumann boundary edges: %d \n', length(propNBC.nodes) - 1);
 end
 
 % Initialize the Neumann boundary lines
-propNBC.lines = zeros(length(unique(propNBC.nodes)) - 1,3);
+propNBC.lines = zeros(length(unique(propNBC.nodes)) - 1, 3);
 
 % Initialize line counter
 counterLines = 1;
@@ -292,8 +296,8 @@ for i = 1:length(propNBC.nodes)
 
 
             % Find the element indices to which the nodes belong
-            [indexI,~] = find(nodeI == strMsh.elements);
-            [indexJ,~] = find(nodeJ == strMsh.elements);
+            [indexI, ~] = find(nodeI == strMsh.elements);
+            [indexJ, ~] = find(nodeJ == strMsh.elements);
 
             % For all the element indices to which indexJ belongs to
             for k = 1:length(indexJ)
@@ -301,7 +305,8 @@ for i = 1:length(propNBC.nodes)
                 commonElmnts = find(indexJ(k) == indexI);
 
                 % If there are common elements to which the nodes belong
-                if norm(commonElmnts) ~= 0 && strcmp(propNBC.fctHandle(i,:),propNBC.fctHandle(j,:))
+                if norm(commonElmnts) ~= 0 && ...
+                        strcmp(propNBC.fctHandle(i, :), propNBC.fctHandle(j, :))
                     % Get the common element index
                     elementIndex = indexI(commonElmnts);
 
@@ -323,10 +328,8 @@ end
 %propNBC.fctHandle = fctHandle;
 %% 12. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
-    fprintf('\nParsing took %.2d seconds \n\n',computationalTime);
+    fprintf('\nParsing took %.2d seconds \n\n', computationalTime);
     fprintf('_________________________Parsing Ended__________________________\n');
     fprintf('################################################################\n\n\n');
 end

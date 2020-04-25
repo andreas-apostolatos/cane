@@ -76,13 +76,11 @@ function [dHistory,minElSize] = solve_FEMHeatTransferTransient...
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
-    fprintf('___________________________________________________________________\n');
-    fprintf('###################################################################\n');
-    fprintf('Computation of the displacement field for a geometrically nonlinear\n');
-    fprintf('plate in transient membrane action problem has been initiated\n');
-    fprintf('___________________________________________________________________\n\n');
-
-    % start measuring computational time
+    fprintf('______________________________________________________________\n');
+    fprintf('##############################################################\n');
+    fprintf('Computation of the displacement field for a thermal conduction\n');
+    fprintf('problem has been initiated\n');
+    fprintf('______________________________________________________________\n\n');
     tic;
 end
 
@@ -146,9 +144,7 @@ freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
 
 %% 3. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
     fprintf('\nNonlinear analysis took %.2d seconds \n\n',computationalTime);
     fprintf('________________________Linear Analysis Ended______________________\n');
     fprintf('####################################################################\n\n\n');

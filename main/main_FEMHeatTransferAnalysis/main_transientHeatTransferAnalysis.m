@@ -65,7 +65,7 @@ caseName = 'transientSquareCavity';
 %% UI
 
 % On the computation of the body forces
-computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
+computeBodyForces = 'undefined';
 
 % Equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
@@ -108,8 +108,10 @@ propGraph.index = 1;
 computeInitialConditions = @computeInitCndsFEMHeatTransferAnalysis;
 propHeatDynamics.initialTemperature = 300;
 
-%% Define boundary flux (load) value
-propNBC.tractionLoadVct = [0; 0; 0]; %computeConstantFlux
+%% Define boundary flux (load) value (computeConstantFlux)
+propNBC.tractionLoadVct = [0 
+                           0
+                           0];
 
 %% Solve the transient heat transfer problem
 [dHistory, minElSize] = solve_FEMHeatTransferTransient ...

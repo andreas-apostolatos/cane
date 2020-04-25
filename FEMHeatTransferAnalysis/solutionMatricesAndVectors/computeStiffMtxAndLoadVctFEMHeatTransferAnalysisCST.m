@@ -76,14 +76,10 @@ function [K, F, minElEdgeSize] = ...
 %
 %    5v. Form the B-Operator matrix for the plate in membrane action problem page-wise
 %
-%   5vi. Compute the element load vector due to body forces and add the contribution
-%
-%  5vii. Compute the stiffness matrix at the Gauss point and add the contribution
+%   5vi. Compute the stiffness matrix at the Gauss point and add the contribution
 % <-
 %
-% 6. Add the contribution from the Gauss Point and assemble to the global system
-%
-% 7. Update the force vector with the body force contributions
+% 6. Assemble to the global system matrix
 %
 %% Functions main body
 
@@ -106,7 +102,6 @@ numElmnts = length(strMsh.elements(:, 1));
 
 % Initialize output arrays
 stiffMtxEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
-FBodyEl = zeros(numElmnts, numDOFsEl, 1);
 
 %% 1. Create the element freedom tables for all elements at once
 EFT = zeros(numDOFsEl, numElmnts);
@@ -164,20 +159,12 @@ for iGP = 1:numGP
         B(:, 1, i) = dN(:, i, 2);
         B(:, 2, i) = dN(:, i, 3);
     end
- 
-    %% 5vi. Compute the element load vector due to body forces and add the contribution
-    bF = computeBodyForces(xGP(:, 1), xGP(:, 2), xGP(:, 3));
-    FBodyEl = FBodyEl + pstimes(pmtimes(ptranspose(N), ptranspose(bF(:, :, 1)))*GW(iGP), detJxxi);
     
-    %% 5vii. Compute the stiffness matrix at the Gauss point and add the contribution
+    %% 5vi. Compute the stiffness matrix at the Gauss point and add the contribution
     stiffMtxEl = stiffMtxEl + propParameters.k * pstimes(pmtimes(ptranspose(B), B)*GW(iGP), detJxxi);
 end
 
-%% 6. Assemble to the global system matrices
-% [K,FBody] = assembleSparseMatricies(EFT,numDOFs,numDOFsEl,KEl,FBodyEl);
-[K] = assembleSparseMatricies(EFT, numDOFs, numDOFsEl, stiffMtxEl);
-
-%% 7. Update the force vector with the body force contributions
-% F = F + FBody;
+%% 6. Assemble to the global system matrix
+K = assembleSparseMatricies(EFT, numDOFs, numDOFsEl, stiffMtxEl);
 
 end

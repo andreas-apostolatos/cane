@@ -157,7 +157,7 @@ end
 
 % Write out the temperature field at each node
 fprintf(output,'POINT_DATA %d\n',noNodes);
-fprintf(output,'SCALARS temperatures double\n');
+fprintf(output,'SCALARS Temperature double\n');
 fprintf(output, 'LOOKUP_TABLE default\n');
 for nodeID = 1:noNodes
     fprintf(output,'  %f\n', nodalTemperature(1,nodeID));
@@ -165,7 +165,5 @@ end
 
 %% 3. Close files
 fclose(output);
-
-return;
 
 end

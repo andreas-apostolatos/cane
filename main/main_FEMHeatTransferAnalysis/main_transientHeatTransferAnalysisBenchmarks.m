@@ -53,9 +53,8 @@ addpath('../../FEMHeatTransferAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMHeatTransferAnalysis/';
-% caseName = 'transientSquareCavity';
-caseName = 'transientWallHeating';
-
+caseName = 'transientSquareCavity';
+% caseName = 'transientWallHeating';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
@@ -65,14 +64,16 @@ caseName = 'transientWallHeating';
 %% UI
 
 % On the computation of the body forces
-computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
+computeBodyForces = 'undefined';
 
 % Equation system solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 
 % Assign load
-propNBC.tractionLoadVct = [0; 0; 0]; %computeConstantFlux
+propNBC.tractionLoadVct = [0
+                           0
+                           0]; %computeConstantFlux
 
 % On the writing the output function
 propVTK.isOutput = false;

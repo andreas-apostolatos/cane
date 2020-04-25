@@ -54,7 +54,6 @@ caseName = 'steadyStateSquareCavity';
 %caseName = 'rectangularPlateWithTwoHoles';
 %caseName = 'rectangularPlateWithCenterHole';
 
-
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
     parameters, propNLinearAnalysis, ~, propGaussInt] = ...
@@ -62,8 +61,8 @@ caseName = 'steadyStateSquareCavity';
 
 %% GUI
 
-% On the body forces
-computeBodyForces = @computeConstantVerticalStructureBodyForceVct;
+% On the body force computation
+computeBodyForces = 'undefined';
 
 % Choose solver for the linear equation system
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
@@ -83,16 +82,11 @@ propHeatDynamics = 'undefined';
 % Initialize graphics index
 graph.index = 1;
 
-% Assign load
-propNBC.tractionLoadVct = [5e4; 0; 0]; %computeConstantFlux
+% Assign load (computeConstantFlux)
+propNBC.tractionLoadVct = [5e4; 0; 0];
 
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
-
-%% Compute the flux(load) vector
-t = 0;
-F = computeLoadVctFEMHeatTransferAnalysis ...
-    (strMsh, propAnalysis, propNBC, t, propGaussInt, 'outputEnabled');
 
 %% Initialize solution
 numNodes = length(strMsh.nodes(:,1));
