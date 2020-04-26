@@ -77,34 +77,36 @@ function [X, Y, Z, sigma0] = createBSplineSurfaceOnCartesianSpace ...
 %% 0. Read input
 
 % Number of knots in xi,eta-direction
-mxi = length(Xi);
-meta = length(Eta);
+numKnots_xi = length(Xi);
+numKnots_eta = length(Eta);
 
 % Number of control points in xi,eta-direction
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+numCPs_xi = length(CP(:, 1, 1));
+numCPs_eta = length(CP(1, :, 1));
 
 % Check the compatibility of the NURBS parameters
-checkInputForBSplineSurface(p,mxi,nxi,q,meta,neta);
+checkInputForBSplineSurface ...
+    (p, numKnots_xi, numCPs_xi, q, numKnots_eta,numCPs_eta);
 
 % Assign a tolerance value
-eps = 10e-10;
+eps = 1e-9;
 
 % Initialize counter for the lines in eta-direction
-counterEta = 1;  
+counter_eta = 1;  
 
 % Incremental step for the lines in eta-direction
-deta = (Eta(meta)-Eta(1))/etaGrid;    
+deta = (Eta(numKnots_eta) - Eta(1))/etaGrid;
 
 % Incremental step for the lines in xi-direction
-dxi = (Xi(mxi)-Xi(1))/xiGrid;  
+dxi = (Xi(numKnots_xi) - Xi(1))/xiGrid;
 
 % Start coordinate on the eta parameter lines
 eta = Eta(1);
 
 % Read input
 if ~ischar(prestress)
-    if ~strcmp(compPrestress,'1') && ~strcmp(compPrestress,'2') && ~strcmp(compPrestress,'12')
+    if ~strcmp(compPrestress, '1') && ~strcmp(compPrestress, '2') && ...
+            ~strcmp(compPrestress, '12')
         error('The value of optionsPrestress.componentPrestress can be "1", "2" or "12"');
     end
 end
@@ -112,8 +114,8 @@ end
 % Check if prestress is defined over a user defined coordinates system
 if ~ischar(prestress)
     isPrestressOverDefinedSystem = false;
-    if isfield(prestress,'computeBaseVectors')
-        if ~isfield(prestress,'computeParametricCoordinates')
+    if isfield(prestress, 'computeBaseVectors')
+        if ~isfield(prestress, 'computeParametricCoordinates')
             error('When defining the prestress over a user-defined coordinate system the function handle prestress.computeParametricCoordinates needs to also be defined');
         end
         isPrestressOverDefinedSystem = true;
@@ -121,48 +123,51 @@ if ~ischar(prestress)
 end
 
 % Initialize output arrays
-S = zeros(xiGrid,etaGrid,3);
+S = zeros(xiGrid, etaGrid, 3);
 if ~ischar(prestress)
-    sigma0 = zeros(xiGrid,etaGrid);
+    sigma0 = zeros(xiGrid, etaGrid);
 else
     sigma0 = 'undefined';
 end
 
 %% 1. Loop over all the parametric coordinate locations
-while eta <= Eta(meta)+eps
+while eta <= Eta(numKnots_eta) + eps
     %% 1i. Compute start coordinate on the xi parameter lines and initialize counter
     xi = Xi(1);
     
     % Initialize counter for the lines in u-direction
-    counterXi = 1;
+    counter_xi = 1;
     
     %% 1ii. Compute the knot span index in eta-direction
-    etaSpan = findKnotSpan(eta,Eta,neta);
+    etaSpan = findKnotSpan(eta, Eta, numCPs_eta);
     
     %% 1iii. Loop over all the coordinates in xi-direction
-    while xi <= Xi(mxi) + eps
+    while xi <= Xi(numKnots_xi) + eps
         %% 1iii.1. Compute the knot span index in xi-direction
-    	xiSpan = findKnotSpan(xi,Xi,nxi);
+    	xiSpan = findKnotSpan(xi, Xi, numCPs_xi);
     	
         %% 1iii.2. Compute the IGA basis functions at (xi,eta)
         if ~ischar(prestress)
             if isPrestressOverDefinedSystem
-                nDrv = 1;
+                numDrvs = 1;
             else
-                nDrv = 0;
+                numDrvs = 0;
             end
         else
-            nDrv = 0;
+            numDrvs = 0;
         end
-        dR = computeIGABasisFunctionsAndDerivativesForSurface(xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,isNURBS,nDrv);
+        dR = computeIGABasisFunctionsAndDerivativesForSurface ...
+            (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, isNURBS, numDrvs);
         
         %% 1iii.3. Compute the Cartesian coordinates of (xi,eta)
-        S(counterXi,counterEta,1:3) = computeCartesianCoordinatesOfAPointOnBSplineSurface(xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,dR(:,1));
+        S(counter_xi, counter_eta, 1:3) = ...
+            computeCartesianCoordinatesOfAPointOnBSplineSurface ...
+            (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, dR(:, 1));
 
         %% 1iii.4. Compute the local to the convective space of the surface coordinates
         if ~ischar(prestress)
-            if isPrestressOverDefinedSystem || isa(prestress.voigtVector,'function_handle')
-                theta = real(prestress.computeParametricCoordinates(squeeze(S(counterXi,counterEta,1:3))));
+            if isPrestressOverDefinedSystem || isa(prestress.voigtVector, 'function_handle')
+                theta = real(prestress.computeParametricCoordinates(squeeze(S(counter_xi, counter_eta, 1:3))));
             end
         end
         
@@ -170,26 +175,26 @@ while eta <= Eta(meta)+eps
         if ~ischar(prestress)
             if isPrestressOverDefinedSystem
                 mixedDerivOrder = 0;
-                [dGXi,dGEta] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                    (xiSpan,p,etaSpan,q,CP,mixedDerivOrder,dR);
+                [dGXi, dGEta] = computeBaseVectorsAndDerivativesForBSplineSurface ...
+                    (xiSpan, p, etaSpan, q, CP, mixedDerivOrder, dR);
             end
         end
         
         %% 1iii.6. Compute the transformation matrix from the user-defined coordinate system of the prestress to the local Cartesian system
         if ~ischar(prestress)
             if isPrestressOverDefinedSystem
-                GabCovariant = [dGXi(:,1) dGEta(:,1)]'*[dGXi(:,1) dGEta(:,1)];
-                GContravariant = GabCovariant\[dGXi(:,1) dGEta(:,1)]';
+                GabCovariant = [dGXi(:, 1) dGEta(:, 1)]'*[dGXi(:, 1) dGEta(:, 1)];
+                GContravariant = GabCovariant\[dGXi(:, 1) dGEta(:, 1)]';
                 GContravariant = GContravariant';
-                eLC = computeLocalCartesianBasis4BSplineSurface([dGXi(:,1) dGEta(:,1)],GContravariant);
-                prestressBaseVct = prestress.computeBaseVectors(theta(1,1),theta(2,1));
-                T2LC = computeT2LocalCartesianBasis(prestressBaseVct,eLC);
+                eLC = computeLocalCartesianBasis4BSplineSurface([dGXi(:, 1) dGEta(:, 1)],GContravariant);
+                prestressBaseVct = prestress.computeBaseVectors(theta(1, 1), theta(2, 1));
+                T2LC = computeT2LocalCartesianBasis(prestressBaseVct, eLC);
             end
         end
         
         %% 1iii.7. Compute the prestress components according to the options
         if ~ischar(prestress)
-            if isa(prestress.voigtVector,'function_handle')
+            if isa(prestress.voigtVector, 'function_handle')
                 prestressVoigtVector = prestress.voigtVector(theta);
             else
                 prestressVoigtVector = prestress.voigtVector;
@@ -197,31 +202,31 @@ while eta <= Eta(meta)+eps
             if isPrestressOverDefinedSystem
                 prestressVoigtVector = T2LC*prestressVoigtVector;
             end
-            if strcmp(compPrestress,'1')
-                sigma0(counterXi,counterEta) = prestressVoigtVector(1,1);
-            elseif strcmp(compPrestress,'2')
-                sigma0(counterXi,counterEta) = prestressVoigtVector(2,1);
-            elseif strcmp(compPrestress,'12')
-                sigma0(counterXi,counterEta) = prestressVoigtVector(3,1);
+            if strcmp(compPrestress, '1')
+                sigma0(counter_xi, counter_eta) = prestressVoigtVector(1, 1);
+            elseif strcmp(compPrestress, '2')
+                sigma0(counter_xi, counter_eta) = prestressVoigtVector(2, 1);
+            elseif strcmp(compPrestress, '12')
+                sigma0(counter_xi, counter_eta) = prestressVoigtVector(3, 1);
             end
         end
     	
         %% 1iii.8. Update counter for the lines in xi-direction
-    	counterXi = counterXi + 1;
+    	counter_xi = counter_xi + 1;
         
         %% 1iii.9. Update the xi-parametric coordinate
         xi = xi + dxi;
     end
   %% 1iv. Update counter for the lines in eta-direction
-  counterEta = counterEta + 1;
+  counter_eta = counter_eta + 1;
   
   %% 1v. Update the eta-parametric coordinate
   eta = eta + deta;
 end
 
 %% 2. Write the coordinates into the individual arrays
-X = S(:,:,1);
-Y = S(:,:,2);
-Z = S(:,:,3);
+X = S(:, :, 1);
+Y = S(:, :, 2);
+Z = S(:, :, 3);
 
 end

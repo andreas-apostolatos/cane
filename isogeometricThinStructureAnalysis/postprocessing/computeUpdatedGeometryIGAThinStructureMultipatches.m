@@ -1,5 +1,5 @@
 function BSplinePatches = computeUpdatedGeometryIGAThinStructureMultipatches...
-    (BSplinePatches,dHat)
+    (BSplinePatches, dHat)
 %% Licensing
 %
 % License:         BSD License

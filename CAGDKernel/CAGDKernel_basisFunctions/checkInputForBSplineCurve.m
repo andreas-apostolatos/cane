@@ -1,4 +1,4 @@
-function checkInputForBSplineCurve(p,m,n)
+function checkInputForBSplineCurve(p, numKnots, numCPs)
 %% Licensing
 %
 % License:         BSD License
@@ -10,17 +10,17 @@ function checkInputForBSplineCurve(p,m,n)
 %
 % checks compatibility of input parameters for a NURBS line
 %
-%  Input :
-%    p,q : polynomial degrees
-%  mu,mv : number of knots in u,v-direction
-%  nu,nv : number of control points in u,v-direction
+%    Input :
+%        p : Polynomial degree
+% numKnots : Number of knots
+%   numCPs : number of Control Points
 %
 % Output :
 %          messages on the compatibility
 %
 %% Function main body
 
-if (n+p+1 ~= m)
+if (numCPs + p + 1 ~= numKnots)
   error('U, p and Control points dont match!')
 end
 

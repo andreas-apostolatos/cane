@@ -312,13 +312,28 @@ if strcmp(outMsg, 'outputEnabled') && ~isTransient
     end
     condK = cond(stiffMtx(freeDOFs, freeDOFs));
     fprintf(strcat(tab, '>> The condition number of the system is %d\n'), condK); 
-    [~, eigVal] = eig(stiffMtx(freeDOFs, freeDOFs));
-    eigVal(~eigVal) = Inf;
-    minEig = min(min(eigVal));
-    fprintf(strcat(tab, '>> The minimum eigenvalue of the system is %d\n'), minEig);
 else
     rankD = 'undefined';
     condK = 'undefined';
+end
+isMinEig = false;
+if isstruct(propCoupling)
+    if isfield(propCoupling, 'method')
+        if ischar(propCoupling.method)
+            if strcmp(propCoupling.method, 'nitsche')
+                isMinEig = true;
+            end
+        end
+    end
+end
+if isMinEig
+    [~, eigVal] = eig(stiffMtx(freeDOFs, freeDOFs));
+    eigVal(~eigVal) = Inf;
+    minEig = min(min(eigVal));
+    if strcmp(outMsg, 'outputEnabled')
+        fprintf(strcat(tab, '>> The minimum eigenvalue of the system is %d\n'), minEig);
+    end
+else
     minEig = 'undefined';
 end
 

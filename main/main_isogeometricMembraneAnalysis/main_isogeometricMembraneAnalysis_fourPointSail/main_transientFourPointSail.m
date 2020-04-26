@@ -154,9 +154,10 @@ graph.resultant = 'displacement';
 graph.component = '2norm';
 
 % Function handle to writing out the results
-% writeOutput = @writeResults4Carat;
-writeOutput = @writeResults4GiD;
-% writeOutput = 'undefined';
+% propOutput.writeOutput = @writeResults4Carat;
+% propOutput.writeOutput = 'undefined';
+propOutput.writeOutput = @writeResults4GiD;
+propOutput.writeFrequency = 1;
 
 % Postprocessing
 propPostproc.resultant = {'displacement'};
@@ -437,10 +438,11 @@ propStrDynamics.dt = (propStrDynamics.TEnd - propStrDynamics.TStart)/propStrDyna
 % end
 
 %% Solve the transient problem
-[dHatHistory,resHistory,BSplinePatches,minElAreaSize] = solve_IGAMembraneTransient...
-    (BSplinePatches,computeInitCnds,propNLinearAnalysis,propStrDynamics,...
-    propPostproc,solve_LinearSystem,writeOutput,pathToOutput,caseName,...
-    propEmpireCoSimulation,'outputEnabled');
+[dHatHistory,resHistory,BSplinePatches,minElAreaSize] = ...
+    solve_IGAMembraneTransient ...
+    (BSplinePatches, computeInitCnds, propNLinearAnalysis, propStrDynamics, ...
+    propPostproc, solve_LinearSystem, propOutput, pathToOutput, caseName,...
+    propEmpireCoSimulation, 'outputEnabled');
 str_timeStep = num2str(propStrDynamics.dt);
 save(['./data_TransientAnalysisPool/' 'data_' caseName '_dt_' str_timeStep '.mat']);
 return;

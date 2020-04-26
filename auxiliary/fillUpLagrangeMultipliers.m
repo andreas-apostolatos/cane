@@ -35,6 +35,6 @@ lm.CP = CP;
 lm.isNURBS = isNURBS;
 
 %% 2. Get the number of Control Points
-lm.noCPs = length(lm.CP(:,1));
+lm.noCPs = length(lm.CP(:, 1));
 
 end
