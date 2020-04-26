@@ -1,5 +1,5 @@
 function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
-    propAnalysis, parameters, propNLinearAnalysis, propFldDynamics, ...
+    propAnalysis, propParameters, propNLinearAnalysis, propFldDynamics, ...
     propGaussInt, postProc] = ...
     parse_FluidModelFromGid(pathToCase, caseName, outMsg)
 %% Licensing
@@ -21,7 +21,8 @@ function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
 %               outMsg : On the output information on the command window
 %
 %              Output :
-%              fldMsh :     .nodes : The nodes in the FE mesh
+%              fldMsh : Structure containing information on the mesh,
+%                           .nodes : The nodes in the FE mesh
 %                        .elements : The elements in the FE mesh
 %             homDOFs : The global numbering of the nodes where homogeneous
 %                       Dirichlet boundary conditions are applied
@@ -35,7 +36,8 @@ function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
 %                       .fctHandle : The function handle to the computation
 %                                    of the prescribed motion on the ALE
 %                                    boundary nodes
-%                 NBC :     .nodes : The nodes where Neumann boundary 
+%                 NBC : Structure on the Neumann boundary conditions,
+%                           .nodes : The nodes where Neumann boundary 
 %                                    conditions are applied
 %                        .loadType : The type of the load for each Neumann 
 %                                    node
@@ -48,26 +50,33 @@ function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
 %                                 .type      : The analysis type
 %                       .noSpatialDimensions : Number of spatial dimensions
 %                                 .noFields  : Number of DOFs per node
-%          parameters : Problem specific technical parameters
-% propNLinearAnalysis :     .method : The employed nonlinear method
+%      propParameters : Problem specific technical parameters,
+%                              .nue : Dynamic viscosity
+% propNLinearAnalysis : Structure containing information on the
+%                       geometrically nonlinear analysis,
+%                           .method : The employed nonlinear method
 %                      .noLoadSteps : Number of load steps (typically used 
 %                                     only in structural steady-state 
 %                                     dynamics)
 %                              .eps : The residual tolerance
 %                          .maxIter : The maximum number of the nonlinear 
 %                                     iterations
-%     propFldDynamics : .timeDependence : Steady-state or transient analysis
+%     propFldDynamics : Structure containing information on the time
+%                       integration regarding the fluid dynamics,
+%                   .timeDependence : Steady-state or transient analysis
 %                           .method : The time integration method
 %                               .T0 : The start time of the simulation
 %                             .TEnd : The end time of the simulation
 %                      .noTimeSteps : The number of the time steps
-%        propGaussInt : On the Gauss Point integration
+%        propGaussInt : Structure containing information on the Gaussian
+%                       quadrature,
 %                                 .type : 'default', 'user'
 %                           .domainNoGP : Number of Gauss Points for the 
 %                                         domain integration
 %                         .boundaryNoGP : Number of Gauss Points for the
 %                                         boundary integration
-%            postProc : Post-processing properties
+%            postProc : Structure containing information on the
+%                       postprocessing,
 %                           .nameDomain : names of all the domains for post
 %                          .nodesDomain : The global numbering of nodes
 %                                         that are part of the domains above
@@ -148,8 +157,8 @@ end
 block = regexp(fstring, 'FLUID_MATERIAL_PROPERTIES', 'split');
 block(1) = [];
 out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
-parameters.rho = str2double(out{1}{2});
-parameters.nue = str2double(out{1}{4});
+propParameters.rho = str2double(out{1}{2});
+propParameters.nue = str2double(out{1}{4});
 
 %% 4. Load the nonlinear method
 block = regexp(fstring, 'FLUID_NLINEAR_SCHEME', 'split');
@@ -242,7 +251,7 @@ for k = 1:numel(block)
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
-fldMsh.elements = out(:,2:end);
+fldMsh.elements = out(:, 2:end);
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Number of elements in the mesh: %d \n', length(fldMsh.elements));
 end
@@ -258,13 +267,13 @@ end
 out = cell2mat(out);
 
 % Filter out the actual DOFs
-noDOFsPerNodeFromGiD = 4;
+numDOFsNodeGiD = 4;
 if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
-    noDOFsPerNode = 3;
-    noDOFsPerNodeArray = [1 2 4];
+    numDOFsNode = 3;
+    numDOFsNodeArray = [1 2 4];
 elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
-    noDOFsPerNode = 4;
-    noDOFsPerNodeArray = [1 2 3 4];
+    numDOFsNode = 4;
+    numDOFsNodeArray = [1 2 3 4];
 else
 	error('Wrong analysis type selected');
 end
@@ -274,25 +283,25 @@ counterHomDBC = 1;
 counterInhomDBC = 1;
 
 % Find the number of nodes where Dirichlet boundary conditions are applied
-noDBCNodes = length(out)/(noDOFsPerNodeFromGiD+1);
+noDBCNodes = length(out)/(numDOFsNodeGiD + 1);
 
 for i = 1:noDBCNodes
     % Get the Dirichlet node ID
-    nodeID = out((noDOFsPerNodeFromGiD+1)*i-noDOFsPerNodeFromGiD);
+    nodeID = out((numDOFsNodeGiD + 1)*i - numDOFsNodeGiD);
     
     % Get the x-component of the prescribed value
-    for jCounter = 1:length(noDOFsPerNodeArray)
+    for jCounter = 1:length(numDOFsNodeArray)
         % Get the actual j-counter
-        j = noDOFsPerNodeArray(jCounter);
+        j = numDOFsNodeArray(jCounter);
         
         % Get the prescribed value at the current DOF
-        presValue = out((noDOFsPerNodeFromGiD+1)*i-noDOFsPerNodeFromGiD+j);
+        presValue = out((numDOFsNodeGiD + 1)*i - numDOFsNodeGiD + j);
         if ~isnan(presValue)
             if presValue == 0
-                homDOFs(counterHomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+jCounter;
+                homDOFs(counterHomDBC) = numDOFsNode*nodeID-numDOFsNode + jCounter;
                 counterHomDBC = counterHomDBC + 1;
             else
-                inhomDOFs(counterInhomDBC) = noDOFsPerNode*nodeID-noDOFsPerNode+jCounter;
+                inhomDOFs(counterInhomDBC) = numDOFsNode*nodeID - numDOFsNode + jCounter;
                 valuesInhomDOFs(counterInhomDBC) = presValue;
                 counterInhomDBC = counterInhomDBC + 1;
             end
@@ -313,18 +322,17 @@ for k = 1:numel(block)
     out{k} = textscan(block{k}, '%f %s %d', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 end
 if ~isempty(out)
+    if strcmp(outMsg, 'outputEnabled')
+        fprintf('>> Arbitrary Lagrangian-Eulerian method selected');
+    end
     out = out{1};
-    propALE.nodes = cell2mat(out(:,1));
-    outFctHandle = out(:,2);
+    propALE.nodes = cell2mat(out(:, 1));
+    outFctHandle = out(:, 2);
     propALE.fctHandle = outFctHandle{1};
-    propALE.isFree = cell2mat(out(:,3));
+    propALE.isFree = cell2mat(out(:, 3));
     fldMsh.initialNodes = fldMsh.nodes;
 else
     propALE = [];
-end
-
-if strcmp(outMsg, 'outputEnabled') && ~isempty(out)
-    fprintf('>> Arbitrary Lagrangian-Eulerian method selected');
 end
 
 %% 11. Load the nodes, body names and function handles for post processing
@@ -334,14 +342,13 @@ out = cell(size(block));
 for k = 1:numel(block)
     out{k} = textscan(block{k}, '%f %s %s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 end
-
 if ~isempty(out)
     out = out{1};
-    outNodes = out(:,1);
+    outNodes = out(:, 1);
     nodes = outNodes{1};
-    outDomains = out(:,2);
+    outDomains = out(:, 2);
     domains = string(outDomains{1}); 
-    outFctHandle = out(:,3);
+    outFctHandle = out(:, 3);
     fctHandles = string(outFctHandle{1});
     
     % get only the unique body names
@@ -353,10 +360,9 @@ if ~isempty(out)
         indexArray = (domains == postProc.nameDomain(k));
         postProc.nodesDomain{k} = nodes(indexArray);
         % find corresponding function handle
-        firstIndex = find(indexArray,1);
+        firstIndex = find(indexArray, 1);
         postProc.computePostProc(k) = fctHandles(firstIndex);
     end
-    
 else
     postProc = [];
 end
@@ -371,10 +377,10 @@ end
 
 if ~isempty(out)
     out = out{1};
-    propNBC.nodes = cell2mat(out(:,1));
-    outLoadType = out(:,2);
+    propNBC.nodes = cell2mat(out(:, 1));
+    outLoadType = out(:, 2);
     propNBC.loadType = cell2mat(outLoadType{1});
-    outFctHandle = out(:,3);
+    outFctHandle = out(:, 3);
     propNBC.fctHandle = cell2mat(outFctHandle{1});
 end
 
@@ -392,37 +398,26 @@ if ~isempty(out)
 
     % Loop over each node pair
     for i = 1:length(propNBC.nodes)
-        for j = i:length(propNBC.nodes)
-            % If we are not in the same node
-            if i ~= j
-                % Get the node index in the element array
-                nodeI = propNBC.nodes(i);
-                nodeJ = propNBC.nodes(j);
+        for j = i + 1:length(propNBC.nodes)
+            % Get the node index in the element array
+            nodeI = propNBC.nodes(i);
+            nodeJ = propNBC.nodes(j);
 
+            % Find the element indices to which the nodes belong
+            [indexI, ~] = find(nodeI == fldMsh.elements);
+            [indexJ, ~] = find(nodeJ == fldMsh.elements);
 
-                % Find the element indices to which the nodes belong
-                [indexI, ~] = find(nodeI == fldMsh.elements);
-                [indexJ, ~] = find(nodeJ == fldMsh.elements);
+            % Find the common elements to which the nodes belong to
+            [idComElmnt, ~] = intersect(indexI, indexJ);
 
-                % For all the element indices to which indexJ belongs to
-                for k = 1:length(indexJ)
-                    % Find the common elements to which both nodes belong to
-                    commonElmnts = find(indexJ(k) == indexI);
-
-                    % If there are commont elements to which the nodes belong
-                    if norm(commonElmnts) ~= 0
-                        % Get the common element index
-                        elementIndex = indexI(commonElmnts);
-
-                        % Store the line into the NBC.line array with the same
-                        % ordering as the are stored in the element array
-                        propNBC.lines(counterLines,:) = ...
-                            [propNBC.nodes(i) propNBC.nodes(j) elementIndex];
-
-                        % Update counter
-                        counterLines = counterLines + 1;
-                    end
-                end
+            % Store the Neumann information on the common lines only if the
+            % nodes on the Neumann boundary share one common elements
+            if length(idComElmnt) == 1 && ...
+                strcmp(propNBC.fctHandle(i, :), propNBC.fctHandle(j, :))
+                propNBC.lines(counterLines,:) = ...
+                    [propNBC.nodes(i) propNBC.nodes(j) idComElmnt];
+                fctHandle(counterLines,:) = propNBC.fctHandle(i,:);
+                counterLines = counterLines + 1;
             end
         end
     end
