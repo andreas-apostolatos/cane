@@ -58,6 +58,7 @@ STRUCTURE_ELEMENTS
 STRUCTURE_DIRICHLET_NODES
 STRUCTURE_FORCE_NODES
 STRUCTURE_CONTACT_NODES
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %   Fluid Boundary Value Problem                                          %
@@ -107,15 +108,15 @@ FLUID_NODES
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-HEAT_ANALYSIS
- ANALYSIS_TYPE,HEAT_TRANSFER_2D
+THERMAL_CONDUCTION_ANALYSIS
+ ANALYSIS_TYPE,THERMAL_CONDUCTION_2D
 
-HEAT_MATERIAL_PROPERTIES
+THERMAL_MATERIAL_PROPERTIES
  DENSITY,2710
  THERMAL_CONDUCTIVITY,205
  SPECIFIC_HEAT,887
 
-HEAT_TRANSIENT_ANALYSIS
+THERMAL_TRANSIENT_ANALYSIS
  SOLVER TRANSIENT
  TIME_INTEGRATION CRANK_NICOLSON
  START_TIME 0
@@ -123,12 +124,12 @@ HEAT_TRANSIENT_ANALYSIS
  NUMBER_OF_TIME_STEPS 30
  ADAPTIVE_TIME_STEPPING true
  
-HEAT_INTEGRATION
+THERMAL_INTEGRATION
  DOMAIN default
  domainNoGP 1
  boundaryNoGP 1
 
-HEAT_NODES
+THERMAL_NODES
        1    0.00000    1.00000    0.00000 
        2    0.06250    1.00000    0.00000 
        3    0.00000    0.93750    0.00000 
@@ -962,7 +963,7 @@ HEAT_NODES
      831    3.00000    0.12500    0.00000 
      832    3.00000    0.06250    0.00000 
      833    3.00000    0.00000    0.00000 
-HEAT_ELEMENTS
+THERMAL_ELEMENTS
        1    218   194     215
        2    194   193     215
        3    220   196     218
@@ -2499,7 +2500,7 @@ HEAT_ELEMENTS
     1534    790   773     774
     1535    808   807     791
     1536    807   790     791
-HEAT_DIRICHLET_NODES
+THERMAL_DIRICHLET_NODES
        1 500  
        3 500  
        6 500  
@@ -2534,5 +2535,5 @@ HEAT_DIRICHLET_NODES
      831 500  
      832 500  
      833 500  
-HEAT_FLUX_NODES 
+THERMAL_FLUX_NODES 
  

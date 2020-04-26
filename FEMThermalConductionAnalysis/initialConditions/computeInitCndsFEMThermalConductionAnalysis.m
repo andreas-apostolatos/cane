@@ -1,6 +1,6 @@
 function [u,uDot,uDDot,noTimeStep,propTransientAnalysis] = ...
-    computeInitCndsFEMHeatTransferAnalysis...
-    (analysis,strMsh,DOF4Output,parameters,propTransientAnalysis,...
+    computeInitCndsFEMThermalConductionAnalysis ...
+    (analysis,strMsh,DOF4Output,parameters,propTransientAnalysis, ...
     VTKResultFile,caseName,pathToOutput)
 %% Licensing
 %
@@ -77,7 +77,7 @@ numNodes = length(strMsh.nodes(:,1));
 numDOFs = numNodes;
 
 % Assign the initial conditions
-u = propTransientAnalysis.initialTemperature * ones(numDOFs,1);
+u = propTransientAnalysis.temperatureInit * ones(numDOFs,1);
 uDot = zeros(numDOFs,1);
 uDDot = zeros(numDOFs,1);
 %uDDot = 'undefined';

@@ -52,6 +52,7 @@ STRUCTURE_ELEMENTS
 STRUCTURE_DIRICHLET_NODES
 STRUCTURE_FORCE_NODES
 STRUCTURE_CONTACT_NODES
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %   Fluid Boundary Value Problem                                          %
@@ -94,22 +95,21 @@ FLUID_POST_PROC_NODES
 
 FLUID_NODES
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Heat Boundary Value Problem                                           %
+%   Thermal Boundary Value Problem                                        %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-HEAT_ANALYSIS
- ANALYSIS_TYPE,HEAT_TRANSFER_2D
+THERMAL_CONDUCTION_ANALYSIS
+ ANALYSIS_TYPE,THERMAL_CONDUCTION_2D
 
-HEAT_MATERIAL_PROPERTIES
+THERMAL_MATERIAL_PROPERTIES
  DENSITY,7750
  THERMAL_CONDUCTIVITY,50
  SPECIFIC_HEAT,420
 
-HEAT_TRANSIENT_ANALYSIS
+THERMAL_TRANSIENT_ANALYSIS
  SOLVER STEADY_STATE
  TIME_INTEGRATION IMLICIT_EULER
  START_TIME 0
@@ -117,12 +117,12 @@ HEAT_TRANSIENT_ANALYSIS
  NUMBER_OF_TIME_STEPS 100
  ADAPTIVE_TIME_STEPPING true
  
-HEAT_INTEGRATION
+THERMAL_INTEGRATION
  DOMAIN default
  domainNoGP 1
  boundaryNoGP 1
 
-HEAT_NODES
+THERMAL_NODES
        1    1.00000    1.00000    0.00000 
        2    1.00000    0.92000    0.00000 
        3    0.92000    1.00000    0.00000 
@@ -1123,7 +1123,7 @@ HEAT_NODES
      998   -1.00000   -0.92000    0.00000 
      999   -0.92000   -1.00000    0.00000 
     1000   -1.00000   -1.00000    0.00000 
-HEAT_ELEMENTS
+THERMAL_ELEMENTS
        1    737   720     709
        2    890   898     913
        3     73    68      61
@@ -2966,7 +2966,7 @@ HEAT_ELEMENTS
     1840    454   498     485
     1841    991   995     999
     1842    396   434     413
-HEAT_DIRICHLET_NODES
+THERMAL_DIRICHLET_NODES
        1 10  
        2 10  
        5 10  
@@ -3018,7 +3018,7 @@ HEAT_DIRICHLET_NODES
      996 10  
      999 10  
     1000 10  
-HEAT_FLUX_NODES
+THERMAL_FLUX_NODES
       65 boundaryFlux computeConstantFlux
       68 boundaryFlux computeConstantFlux
       70 boundaryFlux computeConstantFlux

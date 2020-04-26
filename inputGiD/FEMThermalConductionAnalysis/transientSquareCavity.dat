@@ -58,6 +58,7 @@ STRUCTURE_ELEMENTS
 STRUCTURE_DIRICHLET_NODES
 STRUCTURE_FORCE_NODES
 STRUCTURE_CONTACT_NODES
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %   Fluid Boundary Value Problem                                          %
@@ -100,22 +101,21 @@ FLUID_POST_PROC_NODES
 
 FLUID_NODES
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %   Heat Boundary Value Problem                                           %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-HEAT_ANALYSIS
- ANALYSIS_TYPE,HEAT_TRANSFER_2D
+THERMAL_CONDUCTION_ANALYSIS
+ ANALYSIS_TYPE,THERMAL_CONDUCTION_2D
 
-HEAT_MATERIAL_PROPERTIES
+THERMAL_MATERIAL_PROPERTIES
  DENSITY,7750
  THERMAL_CONDUCTIVITY,50
  SPECIFIC_HEAT,420
 
-HEAT_TRANSIENT_ANALYSIS
+THERMAL_TRANSIENT_ANALYSIS
  SOLVER TRANSIENT
  TIME_INTEGRATION GALERKIN
  START_TIME 0
@@ -123,12 +123,12 @@ HEAT_TRANSIENT_ANALYSIS
  NUMBER_OF_TIME_STEPS 30
  ADAPTIVE_TIME_STEPPING true
  
-HEAT_INTEGRATION
+THERMAL_INTEGRATION
  DOMAIN default
  domainNoGP 1
  boundaryNoGP 1
 
-HEAT_NODES
+THERMAL_NODES
        1    0.00000    1.00000    0.00000 
        2    0.06250    1.00000    0.00000 
        3    0.00000    0.93750    0.00000 
@@ -418,7 +418,7 @@ HEAT_NODES
      287    1.00000    0.06250    0.00000 
      288    0.93750    0.00000    0.00000 
      289    1.00000    0.00000    0.00000 
-HEAT_ELEMENTS
+THERMAL_ELEMENTS
        1    217   194     216
        2    194   190     216
        3    220   197     217
@@ -931,7 +931,7 @@ HEAT_ELEMENTS
      510    193   167     170
      511    218   215     195
      512    215   193     195
-HEAT_DIRICHLET_NODES
+THERMAL_DIRICHLET_NODES
        1 300  
        2 400  
        3 300  
@@ -996,5 +996,5 @@ HEAT_DIRICHLET_NODES
      287 300  
      288 300  
      289 300  
-HEAT_FLUX_NODES 
+THERMAL_FLUX_NODES 
  

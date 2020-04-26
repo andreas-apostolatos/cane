@@ -1,4 +1,4 @@
-function [dHat,FComplete,minElSize] = solve_FEMHeatTransferSteadyState...
+function [dHat,FComplete,minElSize] = solve_FEMThermalConductionSteadyState...
     (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     propNBC, computeBodyForces, propParameters, computeStiffMtxLoadVct, ...
     solve_LinearSystem, propNLinearAnalysis, propGaussInt, propOutput, ...
@@ -14,8 +14,8 @@ function [dHat,FComplete,minElSize] = solve_FEMHeatTransferSteadyState...
 %% Function documentation
 %
 % Returns the temperature field, the complete flux(force) vector and the
-% minimum element area size for a 2D heat transfer problem solved with the
-% classical Finite Element Method.
+% minimum element area size for a 2D thermal conduction problem solved with 
+% the classical Finite Element Method.
 %
 %                  Input :
 %           propAnalysis : Structure containing information about the 
@@ -101,8 +101,6 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('Compute the temperature field for a 2D heat transfer problem \n');
     fprintf('has been initiated\n');
     fprintf('_____________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -154,7 +152,7 @@ freeDOFs = DOFNumbering;
 freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 
 %% 2. Compute the flux (load) vector
-F = computeLoadVctFEMHeatTransferAnalysis...
+F = computeLoadVctFEMThermalConductionAnalysis...
     (strMsh, propAnalysis, propNBC, t, propGaussInt, outMsg);
 
 %% 3. Solve the linear equation system
@@ -193,9 +191,7 @@ end
 
 %% 5. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
     fprintf('\nLinear analysis took %.2d seconds \n\n',computationalTime);
     fprintf('_____________________Linear Analysis Ended___________________\n');
     fprintf('#############################################################\n\n\n');

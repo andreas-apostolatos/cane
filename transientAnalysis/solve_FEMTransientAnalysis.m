@@ -251,7 +251,7 @@ elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
     numDOFs = 3*numNodes;
 elseif strcmp(propAnalysis.type, 'planeStress') || strcmp(propAnalysis.type, 'planeStrain')
     numDOFs = 2*numNodes;
-elseif strcmp(propAnalysis.type, 'HEAT_TRANSFER_2D')
+elseif strcmp(propAnalysis.type, 'THERMAL_CONDUCTION_2D')
     numDOFs = numNodes;
 else
     error('Select a valid analysis type in analysis.type');

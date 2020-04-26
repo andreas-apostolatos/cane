@@ -8,7 +8,7 @@
 %
 %% Script documentation
 %
-% Task : Steady state heat transfer analysis for different GiD input files
+% Task : Steady-state thermal conduction analysis
 %
 % Date : 14.04.2020
 %
@@ -38,26 +38,26 @@ addpath('../../efficientComputation/');
 addpath('../../FEMPlateInMembraneActionAnalysis/loads/');
 
 % Add all functions related to heat transfer analysis
-addpath('../../FEMHeatTransferAnalysis/solvers/',...
-        '../../FEMHeatTransferAnalysis/solutionMatricesAndVectors/',...
-        '../../FEMHeatTransferAnalysis/loads/',...
-        '../../FEMHeatTransferAnalysis/graphics/',...
-        '../../FEMHeatTransferAnalysis/output/',...
-        '../../FEMHeatTransferAnalysis/postprocessing/');
+addpath('../../FEMThermalConductionAnalysis/solvers/',...
+        '../../FEMThermalConductionAnalysis/solutionMatricesAndVectors/',...
+        '../../FEMThermalConductionAnalysis/loads/',...
+        '../../FEMThermalConductionAnalysis/graphics/',...
+        '../../FEMThermalConductionAnalysis/output/',...
+        '../../FEMThermalConductionAnalysis/postprocessing/');
 
 %% Parse data from GiD input file
 
 % Define the path to the case
-pathToCase = '../../inputGiD/FEMHeatTransferAnalysis/';
+pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
 caseName = 'steadyStateSquareCavity';
-%caseName = 'steadyStateWallConduction';
-%caseName = 'rectangularPlateWithTwoHoles';
-%caseName = 'rectangularPlateWithCenterHole';
+% caseName = 'steadyStateWallConduction';
+% caseName = 'rectangularPlateWithTwoHoles';
+% caseName = 'rectangularPlateWithCenterHole';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
     parameters, propNLinearAnalysis, ~, propGaussInt] = ...
-    parse_HeatModelFromGid(pathToCase, caseName, 'outputEnabled');
+    parse_ThermalModelFromGid(pathToCase, caseName, 'outputEnabled');
 
 %% GUI
 
@@ -70,11 +70,11 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % On the writing the output function
 propVTK.isOutput = true;
-propVTK.writeOutputToFile = @writeOutputFEMHeatTransferAnalysisToVTK;
+propVTK.writeOutputToFile = @writeOutputFEMThermalConductionAnalysisToVTK;
 propVTK.VTKResultFile = 'undefined';
 
 % Choose computation of the stiffness matrix
-computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMHeatTransferAnalysisCST;
+computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMThermalConductionAnalysisCST;
 
 % Linear analysis
 propHeatDynamics = 'undefined';
@@ -83,7 +83,7 @@ propHeatDynamics = 'undefined';
 graph.index = 1;
 
 % Assign load (computeConstantFlux)
-propNBC.tractionLoadVct = [5e4; 0; 0];
+propNBC.flux = 5e4;
 
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
@@ -94,7 +94,7 @@ numDOFs = numNodes;
 dHat = zeros(numDOFs,1);
 
 %% Solve the plate in membrane action problem
-[dHat, FComplete, minElSize] = solve_FEMHeatTransferSteadyState ...
+[dHat, FComplete, minElSize] = solve_FEMThermalConductionSteadyState ...
     (propAnalysis, strMsh, dHat, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     propNBC, computeBodyForces, parameters, computeStiffMtxLoadVct, ...
     solve_LinearSystem, propNLinearAnalysis, propGaussInt, propVTK, ...

@@ -1,4 +1,4 @@
-function writeOutputFEMHeatTransferAnalysisToVTK...
+function writeOutputFEMThermalConductionAnalysisToVTK ...
     (analysis,propNLinearAnalysis,propTransientAnalysis,strMsh,...
     parameters,d,dDot,dDDot,DOF4Output,caseName,pathToOutput,...
     title,timeStepNo)
@@ -12,8 +12,8 @@ function writeOutputFEMHeatTransferAnalysisToVTK...
 %
 %% Function documentation 
 %
-% Writes out the results of a 2D heat transfer analysis into a VTK file to
-% be read by paraview.
+% Writes out the results of a 2D thermal conduction transfer analysis into 
+% a VTK file to be read by paraview.
 %
 %                  Input :
 %               analysis : Information on the analysis

@@ -58,6 +58,7 @@ STRUCTURE_ELEMENTS
 STRUCTURE_DIRICHLET_NODES
 STRUCTURE_FORCE_NODES
 STRUCTURE_CONTACT_NODES
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %   Fluid Boundary Value Problem                                          %
@@ -100,22 +101,21 @@ FLUID_POST_PROC_NODES
 
 FLUID_NODES
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Heat Boundary Value Problem                                           %
+%   Thermal Boundary Value Problem                                        %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-HEAT_ANALYSIS
- ANALYSIS_TYPE,HEAT_TRANSFER_2D
+THERMAL_CONDUCTION_ANALYSIS
+ ANALYSIS_TYPE,THERMAL_CONDUCTION_2D
 
-HEAT_MATERIAL_PROPERTIES
+THERMAL_MATERIAL_PROPERTIES
  DENSITY,7750
  THERMAL_CONDUCTIVITY,50
  SPECIFIC_HEAT,420
 
-HEAT_TRANSIENT_ANALYSIS
+THERMAL_TRANSIENT_ANALYSIS
  SOLVER STEADY_STATE
  TIME_INTEGRATION IMPLICIT_EULER
  START_TIME 0
@@ -123,12 +123,12 @@ HEAT_TRANSIENT_ANALYSIS
  NUMBER_OF_TIME_STEPS 100
  ADAPTIVE_TIME_STEPPING true
  
-HEAT_INTEGRATION
+THERMAL_INTEGRATION
  DOMAIN default
  domainNoGP 1
  boundaryNoGP 1
 
-HEAT_NODES
+THERMAL_NODES
        1    0.00000    1.00000    0.00000 
        2    0.00000    0.96875    0.00000 
        3    0.03125    1.00000    0.00000 
@@ -1218,7 +1218,7 @@ HEAT_NODES
     1087    1.00000    0.03125    0.00000 
     1088    0.96875    0.00000    0.00000 
     1089    1.00000    0.00000    0.00000 
-HEAT_ELEMENTS
+THERMAL_ELEMENTS
        1    838   783     835
        2    783   781     835
        3    843   790     838
@@ -3255,7 +3255,7 @@ HEAT_ELEMENTS
     2034    516   472     474
     2035    559   555     518
     2036    555   516     518
-    2037    604   600     559
+    2037    604   600     559HEAT_
     2038    600   555     559
     2039    645   641     604
     2040    641   600     604
@@ -3267,7 +3267,7 @@ HEAT_ELEMENTS
     2046    782   735     738
     2047    839   834     786
     2048    834   782     786
-HEAT_DIRICHLET_NODES
+THERMAL_DIRICHLET_NODES
        1 300  
        2 300  
        3 400  
@@ -3396,5 +3396,5 @@ HEAT_DIRICHLET_NODES
     1087 300  
     1088 300  
     1089 300  
-HEAT_FLUX_NODES 
+THERMAL_FLUX_NODES 
  

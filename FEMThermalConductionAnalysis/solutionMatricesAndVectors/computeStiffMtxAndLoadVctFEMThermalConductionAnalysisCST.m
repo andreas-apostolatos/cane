@@ -1,5 +1,5 @@
 function [K, F, minElEdgeSize] = ...
-    computeStiffMtxAndLoadVctFEMHeatTransferAnalysisCST ...
+    computeStiffMtxAndLoadVctFEMThermalConductionAnalysisCST ...
     (propAnalysis, u, uSaved, uDot, uDotSaved, uMeshALE, ...
     precompStiffMtx, precomResVct, DOFNumbering, strMsh, F, ...
     loadFactor, computeBodyForces, propStrDynamics, t, ...
@@ -15,7 +15,7 @@ function [K, F, minElEdgeSize] = ...
 %% Function documentation
 %
 % Returns the stiffness matrix and the flux (load) vector corresponding to 
-% the 2D heat transfer analysis using the Constant Strain Triangle
+% the 2D thermal conduction analysis using the Constant Strain Triangle
 % (CST) for the temperature field discretization.
 %
 %             Input :
@@ -161,7 +161,7 @@ for iGP = 1:numGP
     end
     
     %% 5vi. Compute the stiffness matrix at the Gauss point and add the contribution
-    stiffMtxEl = stiffMtxEl + propParameters.k * pstimes(pmtimes(ptranspose(B), B)*GW(iGP), detJxxi);
+    stiffMtxEl = stiffMtxEl + propParameters.k*pstimes(pmtimes(ptranspose(B), B)*GW(iGP), detJxxi);
 end
 
 %% 6. Assemble to the global system matrix

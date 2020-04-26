@@ -58,6 +58,7 @@ STRUCTURE_ELEMENTS
 STRUCTURE_DIRICHLET_NODES
 STRUCTURE_FORCE_NODES
 STRUCTURE_CONTACT_NODES
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %   Fluid Boundary Value Problem                                          %
@@ -100,22 +101,21 @@ FLUID_POST_PROC_NODES
 
 FLUID_NODES
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Heat Boundary Value Problem                                           %
+%   Thermal Boundary Value Problem                                        %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-HEAT_ANALYSIS
- ANALYSIS_TYPE,HEAT_TRANSFER_2D
+THERMAL_CONDUCTION_ANALYSIS
+ ANALYSIS_TYPE,THERMAL_CONDUCTION_2D
 
-HEAT_MATERIAL_PROPERTIES
+THERMAL_MATERIAL_PROPERTIES
  DENSITY,2710
  THERMAL_CONDUCTIVITY,205
  SPECIFIC_HEAT,887
 
-HEAT_TRANSIENT_ANALYSIS
+THERMAL_TRANSIENT_ANALYSIS
  SOLVER STEADY_STATE
  TIME_INTEGRATION GALERKIN
  START_TIME 0
@@ -123,12 +123,12 @@ HEAT_TRANSIENT_ANALYSIS
  NUMBER_OF_TIME_STEPS 30
  ADAPTIVE_TIME_STEPPING true
  
-HEAT_INTEGRATION
+THERMAL_INTEGRATION
  DOMAIN default
  domainNoGP 1
  boundaryNoGP 1
 
-HEAT_NODES
+THERMAL_NODES
        1    0.00000    1.00000    0.00000 
        2    0.03125    1.00000    0.00000 
        3    0.00000    0.96875    0.00000 
@@ -3330,7 +3330,7 @@ HEAT_NODES
     3199    3.00000    0.06250    0.00000 
     3200    3.00000    0.03125    0.00000 
     3201    3.00000    0.00000    0.00000 
-HEAT_ELEMENTS
+THERMAL_ELEMENTS
        1    838   784     835
        2    784   782     835
        3    843   791     838
@@ -9475,7 +9475,7 @@ HEAT_ELEMENTS
     6142   3088  3055    3056
     6143   3122  3121    3089
     6144   3121  3088    3089
-HEAT_DIRICHLET_NODES
+THERMAL_DIRICHLET_NODES
        1 400  
        3 400  
        6 400  
@@ -9542,5 +9542,5 @@ HEAT_DIRICHLET_NODES
     3199 200  
     3200 200  
     3201 200  
-HEAT_FLUX_NODES 
+THERMAL_FLUX_NODES 
  

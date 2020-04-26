@@ -1,4 +1,4 @@
-function [dHistory,minElSize] = solve_FEMHeatTransferTransient...
+function [dHistory, minElSize] = solve_FEMThermalConductionTransient...
     (strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     updateInhomDOFs, propNBC,computeLoadVct, ...
     propParameters, computeBodyForceVct, propAnalysis, computeInitCnds, ...
@@ -75,7 +75,7 @@ function [dHistory,minElSize] = solve_FEMHeatTransferTransient...
 % 3. Appendix
 %
 %% Function main body
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('______________________________________________________________\n');
     fprintf('##############################################################\n');
     fprintf('Computation of the displacement field for a thermal conduction\n');
@@ -87,7 +87,7 @@ end
 %% 0. Read input
 
 % Number of nodes in the mesh
-noNodes = length(strMsh.nodes(:,1));
+noNodes = length(strMsh.nodes(:, 1));
 
 % Number of DOFs in the mesh
 nDOFs = noNodes;
@@ -100,7 +100,7 @@ pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
 
 % Write output to VTK
 if propVTK.isOutput
-    propVTK.writeOutputToFile = @writeOutputFEMHeatTransferAnalysisToVTK;
+    propVTK.writeOutputToFile = @writeOutputFEMThermalConductionAnalysisToVTK;
 else
     propVTK.writeOutputToFile = 'undefined';
 end
@@ -123,12 +123,12 @@ DOF4Output = 1:nDOFs;
 
 % Prescribed DOFs (DOFs on which either homogeneous or inhomogeneous 
 % Dirichlet boundary conditions are prescribed)
-prescribedDoFs = mergesorted(homDOFs,inhomDOFs);
+prescribedDoFs = mergesorted(homDOFs, inhomDOFs);
 prescribedDoFs = unique(prescribedDoFs);
 
 % Free DOFs of the system (actual DOFs over which the solution is computed)
 freeDOFs = DOFNumbering;
-freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
+freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 
 %% 2. Solve the transient problem
 [dHistory, minElSize] = solve_FEMTransientAnalysis ...
@@ -136,16 +136,16 @@ freeDOFs(ismember(freeDOFs,prescribedDoFs)) = [];
     valuesInhomDOFs, updateInhomDOFs, propALE, computeInitCnds, ...
     computeBodyForceVct, propNBC, computeLoadVct, propParameters, ...
     solve_FEMSystem, computeConstantProblemMatrices, ...
-    @computeMassMtxFEMHeatTransferAnalysis, ...
+    @computeMassMtxFEMThermalConductionAnalysis, ...
     computeProblemMatricesSteadyState, computeUpdatedMesh, ...
     solve_LinearSystem, propHeatDynamics, propNLinearAnalysis, ...
     propIDBC, propGaussInt, propVTK, caseName, pathToOutput, title, ...
     DOF4Output, tab, outMsg);
 
 %% 3. Appendix
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-    fprintf('\nNonlinear analysis took %.2d seconds \n\n',computationalTime);
+    fprintf('\nNonlinear analysis took %.2d seconds \n\n', computationalTime);
     fprintf('________________________Linear Analysis Ended______________________\n');
     fprintf('####################################################################\n\n\n');
 end

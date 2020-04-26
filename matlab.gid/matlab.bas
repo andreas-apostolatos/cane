@@ -262,14 +262,14 @@ FLUID_NODES
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Heat Boundary Value Problem                                           %
+%   Thermal Boundary Value Problem                                        %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-HEAT_ANALYSIS
- ANALYSIS_TYPE,*GenData(HT_Analysis_Type)
+THERMAL_CONDUCTION_ANALYSIS
+ ANALYSIS_TYPE,*GenData(TC_Analysis_Type)
 
-HEAT_MATERIAL_PROPERTIES
+THERMAL_MATERIAL_PROPERTIES
 *Loop materials
 *if(strcmp(MatProp(0),"Steel")==0 || strcmp(MatProp(0),"Aluminium")==0)
  DENSITY,*MatProp(Density)
@@ -278,37 +278,37 @@ HEAT_MATERIAL_PROPERTIES
 *endif
 *end loop
 
-HEAT_TRANSIENT_ANALYSIS
- SOLVER *GenData(HT_Time_Analysis_Type)
- TIME_INTEGRATION *GenData(HT_Time_Integration_Scheme)
- START_TIME *GenData(HT_Start_Time)
- END_TIME *GenData(HT_End_Time)
- NUMBER_OF_TIME_STEPS *GenData(HT_Number_of_Time_Steps)
- ADAPTIVE_TIME_STEPPING *GenData(HT_Adaptive_Time_Stepping)
+THERMAL_TRANSIENT_ANALYSIS
+ SOLVER *GenData(TC_Time_Analysis_Type)
+ TIME_INTEGRATION *GenData(TC_Time_Integration_Scheme)
+ START_TIME *GenData(TC_Start_Time)
+ END_TIME *GenData(TC_End_Time)
+ NUMBER_OF_TIME_STEPS *GenData(TC_Number_of_Time_Steps)
+ ADAPTIVE_TIME_STEPPING *GenData(TC_Adaptive_Time_Stepping)
  
-HEAT_INTEGRATION
- DOMAIN *GenData(HT_Gauss_Integration_Type)
- domainNoGP *GenData(HT_Domain_NO_GP)
- boundaryNoGP *GenData(HT_Boundary_NO_GP)
+THERMAL_INTEGRATION
+ DOMAIN *GenData(TC_Gauss_Integration_Type)
+ domainNoGP *GenData(TC_Domain_NO_GP)
+ boundaryNoGP *GenData(TC_Boundary_NO_GP)
 
-HEAT_NODES*\
-*set Cond Heat-Nodes *nodes
+THERMAL_NODES*\
+*set Cond Thermal-Nodes *nodes
 *loop nodes OnlyInCond
 *format "%8i%10.5f%10.5f%10.5f"
 
 *NodesNum *NodesCoord(1,real) *NodesCoord(2,real) *NodesCoord(3,real) *\
 *end loop
 
-HEAT_ELEMENTS*\
-*set Cond Heat-Elements *elems
+THERMAL_ELEMENTS*\
+*set Cond Thermal-Elements *elems
 *loop elems OnlyInCond
 *format "%8i%6i%6i%8i%8i%8i%8i%8i%8i%8i%8i"
 
 *ElemsNum *ElemsConec*\
 *end loop
 
-HEAT_DIRICHLET_NODES*\
-*set Cond Heat-Dirichlet *nodes
+THERMAL_DIRICHLET_NODES*\
+*set Cond Thermal-Dirichlet *nodes
 *loop nodes OnlyInCond
 *format "%8i"
 
@@ -320,8 +320,8 @@ NaN  *\
 *endif
 *end loop
 
-HEAT_FLUX_NODES*\
-*set Cond Heat-Flux *nodes
+THERMAL_FLUX_NODES*\
+*set Cond Thermal-Flux *nodes
 *loop nodes OnlyInCond
 *format "%8i"
 
