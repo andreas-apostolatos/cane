@@ -1,0 +1,143 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{import}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage[]{algorithm2e}
+\usepackage[a4paper,bindingoffset=0.2in,%
+            left=1in,right=1in,top=1in,bottom=1in,%
+            footskip=.25in]{geometry}
+\setlength{\parindent}{0cm}
+
+% Define own macros
+\newcommand{\myfrac}[2]{%
+    \ifinner#1/#2%
+    \else\frac{#1}{#2}%
+    \fi%
+}
+
+\title{Computational thermal conduction with finite elements}
+
+\author{Dr.-Ing. Andreas Apostolatos \and Dipl.-Ing. Marko Leskovar}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Theory}\label{sec:theory}
+
+The unsteady thermal conductivity describes the way in which the temperature is distributed within a thermal conductor (referred to in the sequel simply as conductor) as a function of time given a thermal source along its boundary or its interior. First the strong form of the problem is provided by means of the corresponding \textit{Boundary Value Problem} (BVP) and subsequently the corresponding variational form of the problem is provided.
+
+\subsection{Strong formulation}\label{subsec:strong_formulation}
+
+Given is a conductor which is described by a two dimensional body $\Omega \subset \mathbb{R}^2$ with a piecewise continuous boundary $\Gamma = \partial \Omega$. The conductor is assumed to be subject to a given thermal distribution $\bar{T}$ [K] along its Dirichlet boundary $\Gamma_{\text{d}} \subset \Gamma$ and to a heat flux $\bar{q}$ [W/m] along its Neumann boundary $\Gamma_{\text{n}}$. Given is also the density $\rho$ of the conductor's material, its specific heat capacity $c_{\text{p}} > 0$ [$\text{J} \, \text{K}^{-1} \, \text{Kg}^-1$] which is a measure of the the energy in terms of heat that must be added to the a unit mass of the material in order to increase its temperature by one unit and its thermal conductivity $k > 0$ [$\text{W} \, \text{m}^{-1} \, \text{K}^-1$] which is a measure of the material' ability to conduct heat. Assuming that there is no internal source of heat within the conductor, the BVP of the thermal conductivity problem is to find the heat distribution $T \in \mathcal{C}^2(\Omega)$ such that,
+
+\begin{subequations}
+	\begin{alignat}{2}
+		c_{\text{p}} \, \rho \, \dot{T} &= \boldsymbol{\nabla} (k\boldsymbol{\nabla} T) \quad &&\text{in }\Omega\;, \label{eq:thermal_conduction} \\
+		T &= \bar{T} \; &&\text{on } \Gamma_{\text{d}} \;, \label{eq:boundary_dirichlet} \\
+		k \, \mathbf{n} \cdot \boldsymbol{\nabla} T &= \bar{q} \label{eq:boundary_flux} \; &&\text{on } \Gamma_{\text{n}} \;,
+	\end{alignat}
+	\label{eq:thermal_conduction_bvp}
+\end{subequations}
+
+where $\mathbf{n}$ stands for the unit outward normal to $\Gamma$ and $\dot{(\bullet)} = \partial (\bullet)/\partial t$ is the time derivative of the unknown temperature field. Assuming further that the thermal conductivity is constant, Eq.~\eqref{eq:thermal_conduction} simplifies to,
+
+\begin{equation}
+	c_{\text{p}} \, \rho \, \dot{T} = k \, \Delta T \quad \text{in }\Omega\;, \label{eq:thermal_conduction_2} 
+\end{equation}
+
+where $\Delta(\bullet) = \boldsymbol{\nabla} \cdot \boldsymbol{\nabla} (\bullet)$ stands for the Laplacian second-order operator. It is clear then that the thermal conduction problem under the aforementioned assumptions is described by a Laplacian equation in space while it is a first order \textit{Ordinary Differential Equation} (ODE) on time.
+
+\subsection{Weak formulation}\label{subsec:weak_formulation}
+
+Multiplying Eq.~\eqref{eq:thermal_conduction_2} with a test function $\delta T \in \mathcal{H}^1(\Omega)$, integrating over $\Omega$, performing integration by parts and incorporating the boundary conditions in Eqs.~\eqref{eq:boundary_dirichlet}-\eqref{eq:boundary_flux} one arrives in the weak formulation of the problem namely: Find $T \in \mathcal{H}^1(\Omega)$ such that,
+
+\begin{equation}
+	\left< \delta T , c_{\text{p}} \, \rho \, \dot{T} \right>_{0,\Omega} + \left< \boldsymbol{\nabla} \delta T , k \, \boldsymbol{\nabla} T \right>_{0,\Omega} = \left< \delta T , \bar{q} \right>_{0, \Gamma_{\text{n}}} \;, \quad \text{ for all } \delta T \in \mathcal{H}^1(\Omega) \;, \label{eq:thermal_conduction_weak_form} 
+\end{equation}
+where $\left< \bullet , \bullet \right>_{0,\Omega}$ stands for the $\mathcal{L}^2$-norm in $\Omega$.
+
+\section{Discretization}\label{sec:discretization}
+
+\subsection{Spatial discretization}\label{subsec:spatial_discretization}
+
+Let the domain $\Omega$ be triangulated into $\Omega_h$, where $h$ stands for the smallest element edge in the finite element mesh. According to the isoparametric \textit{Buvnon Galerkin} discretization, the test and solution fields $\delta T$ and $T$, respectively, are discretized using the piecewise linear basis functions $\varphi_i$, $i = 1, \ldots, n$, as
+
+\begin{subequations}
+	\begin{alignat}{1}
+		\delta T &= \sum_{i = 1}^n \varphi_i \, \delta T_i \;, \label{eq:test_field_discretization} \\
+		T &= \sum_{i = 1}^n  \varphi_i \, T_i \;, \label{eq:solution_field_discretization}
+	\end{alignat}
+\end{subequations}
+
+where $\delta T_i$ and $T_i$ stand for the \textit{Degrees of Freedom} (DOFs) of the test and unknown solution fields, respectively, and $n$ stands for the total number of nodes in the finite element mesh. The residual form of Eq.~\eqref{eq:thermal_conduction_weak_form} is given by,
+
+\begin{equation}
+	R_i(\mathbf{T}, \dot{\mathbf{T}}) = \sum_{j = 1}^n \left< \varphi_i , c_{\text{p}} \, \rho \,\varphi_i \right>_{0,\Omega} \dot{T}_j + \sum_{j = 1}^n \left< \boldsymbol{\nabla} \varphi_i , k \, \boldsymbol{\nabla} \varphi_i \right>_{0,\Omega} T_j - \sum_{j = 1}^n\left< \varphi_i , \bar{q} \right>_{0, \Gamma_{\text{n}}}\;. \label{eq:thermal_conduction_residual_form} 
+\end{equation}
+
+where $\mathbf{T}$ and $\dot{\mathbf{T}}$ stand for the collection of all DOFs and their time derivatives,
+
+\begin{subequations}
+	\begin{alignat}{1}
+		\mathbf{T} &= \left[ \begin{array}{ccc} T_1 & \cdots & T_n \end{array} \right]^{\text{t}} \;, \label{eq:vector_of_dofs} \\
+		\dot{\mathbf{T}} &= \left[ \begin{array}{ccc} \dot{T}_1 & \cdots & \dot{T}_n \end{array} \right]^{\text{t}} \;. \label{eq:vector_of_timeDerivatives_dofs}
+	\end{alignat}
+	\label{eq:vectors_of_dofs}
+\end{subequations}
+
+By defining the mass matrix $\mathbf{M}$, stiffness matrix $\mathbf{K}$ and load vector $\mathbf{F}$ of the problem in Eq.~\eqref{eq:thermal_conduction_residual_form} with components,
+
+\begin{subequations}
+	\begin{alignat}{1}
+		M_{ij} &= \left< \varphi_i , c_{\text{p}} \, \rho \, \varphi_i \right>_{0,\Omega} \;, \label{eq:massMtx} \\
+		K_{ij} &= \left< \boldsymbol{\nabla} \varphi_i , k \, \boldsymbol{\nabla} \varphi_i \right>_{0,\Omega} \;, \label{eq:stiffMtx} \\
+		F_i &= \left< \varphi_i , \bar{q} \right>_{0, \Gamma_{\text{n}}} \;, \label{eq:forceVct}
+	\end{alignat}
+	\label{eq:discrete_matrices}
+\end{subequations}
+
+residual form in Eq.~\eqref{eq:thermal_conduction_residual_form} can be compactly written as,
+
+\begin{equation}
+\mathbf{R}(\mathbf{T}, \dot{\mathbf{T}}) = \mathbf{M} \, \dot{\mathbf{T}} + \mathbf{K} \mathbf{T} - \mathbf{F} \;. \label{eq:thermal_conduction_residual_form_compact}
+\end{equation}
+
+\subsection{Time discretization using the Explicit Euler method}\label{subsec:time_discretization_ee}
+
+Given is a uniform time discretization $t_{\hat{n}}$ with a constant time step size $\Delta t = t_{\hat{n} + 1} - t_{\hat{n}}$ for all $\hat{n}$. In the frame of the Euler-type methods, the time derivative $\dot{\mathbf{T}}$ is approximated as,
+
+\begin{equation}
+	\dot{\mathbf{T}} = \frac{1}{\Delta t} \left( \mathbf{T}_{\hat{n} + 1} - \mathbf{T}_{\hat{n}} \right) \;. \label{eq:timeDeriv_euler}
+\end{equation}
+
+In particular for the \textit{Explicit-Euler} (EE) time integration method the dynamic residual in Eq.~\eqref{eq:thermal_conduction_residual_form_compact} is posed on the previous time step $t_{\hat{n}}$ and the dynamic residual equation becomes,
+
+\begin{equation}
+	\mathbf{R}_{\hat{n}} = \frac{1}{\Delta t} \mathbf{M} \, \mathbf{T}_{\hat{n} + 1} + \left( - \frac{1}{\Delta t} \mathbf{M} + \mathbf{K} \right) \mathbf{T}_{\hat{n}} - \mathbf{F}_{\hat{n}} \;. \label{eq:dynamic_residual_ee}
+\end{equation}
+
+\subsection{Time discretization using the Implicit Euler method}\label{subsec:time_discretization_ie}
+
+Concerning the \textit{Implicit-Euler} (IE) time integration method the dynamic residual in Eq.~\eqref{eq:thermal_conduction_residual_form_compact} is posed on the current time step $t_{\hat{n} + 1}$ and the dynamic residual equation becomes,
+
+\begin{equation}
+	\mathbf{R}_{\hat{n} + 1} = \left( \frac{1}{\Delta t} \mathbf{M} + \mathbf{K} \right)\mathbf{T}_{\hat{n} + 1} - \frac{1}{\Delta t} \mathbf{M} \, \mathbf{T}_{\hat{n}} - \mathbf{F}_{\hat{n} + 1} \;. \label{eq:dynamic_residual_ie}
+\end{equation}
+
+\section{Numerical examples}\label{subsec:numerical_examples}
+
+
+% \bibliographystyle{elsarticle-num-names}
+\bibliographystyle{alpha}
+\bibliography{literature}
+\nocite{*}
+
+\end{document}
