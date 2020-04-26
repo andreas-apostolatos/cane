@@ -358,10 +358,6 @@ else
     error('Variable computeMassMtx is not defining a function handle as expected');
 end
 
-% debug
-% debug = sum(massMtx,'all')
-% analytical = propParameters.rho * propParameters.cp * 2;
-
 %% 5. Compute part of the residual vector and the stiffness matrix which stays constant throughout the transient analysis
 if ~ischar(computeConstantProblemMatrices)
     [precompStiffMtx, precomResVct] = computeConstantProblemMatrices();

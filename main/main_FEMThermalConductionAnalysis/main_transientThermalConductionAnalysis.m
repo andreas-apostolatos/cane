@@ -107,10 +107,10 @@ propGraph.index = 1;
 
 %% Define the initial condition function
 computeInitialConditions = @computeInitCndsFEMThermalConductionAnalysis;
-propThermalDynamics.temperatureInit = 300; % 300
+propThermalDynamics.temperatureInit = 300;
 
 %% Define boundary flux (load) value (computeConstantFlux)
-propNBC.flux = 1e2; % 1e2
+propNBC.flux = 1e2;
 
 %% Solve the transient heat transfer problem
 [dHistory, minElSize] = solve_FEMThermalConductionTransient ...
