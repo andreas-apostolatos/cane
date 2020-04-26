@@ -1,24 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function TMortar = computeConstantMtxForDDMMortarIGAThinStructure...
-    (BSplinePatches,connections,noDOFs,propCoupling)
+function TMortar = computeConstantMtxForDDMMortarIGAThinStructure ...
+    (BSplinePatches, connections, numDOFs, propCoupling)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the mortar transformation matrices for each patch pair in a cell 
@@ -42,6 +30,20 @@ function TMortar = computeConstantMtxForDDMMortarIGAThinStructure...
 %
 % Function layout :
 %
+% 0. Read input
+%
+% 1. Loop over all the connections in the multipatch geometry
+% ->
+%    1i. Get the patch IDs
+%
+%   1ii. Get the coupling boundaries for both patches
+%
+%  1iii. Determine the interface orientation
+%
+%   1iv. Compute the Lagrange Multipliers matrices
+%
+%    1v. Compute the mortar transformation matrix for the given patch connection
+% <-
 %
 %% Function main body
 
@@ -79,9 +81,13 @@ for iConnections = 1:connections.No
     BSplinePatches{idJ}.etacoup = connections.xiEtaCoup(iConnections,9:10);
     
     %% 1iii. Determine the interface orientation
-    haveSameDirection = findSubdomainInterfaceOrientation...
-        (BSplinePatches{idI}.p,BSplinePatches{idI}.Xi,BSplinePatches{idI}.q,BSplinePatches{idI}.Eta,BSplinePatches{idI}.CP,BSplinePatches{idI}.isNURBS,BSplinePatches{idI}.xicoup,BSplinePatches{idI}.etacoup,...
-        BSplinePatches{idJ}.p,BSplinePatches{idJ}.Xi,BSplinePatches{idJ}.q,BSplinePatches{idJ}.Eta,BSplinePatches{idJ}.CP,BSplinePatches{idJ}.isNURBS,BSplinePatches{idJ}.xicoup,BSplinePatches{idJ}.etacoup);
+    isSameOrientation = findSubdomainInterfaceOrientation...
+        (BSplinePatches{idI}.p, BSplinePatches{idI}.Xi, BSplinePatches{idI}.q, ...
+        BSplinePatches{idI}.Eta, BSplinePatches{idI}.CP, BSplinePatches{idI}.isNURBS, ...
+        BSplinePatches{idI}.xicoup, BSplinePatches{idI}.etacoup, BSplinePatches{idJ}.p, ...
+        BSplinePatches{idJ}.Xi, BSplinePatches{idJ}.q, BSplinePatches{idJ}.Eta, ...
+        BSplinePatches{idJ}.CP, BSplinePatches{idJ}.isNURBS, BSplinePatches{idJ}.xicoup, ...
+        BSplinePatches{idJ}.etacoup);
     
     %% 1iv. Compute the Lagrange Multipliers matrices
     mortarConnection = connections.mortar(iConnections,:);
@@ -106,8 +112,8 @@ for iConnections = 1:connections.No
     end
     masterDOFs = connections.masterDOFs{iConnections} - indexMaster;
     slaveDOFs = connections.slaveDOFs{iConnections} - indexSlave;
-    [LambdaMaster,LambdaSlave] = computeDDMLagrangeMultipliersMtces4MortarIGAThinStructure...
-        (patchMaster,patchSlave,haveSameDirection,propCoupling);
+    [LambdaMaster, LambdaSlave] = computeDDMLagrangeMultipliersMtces4MortarIGAThinStructure ...
+        (patchMaster, patchSlave, isSameOrientation, propCoupling);
     LambdaMaster = LambdaMaster(masterDOFs,slaveDOFs)';
     LambdaSlave = LambdaSlave(slaveDOFs,slaveDOFs)';
     

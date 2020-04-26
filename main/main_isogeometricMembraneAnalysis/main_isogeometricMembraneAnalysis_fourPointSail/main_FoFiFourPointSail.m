@@ -413,8 +413,8 @@ propFormFinding.maxNoIter = 1e2;
     solve_formFindingIGAMembrane(BSplinePatch,propFormFinding,...
     solve_LinearSystem,'outputEnabled');
 BSplinePatches = {BSplinePatch};
-% save data_FoFiFourPointSailCoarse.mat;
-% return;
+save data_FoFiFourPointSailp1q1Xi10Eta10.mat;
+return;
 
 %% Compute the relative error from the reference results
 % referenceData = importdata('../../../preComputedData/isogeometricMembraneAnalysis/referenceSolution_fourPointSailp3q3Xi50Eta50.mat');
