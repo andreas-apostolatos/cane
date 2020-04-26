@@ -157,8 +157,8 @@ end
 block = regexp(fstring, 'FLUID_MATERIAL_PROPERTIES', 'split');
 block(1) = [];
 out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
-parameters.rho = str2double(out{1}{2});
-parameters.nue = str2double(out{1}{4});
+propParameters.rho = str2double(out{1}{2});
+propParameters.nue = str2double(out{1}{4});
 
 %% 4. Load the nonlinear method
 block = regexp(fstring, 'FLUID_NLINEAR_SCHEME', 'split');
