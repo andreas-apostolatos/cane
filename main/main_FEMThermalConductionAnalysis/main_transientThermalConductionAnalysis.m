@@ -54,8 +54,8 @@ addpath('../../FEMThermalConductionAnalysis/solvers/',...
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
 % caseName = 'transientSquareCavity';
-caseName = 'transientWallHeating';
-% caseName = 'thermalConduction_trapezoid';
+% caseName = 'transientWallHeating';
+caseName = 'thermalConduction_trapezoid';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
