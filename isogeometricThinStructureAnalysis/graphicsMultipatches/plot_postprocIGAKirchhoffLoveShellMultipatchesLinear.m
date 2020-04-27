@@ -1,5 +1,6 @@
-function index = plot_postprocIGAKirchhoffLoveShellMultipatchesLinear...
-    (BSplinePatches,dHat,graph,outMsg)
+function index = ...
+    plot_postprocIGAKirchhoffLoveShellMultipatchesLinear ...
+    (BSplinePatches, dHat, graph, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -135,8 +136,6 @@ if strcmp(outMsg,'outputEnabled')
         fprintf('No resultant has been chosen to be visualized\n');
     end
     fprintf('__________________________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -307,11 +306,9 @@ ylabel('y','FontSize',14);
 index = graph.index + 1;
 
 %% 4. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
-    fprintf('Plotting the current configuration took %.2d seconds \n\n',computationalTime);
+    fprintf('Plotting the current configuration took %.2d seconds \n\n', computationalTime);
     fprintf('__________________Plotting Current Configuration Ended____________________\n');
     fprintf('##########################################################################\n\n\n');
 end

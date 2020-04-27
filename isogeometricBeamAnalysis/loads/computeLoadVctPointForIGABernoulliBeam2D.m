@@ -1,5 +1,5 @@
-function Fl = computeLoadVctPointForIGABernoulliBeam2D...
-    (Fold,xib,p,Xi,CP,isNURBS,loadAmp,loadDir,t,int,outMsg)
+function Fl = computeLoadVctPointForIGABernoulliBeam2D ...
+    (Fold, xib, p, Xi, CP, isNURBS, loadAmp, loadDir, t, int, outMsg)
 %% Licensing
 %
 % License:         BSD License

@@ -1,4 +1,5 @@
-function [N,Area,isInside] = computeCST2DBasisFunctions(vertexI,vertexJ,vertexK,x,y)
+function [N, Area, isInside] = computeCST2DBasisFunctions ...
+    (vertexI, vertexJ, vertexK, x, y)
 %% Licensing
 %
 % License:         BSD License

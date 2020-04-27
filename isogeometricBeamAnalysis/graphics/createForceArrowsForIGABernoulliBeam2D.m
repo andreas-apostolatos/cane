@@ -1,4 +1,5 @@
-function [xf,yf,zf] = createForceArrowsForIGABernoulliBeam2D(CP,F)
+function [xf, yf, zf] = createForceArrowsForIGABernoulliBeam2D ...
+    (CP, F)
 %% Licensing
 %
 % License:         BSD License

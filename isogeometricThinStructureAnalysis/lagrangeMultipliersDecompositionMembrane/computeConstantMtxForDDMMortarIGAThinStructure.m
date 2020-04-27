@@ -1,4 +1,4 @@
-function TMortar = computeConstantMtxForDDMMortarIGAThinStructure ...
+function TMortar = computeConstantMtxForDDMMortarIGAThinStructure...
     (BSplinePatches, connections, numDOFs, propCoupling)
 %% Licensing
 %
@@ -19,7 +19,7 @@ function TMortar = computeConstantMtxForDDMMortarIGAThinStructure ...
 %                            .No : Number of connections
 %                     .xiEtaCoup : [patchID1 patchID2 xi12 eta12 xi21 eta21
 %                                 ...      ...    ...   ...  ...   ...]
-%               noDOFs : The complete number of DOFs
+%              numDOFs : The complete number of DOFs
 %         propCoupling : Properties of the multipatch coupling
 %                             .intC : On the integration of the coupling
 %                                     interface

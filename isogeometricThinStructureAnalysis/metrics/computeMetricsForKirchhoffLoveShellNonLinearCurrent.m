@@ -1,4 +1,6 @@
-function [gCovariant,g3Tilde,dA,g3,gabCovariant,dgCovariant,CurvatureVoigt] = computeMetricsForKirchhoffLoveShellNonLinearCurrent(i,p,u,U,j,q,v,V,CP,dR,ddR)
+function [gCovariant, g3Tilde, dA, g3, gabCovariant, dgCovariant, CurvatureVoigt] = ...
+    computeMetricsForKirchhoffLoveShellNonLinearCurrent ...
+    (i, p, xi, Xi, j, q, eta, Eta, CP, dR, ddR)
 %% Licensing
 %
 % License:         BSD License
@@ -14,8 +16,8 @@ function [gCovariant,g3Tilde,dA,g3,gabCovariant,dgCovariant,CurvatureVoigt] = co
 %          Input :
 %            p,q : NURBS polynomial degrees
 %            i,j : knot span indices
-%            u,v : NURBS coodinates of evaluation
-%            U,V : Knot vectors
+%         xi,eta : NURBS coodinates of evaluation
+%         Xi,Eta : Knot vectors
 %             CP : Control Point coordinates of the deformed configuration
 %             dR : The first derivatives of the NURBS basis functions for 
 %                  the deformed configuration
@@ -51,7 +53,7 @@ function [gCovariant,g3Tilde,dA,g3,gabCovariant,dgCovariant,CurvatureVoigt] = co
 %% Function main body
 
 %% 1. Compute covariant base vectors g and second derivatives of the position vector
-[gCovariant,dgCovariant] = computeBaseVectorsAndDerivatives2DGivenBasisFunctions(i,p,u,U,j,q,v,V,CP,dR,ddR);
+[gCovariant,dgCovariant] = computeBaseVectorsAndDerivatives2DGivenBasisFunctions(i,p,xi,Xi,j,q,eta,Eta,CP,dR,ddR);
 
 %% 2. Compute the normal to the surface base vector
 g3Tilde = cross(gCovariant(:,1),gCovariant(:,2));

@@ -1,5 +1,5 @@
 function [massMtx] = computeMassMtxFEMPlateInMembraneAction...
-    (analysis,mesh,parameters,gaussInt)
+    (analysis, mesh, parameters, gaussInt)
 %% Licensing
 %
 % License:         BSD License

@@ -1,4 +1,5 @@
-function d = computePostprocDisplacementIGAKirchhoffLoveShell(p,q,R,dHatActual)
+function d = computePostprocDisplacementIGAKirchhoffLoveShell ...
+    (p, q, R, dHatActual)
 %% Licensing
 %
 % License:         BSD License

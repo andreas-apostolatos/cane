@@ -1,6 +1,6 @@
-function [tanMtxMatEl,tanMtxGeoEl,resIntEl,FBodyEl] = ...
-    computeElTangentStiffMtxResVctFEMPlateInMembraneAction...
-    (uEl,dN,bF,parameters,C,DetJxxi,GW)
+function [tanMtxMatEl, tanMtxGeoEl, resIntEl, FBodyEl] = ...
+    computeElTangentStiffMtxResVctFEMPlateInMembraneAction ...
+    (uEl, dN, bF, propParameters, C, DetJxxi, GW)
 %% Licensing
 %
 % License:         BSD License
@@ -14,25 +14,25 @@ function [tanMtxMatEl,tanMtxGeoEl,resIntEl,FBodyEl] = ...
 % residual and external body force vector at the Gauss point corresponding
 % to the geometrically nonlinear plane stress formulation.
 %
-%        Input :
-%          uEl : The displacement vector at the element level arranged as
-%                uEl = [u1x u1y; u2x u2y; u3x u3y]
-%           dN : The basis functions and their derivatives
-%           bF : The body force vector
-%   parameters : The parameters of the problem
+%          Input :
+%            uEl : The displacement vector at the element level arranged as
+%                  uEl = [u1x u1y; u2x u2y; u3x u3y]
+%             dN : The basis functions and their derivatives
+%             bF : The body force vector
+% propParameters : The parameters of the problem
 %                    .E : The Young's modulus
 %                  .nue : The Poisson's ratio
 %                  .rho : The material density
-%            C : The material matrix of the plate in membrane action 
-%                problem
-%      DetJxxi : The element area at the Gauss Point
-%           GW : The corresponding Gauss weight
+%              C : The material matrix of the plate in membrane action 
+%                  problem
+%        DetJxxi : The element area at the Gauss Point
+%             GW : The corresponding Gauss weight
 % 
-%       Output :
-%  tanMtxMatEl : The material stiffness at the Gauss point
-%  tanMtxGeoEl : The geometric stiffness at the Gauss point
-%     resIntEl : The internal residual K(u)*u at the Gauss point
-%      FBodyEl : The body force vector at the Gauss point
+%         Output :
+%    tanMtxMatEl : The material stiffness at the Gauss point
+%    tanMtxGeoEl : The geometric stiffness at the Gauss point
+%       resIntEl : The internal residual K(u)*u at the Gauss point
+%        FBodyEl : The body force vector at the Gauss point
 %
 % Function layout :
 %

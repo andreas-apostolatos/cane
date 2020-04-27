@@ -1,5 +1,5 @@
-function plot_postprocResultantsIGAKirchhoffLoveShell...
-    (p,q,Xi,Eta,CP,isNURBS,parameters,xiGrid,etaGrid,dHat,graph)
+function plot_postprocResultantsIGAKirchhoffLoveShell ...
+    (p, q, Xi, Eta, CP, isNURBS, parameters, xiGrid, etaGrid, dHat, graph)
 %% Licensing
 %
 % License:         BSD License

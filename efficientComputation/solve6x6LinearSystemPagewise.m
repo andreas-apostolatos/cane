@@ -1,4 +1,4 @@
-function x = solve6x6LinearSystemPagewise(A,b)
+function x = solve6x6LinearSystemPagewise(A, b)
 %% Licensing
 %
 % License:         BSD License

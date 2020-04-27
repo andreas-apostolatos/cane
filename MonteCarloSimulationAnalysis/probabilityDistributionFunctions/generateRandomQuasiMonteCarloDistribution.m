@@ -1,4 +1,5 @@
-function distribution = generateRandomQuasiMonteCarloDistribution(meanValue, standardDeviation, noSamples)
+function distribution = generateRandomQuasiMonteCarloDistribution ...
+    (meanValue, standardDeviation, numSamples)
 %% Licensing
 %
 % License:         BSD License
@@ -14,7 +15,7 @@ function distribution = generateRandomQuasiMonteCarloDistribution(meanValue, sta
 %             Input :
 %         meanValue : Mean value of the distribution
 % standardDeviation : Standard deviation of the distribution
-%         noSamples : Number of samples
+%        numSamples : Number of samples
 %
 %            Output :
 %      distribution : Random vector of noSamples distributed according to
@@ -25,7 +26,7 @@ function distribution = generateRandomQuasiMonteCarloDistribution(meanValue, sta
 % Generate necessary variables
 p = haltonset(1,'Skip',1e3,'Leap',1e2);
 p = scramble(p,'RR2');
-haltonvector = net(p,noSamples); % Halton Sequence sampling
+haltonvector = net(p,numSamples); % Halton Sequence sampling
 
 % Invert uniform Halton sequence to normal distribution
 distribution = norminv(haltonvector, meanValue, standardDeviation);

@@ -1,4 +1,5 @@
-function index = computeIndexForBSplineBasisFunctionsAndDerivatives(mixedDerivOrder,xiDerivOrder,etaDerivOrder)
+function index = computeIndexForBSplineBasisFunctionsAndDerivatives ...
+    (mixedDerivOrder, xiDerivOrder, etaDerivOrder)
 %% Licensing
 %
 % License:         BSD License

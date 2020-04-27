@@ -1,5 +1,5 @@
-function kappaVoigt = computePostprocChangeInCurvatureIGAKirchhoffLoveShellNLinear...
-    (GCovariant,G3Tilde,dGCovariant,g3Tilde,dgCovariant)
+function kappaVoigt = computePostprocChangeInCurvatureIGAKirchhoffLoveShellNLinear ...
+    (GCovariant, G3Tilde, dGCovariant, g3Tilde, dgCovariant)
 %% Licensing
 %
 % License:         BSD License

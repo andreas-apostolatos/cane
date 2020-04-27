@@ -1,5 +1,6 @@
-function [Lambda,Mu] = computeDDMLagrangeMultipliersMtces4IGAKLShellLinear...
-    (BSplinePatch,lambda,mu,isMaster,haveSameOrientation,propCoupling)
+function [Lambda, Mu] = ...
+    computeDDMLagrangeMultipliersMtces4IGAKLShellLinear ...
+    (BSplinePatch, lambda, mu, isMaster, isSameOrientation, propCoupling)
 %% Licensing
 %
 % License:         BSD License
@@ -21,7 +22,7 @@ function [Lambda,Mu] = computeDDMLagrangeMultipliersMtces4IGAKLShellLinear...
 %                       field for the traction moments
 %            isMaster : Flag on whether the patch is the master or the 
 %                       slave one
-% haveSameOrientation : Flag on whether the interfaces from both patches
+%   isSameOrientation : Flag on whether the interfaces from both patches
 %                       are oriented in the same direction
 %        propCoupling : Properties of the multipatch coupling
 %                           .alphaD : penalty factor for the displacement
@@ -346,7 +347,7 @@ for i = 1:length(couplingRegionOnKnotVector)-1
         % For patch :
         % ___________
         
-        if ~isMaster && ~haveSameOrientation
+        if ~isMaster && ~isSameOrientation
             if isOnXi
                 xi = xiEta;
                 xiSpan = findKnotSpan(xi,Xi,nxi);

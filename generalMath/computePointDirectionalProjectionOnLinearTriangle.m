@@ -1,5 +1,5 @@
-function [zeta1,zeta2,lambda,isProjected] = computePointDirectionalProjectionOnLinearTriangle...
-    (P,X1,X2,X3,n)
+function zetaLambda = computePointDirectionalProjectionOnLinearTriangle ...
+    (P, X1, X2, X3, n)
 %% Licensing
 %
 % License:         BSD License
@@ -29,7 +29,6 @@ function [zeta1,zeta2,lambda,isProjected] = computePointDirectionalProjectionOnL
 % Function layout :
 %
 %% Function main body
-
 zetaLambda = [X1(1,1)-X3(1,1) X2(1,1)-X3(1,1) -n(1,1)
               X1(2,1)-X3(2,1) X2(2,1)-X3(2,1) -n(2,1)
               X1(3,1)-X3(3,1) X2(3,1)-X3(3,1) -n(3,1)]\[P(1,1)-X3(1,1)

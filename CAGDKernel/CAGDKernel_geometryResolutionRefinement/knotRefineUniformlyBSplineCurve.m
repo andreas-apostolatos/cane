@@ -1,4 +1,4 @@
-function [Xir,CPr] = knotRefineUniformlyBSplineCurve(n,p,Xi,CP,outMsg)
+function [Xir, CPr] = knotRefineUniformlyBSplineCurve(n, p, Xi, CP, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -30,16 +30,13 @@ function [Xir,CPr] = knotRefineUniformlyBSplineCurve(n,p,Xi,CP,outMsg)
 % 2. Appendix
 %
 %% Function main body
-
 if strcmp(outMsg,'outputEnabled')
     fprintf('______________________________________________________________\n');
     fprintf('##############################################################\n');
     fprintf('Uniform Knot insertion for a B-Spline curve has been initiated \n\n');
     fprintf('Number of knots before knot insertion nxi = %d \n',length(Xi));
-    fprintf('Number of knots after knot insertion nxi = %d \n',length(Xi)+n);
+    fprintf('Number of knots after knot insertion nxi = %d \n',length(Xi) + n);
     fprintf('______________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -57,12 +54,9 @@ end
 [Xir,CPr] = knotRefineBSplineCurve(p,Xi,CP,Ru,'');
 
 %% 2. Appendix
-
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
-    fprintf('Degree elevation took %d seconds \n\n',computationalTime);
+    fprintf('Degree elevation took %d seconds \n\n', computationalTime);
     fprintf('_____________________Knot Insertion Ended_____________________\n');
     fprintf('##############################################################\n\n\n');
 end

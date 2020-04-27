@@ -1,4 +1,4 @@
-function Xi = transformKnotVct(Xi,targetDomain)
+function Xi = transformKnotVct(Xi, targetDomain)
 %% Licensing
 %
 % License:         BSD License

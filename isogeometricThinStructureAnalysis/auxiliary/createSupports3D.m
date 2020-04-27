@@ -1,10 +1,12 @@
-function [xs,ys,zs] = createSupports3D(CP,rb)
+function [xs, ys, zs] = createSupports3D(CP, rb)
 %% Licensing
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Andreas Apostolatos
+%
+%% Function documentation 
 %
 % Returns the coordinates of the triangles needed for drawing the supports
 %

@@ -1,4 +1,4 @@
-function i = findKnotSpan(xi, Xi, numCPs)
+function i = findKnotSpan(xi, Xi, numCPs_xi)
 %% Licensing
 %
 % License:         BSD License
@@ -13,13 +13,13 @@ function i = findKnotSpan(xi, Xi, numCPs)
 % There's no problem for the inner knots but to get the last knot (special
 % case) rounding range must be considered
 %
-%  Input :
-%     xi : The coordinate in the unit interval
-%     Xi : The knot vector of the NURBS curve
-% numCPs : n = m - p - 1
+%     Input :
+%        xi : The coordinate in the unit interval
+%        Xi : The knot vector of the NURBS curve
+% numCPs_xi : n = m - p - 1
 %
-% Output :
-%      i : The knot span where u lies
+%    Output :
+%         i : The knot span where u lies
 %
 %% Function main body
 
@@ -34,13 +34,13 @@ if norm(xi) < Xi(1) - 1e-7
 end
 
 % special case: last knot (open knot vector assumed)
-if abs(xi - Xi(numCPs + 1)) < eps
-    i = numCPs;
+if abs(xi-Xi(numCPs_xi+1)) < eps
+    i = numCPs_xi;
     return
 end
 
 for i = 1:m-1
-    if xi < Xi(i + 1)
+    if xi < Xi(i+1)
         return
     end
 end  

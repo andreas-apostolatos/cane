@@ -7,8 +7,6 @@ function plot_activeNodes(mesh, dHat, nodeIDs_active)
 % Main authors:    Marko Leskovar
 %                  Andreas Apostolatos
 %
-% Date: 04.02.2020
-%
 %% Function documentation
 %
 % Plots a red dot for every node and if a direction is specified bars for

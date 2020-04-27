@@ -1,4 +1,4 @@
-function FAmp = computeLoadPseudoWind4GenoaSail(x,y,z,t)
+function FAmp = computeLoadPseudoWind4GenoaSail(x, y, z, t)
 %% Licensing
 %
 % License:         BSD License

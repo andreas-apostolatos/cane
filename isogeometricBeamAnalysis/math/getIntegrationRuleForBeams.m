@@ -1,4 +1,4 @@
-function int = getIntegrationRuleForBeams(int,analysis)
+function int = getIntegrationRuleForBeams(int, analysis)
 %% Licensing
 %
 % License:         BSD License

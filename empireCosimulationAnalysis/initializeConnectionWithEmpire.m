@@ -1,4 +1,4 @@
-function initializeConnectionWithEmpire(strMatlabXml,tab,outMsg)
+function initializeConnectionWithEmpire(strMatlabXml, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License

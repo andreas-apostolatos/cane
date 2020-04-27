@@ -1,4 +1,5 @@
-function dF = computeDenominatorFunctionAndDerivativesForCurve(dN,knotSpanIndex,p,CP,nDeriv)
+function dF = computeDenominatorFunctionAndDerivativesForCurve ...
+    (dN, knotSpanIndex, p, CP, numDeriv)
 %% Licensing
 %
 % License:         BSD License
@@ -22,7 +23,7 @@ function dF = computeDenominatorFunctionAndDerivativesForCurve(dN,knotSpanIndex,
 % knotSpanIndex : Knot span index
 %             p : The polynomial degree of the curve
 %            CP : The set of Control Point coordinates and weights
-%        nDeriv : The number of derivatives to be computed for the
+%      numDeriv : The number of derivatives to be computed for the
 %                 denominator function
 %   
 %        Output : 
@@ -47,10 +48,10 @@ function dF = computeDenominatorFunctionAndDerivativesForCurve(dN,knotSpanIndex,
 %% 0. Read input
 
 % Initialize output array
-dF = zeros(nDeriv+1,1);
+dF = zeros(numDeriv+1,1);
 
 %% 1. Loop over all the derivatives
-for i=1:nDeriv+1
+for i=1:numDeriv+1
     %% 1i. Loop over all the basis functions
     for j=0:p
         %% 1i.1. Get the Control Point index

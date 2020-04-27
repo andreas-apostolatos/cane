@@ -42,7 +42,7 @@ T = 10;
 holeRadius = 1;
 
 % Initialize the output array
-F = zeros(3,1);
+F = zeros(3, 1);
 
 %% 1. Compute the curvilinear coordinates of (x,y)
 

@@ -1,23 +1,11 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function plot_knotsForBSplineCurveOnCartesianSpace(p,Xi,CP,isNURBS)
+function plot_knotsForBSplineCurveOnCartesianSpace(p, Xi, CP, isNURBS)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Draws the element edges for the B-Spline curve, i.e the knots on the
@@ -52,8 +40,8 @@ function plot_knotsForBSplineCurveOnCartesianSpace(p,Xi,CP,isNURBS)
 
 %% 0. Read input
 
-% Number of Control Points in u,v-direction
-nxi = length(CP(:,1,1));
+% Number of Control Points in xi,eta-direction
+nxi = length(CP(:, 1, 1));
 
 % Initialize array to be plotted
 Point = zeros(length(Xi),3);

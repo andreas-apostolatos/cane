@@ -1,5 +1,6 @@
-function [relErrL2,minElSize] = computeErrIGABernoulliBeam2D...
-    (p,Xi,CP,isNURBS,dHat,computeExactSolution,problemSettings,int,outMsg)
+function [relErrL2, minElSize] = computeErrIGABernoulliBeam2D...
+    (p, Xi, CP, isNURBS, dHat,computeExactSolution, problemSettings, ...
+    propInt, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -25,7 +26,7 @@ function [relErrL2,minElSize] = computeErrIGABernoulliBeam2D...
 %                        solution for a given Euler-Bernoulli beam problem
 %      problemSettings : Parameters which are related to the benchmark
 %                        problem, such as dimensions, load amplitude etc.
-%                  int : On the numerical quadrature
+%              propInt : On the numerical quadrature
 %               outMsg : On outputting information
 %
 %               Output :
@@ -93,10 +94,10 @@ errL2 = 0;
 exactL2 = 0;
 
 %% 1. Get Gauss Points and Gauss coordinates
-if strcmp(int.type,'default')
+if strcmp(propInt.type,'default')
     nGP = ceil((p + 1)/2);
-elseif strcmp(int.type,'user')
-    nGP = int.noGP;
+elseif strcmp(propInt.type,'user')
+    nGP = propInt.noGP;
 end
 [GP,GW] = getGaussPointsAndWeightsOverUnitDomain(nGP);
 

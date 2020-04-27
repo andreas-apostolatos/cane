@@ -1,23 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function index = plot_IGABasisFunctionsAndDerivativesForCurve(p,Xi,CP,numEval,isNURBS,graph,outMsg)
+function index = plot_IGABasisFunctionsAndDerivativesForCurve ...
+    (p, Xi, CP, numEval, isNURBS, graph, outMsg)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Plots the NURBS basis functions and their derivatives up to the desired
@@ -73,8 +62,6 @@ if strcmp(outMsg,'outputEnabled')
         fprintf('were chosen to be displayed \n');
     end
     fprintf('___________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -159,10 +146,8 @@ index = graph.index;
 
 %% 3. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
-    fprintf('Plotting the basis functions took %d seconds \n\n',computationalTime);
+    fprintf('Plotting the basis functions took %d seconds \n\n', computationalTime);
     fprintf('_______________Plotting Basis Functions Ended______________\n');
     fprintf('###########################################################\n\n\n');
 end

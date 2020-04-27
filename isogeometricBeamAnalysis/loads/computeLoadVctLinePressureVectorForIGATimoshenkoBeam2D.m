@@ -1,5 +1,5 @@
-function F = computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D...
-    (Fold,xib,p,Xi,CP,isNURBS,loadFnc,loadDir,t,int,outMsg)
+function F = computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D ...
+    (Fold, xib, p, Xi, CP, isNURBS, loadFnc, loadDir, t, int, outMsg)
 %% Licensing
 %
 % License:         BSD License

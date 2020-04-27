@@ -1,5 +1,5 @@
-function dN = computeBSplineBasisFunctionsAndDerivativesForSurface...
-    (xiKnotSpan,p,xi,Xi,etaKnotSpan,q,eta,Eta,mixedDerivOrder)
+function dN = computeBSplineBasisFunctionsAndDerivativesForSurface ...
+    (xiKnotSpan, p, xi, Xi, etaKnotSpan, q, eta, Eta, mixedDerivOrder)
 %% Licensing
 %
 % License:         BSD License

@@ -1,4 +1,5 @@
-function Q = computeShearForceForIGABeams2D(knotSpanIndex,p,dHat,parameters,analysis,G,dR)
+function Q = computeShearForceForIGABeams2D ...
+    (knotSpanIndex, p, dHat, parameters, analysis, G, dR)
 %% Licensing
 %
 % License:         BSD License

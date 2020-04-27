@@ -1,4 +1,4 @@
-function FAmp = computeLoadPseudoWind4Sail(x,y,z,t)
+function FAmp = computeLoadPseudoWind4Sail(x, y, z, t)
 %% Licensing
 %
 % License:         BSD License

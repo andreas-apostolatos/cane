@@ -1,16 +1,71 @@
 function [LambdaMaster, LambdaSlave] = ...
     computeDDMLagrangeMultipliersMtces4MortarIGAThinStructure ...
-    (patchMaster, patchSlave, haveSameOrientation, propCoupling)
+    (patchMaster, patchSlave, isSameOrientation, propCoupling)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the Lagrange Multipliers matrices corresponding to the 
 % application of the mortar method for the multipatch coupling of
 % thin-walled isogeometric structures.
 %
-%          Input :
-% patchI, patchJ : 
+%                     Input :
+%   patchMaster, patchSlave : Structure containing information on the two
+%                             computational patches which share an 
+%                             interface
+%         isSameOrientation : Flag on whether the interfaces from both 
+%                             patches are oriented in the same direction
+%              propCoupling : Properties of the multipatch coupling
+%                             .alphaD : penalty factor for the displacement
+%                                       coupling
+%                             .alphaR : penalty factor for the rotation
+%                                       coupling
+%                               .intC : On the integration of the coupling
+%                                       interface
 %
+%                    Output : 
+% LambdaMaster, LambdaSlave : The Lagrange Multipliers matrices for the 
+%                             traction forces
 %
+% Function layout :
+%
+% 0. Read input
+%
+% 1. Get the running and the fixed parameters on the patch interface and the coupling region
+%
+% 2. Compute the merged knot vector from the master and the slave patch
+%
+% 3. Issue Gauss Point coordinates and weights
+%
+% 4. Loop over all the elements on the coupling interface
+% ->
+%    4i. Compute the determinant of the Jacobian of the transformation from the parent to the integation domain
+%
+%   4ii. Loop over all Gauss points
+%   ->
+%        4ii.1. Transform the Gauss Point coordinate from the bi-unit interval to the knot span
+%
+%        4ii.2. Compute the NURBS basis functions and their derivatives
+%
+%        4ii.3. Create the element freedom tables
+%
+%        4ii.4. Compute the covariant base vectors from the master side
+%
+%        4ii.5. Compute the basis functions matrices
+%
+%        4ii.6. Compute the determinant of the Jacobian of the transformation from the physical to the parent domain on the GP
+%
+%        4ii.7. Compute the element length at the GP
+%
+%        4ii.8. Compute the Lagrange Multipliers matrices and add them to the global matrices
+%   <-
+% <-
+% 
 %% Function main body
 
 %% 0. Read input
@@ -28,10 +83,6 @@ isNURBSMaster = patchMaster.isNURBS;
 xicoupMaster = patchMaster.xicoup;
 etacoupMaster = patchMaster.etacoup;
 noDOFsMaster = patchMaster.noDOFs;
-
-% Number of knots in xi-,-eta directions
-% mxiMaster = length(XiMaster);
-% metaMaster = length(EtaMaster);
 
 % Number of Control Points in xi-,eta- directions
 nxiMaster = length(CPMaster(:,1,1));
@@ -147,16 +198,6 @@ end
 % -------
 
 if etacoupSlave(1) == etacoupSlave(2)
-    % Coupled region in xi-direction
-%     couplingRegionSlave = xicoupSlave;
-    
-    % Find the correct spans for the coupled region
-%     spanStartSlave = findKnotSpan(couplingRegionSlave(1),XiSlave,nxiSlave);
-%     spanEndSlave = findKnotSpan(couplingRegionSlave(2),XiSlave,nxiSlave) + 1;
-    
-    % Corresponding to the coupled region knot span
-%     couplingRegionOnKnotVectorSlave = XiMaster(spanStartSlave:spanEndSlave);
-    
     % Fixed parameter on the parametric net
     etaSlave = etacoupSlave(1);
     
@@ -166,16 +207,6 @@ if etacoupSlave(1) == etacoupSlave(2)
     % Flag on whether the coupling line is over xi
     isOnXiSlave = true;
 else
-    % Coupled region in eta-direction
-%     couplingRegionSlave = etacoupSlave;
-    
-    % Find the correct spans for the coupled region
-%     spanStartSlave = findKnotSpan(couplingRegionSlave(1),EtaSlave,netaSlave);
-%     spanEndSlave = findKnotSpan(couplingRegionSlave(2),EtaSlave,netaSlave) + 1;
-    
-    % Corresponding to the coupled region knot span
-%     couplingRegionOnKnotVectorSlave = EtaSlave(spanStartSlave:spanEndSlave);
-    
     % Fixed parameter on the parametric net
     xiSlave = xicoupSlave(1);
     
@@ -262,7 +293,7 @@ for i = 1:length(couplingRegionOnKnotVector) - 1
         % Slave :
         % -------
         
-        if ~haveSameOrientation
+        if ~isSameOrientation
             if isOnXiSlave
                 xiSlave = xiEta;
                 xiSpanSlave = findKnotSpan(xiSlave,XiSlave,nxiSlave);

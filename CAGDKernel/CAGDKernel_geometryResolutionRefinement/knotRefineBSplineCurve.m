@@ -1,4 +1,4 @@
-function [Xir,CPr] = knotRefineBSplineCurve(p,Xi,CP,Rxi,outMsg)
+function [Xir, CPr] = knotRefineBSplineCurve(p, Xi, CP, Rxi, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -44,10 +44,8 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('######################################################\n');
     fprintf('Knot insertion for a B-Spline curve has been initiated \n\n');
     fprintf('Number of knots before knot insertion nxi = %d\n',length(Xi));
-    fprintf('Number of knots after knot insertion nxi = %d\n',length(Xi)+length(Rxi));
+    fprintf('Number of knots after knot insertion nxi = %d\n',length(Xi) + length(Rxi));
     fprintf('______________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 

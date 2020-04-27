@@ -9,8 +9,6 @@ function [contactLength, contactForce, maxContactPressure] = ...
 % Main authors:    Andreas Apostolatos
 %                  Marko Leskovar
 %
-% Date : 27.02.2020
-%
 %% Function documentation
 %
 % Computes the length of contact, its reaction force and the maximal

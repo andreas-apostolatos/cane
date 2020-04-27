@@ -1,13 +1,13 @@
 function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
-    propAnalysis, propParameters, propNLinearAnalysis, propStrDynamics, ...
-    propGaussInt, propContact] = ...
-    parse_StructuralModelFromGid(pathToCase, caseName, outMsg)
-%% Licensing
+    propAnalysis, propParameters, propNLinearAnalysis, propThermalDynamics, ...
+    propGaussInt] = parse_ThermalModelFromGid(pathToCase, caseName, outMsg)
+%% Licensingprop
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
 % Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
 %
 %% Function documentation
 %
@@ -20,7 +20,7 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %              outMsg : On the output information on the command window
 %
 %              Output :
-%              strMsh : Structure containing information on the mesh,
+%              strMsh : On the structural mesh   
 %                           .nodes : The nodes in the FE mesh
 %                        .elements : The elements in the FE mesh
 %             homDOFs : The global numbering of the nodes where homogeneous
@@ -30,7 +30,9 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %                       applied
 %     valuesInhomDOFs : The prescribed values for the inhomogeneous 
 %                       Dirichlet boundary conditions
-%             propNBC :     .nodes : The nodes where Neumann boundary 
+%             propNBC : Structure containing information on the Neumann
+%                       boundary conditions (fluxes)
+%                           .nodes : The nodes where Neumann boundary 
 %                                    conditions are applied
 %                        .loadType : The type of the load for each Neumann 
 %                                    node
@@ -41,37 +43,27 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %        propAnalysis : Structure defining general properties of the
 %                       analysis,
 %                             .type : The analysis type
-%          parameters : Problem specific technical (physical) parameters
-%                              .rho : Material density,
-%                                .E : Young's modulus
-%                              .nue : Poisson ration 
-%                                .t : thickness
-% propNLinearAnalysis : Structure containing information on the
-%                       geometrically nonlinear analysis,
-%                           .method : The employed nonlinear method
+%      propParameters : Problem specific technical (physical) parameters
+%                              .rho : Material density
+%                                .k : Thermal conductivity
+%                               .cp : Specific heat capacity
+% propNLinearAnalysis :     .method : The employed nonlinear method
 %                        .tolerance : The residual tolerance
 %                          .maxIter : The maximum number of the nonlinear 
 %                                     iterations
-%     propStrDynamics : Structure containing information on the time
-%                       integration regarding the structural dynamics,
-%                       .timeDependence : On the transient analysis
+% propThermalDynamics : .timeDependence : On the transient analysis
 %                               .method : The time integration method
 %                                   .T0 : The start time of the simulation
 %                                 .TEnd : The end time of the simulation
 %                          .noTimeSteps : The number of the time steps
-%        propGaussInt : Structure containing information on the Gaussian
-%                       quadrature,
+%        propGaussInt : On the Gauss Point integration
 %                               .type : 'default', 'user'
 %                         .domainNoGP : Number of Gauss Points for the 
 %                                       domain integration
 %                       .boundaryNoGP : Number of Gauss Points for the 
 %                                       boundary integration
-%         propContact : Structure containing information on the nodes which
-%                       are going to be in potential contact
-%                            .nodeIDs : Global numbering of contact nodes
-%                       numberOfNodes : number of contact nodes
 %
-% Function layout :
+%% Function layout :
 %
 % 1. Load the input file from GiD
 %
@@ -79,33 +71,31 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %
 % 3. Load the material properties
 %
-% 4. Load the nonlinear method
+% 4. Load the nonlinear method (heat transfer without internal heat generation is always linear)
 %
 % 5. Load the time integration method
 %
 % 6. Load the Gauss Point integration method
 %
-% 7. Load the structural nodes
+% 7. Load the heat nodes
 %
-% 8. Load the structural elements by connectivity arrays
+% 8. Load the heat elements by connectivity arrays
 %
 % 9. Load the nodes on which homogeneous Dirichlet boundary conditions are applied
 %
 % 10. Load the nodes on the Neumann boundary together with the load application information
 %
-% 11. Load the nodes that are candidates for contact
+% 11. Get edge connectivity arrays for the Neumann edges
 %
-% 12. Get edge connectivity arrays for the Neumann edges
-%
-% 13. Appendix
+% 12. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
-    fprintf('________________________________________________________________\n');
-    fprintf('################################################################\n');
-    fprintf('Parsing data from GiD input file for a structural boundary value\n');
-    fprintf('problem has been initiated\n');
-    fprintf('________________________________________________________________\n\n');
+    fprintf('_____________________________________________________________\n');
+    fprintf('#############################################################\n');
+    fprintf('Parsing data from GiD input file for a heat transfer boundary\n');
+    fprintf('value problem has been initiated\n');
+    fprintf('_____________________________________________________________\n\n');
     tic;
 end
 
@@ -120,7 +110,7 @@ valuesInhomDOFs = [];
 fstring = fileread([pathToCase caseName '.dat']); 
 
 %% 2. Load the analysis type
-block = regexp(fstring, 'STRUCTURE_ANALYSIS','split');
+block = regexp(fstring, 'THERMAL_CONDUCTION_ANALYSIS', 'split');
 block(1) = [];
 out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
 propAnalysis.type = out{1}{2};
@@ -129,63 +119,53 @@ if strcmp(outMsg, 'outputEnabled')
 end
 
 %% 3. Load the material properties
-block = regexp(fstring, 'STRUCTURE_MATERIAL_PROPERTIES', 'split');
+block = regexp(fstring, 'THERMAL_MATERIAL_PROPERTIES','split');
 block(1) = [];
 out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
-propParameters.rho = str2double(out{1}{2});
-propParameters.E = str2double(out{1}{4});
-propParameters.nue = str2double(out{1}{6});
-propParameters.t = str2double(out{1}{8});
 
-%% 4. Load the nonlinear method
-block = regexp(fstring, 'STRUCTURE_NLINEAR_SCHEME', 'split');
-block(1) = [];
-out = textscan(block{1}, '%s', 'delimiter', ',', 'MultipleDelimsAsOne', 1);
-propNLinearAnalysis.method = out{1}{2};
-propNLinearAnalysis.noLoadSteps = str2double(out{1}{4});
-propNLinearAnalysis.eps = str2double(out{1}{6});
-propNLinearAnalysis.maxIter = str2double(out{1}{8});
-if strcmp(outMsg, 'outputEnabled')
-    fprintf('>> Nonlinear method: %s \n', propNLinearAnalysis.method);
-    fprintf('\t>> No. load steps = %d \n', propNLinearAnalysis.noLoadSteps);
-    fprintf('\t>> Convergence tolerance = %d \n', propNLinearAnalysis.eps);
-    fprintf('\t>> Maximum number of iterations = %d \n', propNLinearAnalysis.maxIter);
-end
+% Read material density
+propParameters.rho = str2double(out{1}{2});
+
+% Read thermal conductivity
+propParameters.k = str2double(out{1}{4});
+
+% Read specific heat
+propParameters.cp = str2double(out{1}{6});
+
+%% 4. Load the nonlinear method (heat transfer without internal heat generation is always linear)
+propNLinearAnalysis.method = 'UNDEFINED';
+propNLinearAnalysis.noLoadSteps = [];
+propNLinearAnalysis.eps = [];
+propNLinearAnalysis.maxIter = 1;
 
 %% 5. Load the time integration method
-block = regexp(fstring, 'STRUCTURE_TRANSIENT_ANALYSIS','split');
+block = regexp(fstring, 'THERMAL_TRANSIENT_ANALYSIS','split');
 block(1) = [];
 out = textscan(block{1}, '%s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
-propStrDynamics.timeDependence = out{1}{2};
-propStrDynamics.method = out{1}{4};
-if strcmp(propStrDynamics.method, 'bossak')
-    propStrDynamics.alphaBeta =  str2double(out{1}{6});
-    propStrDynamics.gamma =  str2double(out{1}{8});
+propThermalDynamics.timeDependence = out{1}{2};
+if ~strcmp(propThermalDynamics.timeDependence, 'STEADY_STATE')
+    propThermalDynamics.method = out{1}{4};
+    propThermalDynamics.T0 = str2double(out{1}{6});
+    propThermalDynamics.TEnd = str2double(out{1}{8});
+    propThermalDynamics.noTimeSteps = str2double(out{1}{10});
+    propThermalDynamics.isAdaptive = out{1}{12};
+    propThermalDynamics.dt = (propThermalDynamics.TEnd - propThermalDynamics.T0)/propThermalDynamics.noTimeSteps;
 end
-propStrDynamics.T0 = str2double(out{1}{10});
-propStrDynamics.TEnd = str2double(out{1}{12});
-propStrDynamics.noTimeSteps = str2double(out{1}{14});
-propStrDynamics.isAdaptive = out{1}{16};
-propStrDynamics.dt = (propStrDynamics.TEnd - propStrDynamics.T0)/propStrDynamics.noTimeSteps;
 if strcmp(outMsg, 'outputEnabled')
-    fprintf('>> Structural dynamics: %s \n', propStrDynamics.timeDependence);
-    if ~strcmp(propStrDynamics.timeDependence, 'STEADY_STATE')
-        fprintf('\t>> Time integration method: %s \n', propStrDynamics.method);
-        if strcmp(propStrDynamics.method, 'bossak')
-            fprintf('\t \t>> alphaBeta =  %s \n', propStrDynamics.alphaBeta);
-            fprintf('\t \t>> gamma =  %s \n', propStrDynamics.gamma);
-        end
-        fprintf('\t>> Start time of the simulation: %f \n', propStrDynamics.T0);
-        fprintf('\t>> End time of the simulation: %f \n', propStrDynamics.TEnd);
-        fprintf('\t>> Number of time steps: %f \n', propStrDynamics.noTimeSteps);
-        fprintf('\t>> Time step size: %f \n', propStrDynamics.dt);
+    fprintf('>> Thermal dynamics: %s \n', propThermalDynamics.timeDependence);
+    if ~strcmp(propThermalDynamics.timeDependence, 'STEADY_STATE')
+        fprintf('\t>> Time integration method: %s \n', propThermalDynamics.method);
+        fprintf('\t>> Start time of the simulation: %f \n', propThermalDynamics.T0);
+        fprintf('\t>> End time of the simulation: %f \n', propThermalDynamics.TEnd);
+        fprintf('\t>> Number of time steps: %f \n', propThermalDynamics.noTimeSteps);
+        fprintf('\t>> Time step size: %f \n', propThermalDynamics.dt);
     end
 end
 
 %% 6. Load the Gauss Point integration method
-block = regexp(fstring, 'STRUCTURE_INTEGRATION', 'split');
+block = regexp(fstring, 'THERMAL_INTEGRATION', 'split');
 block(1) = [];
-out = textscan(block{1}, '%s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
+out = textscan(block{1}, '%s','delimiter', ' ', 'MultipleDelimsAsOne', 1);
 propGaussInt.type = out{1}{2};
 if strcmp(propGaussInt.type, 'user')
     propGaussInt.domainNoGP = str2double(out{1}{4});
@@ -200,7 +180,7 @@ if strcmp(outMsg, 'outputEnabled')
 end
 
 %% 7. Load the structural nodes
-block = regexp(fstring, 'STRUCTURE_NODES','split'); 
+block = regexp(fstring, 'THERMAL_NODES', 'split'); 
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
@@ -214,7 +194,7 @@ if strcmp(outMsg, 'outputEnabled')
 end
 
 %% 8. Load the structural elements by connectivity arrays
-block = regexp(fstring, 'STRUCTURE_ELEMENTS', 'split');
+block = regexp(fstring, 'THERMAL_ELEMENTS', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
@@ -229,7 +209,7 @@ if strcmp(outMsg, 'outputEnabled')
 end
 
 %% 9. Load the nodes on which homogeneous Dirichlet boundary conditions are applied
-block = regexp(fstring, 'STRUCTURE_DIRICHLET_NODES', 'split'); 
+block = regexp(fstring, 'THERMAL_DIRICHLET_NODES', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
@@ -239,10 +219,9 @@ end
 out = cell2mat(out);
 
 % Filter out the actual DOFs
-numDOFsNodeGiD = 3;
-if strcmp(propAnalysis.type, 'planeStress') || ...
-        strcmp(propAnalysis.type, 'planeStrain')
-    numDOFsPerNode = 2;
+numDOFsNodeGiD = 1;
+if strcmp(propAnalysis.type, 'THERMAL_CONDUCTION_2D')
+    numDOFsNode = 1;
 end
 
 % Initialize counter
@@ -252,19 +231,20 @@ counterInhomDBC = 1;
 % Find the number of nodes where Dirichlet boundary conditions are applied
 numDBCNodes = length(out)/(numDOFsNodeGiD + 1);
 
+% Loop overll all nodes where Dirchlet boundary conditions are applied
 for i = 1:numDBCNodes
     % Get the Dirichlet node ID
-    nodeID = out((numDOFsNodeGiD + 1)*i-numDOFsNodeGiD);
+    nodeID = out((numDOFsNodeGiD + 1)*i - numDOFsNodeGiD);
     
     % Get the x-component of the prescribed value
-    for j = 1:numDOFsPerNode
-        presValue = out((numDOFsNodeGiD + 1)*i-numDOFsNodeGiD + j);
+    for j = 1:numDOFsNode
+        presValue = out((numDOFsNodeGiD + 1)*i - numDOFsNodeGiD + j);
         if ~isnan(presValue)
             if presValue == 0
-                homDOFs(counterHomDBC) = numDOFsPerNode*nodeID - numDOFsPerNode + j;
+                homDOFs(counterHomDBC) = numDOFsNode*nodeID - numDOFsNode + j;
                 counterHomDBC = counterHomDBC + 1;
             else
-                inhomDOFs(counterInhomDBC) = numDOFsPerNode*nodeID-numDOFsPerNode + j;
+                inhomDOFs(counterInhomDBC) = numDOFsNode*nodeID - numDOFsNode + j;
                 valuesInhomDOFs(counterInhomDBC) = presValue;
                 counterInhomDBC = counterInhomDBC + 1;
             end
@@ -274,45 +254,37 @@ end
 
 % Sort out the vectors
 homDOFs = sort(homDOFs);
-[inhomDOFs,indexSorting] = sort(inhomDOFs);
+[inhomDOFs, indexSorting] = sort(inhomDOFs);
 valuesInhomDOFs = valuesInhomDOFs(indexSorting);
 
 %% 10. Load the nodes on the Neumann boundary together with the load application information
-block = regexp(fstring, 'STRUCTURE_FORCE_NODES','split'); 
+block = regexp(fstring,'THERMAL_FLUX_NODES', 'split');
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
-    out{k} = textscan(block{k}, '%f %s %s','delimiter', ' ', 'MultipleDelimsAsOne', 1);
-end
-out = out{1};
-propNBC.nodes = cell2mat(out(:, 1));
-outLoadType = out(:, 2);
-propNBC.loadType = cell2mat(outLoadType{1});
-outFctHandle = out(:, 3);
-propNBC.fctHandle = cell2mat(outFctHandle{1});
-
-%% 11. Load the nodes that are candidates for contact
-block = regexp(fstring, 'STRUCTURE_CONTACT_NODES', 'split'); 
-block(1) = [];
-out = cell(size(block));
-for k = 1:numel(block)
-    out{k} = textscan(block{k}, '%f');
+    out{k} = textscan(block{k}, '%f %s %s', 'delimiter', ' ', 'MultipleDelimsAsOne', 1);
 end
 if ~isempty(out)
     out = out{1};
-    propContact.nodeIDs = cell2mat(out(:, 1));
-    propContact.numNodes = length(propContact.nodeIDs);
-else
-    propContact.nodeIDs = [];
-    propContact.numNodes = 0;
+    propNBC.nodes = cell2mat(out(:, 1));
+    outLoadType = out(:, 2);
+    propNBC.loadType = cell2mat(outLoadType{1});
+    outFctHandle = out(:, 3);
+    propNBC.fctHandle = cell2mat(outFctHandle{1});
 end
 
-%% 12. Get edge connectivity arrays for the Neumann edges
+%% 11. Get edge connectivity arrays for the Neumann edges
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Neumann boundary edges: %d \n', length(propNBC.nodes) - 1);
 end
+
+% Initialize the Neumann boundary lines
 propNBC.lines = zeros(length(unique(propNBC.nodes)) - 1, 3);
+
+% Initialize line counter
 counterLines = 1;
+
+% Loop over each node pair
 for i = 1:length(propNBC.nodes)
     for j = i + 1:length(propNBC.nodes)
         % Get the node index in the element array
@@ -337,10 +309,9 @@ for i = 1:length(propNBC.nodes)
         end
     end
 end
-propNBC.fctHandle = fctHandle;
 
-%% 13. Appendix
-if strcmp(outMsg, 'outputEnabled')
+%% 12. Appendix
+if strcmp(outMsg,'outputEnabled')
     computationalTime = toc;
     fprintf('\nParsing took %.2d seconds \n\n', computationalTime);
     fprintf('_________________________Parsing Ended__________________________\n');

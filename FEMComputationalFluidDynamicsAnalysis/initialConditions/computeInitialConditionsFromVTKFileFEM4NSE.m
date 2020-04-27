@@ -1,6 +1,7 @@
-function [up,upDot,upDDot,noTimeStep] = computeInitialConditionsFromVTKFileFEM4NSE...
-    (analysis,fldMsh,DOF4Output,parameters,fldDynamics,VTKResultFile,...
-    caseName,pathToFile)
+function [up, upDot, upDDot, numTimeStep] = ...
+    computeInitialConditionsFromVTKFileFEM4NSE...
+    (analysis, fldMsh, DOF4Output, parameters, fldDynamics, ...
+    VTKResultFile, caseName, pathToFile)
 %% Licensing
 %
 % License:         BSD License
@@ -36,7 +37,7 @@ function [up,upDot,upDDot,noTimeStep] = computeInitialConditionsFromVTKFileFEM4N
 %                     for the acceleration and the pressure rate field
 %            upDDot : Dummny variable needed only for computational 
 %                     structural dynamics
-%        noTimeStep : The time step where the simulation has been paused
+%       numTimeStep : The time step where the simulation has been paused
 %
 % Function layout :
 %

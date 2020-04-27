@@ -1,5 +1,5 @@
-function dR = computeIGABasisFunctionsAndDerivativesForSurface...
-    (xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,isNURBS,mixedDerivOrder)
+function dR = computeIGABasisFunctionsAndDerivativesForSurface ...
+    (xiSpan, p, xi, Xi, etaSpan, q, eta, Eta, CP, isNURBS, mixedDerivOrder)
 %% Licensing
 %
 % License:         BSD License

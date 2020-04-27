@@ -1,5 +1,5 @@
-function dt = computeTriangulationOfPolygonInBSplineParameterSpace...
-    (polygon,knotIntersections,parameterLines,tolPoints)
+function dt = computeTriangulationOfPolygonInBSplineParameterSpace ...
+    (polygon, knotIntersections, parameterLines, tolPoints)
 %% Licensing
 %
 % License:         BSD License

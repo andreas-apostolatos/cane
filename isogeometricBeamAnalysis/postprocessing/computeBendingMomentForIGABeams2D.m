@@ -1,4 +1,5 @@
-function M = computeBendingMomentForIGABeams2D(knotSpanIndex,p,dHat,parameters,analysis,G,dG,dR)
+function M = computeBendingMomentForIGABeams2D ...
+    (knotSpanIndex, p, dHat, parameters, analysis, G, dG, dR)
 %% Licensing
 %
 % License:         BSD License

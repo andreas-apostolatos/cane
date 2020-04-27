@@ -1,5 +1,6 @@
 function valuesInhomDBCModified = ...
-    computeInletVelocityPowerLaw(fldMsh, inhomDBC, valuesInhomDBC, u0)
+    computeInletVelocityPowerLaw ...
+    (fldMsh, inhomDBC, valuesInhomDBC, u0)
 %% Licensing
 %
 % License:         BSD License

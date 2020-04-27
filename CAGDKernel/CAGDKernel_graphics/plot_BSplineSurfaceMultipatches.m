@@ -1,4 +1,4 @@
-function plot_BSplineSurfaceMultipatches(BSplinePatches,color)
+function plot_BSplineSurfaceMultipatches(BSplinePatches, color)
 %% Licensing
 %
 % License:         BSD License

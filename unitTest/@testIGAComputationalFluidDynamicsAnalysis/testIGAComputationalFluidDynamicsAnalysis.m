@@ -1,3 +1,4 @@
+classdef testIGAComputationalFluidDynamicsAnalysis < matlab.unittest.TestCase
 %% Licensing
 %
 % License:         BSD License
@@ -5,14 +6,14 @@
 %
 % Main authors:    Andreas Apostolatos
 %
-classdef testIGAComputationalFluidDynamicsAnalysis < matlab.unittest.TestCase
-    %% Class definition
-    %
-    % Test suites for the isogeometric incompressible flow analysis.
-    %
-    %% Method definitions
-    methods (Test)
-        testIGA4StokesSteadyState2D(testCase)
-        testIGA4TransientTaylorGreenVortices2D(testCase)
-    end
+%% Class definition
+%
+% Test suites for the isogeometric incompressible flow analysis.
+%
+%% Method definitions
+methods (Test)
+    testIGA4StokesSteadyState2D(testCase)
+    testIGA4TransientTaylorGreenVortices2D(testCase)
+end
+
 end

@@ -1,4 +1,4 @@
-function [ result ] = phorzcat( varargin )
+function [ result ] = phorzcat(varargin)
 %% Licensing
 %
 % License:         BSD License
@@ -20,5 +20,6 @@ function [ result ] = phorzcat( varargin )
 % result : The concatenated 3-d aray
 %
 %% Function main body
+result = cat(3, varargin{:});
 
-result = cat( 3, varargin{:} );
+end

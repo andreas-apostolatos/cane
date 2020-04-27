@@ -1,4 +1,4 @@
-function c = mergesorted(a,b)
+function c = mergesorted(a, b)
 %% Licensing
 %
 % License:         BSD License

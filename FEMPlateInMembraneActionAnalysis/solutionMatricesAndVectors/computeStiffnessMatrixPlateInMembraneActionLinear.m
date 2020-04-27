@@ -1,5 +1,5 @@
-function K = computeStiffnessMatrixPlateInMembraneActionLinear...
-    (mesh,materialProperties,analysis)
+function K = computeStiffnessMatrixPlateInMembraneActionLinear ...
+    (mesh, propParameters, propAnalysis)
 %% Licensing
 %
 % License:         BSD License
@@ -14,8 +14,8 @@ function K = computeStiffnessMatrixPlateInMembraneActionLinear...
 %
 %              Input :
 %               mesh : The mesh of the structure
-% materialProperties : The material properties of the structure
-%           analysis : Analysis type (plane stress or plane strain)
+%     propParameters : The material properties of the structure
+%       propAnalysis : Analysis type (plane stress or plane strain)
 %
 %             Output :
 %                  K : Master stiffness matrix

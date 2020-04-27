@@ -1,5 +1,5 @@
-function [dx,dy,dz] = ...
-    computeTransientYMotion(x,y,z,t)
+function [dx, dy, dz] = ...
+    computeTransientYMotion(x, y, z, t)
 %% Licensing
 %
 % License:         BSD License
@@ -22,7 +22,7 @@ function [dx,dy,dz] = ...
 %                       dx : movement in x coordinate of the current node
 %                       dy : movement in y coordinate of the current node
 %                       dz : movement in z coordinate of the current node
-
+%
 %% Function main body
 amplification = .5;
 frequency = 10;

@@ -11,15 +11,14 @@ function checkInputForBSplineCurve(p, numKnots, numCPs)
 % checks compatibility of input parameters for a NURBS line
 %
 %    Input :
-%        p : Polynomial degree
-% numKnots : Number of knots
-%   numCPs : number of Control Points
+%        p : polynomial order
+% numKnots : number of knots
+%   numCPs : number of control points
 %
 % Output :
 %          messages on the compatibility
 %
 %% Function main body
-
 if (numCPs + p + 1 ~= numKnots)
   error('U, p and Control points dont match!')
 end
