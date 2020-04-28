@@ -69,7 +69,7 @@ end
 %% 2. Compute the right hand-side (RHS)/residual vector considering the inertia forces for the implicit Euler time integration scheme
 if ischar(damMtx)
     resVct = resVct + ...
-        (massMtx/dt + tanMtx)*u - massMtx/dt*uSaved;  % transient (implicit Euler)
+        massMtx/dt*uSaved;  % transient (implicit Euler)
 else
     error('Damping not yet supported for this time integration type');
 end

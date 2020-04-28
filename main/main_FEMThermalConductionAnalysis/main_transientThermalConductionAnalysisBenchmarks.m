@@ -103,7 +103,7 @@ propIDBC = [];
 %     error('Invalid time integration method selected in propStrDynamics.method as %s',propThermalDynamics.method);
 % end
 
-propThermalDynamics.computeProblemMtrcsTransient = @computeProblemMtrcsGalerkinThermalConduction;
+propThermalDynamics.computeProblemMtrcsTransient = @computeProblemMtrcsCrankNicolsonThermalConduction;
 propThermalDynamics.computeUpdatedVct = @computeBETITransientUpdatedVctAccelerationField;
 
 % Initialize graphics index

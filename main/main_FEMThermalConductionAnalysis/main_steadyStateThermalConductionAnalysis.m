@@ -51,8 +51,9 @@ addpath('../../FEMThermalConductionAnalysis/solvers/',...
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
 % caseName = 'steadyStateSquareCavity';
 % caseName = 'steadyStateWallConduction';
-caseName = 'rectangularPlateWithTwoHoles';
+% caseName = 'rectangularPlateWithTwoHoles';
 % caseName = 'rectangularPlateWithCenterHole';
+caseName = 'trapezoidalPlate';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...

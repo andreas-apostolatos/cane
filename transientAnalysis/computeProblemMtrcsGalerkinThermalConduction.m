@@ -60,14 +60,15 @@ stiffMtx = tanMtx;
 
 %% 1. Compute the problem matrix considering the inertia forces for the Galerkin time integration scheme
 if ischar(damMtx)
-    tanMtx =  massMtx + (2/3)*stiffMtx*dt; % transient (Galerkin)
+    tanMtx =  massMtx/dt + (2/3)*stiffMtx; % transient (Galerkin)
 else
     error('Damping not yet supported for this time integration type');
 end
 
 %% 2. Compute the right hand-side (RHS)/residual vector considering the inertia forces for the Galerkin time time integration scheme
 if ischar(damMtx)
-    resVct = ( massMtx - (dt/3)*stiffMtx )*u + dt*resVct - resVct;  % transient (Galerkin)
+%     resVct = ( massMtx - (dt/3)*stiffMtx )*u + dt*resVct - resVct;  % transient (Galerkin)
+    resVct = resVct + ( massMtx/dt - (1/3)*stiffMtx )*uSaved; % transient (Galerkin)
 else
     error('Damping not yet supported for this time integration type');
 end

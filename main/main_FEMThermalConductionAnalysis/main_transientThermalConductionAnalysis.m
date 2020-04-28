@@ -55,7 +55,7 @@ addpath('../../FEMThermalConductionAnalysis/solvers/',...
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
 % caseName = 'transientSquareCavity';
 % caseName = 'transientWallHeating';
-caseName = 'thermalConduction_trapezoid';
+caseName = 'trapezoidalPlate';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
@@ -82,25 +82,28 @@ propIDBC = [];
 
 % Choose the appropriate matrix update computation corresponding to the
 % chosen time integration scheme
-if strcmp(propThermalDynamics.method,'IMPLICIT_EULER')
-    propThermalDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsImplicitEuler;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propThermalDynamics.method,'GALERKIN')
-    propThermalDynamics.computeProblemMtrcsTransient =  ...
-        @computeProblemMtrcsGalerkin;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propThermalDynamics.method,'CRANK_NICOLSON')
-    propThermalDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsCrankNicolson;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-else
-    error('Invalid time integration method selected in propStrDynamics.method as %s', ...
-        propThermalDynamics.method);
-end
+% if strcmp(propThermalDynamics.method,'IMPLICIT_EULER')
+%     propThermalDynamics.computeProblemMtrcsTransient = ...
+%         @computeProblemMtrcsImplicitEulerThermalConduction;
+%     propThermalDynamics.computeUpdatedVct = ...
+%         @computeBETITransientUpdatedVctAccelerationField;
+% elseif strcmp(propThermalDynamics.method,'GALERKIN')
+%     propThermalDynamics.computeProblemMtrcsTransient =  ...
+%         @computeProblemMtrcsGalerkinThermalConduction;
+%     propThermalDynamics.computeUpdatedVct = ...
+%         @computeBETITransientUpdatedVctAccelerationField;
+% elseif strcmp(propThermalDynamics.method,'CRANK_NICOLSON')
+%     propThermalDynamics.computeProblemMtrcsTransient = ...
+%         @computeProblemMtrcsCrankNicolsonThermalConduction;
+%     propThermalDynamics.computeUpdatedVct = ...
+%         @computeBETITransientUpdatedVctAccelerationField;
+% else
+%     error('Invalid time integration method selected in propStrDynamics.method as %s', ...
+%         propThermalDynamics.method);
+% end
+
+propThermalDynamics.computeProblemMtrcsTransient = @computeProblemMtrcsCrankNicolsonThermalConduction;
+propThermalDynamics.computeUpdatedVct = @computeBETITransientUpdatedVctAccelerationField;
 
 % Initialize graphics index
 propGraph.index = 1;

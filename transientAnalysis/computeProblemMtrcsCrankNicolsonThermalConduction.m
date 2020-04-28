@@ -61,16 +61,14 @@ stiffMtx = tanMtx;
 
 %% 1. Compute the problem matrix considering the inertia forces for the Crank-Nicolson time integration scheme
 if ischar(damMtx)
-    tanMtx = tanMtx + ...  % steady-state
-        2 * massMtx / dt;    % transient (Crank-Nicolson)
+    tanMtx = massMtx/dt + 0.5*stiffMtx;
 else
     error('Damping not yet supported for this time integration type');
 end
 
 %% 2. Compute the right hand-side (RHS)/residual vector considering the inertia forces for the Crank-Nicolson time integration scheme
 if ischar(damMtx)
-    resVct = resVct - ...  % steady-state
-        stiffMtx*u + 2*massMtx*u/dt;  % transient (Crank-Nicolson)
+    resVct = resVct + ( massMtx/dt - 0.5*stiffMtx )*uSaved;
 else
     error('Damping not yet supported for this time integration type');
 end

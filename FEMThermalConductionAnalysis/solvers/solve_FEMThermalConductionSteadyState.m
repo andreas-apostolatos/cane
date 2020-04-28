@@ -154,6 +154,11 @@ freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 %% 2. Compute the flux (load) vector
 F = computeLoadVctFEMThermalConductionAnalysis...
     (strMsh, propAnalysis, propNBC, t, propGaussInt, outMsg);
+% F = F ~= 0;
+% 
+% % x = strMsh.nodes(propNBC.nodes,1:2);
+% x = strMsh.nodes(F,1:2);
+% plot(x(:,1),x(:,2),'ob');
 
 %% 3. Solve the linear equation system
 [dHat, FComplete, ~, minElSize] = solve_FEMLinearSystem ...
