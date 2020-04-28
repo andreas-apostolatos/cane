@@ -160,7 +160,7 @@ for iElmnt = 1:length(propNBC.lines(:, 1))
         detJxxi = norm(x2 - x1)/2;
         
         %% 2v.6. Compute the element load vector on the Gauss point
-        FElOnGP = N'*fluxOnGP*detJxxi*GW(iGP);
+        FElOnGP = N*fluxOnGP*detJxxi*GW(iGP);
         
         %% 2v.7. Assemble the contribution to the global load vector via the EFT
         F(EFT) = F(EFT) + FElOnGP; 

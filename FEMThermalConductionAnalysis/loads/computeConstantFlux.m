@@ -1,0 +1,28 @@
+function load = computeConstantFlux(x, y, z, t, propNBC)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%                  Marko Leskovar
+%
+%% Function documentation
+%
+% Returns the applied load vector at the physical location x,y,z and at
+% time t. The load is assumed to be constant and vertical (y-direction).
+%
+%       Input :
+%       x,y,z : The physical location where the load is applied
+%           t : The time instance
+%     propNBC : User-defined parameters for the load,
+%                  .tractionLoadVct : Externally applied traction vector
+%
+%      Output :
+%        load :  The load vector [loadx; loady; loadz]
+%
+%% Function main body
+load = [propNBC.flux; 0; 0];
+
+end
+

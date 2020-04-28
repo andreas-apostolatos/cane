@@ -84,24 +84,27 @@ propIDBC = [];
 
 % Choose the appropriate matrix update computation corresponding to the
 % chosen time integration scheme
-if strcmp(propThermalDynamics.method,'IMPLICIT_EULER')
-    propThermalDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsImplicitEuler;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propThermalDynamics.method,'GALERKIN')
-    propThermalDynamics.computeProblemMtrcsTransient =  ...
-        @computeProblemMtrcsGalerkin;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propThermalDynamics.method,'CRANK_NICOLSON')
-    propThermalDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsCrankNicolson;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-else
-    error('Invalid time integration method selected in propStrDynamics.method as %s',propThermalDynamics.method);
-end
+% if strcmp(propThermalDynamics.method,'IMPLICIT_EULER')
+%     propThermalDynamics.computeProblemMtrcsTransient = ...
+%         @computeProblemMtrcsImplicitEulerThermalConduction;
+%     propThermalDynamics.computeUpdatedVct = ...
+%         @computeBETITransientUpdatedVctAccelerationField;
+% elseif strcmp(propThermalDynamics.method,'GALERKIN')
+%     propThermalDynamics.computeProblemMtrcsTransient =  ...
+%         @computeProblemMtrcsGalerkinThermalConduction;
+%     propThermalDynamics.computeUpdatedVct = ...
+%         @computeBETITransientUpdatedVctAccelerationField;
+% elseif strcmp(propThermalDynamics.method,'CRANK_NICOLSON')
+%     propThermalDynamics.computeProblemMtrcsTransient = ...
+%         @computeProblemMtrcsCrankNicolsonThermalConduction;
+%     propThermalDynamics.computeUpdatedVct = ...
+%         @computeBETITransientUpdatedVctAccelerationField;
+% else
+%     error('Invalid time integration method selected in propStrDynamics.method as %s',propThermalDynamics.method);
+% end
+
+propThermalDynamics.computeProblemMtrcsTransient = @computeProblemMtrcsGalerkinThermalConduction;
+propThermalDynamics.computeUpdatedVct = @computeBETITransientUpdatedVctAccelerationField;
 
 % Initialize graphics index
 propGraph.index = 1;
@@ -149,7 +152,7 @@ elseif strcmp(caseName, 'transientWallHeating')
     propPostproc.T2 = max(valuesInhomDOFs);
     
     % Compute thermal diffusivity
-    propPostproc.alpha = propParameters.k/(propParameters.rho*propParameters.cp);
+    propPostproc.alpha = propParameters.alpha;
 end
 
 %% Visualize analytical solution at one time instance

@@ -132,6 +132,9 @@ propParameters.k = str2double(out{1}{4});
 % Read specific heat
 propParameters.cp = str2double(out{1}{6});
 
+% Compute thermal diffusivity
+propParameters.alpha = propParameters.k/(propParameters.rho*propParameters.cp);
+
 %% 4. Load the nonlinear method (heat transfer without internal heat generation is always linear)
 propNLinearAnalysis.method = 'UNDEFINED';
 propNLinearAnalysis.noLoadSteps = [];
