@@ -67,7 +67,6 @@ end
 
 %% 2. Compute the right hand-side (RHS)/residual vector considering the inertia forces for the Galerkin time time integration scheme
 if ischar(damMtx)
-%     resVct = ( massMtx - (dt/3)*stiffMtx )*u + dt*resVct - resVct;  % transient (Galerkin)
     resVct = resVct + ( massMtx/dt - (1/3)*stiffMtx )*uSaved; % transient (Galerkin)
 else
     error('Damping not yet supported for this time integration type');

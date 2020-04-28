@@ -10,7 +10,7 @@
 %
 % Task : Transient heat transfer analysis for two benchmark cases
 %
-% Date : 21.04.2020
+% Date : 28.04.2020
 %
 %% Preamble
 clear;
@@ -101,7 +101,7 @@ integrationSchemes = {@computeProblemMtrcsImplicitEulerThermalConduction
                   
 % Define name and color for each scheme
 name = {'Implicit';'Galerkin';'Crank-Nicolson'};
-color = {'blue';'red';'green'};
+color = {'blue';'red';'black'};
        
 %% Initialize figure properties
 figure(propGraph.index)
@@ -136,8 +136,8 @@ for n = 1:length(integrationSchemes)
     %% Plot the selected resultant at the chosen Cartesian location over time
     plot(timeSpaceDiscrete, resultantNumerical, color{n},'DisplayName',name{n});
     
-    temperature50s(n,1) = resultantNumerical(timeSpaceDiscrete == 50);
-    temperature75s(n,1) = resultantNumerical(timeSpaceDiscrete == 75);
+%     temperature50s(n,1) = resultantNumerical(timeSpaceDiscrete == 50);
+%     temperature75s(n,1) = resultantNumerical(timeSpaceDiscrete == 75);
 end
 
 %% Update graph properties
@@ -149,6 +149,6 @@ hold off
 propGraph.index = propGraph.index + 1;
 
 %% Print out the temperature at selected time instances
-table(name,temperature50s,temperature75s)
+% table(name,temperature50s,temperature75s)
 
 %% END OF THE SCRIPT
