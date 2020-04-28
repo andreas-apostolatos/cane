@@ -8,9 +8,9 @@
 %
 %% Script documentation
 %
-% Task : Transient thermal conduction analysis
+% Task : Transient heat transfer analysis for two benchmark cases
 %
-% Date : 17.04.2020
+% Date : 21.04.2020
 %
 %% Preamble
 clear;
@@ -53,9 +53,7 @@ addpath('../../FEMThermalConductionAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
-caseName = 'transientSquareCavity';
-% caseName = 'transientWallHeating';
-% caseName = 'trapezoidalPlateHeatFlux';
+caseName = 'trapezoidalPlateHeatFlux';
 % caseName = 'rectangularPlateHeatFlux';
 
 % Parse the data from the GiD input file
@@ -73,7 +71,7 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 
 % On the writing the output function
-propVTK.isOutput = true;
+propVTK.isOutput = false;
 propVTK.writeOutputToFile = @writeOutputFEMThermalConductionAnalysisToVTK;
 propVTK.VTKResultFile = 'undefined';
 
@@ -84,48 +82,73 @@ propGraph.index = 1;
 updateInhomDOFs = 'undefined';
 propIDBC = [];
 
-% Choose the appropriate matrix update computation corresponding to the
-% chosen time integration scheme
-if strcmp(propThermalDynamics.method,'IMPLICIT_EULER')
-    propThermalDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsImplicitEulerThermalConduction;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propThermalDynamics.method,'GALERKIN')
-    propThermalDynamics.computeProblemMtrcsTransient =  ...
-        @computeProblemMtrcsGalerkinThermalConduction;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-elseif strcmp(propThermalDynamics.method,'CRANK_NICOLSON')
-    propThermalDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsCrankNicolsonThermalConduction;
-    propThermalDynamics.computeUpdatedVct = ...
-        @computeBETITransientUpdatedVctAccelerationField;
-else
-    error('Invalid time integration method selected in propStrDynamics.method as %s', ...
-        propThermalDynamics.method);
-end
+% On post processing
+propPostproc.computeAnalytical = 'undefined';
 
 % Define the initial condition function 
 computeInitialConditions = @computeInitCndsFEMThermalConductionAnalysis;
 
 %% Define intial temperature and/or applied heat flux
-if strcmp(caseName,'transientSquareCavity')
-    propThermalDynamics.temperatureInit = 300;
-elseif strcmp(caseName,'transientWallHeating')
-    propThermalDynamics.temperatureInit = 200;
-elseif strcmp(caseName,'trapezoidalPlateHeatFlux') || strcmp(caseName,'rectangularPlateHeatFlux')
+if strcmp(caseName,'trapezoidalPlateHeatFlux') || strcmp(caseName,'rectangularPlateHeatFlux')
     propThermalDynamics.temperatureInit = 300;
     propNBC.flux = 100; 
 end
 
-%% Solve the transient heat transfer problem
-[dHistory, minElSize] = solve_FEMThermalConductionTransient ...
+%% Define the integration schemes function handles
+integrationSchemes = {@computeProblemMtrcsImplicitEulerThermalConduction
+                      @computeProblemMtrcsGalerkinThermalConduction
+                      @computeProblemMtrcsCrankNicolsonThermalConduction};
+                  
+% Define name and color for each scheme
+name = {'Implicit';'Galerkin';'Crank-Nicolson'};
+color = {'blue';'red';'green'};
+       
+%% Initialize figure properties
+figure(propGraph.index)
+hold on
+
+%% Loop over all integration schemes to compare the results
+for n = 1:length(integrationSchemes)
+    
+    %% Define the time integration rules
+    propThermalDynamics.computeProblemMtrcsTransient = ...
+        integrationSchemes{n};
+    propThermalDynamics.computeUpdatedVct = ...
+        @computeBETITransientUpdatedVctAccelerationField;
+    
+    %% Solve the transient heat transfer problem
+    [dHistory, minElSize] = solve_FEMThermalConductionTransient ...
     (strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     updateInhomDOFs, propNBC, @computeLoadVctFEMThermalConductionAnalysis, ...
     propParameters, computeBodyForces, propAnalysis, computeInitialConditions, ...
-    @computeStiffMtxAndLoadVctFEMThermalConductionAnalysisCST,...
+    @computeStiffMtxAndLoadVctFEMThermalConductionAnalysisCST, ...
     propNLinearAnalysis, propIDBC, propThermalDynamics, solve_LinearSystem, ...
     @solve_FEMLinearSystem, propGaussInt, propVTK, caseName,'outputEnabled');
+    
+    %% Compute the selected resultant at the chosen Cartesian location over time 
+    x = -10;
+    y = 0;
+    [timeSpaceDiscrete, resultantNumerical, ~] = ...
+        computeResultantAtPointOverTime...
+        (x, y, strMsh, dHistory, ...
+        propThermalDynamics, propPostproc, 'outputEnabled');
+
+    %% Plot the selected resultant at the chosen Cartesian location over time
+    plot(timeSpaceDiscrete, resultantNumerical, color{n},'DisplayName',name{n});
+    
+    temperature50s(n,1) = resultantNumerical(timeSpaceDiscrete == 50);
+    temperature75s(n,1) = resultantNumerical(timeSpaceDiscrete == 75);
+end
+
+%% Update graph properties
+xlabel('Time [seconds]');
+ylabel('Temperature');
+title(sprintf('Evolution of Temperature at point X = (%d, %d)', x, y));
+legend('Orientation', 'horizontal', 'Location', 'southoutside');  
+hold off
+propGraph.index = propGraph.index + 1;
+
+%% Print out the temperature at selected time instances
+table(name,temperature50s,temperature75s)
 
 %% END OF THE SCRIPT

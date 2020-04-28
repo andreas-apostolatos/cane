@@ -100,11 +100,11 @@ VALUE: IMPLICIT_EULER
 QUESTION: TC_Start_Time
 VALUE: 0
 QUESTION: TC_End_Time
-VALUE: 10
+VALUE: 100
 QUESTION: TC_Number_of_Time_Steps
-VALUE: 1000
+VALUE: 40
 QUESTION: TC_Adaptive_Time_Stepping#CB#(true,false)
-VALUE: false
+VALUE: true
 TITLE: THERMAL_INTEGRATION
 QUESTION: TC_Gauss_Integration_Type#CB#(default,user)
 VALUE: default

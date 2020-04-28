@@ -96,7 +96,7 @@ nDOFs = noNodes;
 DOFNumbering = 1:nDOFs;
 
 % Path where to write the output
-pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
+pathToOutput = '../../outputVTK/FEMThermalConductionAnalysis/';
 
 % Write output to VTK
 if propVTK.isOutput

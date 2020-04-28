@@ -70,13 +70,13 @@ computeBodyForces = 'undefined';
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 
-% Assign the flux magnitude
-propNBC.tractionLoadVct = 0; 
-
 % On the writing the output function
 propVTK.isOutput = false;
 propVTK.writeOutputToFile = @writeOutputFEMThermalConductionAnalysisToVTK;
 propVTK.VTKResultFile = 'undefined';
+
+% Initialize graphics index
+propGraph.index = 1;
 
 % On transient inhomogeneous Dirichlet boundary conditions
 updateInhomDOFs = 'undefined';
@@ -84,37 +84,35 @@ propIDBC = [];
 
 % Choose the appropriate matrix update computation corresponding to the
 % chosen time integration scheme
-% if strcmp(propThermalDynamics.method,'IMPLICIT_EULER')
-%     propThermalDynamics.computeProblemMtrcsTransient = ...
-%         @computeProblemMtrcsImplicitEulerThermalConduction;
-%     propThermalDynamics.computeUpdatedVct = ...
-%         @computeBETITransientUpdatedVctAccelerationField;
-% elseif strcmp(propThermalDynamics.method,'GALERKIN')
-%     propThermalDynamics.computeProblemMtrcsTransient =  ...
-%         @computeProblemMtrcsGalerkinThermalConduction;
-%     propThermalDynamics.computeUpdatedVct = ...
-%         @computeBETITransientUpdatedVctAccelerationField;
-% elseif strcmp(propThermalDynamics.method,'CRANK_NICOLSON')
-%     propThermalDynamics.computeProblemMtrcsTransient = ...
-%         @computeProblemMtrcsCrankNicolsonThermalConduction;
-%     propThermalDynamics.computeUpdatedVct = ...
-%         @computeBETITransientUpdatedVctAccelerationField;
-% else
-%     error('Invalid time integration method selected in propStrDynamics.method as %s',propThermalDynamics.method);
-% end
+if strcmp(propThermalDynamics.method,'IMPLICIT_EULER')
+    propThermalDynamics.computeProblemMtrcsTransient = ...
+        @computeProblemMtrcsImplicitEulerThermalConduction;
+    propThermalDynamics.computeUpdatedVct = ...
+        @computeBETITransientUpdatedVctAccelerationField;
+elseif strcmp(propThermalDynamics.method,'GALERKIN')
+    propThermalDynamics.computeProblemMtrcsTransient =  ...
+        @computeProblemMtrcsGalerkinThermalConduction;
+    propThermalDynamics.computeUpdatedVct = ...
+        @computeBETITransientUpdatedVctAccelerationField;
+elseif strcmp(propThermalDynamics.method,'CRANK_NICOLSON')
+    propThermalDynamics.computeProblemMtrcsTransient = ...
+        @computeProblemMtrcsCrankNicolsonThermalConduction;
+    propThermalDynamics.computeUpdatedVct = ...
+        @computeBETITransientUpdatedVctAccelerationField;
+else
+    error('Invalid time integration method selected in propStrDynamics.method as %s',propThermalDynamics.method);
+end
 
-propThermalDynamics.computeProblemMtrcsTransient = @computeProblemMtrcsCrankNicolsonThermalConduction;
-propThermalDynamics.computeUpdatedVct = @computeBETITransientUpdatedVctAccelerationField;
-
-% Initialize graphics index
-propGraph.index = 1;
-
-%% Define the initial condition function
+% Define the initial condition function 
 computeInitialConditions = @computeInitCndsFEMThermalConductionAnalysis;
+
+%% Define intial temperature and/or applied heat flux
 if strcmp(caseName, 'transientSquareCavity')
     propThermalDynamics.temperatureInit = 300;
+    propNBC.flux = 0; 
 elseif strcmp(caseName, 'transientWallHeating')
     propThermalDynamics.temperatureInit = 200;
+    propNBC.flux = 0; 
 end
 
 %% Solve the transient heat transfer problem

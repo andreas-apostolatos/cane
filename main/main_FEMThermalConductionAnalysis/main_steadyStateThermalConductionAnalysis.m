@@ -49,11 +49,12 @@ addpath('../../FEMThermalConductionAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
-% caseName = 'steadyStateSquareCavity';
+caseName = 'steadyStateSquareCavity';
 % caseName = 'steadyStateWallConduction';
 % caseName = 'rectangularPlateWithTwoHoles';
 % caseName = 'rectangularPlateWithCenterHole';
-caseName = 'trapezoidalPlate';
+% caseName = 'trapezoidalPlateHeatFlux';
+% caseName = 'rectangularPlateHeatFlux';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
@@ -83,11 +84,16 @@ propHeatDynamics = 'undefined';
 % Initialize graphics index
 graph.index = 1;
 
-% Assign load (computeConstantFlux)
-propNBC.flux = 5e4;
+%% Assign heat flux (load)
+% computeConstantFlux
+if strcmp(caseName, 'rectangularPlateWithTwoHoles')
+    propNBC.flux = 5e4;
+elseif strcmp(caseName,'trapezoidalPlateHeatFlux') || strcmp(caseName,'rectangularPlateHeatFlux')
+    propNBC.flux = 100;
+end
 
 %% Output data to a VTK format
-pathToOutput = '../../outputVTK/FEMHeatTransferAnalysis/';
+pathToOutput = '../../outputVTK/FEMThermalConductionAnalysis/';
 
 %% Initialize solution
 numNodes = length(strMsh.nodes(:,1));

@@ -1,12 +1,12 @@
-BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/thermalConduction_trapezoid.gid/thermalConduction_trapezoid.vv
-   x -10.1343536376953125 30.8796100616455078
-   y 17.5367488861083984 -9.55981159210205078
+BeginZE C:/Users/marki/Desktop/marko-hiwi/gid_cases/trapezoidalPlate.gid/trapezoidalPlate.vv
+   x -18.25775146484375 19.7493171691894531
+   y 5.08405017852783203 -12.0397310256958008
    z -35 35
    e 11.6666669845581055
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 10 6.25 0
+   c 0 -3.75 0
    pd 0
    pno 0
    pfo 0
@@ -29,7 +29,7 @@ BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/thermalC
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/thermalConduction_trapezoid.gid/thermalConduction_trapezoid.vv
+EndZE C:/Users/marki/Desktop/marko-hiwi/gid_cases/trapezoidalPlate.gid/trapezoidalPlate.vv
 
 BeginMirror
    Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror

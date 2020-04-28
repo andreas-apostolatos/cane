@@ -155,12 +155,13 @@ for iElmnt = 1:length(propNBC.lines(:, 1))
         %% 2v.4. Compute the applied load onto the Gauss Point
         fluxOnGP = squeeze(loadFctHandle(xGP(1, 1), xGP(1, 2), xGP(1, 3), ...
             t, propNBC));
+        fluxOnGP1D = fluxOnGP(1,1);
         
         %% 2v.5. Compute the determinant of the transformation from the physical space to the parameter space
         detJxxi = norm(x2 - x1)/2;
         
         %% 2v.6. Compute the element load vector on the Gauss point
-        FElOnGP = N*fluxOnGP*detJxxi*GW(iGP);
+        FElOnGP = N'*fluxOnGP1D*detJxxi*GW(iGP);
         
         %% 2v.7. Assemble the contribution to the global load vector via the EFT
         F(EFT) = F(EFT) + FElOnGP; 
