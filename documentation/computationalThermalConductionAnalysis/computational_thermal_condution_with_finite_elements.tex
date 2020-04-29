@@ -28,6 +28,8 @@
 
 \begin{document}
 
+\sloppy
+
 \maketitle
 
 \section{Theory}\label{sec:theory}
@@ -178,6 +180,145 @@ By substituting $\theta = 1$ into Eq.~\eqref{eq:general_cn_method} we obtain the
 
 
 \section{Numerical examples}\label{subsec:numerical_examples}
+
+
+
+\section{Preprocessing using GiD}
+
+Herein it is introduced a tutorial for the demonstration of all the necessary steps in the setup of a GiD input file that is used in FEM thermal conduction analysis. GiD only acts as a preprocessor while the actual analysis takes place within \textit{cane} MATLAB framework. Setting up a thermal conduction problem is exactly the same as setting up a classic FEM plate in membrane action analysis, the only difference here being in naming of the functions and time integration options for transient analysis.
+
+\subsection{Problem Type}
+
+The user must specify the MATLAB GiD problem type which can be found under \verb+./cane/matlab.gid+  (Figure~\ref{im:Problem_type_geometry}). Select \textit{Data $\rightarrow$ Problem Type $\rightarrow$ Load…}, find the folder where the MATLAB problem type is saved and then select \textit{problemTypeGiD/matlab}. This is a custom problem type made specifically for the interface between GiD and \textit{cane} MATLAB framework. This problem type can be expanded along with the parser of the corresponding analysis (e.g. FEM thermal conduction analysis, etc.) depending on the user needs.
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.9\textwidth}\import{./figures/}{problem_type_geometry.pdf_tex}
+	\caption{Problem type and geometry selection.}
+	\label{im:Problem_type_geometry}
+\end{figure}
+
+
+\subsection{Geometry setup}
+
+To create a geometry, select for \textit{create object $\rightarrow$ rectangle}. The rectangle can be drawn by clicking on the drawing plane or by specifying the coordinates of the its corner edges (Figure~\ref{im:Problem_type_geometry}). The coordinates must be typed in the format $\mathbf{x}$ $\mathbf{y}$ $\mathbf{z}$. They must contain white space between each coordinate. Enter the first point $\mathbf{0}$ $\mathbf{0}$ in the command line and confirm with \textit{esc}. Now enter the second point $\mathbf{1}$ $\mathbf{1}$ and again confirm with \textit{esc}. Now we can create two circles with coordinates $\mathbf{0.25}$ $\mathbf{0.25}$ and $\mathbf{0.75}$ $\mathbf{0.75}$ with the normal in positive Z direction and radius $\mathbf{0.1}$. \\
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.9\textwidth}\import{./figures/}{before_boolean.pdf_tex}
+	\caption{Subtracting circle from rectangle.}
+	\label{im:before_boolean}
+\end{figure}
+
+There are three unrelated surface geometries as shown in Figure~\ref{im:before_boolean}. Next step is to subtract both circles from the rectangle to get the desired shape. Select \textit{Geometry $\rightarrow$ Edit $\rightarrow$ Surface Boolean op. $\rightarrow$ Substraction}. Firstly, the surface to be subtracted (rectangle) needs to be selected, then the action needs to be confirmed using \textit{esc} and lastly the subtracting surfaces (both circles) needs to be selected. The resulting geometry is now complete (Figure~\ref{im:after_boolean}). At this point it is recommended to save the project. \\
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.6\textwidth}\import{./figures/}{after_boolean.pdf_tex}
+	\caption{Final geometry.}
+	\label{im:after_boolean}
+\end{figure}
+
+If you are unsure what to click or how to use certain commands, take a look at console output above the command line. Just be aware that simple \textit{ctrl+Z} undo command does not exist in GiD.
+
+
+\subsection{Dirichlet boundary conditions}
+
+To specify the Dirichlet boundary conditions select \textit{Data $\rightarrow$ Conditions $\rightarrow$ Constrains}. Select \textit{lines} (line icon) as selection type and select \textit{Thermal-Dirichlet}. Fix the temperature $\mathbf{T}$ on bottom and right line as shown in Figure~\ref{im:boundary_conditions}. Be aware that if you again select \textit{Thermal-Dirichlet} boundary conditions on the same line or node, the new condition will overwrite the previous one.
+
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.9\textwidth}\import{./figures/}{boundary_conditions.pdf_tex}
+	\caption{Applied Dirichlet boundary conditions.}
+	\label{im:boundary_conditions}
+\end{figure}
+
+\subsection{Neumann boundary conditions}
+
+To apply loads (heat flux) on the structure the selection \textit{Data $\rightarrow$ Conditions $\rightarrow$ Loads} must be chosen. Then, select \textit{Thermal-Flux} from the drop-down menu and type in a function handle to the load (heat flux) computation function which is implemented in MATLAB. Change the default \textit{functionHandle} to the \textit{computeConstantFlux} and apply the load on both circles according to Figure~\ref{im:load}. \\
+
+Function \textit{computeConstantFlux} is self-explanatory as it only applies constant flux on the structure. The magnitude of the load (flux) must be specified within MATLAB. Currently there is only one function implement in \verb+./FEMThermalConductionAnalysis/loads+. Within this folder user-specific functions may be implemented in the same manner as the existing ones. More options for specifying loads can be found under \verb+./FEMPlateInMembraneActionAnalysis/loads+.
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.9\textwidth}\import{./figures/}{load.pdf_tex}
+	\caption{Applied constant vertical load.}
+	\label{im:load}
+\end{figure}
+
+
+\subsection{Computational domain definition}
+
+The computational mesh needs then to be assigned to a domain, so that the nodes and the elements for the chosen domain are written out to the desirable input file. Select \textit{Data $\rightarrow$ Conditions $\rightarrow$ Domains}, choose \textit{Thermal-Nodes} from the drop-down menu and select the whole surface according to Figure~\ref{im:domains}. Confirm with \textit{esc}. Then, select \textit{Thermal-Elements} and repeat the previous step to assign the elements to the computational domain.
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.9\textwidth}\import{./figures/}{domains.pdf_tex}
+	\caption{Defined domain for the mesh elements and nodes.}
+	\label{im:domains}
+\end{figure}
+
+
+\subsection{Material properties}
+
+In order to select the material properties, choose \textit{Data $\rightarrow$ Materials $\rightarrow$ Solids}. There one can select between two default materials \textit{Steel} and \textit{Aluminum} from the drop-down menu (Figure~\ref{im:materials}) or just change the given parameters to adjust material properties. Select \textit{Heat-Transfer} as type and apply the material to the geometry of the problem by selecting \textit{Assign $\rightarrow$ Surfaces} and choose the surface of defining the problem’s domain. Save the changes if asked so. The user may also expand the materials selection by editing the corresponding files under the folder \textit{matlab.gid}.
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.9\textwidth}\import{./figures/}{materials.pdf_tex}
+	\caption{Define material over surfaces.}
+	\label{im:materials}
+\end{figure}
+
+
+\subsection{Computational mesh generation}
+
+Lastly, the finite element mesh needs to be generated. The simplest way is to go to \textit{Mesh $\rightarrow$ Generate Mesh…} and specify the element size (Figure~\ref{im:mesh}). Be aware that only CST elements are implemented in \textit{cane} MATLAB framework for the thermal conduction analysis. So make sure to select triangular elements if using a structured mesh. For more details about the mesh generation please look at the official GiD documentation.
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.8\textwidth}\import{./figures/}{mesh.pdf_tex}
+	\caption{Mesh generation with mesh size.}
+	\label{im:mesh}
+\end{figure}
+
+
+\subsection{Analysis type and solver setup}
+
+To select the analysis type and setup the solver, select \textit{Data $\rightarrow$ Problem Data $\rightarrow$ Thermal Conduction Analysis}. In this window the user can choose between steady state or a transient analysis. Many more settings are possible, specifically on the time integration schemes, but they are not needed within the FEM thermal conduction analysis. Therefore, the default options are sufficient.
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.7\textwidth}\import{./figures/}{analysis_setup.pdf_tex}
+	\caption{Analysis type and solver setup.}
+	\label{im:analysis_setup}
+\end{figure}
+
+
+
+\subsection{Generation of input file for analysis in MATLAB}
+
+After the setup is complete, choose \textit{Calculation $\rightarrow$ Calculation (F5)} or just select \textit{F5} to write out the input file (Figure~\ref{im:input_file}) which will be later on parsed within \textit{cane} MATLAB framework. This file has the same name as our project whereas its extension is \textit{.dat}. The user can also open it with any text editor to check or adjust the data. This file needs then to be placed under folder \verb+./cane/inputGiD/FEMThermalConductionAnalysis+ and then a new \textit{caseName} with the same name needs to be defined in the MATLAB main driver script located in \verb+./cane/man/main_FEMThermalConductionAnalysis+. Furthermore, the user must specify initial conditions and the load (heat flux) magnitude within \textit{cane} MATLAB framework.
+
+\begin{figure}[ht]
+	\centering
+	\footnotesize
+    \def\svgwidth{0.8\textwidth}\import{./figures/}{input_file.pdf_tex}
+	\caption{GiD input file in detail.}
+	\label{im:input_file}
+\end{figure}
+
+
 
 
 % \bibliographystyle{elsarticle-num-names}
