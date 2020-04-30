@@ -47,7 +47,8 @@ addpath('../../FEMThermalConductionAnalysis/solvers/',...
         '../../FEMThermalConductionAnalysis/graphics/',...
         '../../FEMThermalConductionAnalysis/output/',...
         '../../FEMThermalConductionAnalysis/initialConditions/',...
-        '../../FEMThermalConductionAnalysis/postProcessing/');
+        '../../FEMThermalConductionAnalysis/postprocessing/', ...
+        '../../FEMThermalConductionAnalysis/transientAnalysis/');
 
 %% Parse data from GiD input file
 
@@ -57,7 +58,7 @@ caseName = 'trapezoidalPlateHeatFlux';
 % caseName = 'rectangularPlateHeatFlux';
 
 % Parse the data from the GiD input file
-[strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
+[thermalMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
     propParameters, propNLinearAnalysis, propThermalDynamics, propGaussInt] = ...
     parse_ThermalModelFromGid(pathToCase, caseName, 'outputEnabled');
 
@@ -71,7 +72,7 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 
 % On the writing the output function
-propVTK.isOutput = false;
+propVTK.isOutput = true;
 propVTK.writeOutputToFile = @writeOutputFEMThermalConductionAnalysisToVTK;
 propVTK.VTKResultFile = 'undefined';
 
@@ -95,60 +96,58 @@ if strcmp(caseName,'trapezoidalPlateHeatFlux') || strcmp(caseName,'rectangularPl
 end
 
 %% Define the integration schemes function handles
-integrationSchemes = {@computeProblemMtrcsImplicitEulerThermalConduction
-                      @computeProblemMtrcsGalerkinThermalConduction
-                      @computeProblemMtrcsCrankNicolsonThermalConduction};
-                  
-% Define name and color for each scheme
-name = {'Implicit';'Galerkin';'Crank-Nicolson'};
-color = {'blue';'red';'black'};
-       
-%% Initialize figure properties
-figure(propGraph.index)
-hold on
+computeTransientProblemMatrices = ...
+    {@computeProblemMtrcsImplicitEulerThermalConduction ...
+    @computeProblemMtrcsGalerkinThermalConduction ....
+    @computeProblemMtrcsCrankNicolsonThermalConduction};
+name = {'Implicit' 'Galerkin' 'Crank-Nicolson'};
+color = {'blue', 'red', 'black'};
+nameMethods = length(computeTransientProblemMatrices);
+
+%% Initialize solution arrays
+if ~propVTK.isOutput
+    numNodes = length(thermalMsh.nodes);
+    THistory = zeros(numNodes, propThermalDynamics.noTimeSteps + 1, nameMethods);
+end
 
 %% Loop over all integration schemes to compare the results
-for n = 1:length(integrationSchemes)
-    
+for iMet = 1:length(computeTransientProblemMatrices)
     %% Define the time integration rules
     propThermalDynamics.computeProblemMtrcsTransient = ...
-        integrationSchemes{n};
+        computeTransientProblemMatrices{iMet};
     propThermalDynamics.computeUpdatedVct = ...
         @computeBETITransientUpdatedVctAccelerationField;
     
     %% Solve the transient heat transfer problem
-    [dHistory, minElSize] = solve_FEMThermalConductionTransient ...
-    (strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
+    [THistory(:, :, iMet), WComplete, minElSize] = solve_FEMThermalConductionTransient ...
+    (thermalMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     updateInhomDOFs, propNBC, @computeLoadVctFEMThermalConductionAnalysis, ...
     propParameters, computeBodyForces, propAnalysis, computeInitialConditions, ...
     @computeStiffMtxAndLoadVctFEMThermalConductionAnalysisCST, ...
     propNLinearAnalysis, propIDBC, propThermalDynamics, solve_LinearSystem, ...
-    @solve_FEMLinearSystem, propGaussInt, propVTK, caseName,'outputEnabled');
-    
-    %% Compute the selected resultant at the chosen Cartesian location over time 
-    x = -10;
-    y = 0;
-    [timeSpaceDiscrete, resultantNumerical, ~] = ...
-        computeResultantAtPointOverTime...
-        (x, y, strMsh, dHistory, ...
-        propThermalDynamics, propPostproc, 'outputEnabled');
-
-    %% Plot the selected resultant at the chosen Cartesian location over time
-    plot(timeSpaceDiscrete, resultantNumerical, color{n},'DisplayName',name{n});
-    
-%     temperature50s(n,1) = resultantNumerical(timeSpaceDiscrete == 50);
-%     temperature75s(n,1) = resultantNumerical(timeSpaceDiscrete == 75);
+    @solve_FEMLinearSystem, propGaussInt, propVTK, caseName, 'outputEnabled');
 end
 
-%% Update graph properties
-xlabel('Time [seconds]');
-ylabel('Temperature');
-title(sprintf('Evolution of Temperature at point X = (%d, %d)', x, y));
-legend('Orientation', 'horizontal', 'Location', 'southoutside');  
-hold off
-propGraph.index = propGraph.index + 1;
-
-%% Print out the temperature at selected time instances
-% table(name,temperature50s,temperature75s)
+%% Plot the evolution of the temperature over time at the selected Cartesian location
+if ~propVTK.isOutput
+    figure(propGraph.index)
+    hold on;
+    for iMet = 1:length(computeTransientProblemMatrices)
+        x = -10;
+        y = 0;
+        [timeSpaceDiscrete, temperature_h, ~] = ...
+            computeTemperatureAtPointOverTime ...
+            (x, y, thermalMsh, THistory(:, :, iMet), propThermalDynamics, ...
+            propPostproc, 'outputEnabled');
+        plot(timeSpaceDiscrete, temperature_h, color{iMet},'DisplayName',name{iMet});
+    end
+    hold off;
+    xlabel('Time [seconds]');
+    ylabel('Temperature');
+    title(sprintf('Evolution of Temperature at point X = (%d, %d)', x, y));
+    legend('Orientation', 'horizontal', 'Location', 'southoutside');  
+    hold off;
+    propGraph.index = propGraph.index + 1;
+end
 
 %% END OF THE SCRIPT

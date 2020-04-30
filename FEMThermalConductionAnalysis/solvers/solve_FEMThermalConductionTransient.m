@@ -1,4 +1,5 @@
-function [dHistory, minElSize] = solve_FEMThermalConductionTransient...
+function [THistory, WComplete, minElSize] = ...
+    solve_FEMThermalConductionTransient...
     (strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, ...
     updateInhomDOFs, propNBC,computeLoadVct, ...
     propParameters, computeBodyForceVct, propAnalysis, computeInitCnds, ...
@@ -61,7 +62,8 @@ function [dHistory, minElSize] = solve_FEMThermalConductionTransient...
 %              outMsg : On outputting information
 %
 %              Output :
-%            dHistory : The history of the displacement field
+%            THistory : The history of the temperature field
+%           WComplete : The history of the energy rate field
 %           minElSize : The minimum element area size in the mesh
 %
 % Function layout :
@@ -86,14 +88,17 @@ end
 
 %% 0. Read input
 
+% Title for the output file
+title = 'linear transient 2D heat transfer analysis';
+
 % Number of nodes in the mesh
 noNodes = length(strMsh.nodes(:, 1));
 
 % Number of DOFs in the mesh
-nDOFs = noNodes;
+numDOFs = noNodes;
 
 % GLobal DOF numbering
-DOFNumbering = 1:nDOFs;
+DOFNumbering = 1:numDOFs;
 
 % Path where to write the output
 pathToOutput = '../../outputVTK/FEMThermalConductionAnalysis/';
@@ -113,11 +118,8 @@ computeConstantProblemMatrices = 'undefined';
 propALE = 'undefined';
 computeUpdatedMesh = 'undefined';
 
-% Title for the output file
-title = 'linear transient 2D heat transfer analysis';
-
 % Get the DOF numbering for each component of the temperature field
-DOF4Output = 1:nDOFs;
+DOF4Output = 1:numDOFs;
 
 %% 1. Find the prescribed and the free DOFs of the system
 
@@ -131,7 +133,7 @@ freeDOFs = DOFNumbering;
 freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 
 %% 2. Solve the transient problem
-[dHistory, minElSize] = solve_FEMTransientAnalysis ...
+[THistory, WComplete, minElSize] = solve_FEMTransientAnalysis ...
     (propAnalysis, strMsh, DOFNumbering, freeDOFs, homDOFs, inhomDOFs, ...
     valuesInhomDOFs, updateInhomDOFs, propALE, computeInitCnds, ...
     computeBodyForceVct, propNBC, computeLoadVct, propParameters, ...
@@ -145,7 +147,7 @@ freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 %% 3. Appendix
 if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-    fprintf('\nNonlinear analysis took %.2d seconds \n\n', computationalTime);
+    fprintf('\nThermal conduction analysis took %.2d seconds \n\n', computationalTime);
     fprintf('________________________Linear Analysis Ended______________________\n');
     fprintf('####################################################################\n\n\n');
 end

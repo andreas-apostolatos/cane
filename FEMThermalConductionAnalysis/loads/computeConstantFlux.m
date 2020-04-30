@@ -1,4 +1,4 @@
-function load = computeConstantFlux(x, y, z, t, propNBC)
+function flux = computeConstantFlux(x, y, z, t, propNBC)
 %% Licensing
 %
 % License:         BSD License
@@ -9,8 +9,7 @@ function load = computeConstantFlux(x, y, z, t, propNBC)
 %
 %% Function documentation
 %
-% Returns the applied load vector at the physical location x,y,z and at
-% time t. The load is assumed to be constant and vertical (y-direction).
+% Returns the applied fux at the given chorochronical location.
 %
 %       Input :
 %       x,y,z : The physical location where the load is applied
@@ -22,7 +21,6 @@ function load = computeConstantFlux(x, y, z, t, propNBC)
 %        load :  The load vector [loadx; loady; loadz]
 %
 %% Function main body
-load = [propNBC.flux; 0; 0];
+flux = propNBC.flux;
 
 end
-

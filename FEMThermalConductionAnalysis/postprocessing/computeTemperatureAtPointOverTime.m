@@ -1,7 +1,6 @@
 function [timeSpaceDiscrete, resultantNumerical, resultantAnalytical] = ...
-    computeResultantAtPointOverTime ...
-    (x, y, mesh, upHistory, propHeatDynamics, ...
-    propPostproc, outMsg)
+    computeTemperatureAtPointOverTime ...
+    (x, y, mesh, THistory, propHeatDynamics, propPostproc, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -20,11 +19,9 @@ function [timeSpaceDiscrete, resultantNumerical, resultantAnalytical] = ...
 %                     Input :
 %                       x,y : Cartesian coordinates of the evaluation point
 %                      mesh : Nodes and elements for the structure mesh
-%                parameters : The parameters of the flow (density, 
-%                             viscosity)
-%                 upHistory : The history data of the transient analysis by
+%                  THistory : The history data of the transient analysis by
 %                             solving the problem numerically
-%          propHeatDynamics : Transient analysis parameters : 
+%          propHeatDynamics : Transient analysis parameters,
 %                                  T0 : Start time of the simulation
 %                                TEnd : End time of the simulation
 %                         noTimeSteps : Number of time steps
@@ -83,10 +80,10 @@ if strcmp(outMsg,'outputEnabled')
     fprintf('Computation of Temperature evolution over time\n');
     fprintf('at point (%d, %d)\n', x, y);
     fprintf('has been initiated\n');
-if isAnalytical
-    fprintf('Analytical solution is computed using function\n');
-    fprintf('%s\n', func2str(propPostproc.computeAnalytical));
-end 
+    if isAnalytical
+        fprintf('Analytical solution is computed using function\n');
+        fprintf('%s\n', func2str(propPostproc.computeAnalytical));
+    end 
     fprintf('\n');
     fprintf('________________________________________________\n');
     fprintf('\n');
@@ -107,35 +104,16 @@ timeSpaceDiscrete = zeros(propHeatDynamics.noTimeSteps + 1, 1);
 % Initialize time
 t = propHeatDynamics.T0;
 
-% Define the number of infinite series sum
-propPostproc.k = 200;
-
-% Lower left corner
-x0(1) = min(mesh.nodes(:,1));
-x0(2) = min(mesh.nodes(:,2));
-
-% Lower right corner
-x1(1) = max(mesh.nodes(:,1));
-x1(2) = min(mesh.nodes(:,2));
-
-% Upper left corner
-x2(1) = min(mesh.nodes(:,1));
-x2(2) = max(mesh.nodes(:,2));
-
-% Get height and width
-propPostproc.height = abs(x2(2)-x0(2));
-propPostproc.width = abs(x1(1)-x0(1));
-
 %% 1. Find the mesh element from cartesian coordinates
-for iElement = 1:size(mesh.elements,1)
+for iElement = 1:size(mesh.elements, 1)
 
     % Find the node IDs of an element
-    node_IDs = mesh.elements(iElement,:);
+    node_IDs = mesh.elements(iElement, :);
     
     % Find the node coordinates of an element
-    vertexI = mesh.nodes(node_IDs(1),1:2);
-    vertexJ = mesh.nodes(node_IDs(2),1:2);
-    vertexK = mesh.nodes(node_IDs(3),1:2);
+    vertexI = mesh.nodes(node_IDs(1), 1:2);
+    vertexJ = mesh.nodes(node_IDs(2), 1:2);
+    vertexK = mesh.nodes(node_IDs(3), 1:2);
     
     % Compute basis functions and check if the point is inside the element
     [N, ~, isInside] = computeCST2DBasisFunctions ...
@@ -161,7 +139,7 @@ for iTime = 1:propHeatDynamics.noTimeSteps + 1
     timeSpaceDiscrete(iTime, 1) = t;
     
     %% 3ii. Get the current discrete solution vector
-    upCurrent = upHistory(:, iTime);
+    upCurrent = THistory(:, iTime);
     
     %% 3iii. Get the DOFs of the resultant at the element where (x, y) belongs to at the given time step
     upVector = upCurrent(DOFsI, 1)*N(1) + ...
@@ -184,7 +162,7 @@ end
 %% 4. Appendix
 if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-    fprintf('Computation of Temperature field over time took %.2d seconds \n\n', computationalTime);
+    fprintf('Computation of temperature field over time took %.2d seconds \n\n', computationalTime);
     fprintf('_______________Postprocessing Computation Ended________________\n');
     fprintf('###############################################################\n\n\n');
 end
