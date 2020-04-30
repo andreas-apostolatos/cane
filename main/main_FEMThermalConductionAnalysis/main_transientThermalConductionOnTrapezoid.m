@@ -72,7 +72,7 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 % solve_LinearSystem = @solve_LinearSystemGMResWithIncompleteLUPreconditioning;
 
 % On the writing the output function
-propVTK.isOutput = true;
+propVTK.isOutput = false;
 propVTK.writeOutputToFile = @writeOutputFEMThermalConductionAnalysisToVTK;
 propVTK.VTKResultFile = 'undefined';
 

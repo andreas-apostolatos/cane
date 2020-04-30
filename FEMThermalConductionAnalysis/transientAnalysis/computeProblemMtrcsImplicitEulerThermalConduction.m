@@ -1,6 +1,7 @@
-function [tanMtx,resVct] = computeProblemMtrcsImplicitEuler...
-    (u,uSaved,uDot,uDotSaved,uDDot,uDDotSaved,massMtx,damMtx,tanMtx,...
-    resVct,propTransientAnalysis)
+function [tanMtx,resVct] = ...
+    computeProblemMtrcsImplicitEulerThermalConduction ...
+    (T, TSaved, TDot, TDotSaved, TDDot, TDDotSaved, massMtx, damMtx, ...
+    tanMtx, resVct, propThermalDynamics)
 %% Licensing
 %
 % License:         BSD License
@@ -31,7 +32,7 @@ function [tanMtx,resVct] = computeProblemMtrcsImplicitEuler...
 %                         problem
 %             resVctRHS : Right-hand side (RHS)/residual vector 
 %                         corresponding to the steady-state problem
-% propTransientAnalysis : Transient analysis parameters:
+%  propThermalDynamics : Transient analysis properties,
 %                                   .method : Time integration method
 %                                .alphaBeta : Bossak parameter
 %                                    .gamma : Bossak parameter
@@ -56,7 +57,7 @@ function [tanMtx,resVct] = computeProblemMtrcsImplicitEuler...
 %% Function main body
 
 %% 0. Read input
-dt = propTransientAnalysis.dt;
+dt = propThermalDynamics.dt;
 
 %% 1. Compute the problem matrix considering the inertia forces for the implicit Euler time integration scheme
 if ischar(damMtx)
@@ -67,7 +68,7 @@ end
 
 %% 2. Compute the right hand-side (RHS)/residual vector considering the inertia forces for the implicit Euler time integration scheme
 if ischar(damMtx)
-    resVct = resVct + massMtx/dt*uSaved;  % transient (implicit Euler)
+    resVct = resVct + massMtx/dt*TSaved;  % transient (implicit Euler)
 else
     error('Damping not yet supported for this time integration type');
 end

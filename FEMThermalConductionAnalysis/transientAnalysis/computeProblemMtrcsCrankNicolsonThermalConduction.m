@@ -1,6 +1,7 @@
-function [tanMtx,resVct] = computeProblemMtrcsCrankNicolson...
-    (u,uSaved,uDot,uDotSaved,uDDot,uDDotSaved,massMtx,damMtx,tanMtx,...
-    resVct,propTransientAnalysis)
+function [tanMtx, resVct] = ...
+    computeProblemMtrcsCrankNicolsonThermalConduction ...
+    (T, TSaved, TDot, TDotSaved, TDDot, TDDotSaved, massMtx, damMtx, ...
+    tanMtx, resVct, propThermalDynamics)
 %% Licensing
 %
 % License:         BSD License
@@ -15,15 +16,15 @@ function [tanMtx,resVct] = computeProblemMtrcsCrankNicolson...
 % Crank-Nicolson time integration scheme.
 %
 %                 input :
-%                     u : Solution of the primary field from the previous 
+%                     T : Solution of the primary field from the previous 
 %                         iteration step
-%                uSaved : Solution of the primary field from the previous 
+%                TSaved : Solution of the primary field from the previous 
 %                         time step
-%                  uDot : Solution of the rate of the primary field from 
+%                  TDot : Solution of the rate of the primary field from 
 %                         the previous iteration step
-%             uDotSaved : Solution of the rate of the primary field from 
+%             TDotSaved : Solution of the rate of the primary field from 
 %                         the previous time step
-%            uDDotSaved : Solution of the second time derivative of the 
+%            TDDotSaved : Solution of the second time derivative of the 
 %                         primary field from the previous time step
 %               massMtx : The mass matrix of the problem
 %                damMtx : System damping matrix
@@ -31,7 +32,7 @@ function [tanMtx,resVct] = computeProblemMtrcsCrankNicolson...
 %                         problem
 %             resVctRHS : Right-hand side (RHS)/residual vector 
 %                         corresponding to the steady-state problem
-% propTransientAnalysis : Transient analysis parameters:
+%   propThermalDynamics : Transient analysis properties,
 %                                   .method : Time integration method
 %                                .alphaBeta : Bossak parameter
 %                                    .gamma : Bossak parameter
@@ -56,7 +57,7 @@ function [tanMtx,resVct] = computeProblemMtrcsCrankNicolson...
 %% Function main body
 
 %% 0. Read input
-dt = propTransientAnalysis.dt;
+dt = propThermalDynamics.dt;
 stiffMtx = tanMtx;
 
 %% 1. Compute the problem matrix considering the inertia forces for the Crank-Nicolson time integration scheme
@@ -68,7 +69,7 @@ end
 
 %% 2. Compute the right hand-side (RHS)/residual vector considering the inertia forces for the Crank-Nicolson time integration scheme
 if ischar(damMtx)
-    resVct = resVct + ( massMtx/dt - 0.5*stiffMtx )*uSaved;
+    resVct = resVct + ( massMtx/dt - 0.5*stiffMtx )*TSaved;
 else
     error('Damping not yet supported for this time integration type');
 end
