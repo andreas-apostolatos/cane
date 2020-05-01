@@ -4,16 +4,12 @@
 %                   cane Multiphysics default license: cane/license.txt   %
 %                                                                         %
 %   Main authors:   Andreas Apostolatos                                   %
-%                   Marko Leskovar                                        %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Matlab Input File                                                     %
-%   _________________                                                     %
-%                                                                         %
-%   cane Multiphysics                                                     %
+%   cane Input File                                                       %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

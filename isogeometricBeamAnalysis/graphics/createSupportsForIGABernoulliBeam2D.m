@@ -1,4 +1,5 @@
-function [xs,ys,zs] = createSupportsForIGABernoulliBeam2D(CP,rb)
+function [xs, ys, zs] = createSupportsForIGABernoulliBeam2D ...
+    (CP, rb)
 %% Licensing
 %
 % License:         BSD License

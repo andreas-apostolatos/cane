@@ -1,5 +1,6 @@
 function valuesInhomDBCModified = ...
-    computeInletVelocityParabolicLaw(fldMsh, inhomDBC, valuesInhomDBC, Umid)
+    computeInletVelocityParabolicLaw ...
+    (fldMsh, inhomDBC, valuesInhomDBC, Umid)
 %% Licensing
 %
 % License:         BSD License

@@ -1,4 +1,4 @@
-function bCoef = getBinomialCoefficients(a,b) 
+function bCoef = getBinomialCoefficients(a, b) 
 %% Licensing
 %
 % License:         BSD License

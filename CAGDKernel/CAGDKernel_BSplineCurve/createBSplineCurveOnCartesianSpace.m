@@ -1,23 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [X,Y,Z] = createBSplineCurveOnCartesianSpace(p,Xi,CP,isNURBS,nEval)
+function [X, Y, Z] = createBSplineCurveOnCartesianSpace ...
+    (p, Xi, CP, isNURBS, numEval)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns three arrays containing the spatial positions of the points on 3D
@@ -28,7 +17,7 @@ function [X,Y,Z] = createBSplineCurveOnCartesianSpace(p,Xi,CP,isNURBS,nEval)
 %      Xi : The knot vector
 %      CP : The set of Control Point and coordinates
 % isNURBS : On whether the basis is a NURBS or a B-Spline
-%   nEval : Number of evaluation points
+% numEval : Number of evaluation points
 %
 % Function layout :
 %
@@ -60,16 +49,16 @@ nxi = length(CP(:,1));
 checkInputForBSplineCurve(p,mxi,nxi);
 
 % Compute an increment
-dxi = (Xi(length(Xi)) - Xi(1))/(nEval-1);
+dxi = (Xi(length(Xi)) - Xi(1))/(numEval-1);
 
 % Initialize output array
-XYZ = zeros(nEval,3);
+XYZ = zeros(numEval,3);
 
 % points in u-direction
 xi = Xi(p+1);
 
 %% 1. Loop over all the parametric locations
-for j=1:nEval
+for j=1:numEval
     %% 1i. Find the span index where xi is located
     spandIndex = findKnotSpan(xi,Xi,nxi);
     

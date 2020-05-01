@@ -1,5 +1,5 @@
-function [dx,dy,dz] = ...
-    computeNullV(x,y,z,t,varargin)
+function [dx, dy, dz] = ...
+    computeNullV(x, y, z, t, varargin)
 %% Licensing
 %
 % License:         BSD License

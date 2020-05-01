@@ -4,16 +4,12 @@
 %                   cane Multiphysics default license: cane/license.txt   %
 %                                                                         %
 %   Main authors:   Andreas Apostolatos                                   %
-%                   Marko Leskovar                                        %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Matlab Input File                                                     %
-%   _________________                                                     %
-%                                                                         %
-%   cane Multiphysics                                                     %
+%   cane Input File                                                       %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -259,3 +255,75 @@ FLUID_NODES
 
 *NodesNum *NodesCoord(1,real) *NodesCoord(2,real) *NodesCoord(3,real) *\
 *end loop
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   Thermal Boundary Value Problem                                        %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+THERMAL_CONDUCTION_ANALYSIS
+ ANALYSIS_TYPE,*GenData(TC_Analysis_Type)
+
+THERMAL_MATERIAL_PROPERTIES
+*Loop materials
+*if(strcmp(MatProp(0),"Steel")==0 || strcmp(MatProp(0),"Aluminium")==0)
+ DENSITY,*MatProp(Density)
+ THERMAL_CONDUCTIVITY,*MatProp(Thermal_Conductivity)
+ SPECIFIC_HEAT,*MatProp(Specific_Heat)
+*endif
+*end loop
+
+THERMAL_TRANSIENT_ANALYSIS
+ SOLVER *GenData(TC_Time_Analysis_Type)
+ TIME_INTEGRATION *GenData(TC_Time_Integration_Scheme)
+ START_TIME *GenData(TC_Start_Time)
+ END_TIME *GenData(TC_End_Time)
+ NUMBER_OF_TIME_STEPS *GenData(TC_Number_of_Time_Steps)
+ ADAPTIVE_TIME_STEPPING *GenData(TC_Adaptive_Time_Stepping)
+ 
+THERMAL_INTEGRATION
+ DOMAIN *GenData(TC_Gauss_Integration_Type)
+ domainNoGP *GenData(TC_Domain_NO_GP)
+ boundaryNoGP *GenData(TC_Boundary_NO_GP)
+
+THERMAL_NODES*\
+*set Cond Thermal-Nodes *nodes
+*loop nodes OnlyInCond
+*format "%8i%10.5f%10.5f%10.5f"
+
+*NodesNum *NodesCoord(1,real) *NodesCoord(2,real) *NodesCoord(3,real) *\
+*end loop
+
+THERMAL_ELEMENTS*\
+*set Cond Thermal-Elements *elems
+*loop elems OnlyInCond
+*format "%8i%6i%6i%8i%8i%8i%8i%8i%8i%8i%8i"
+
+*ElemsNum *ElemsConec*\
+*end loop
+
+THERMAL_DIRICHLET_NODES*\
+*set Cond Thermal-Dirichlet *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*NodesNum *\
+*if(cond(T-Constraint,int)==1)
+*cond(T-Value)  *\
+*else
+NaN  *\
+*endif
+*end loop
+
+THERMAL_FLUX_NODES*\
+*set Cond Thermal-Flux *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*if(strcmp(cond(FluxType),"boundaryFlux")==0)
+*NodesNum *cond(FluxType) *cond(FunctionHandleToFluxComputation)*\
+*endif
+*end loop
+ 
+ 

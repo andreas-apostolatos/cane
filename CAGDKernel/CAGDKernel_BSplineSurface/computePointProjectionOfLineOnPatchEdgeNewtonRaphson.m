@@ -1,25 +1,13 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [t,lambda,distance,noNRIter,isConvergent] = ...
-    computePointProjectionOfLineOnPatchEdge...
-    (t0,P1,P2,p,Xi,q,Eta,CP,isNURBS,xiB,etaB,newtonRaphson)
+function [t, lambda, distance, noNRIter, isConvergent] = ...
+    computePointProjectionOfLineOnPatchEdgeNewtonRaphson ...
+    (t0, P1, P2, p, Xi, q, Eta, CP, isNURBS, xiB, etaB, newtonRaphson)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Solves the nonlinear problem of the projection of a straight line in 3D

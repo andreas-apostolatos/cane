@@ -1,4 +1,5 @@
-function sinusoidal_y = load_sinusoidal_y(p,i,u,U,q,j,v,V,CP)
+function sinusoidal_y = load_sinusoidal_y ...
+    (p, i, xi, Xi, q, j, eta, Eta, CP)
 %% Licensing
 %
 % License:         BSD License
@@ -12,15 +13,17 @@ function sinusoidal_y = load_sinusoidal_y(p,i,u,U,q,j,v,V,CP)
 % analytical solution for the recangular plate fixed at one edge and
 % subject to a sinusoidal loading at the opposite edge
 %
-%  Input : 
-%    p,q : Polynomial degrees
-%    i,j : Knot span indeces
-%    u,v : Parametric coordinates on the surface
-%     CP : The set of control points and weights
+%   Input : 
+%     p,q : Polynomial degrees
+%     i,j : Knot span indeces
+%  xi,eta : Parametric coordinates on the surface
+%  Xi,Eta : Knot vectors of the surface
+%      CP : The set of control points and weights
 %
-% Output :
-%  shear_y : The value of the analytical load at the surface location (u,v) 
-
+%  Output :
+% shear_y : The value of the analytical load at the surface location 
+%           (xi,eta) 
+%
 %% Function main body
 
 % The load maximum amplitude
@@ -34,7 +37,7 @@ h = 2;
 y = 0;
 
 % Compute the basis functions affecting the knot span
-Rb = nurbs_basis_functions2D(i,p,u,U,j,q,v,V,CP);
+Rb = nurbs_basis_functions2D(i,p,xi,Xi,j,q,eta,Eta,CP);
 
 % initialize counter
 k = 0;

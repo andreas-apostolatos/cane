@@ -1,16 +1,15 @@
-%% Licensing
-%
-% License:         BSD License
-%                  cane Multiphysics default license: cane/license.txt
-%
-% Main authors:    Andreas Apostolatos
-%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Matlab Input File                                                     %
-%   _________________                                                     %
+%   License:        BSD License                                           %
+%                   cane Multiphysics default license: cane/license.txt   %
 %                                                                         %
-%   cane Multiphysics                                                     %
+%   Main authors:   Andreas Apostolatos                                   %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   cane Input File                                                       %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

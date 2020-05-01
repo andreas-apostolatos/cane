@@ -1,4 +1,4 @@
-function grevilleAbscissae = computeGrevilleAbscissae(indexCP,p,Xi)
+function grevilleAbscissae = computeGrevilleAbscissae(indexCP, p, Xi)
 %% Licensing
 %
 % License:         BSD License

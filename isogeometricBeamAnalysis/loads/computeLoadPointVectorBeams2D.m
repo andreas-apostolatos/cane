@@ -1,5 +1,5 @@
 function F = computeLoadPointVectorBeams2D...
-    (Fold,p,Xi,CP,isNURBS,loadAmplitude,xib,analysis,dir)
+    (Fold, p, Xi, CP, isNURBS, loadAmplitude, xib, analysis, dir)
 %% Licensing
 %
 % License:         BSD License

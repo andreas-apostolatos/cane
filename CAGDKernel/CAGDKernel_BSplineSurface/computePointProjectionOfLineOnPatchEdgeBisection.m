@@ -1,24 +1,14 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [xi,eta,Q,lambda,minDist,isConvergent] = computePointProjectionOfLineOnPatchEdgeBisection...
-    (xiIn,etaIn,PIn,POut,p,Xi,q,Eta,CP,isNURBS,propNewtonRaphson,propBisection)
+function [xi, eta, Q, lambda, minDist, isConvergent] = ...
+    computePointProjectionOfLineOnPatchEdgeBisection...
+    (xiIn, etaIn, PIn, POut, p, Xi, q, Eta, CP, isNURBS, ...
+    propNewtonRaphson, propBisection)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the parametric coordinates and the physical coordinates of the

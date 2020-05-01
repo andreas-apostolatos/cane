@@ -1,26 +1,14 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function index = plot_BSplineCurveOnBSplineSurface...
-    (p_curve,Xi_curve,CP_curve,isNURBS_curve,...
-    p_surface,q_surface,Xi_surface,Eta_surface,CP_surface,isNURBS_surface,...
-    nEval,color_curve,color_surface,lineWidth,graph)
+function index = plot_BSplineCurveOnBSplineSurface ...
+    (p_curve, Xi_curve, CP_curve, isNURBS_curve, ...
+    p_surface, q_surface, Xi_surface, Eta_surface, CP_surface, ...
+    isNURBS_surface, numEval, color_curve, color_surface, lineWidth, graph)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Plots a B-Spline curve which is embedded in the parametric space of a
@@ -60,7 +48,7 @@ hold on;
 %% 2. Plot the embedded B-Spline curve in the surface's parametric space
 [Xp,Yp,Zp] = createBSplineSurfaceEmbeddedBSplineCurveOnCartesianSpace....
     (p_surface,q_surface,Xi_surface,Eta_surface,CP_surface,isNURBS_surface,...
-    p_curve,Xi_curve,CP_curve,isNURBS_curve,nEval);
+    p_curve,Xi_curve,CP_curve,isNURBS_curve,numEval);
 line(Xp,Yp,Zp,'Linewidth',lineWidth,'color',color_curve);
 % plot_ControlPolygonBSplineCurveOnBSplineSurface...
 %     (CP_curve,p_surface,q_surface,Xi_surface,Eta_surface,CP_surface,isNURBS_surface);

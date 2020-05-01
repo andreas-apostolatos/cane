@@ -1,4 +1,6 @@
-function [zeta,N,isInside] = computePointProjectionAndBasisFunctionsOnLinearTriangle(P,P1,P2,P3)
+function [zeta, N, isInside] = ...
+    computePointProjectionAndBasisFunctionsOnLinearTriangle ...
+    (P, P1, P2, P3)
 %% Licensing
 %
 % License:         BSD License

@@ -18,7 +18,6 @@ function b = computeConstantVerticalFluidBodyForceVct(x, y, z, t)
 %       b : The load vector at the chorochronical location (x,y,z,t)
 %
 %% Function main body
-
 b = zeros(3,1);
 
 end

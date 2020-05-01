@@ -1,5 +1,6 @@
 function TContra2LC4VoigtStrain = ...
-    computeTFromContra2LocalCartesian4VoigtStrainIGAKLShell(eLC,GContravariant)
+    computeTFromContra2LocalCartesian4VoigtStrainIGAKLShell ...
+    (eLC, GContravariant)
 %% Licensing
 %
 % License:         BSD License

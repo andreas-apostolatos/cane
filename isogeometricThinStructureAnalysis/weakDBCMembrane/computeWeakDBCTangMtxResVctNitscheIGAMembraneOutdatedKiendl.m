@@ -1,6 +1,6 @@
-function [tangMtxWeakDBCNitsche,resVctWeakDBCNitsche] = ...
-    computeWeakDBCTangMtxResVctNitscheIGAMembraneOutdatedKiendl...
-    (BSplinePatch,dHat,connections,noDOFs,propCoupling)
+function [tangMtxWeakDBCNitsche, resVctWeakDBCNitsche] = ...
+    computeWeakDBCTangMtxResVctNitscheIGAMembraneOutdatedKiendl ...
+    (BSplinePatch, dHat, connections, numDOFs, propCoupling)
 %% Licensing
 %
 % License:         BSD License
@@ -74,7 +74,7 @@ function [tangMtxWeakDBCNitsche,resVctWeakDBCNitsche] = ...
 %                dHat : The displacement solution vector from the previous
 %                       nonlinear iteration step
 %         connections : Dummy variable for this function
-%              noDOFs : Dummy variable for this function
+%             numDOFs : Dummy variable for this function
 %        propCoupling : Dummy variable for this function
 %
 % Function layout :
@@ -233,7 +233,7 @@ noCPsEl = (p+1)*(q+1);
 noDOFsEl = 3*noCPsEl;
 
 % Number of DOFs
-noDOFs = 3*nxi*neta;
+numDOFs = 3*nxi*neta;
 
 % Initialize the element freedom table
 EFT = zeros(1,noDOFsEl);
@@ -245,8 +245,8 @@ dtractionVct = zeros(3,noDOFsEl);
 ddtractionVct = zeros(3,noDOFsEl,noDOFsEl);
 
 % Initialize the output arrays
-tangMtxWeakDBCNitsche = zeros(noDOFs,noDOFs);
-resVctWeakDBCNitsche = zeros(noDOFs,1);
+tangMtxWeakDBCNitsche = zeros(numDOFs,numDOFs);
+resVctWeakDBCNitsche = zeros(numDOFs,1);
 
 %% 1. Loop over all the conditions
 for counterCnd = 1:BSplinePatch.weakDBC.noCnd

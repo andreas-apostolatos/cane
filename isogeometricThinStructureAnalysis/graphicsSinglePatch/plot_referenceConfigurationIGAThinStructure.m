@@ -1,5 +1,5 @@
-function plot_referenceConfigurationIGAThinStructure...
-    (p,q,Xi,Eta,CP,isNURBS,homDOFs,Fl,outMsg)
+function plot_referenceConfigurationIGAThinStructure ...
+    (p, q, Xi, Eta, CP, isNURBS, homDOFs, Fl, outMsg)
 %% Licensing
 %
 % License:         BSD License

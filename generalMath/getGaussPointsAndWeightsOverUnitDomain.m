@@ -1,4 +1,4 @@
-function [GP,GW] = getGaussPointsAndWeightsOverUnitDomain(n)
+function [GP, GW] = getGaussPointsAndWeightsOverUnitDomain(n)
 %% Licensing
 %
 % License:         BSD License

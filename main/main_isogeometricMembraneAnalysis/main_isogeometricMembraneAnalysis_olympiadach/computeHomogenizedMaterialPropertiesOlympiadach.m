@@ -1,5 +1,5 @@
-function [propMembrane,propCables] = computeHomogenizedMaterialPropertiesOlympiadach...
-    (propPlexiglas,propSteelCables,propMembrane,characteristicLength,noCables)
+function [propMembrane, propCables] = computeHomogenizedMaterialPropertiesOlympiadach ...
+    (propPlexiglas, propSteelCables, propMembrane, characteristicLength, noCables)
 %% Licensing
 %
 % License:         BSD License

@@ -1,5 +1,5 @@
 function F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,analysis,propNBC,t,gaussInt,outMsg)
+    (strMsh, analysis, propNBC, t, gaussInt, outMsg)
 %% Licensing
 %
 % License:         BSD License

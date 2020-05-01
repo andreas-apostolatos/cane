@@ -1,4 +1,6 @@
-function [G3,dA,GabCovariant,GabContravariant,GContravariant,eLC,BV] = computeG3AndCotraBaseVectorsCovConMetricsAndCurvatureTensor(gCovariant,dGCovariant)
+function [G3, dA, GabCovariant, GabContravariant, GContravariant, eLC, BV] = ...
+    computeG3AndCotraBaseVectorsCovConMetricsAndCurvatureTensor ...
+    (GCovariant, dGCovariant)
 %% Licensing
 %
 % License:         BSD License
@@ -14,13 +16,8 @@ function [G3,dA,GabCovariant,GabContravariant,GContravariant,eLC,BV] = computeG3
 % 3D NURBS surface.
 %
 %             Input :
-%               i,j : Knot span indices
-%               p,q : Polynomial degress in u,v-directions
-%               u,v : Parametric locations of the point where quantities 
-%                     are evaluated
-%               U,V : Knot vectors in u,v-directions
-%                CP : The set of Control points coordinates and weights
-%               
+%        gCovariant : The covariant base vectors
+%       dGCovariant : The derivatives of the covariant base vectorsghts
 %
 %            Output :
 %                G3 : The normal to the NURBS surface base vector
@@ -52,7 +49,7 @@ function [G3,dA,GabCovariant,GabContravariant,GContravariant,eLC,BV] = computeG3
 %% Function main body
 
 %% 1. Compute the normal vector to the surface vector G3Tilde which is not normalized
-G3Tilde = cross(gCovariant(:,1),gCovariant(:,2));
+G3Tilde = cross(GCovariant(:,1),GCovariant(:,2));
 
 %% 2. Compute the area pf the element spanned by g1 and g2
 dA = norm(G3Tilde);
@@ -61,16 +58,16 @@ dA = norm(G3Tilde);
 G3 = G3Tilde/dA;
 
 %% 4. Compute the covariant metric coefficient tensor
-GabCovariant = gCovariant'*gCovariant; 
+GabCovariant = GCovariant'*GCovariant; 
 
 %% 5. Compute the contravariant metric coefficient tensor
 GabContravariant = inv(GabCovariant);
 
 %% 6. Compute the contravariant base vectors
-GContravariant = gCovariant*GabContravariant';
+GContravariant = GCovariant*GabContravariant';
 
 %% 7. Compute the local cartesian base vectors
-eLC(:,1) = gCovariant(:,1)/sqrt(gCovariant(:,1)'*gCovariant(:,1));
+eLC(:,1) = GCovariant(:,1)/sqrt(GCovariant(:,1)'*GCovariant(:,1));
 eLC(:,2) = GContravariant(:,2)/sqrt(GContravariant(:,2)'*GContravariant(:,2));
 eLC(:,3) = G3;
 

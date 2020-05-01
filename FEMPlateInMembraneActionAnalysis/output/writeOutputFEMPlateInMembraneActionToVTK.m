@@ -1,7 +1,7 @@
-function writeOutputFEMPlateInMembraneActionToVTK...
-    (analysis,propNLinearAnalysis,propTransientAnalysis,strMsh,...
-    parameters,d,dDot,dDDot,DOF4Output,caseName,pathToOutput,...
-    title,timeStepNo)
+function writeOutputFEMPlateInMembraneActionToVTK ...
+    (analysis, propNLinearAnalysis, propTransientAnalysis, strMsh, ...
+    parameters, d, dDot, dDDot, DOF4Output, caseName, pathToOutput, ...
+    title, noTimeStep)
 %% Licensing
 %
 % License:         BSD License
@@ -31,7 +31,7 @@ function writeOutputFEMPlateInMembraneActionToVTK...
 %              caseName : The name of the case in the inputGiD case folder
 %          pathToOutput : Path to the output file
 %                 title : The name of the output file
-%            timeStepNo : Number of the current time step
+%            noTimeStep : Number of the current time step
 %
 %                Output :
 %                         Write results into file
@@ -65,7 +65,7 @@ end
 [noElements,elementOrder] = size(strMsh.elements);
 
 output = fopen(strcat(pathToOutput,caseName,'/',caseName,'_',...
-    num2str(timeStepNo),'.vtk'),'w');
+    num2str(noTimeStep),'.vtk'),'w');
 
 % Transpose the nodal coordinates array
 XYZ = strMsh.nodes(1:noNodes,:)';

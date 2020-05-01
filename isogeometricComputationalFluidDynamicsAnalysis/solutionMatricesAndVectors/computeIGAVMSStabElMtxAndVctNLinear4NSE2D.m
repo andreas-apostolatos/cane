@@ -1,24 +1,14 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [KLinearEl,KNLinearEl,massMtxEl,FBodyEl] = computeIGAVMSStabElMtxAndVctNLinear4NSE2D...
-    (dR,xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,parameters,bodyForces,tauM,tauC,upe,upVector,Jxxi,Hxxi)
+function [KLinearEl, KNLinearEl, massMtxEl, FBodyEl] = ...
+    computeIGAVMSStabElMtxAndVctNLinear4NSE2D ...
+    (dR, xiSpan, p, xi ,Xi, etaSpan, q, eta, Eta, CP, parameters, ...
+    computeBodyForces, tauM, tauC, upe, upVector, Jxxi, Hxxi)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the element stiffness, tangent stiffness and mass matrix as well
@@ -26,35 +16,37 @@ function [KLinearEl,KNLinearEl,massMtxEl,FBodyEl] = computeIGAVMSStabElMtxAndVct
 % application of the Variational Multiscale Stabilization method (VMS) to 
 % the nonlinear isogemetric Navier-Stokes problem in 2D.
 % 
-%        Input : 
-%              dR : The vector containing the NURBS basis functions and up to 
-%                   their second derivatives at the Gauss Point as follows:
-%                   dR = 
-%                   [R dR/dxi d^2R/dxi^2 dR/deta d^2R/deta/dxi d^2R/deta^2]
-%  xiSpan,etaSpan : The knot span indices
-%          xi,eta : The coordinates of the Gauss Points in the parameter
-%                   space
-%             p,q : polynomial degrees
-%              CP : The set of Control Point Coordinates and weights
-%      parameters : Flow parameters
-%      bodyForces : The source vector for the convection-diffusion-reaction
-%                   equation
-%            tauM : Stabilization parameter for the momentum equilibrium
-%            tauC : Stabilization parameter for the divergence-free 
-%                   condition with respect to the velocity
-%             upe : The element discrete solution vector of the previous
-%                   Newton iteration
-%        upVector : The solution vector [u v p]' at the Gauss point from 
-%                   the previous Newton iteration step
-%            Jxxi : Jacobian of the transformation from the physical space the NURBS
-%                   parametric space evaluated at the Gauss Point
-%            Hxxi : The Hessian matrix at the Gauss Point
+%             Input : 
+%                dR : The vector containing the NURBS basis functions and 
+%                     up to their second derivatives at the Gauss Point as 
+%                     follows,
+%                     dR = [R dR/dxi d^2R/dxi^2 dR/deta d^2R/deta/dxi ...
+%                           d^2R/deta^2]
+%    xiSpan,etaSpan : The knot span indices
+%            xi,eta : The coordinates of the Gauss Points in the parameter
+%                     space
+%               p,q : polynomial degrees
+%                CP : The set of Control Point Coordinates and weights
+%        parameters : Flow parameters
+% computeBodyForces : The source vector for the convection-diffusion-
+%                     reaction equation
+%              tauM : Stabilization parameter for the momentum equilibrium
+%              tauC : Stabilization parameter for the divergence-free 
+%                     condition with respect to the velocity
+%               upe : The element discrete solution vector of the previous
+%                     Newton iteration
+%          upVector : The solution vector [u v p]' at the Gauss point from 
+%                     the previous Newton iteration step
+%              Jxxi : Jacobian of the transformation from the physical 
+%                     space the NURBS parametric space evaluated at the 
+%                     Gauss Point
+%              Hxxi : The Hessian matrix at the Gauss Point
 %
-%          Output :
-%       KLinearEl : The element linear stiffness matrix
-%      KNLinearEl : The element nonlinear stiffness matrix
-%       massMtxEl : The element mass matrix
-%         FBodyEl : The element body force vector
+%            Output :
+%         KLinearEl : The element linear stiffness matrix
+%        KNLinearEl : The element nonlinear stiffness matrix
+%         massMtxEl : The element mass matrix
+%           FBodyEl : The element body force vector
 %
 % Function layout :
 %
@@ -145,9 +137,9 @@ nDOFsEl = 3*nNodesEl;
 % Initialize flag for the nature of the body forces
 isBodyForceNumeric = 0;
 isBodyForceIdenticallyZero = 0;
-if isnumeric(bodyForces)
+if isnumeric(computeBodyForces)
     isBodyForceNumeric = 1;
-    if norm(bodyForces) == 0
+    if norm(computeBodyForces) == 0
         isBodyForceIdenticallyZero = 1;
     end
 end
@@ -237,7 +229,7 @@ end
 if isBodyForceNumeric && ~isBodyForceIdenticallyZero
     % Re-arrange the source vector to account also for the pressure
     % degrees of freedom
-    bodyForcesRearranged = [bodyForces(1) bodyForces(2) 0]';
+    bodyForcesRearranged = [computeBodyForces(1) computeBodyForces(2) 0]';
 elseif ~isBodyForceNumeric
     % Find the Cartesian coordinates 
     P = computeCartesianCoordinatesOfAPointOnBSplineSurface(xiSpan,p,xi,Xi,etaSpan,q,eta,Eta,CP,dR(:,1));

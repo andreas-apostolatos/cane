@@ -1,4 +1,6 @@
-function V_nc = computeNonConservativeLoadContributionToStiffnessKLShellNLinear(ub,vb,p,q,U,V,CP,mload,dir,CPd,int)
+function V_nc = ...
+    computeNonConservativeLoadContributionToStiffnessKLShellNLinear ...
+    (xib, etab, p, q, Xi, Eta, CP, mload, dir, CPd, int)
 %% Licensing
 %
 % License:         BSD License
@@ -12,19 +14,19 @@ function V_nc = computeNonConservativeLoadContributionToStiffnessKLShellNLinear(
 % externally applied load for the non-linear analysis of the Kirchhoff-Love
 % shell
 %
-%   Input :
-%   ub,vb : Load extension
-%     p,q : B-Spline polynomial degrees in u-,v-direction
-%     U,V : B-Spline knot vectors in u-,v-direction
-%      CP : Set of Control Point coordinates and weights
-%   mload : The load magnitude (or the load function)
-%     dir : The direction of the load
-%     CPd : The Control Point Coordinates of the deformed state
-%     int : The quadrature rule
+%    Input :
+% xib,etab : Load extension
+%      p,q : B-Spline polynomial degrees in xi-,eta-direction
+%   Xi,Eta : B-Spline knot vectors in xi-,eta-direction
+%       CP : Set of Control Point coordinates and weights
+%    mload : The load magnitude (or the load function)
+%      dir : The direction of the load
+%      CPd : The Control Point Coordinates of the deformed state
+%      int : The quadrature rule
 %
-%  Output :
-%    V_nc : The contribution to the non-Linear stiffness matrix for the
-%           Kirchhoff-Love shell
+%   Output :
+%     V_nc : The contribution to the non-Linear stiffness matrix for the
+%            Kirchhoff-Love shell
 %
 % Function Layout :
 %
@@ -67,8 +69,8 @@ function V_nc = computeNonConservativeLoadContributionToStiffnessKLShellNLinear(
 %% 0. Read input
 
 % Length of the knot vectors
-mu = length(U);
-mv = length(V);
+mu = length(Xi);
+mv = length(Eta);
 
 % Number of control points in u,v-direction
 nu = length(CP(:,1,1));
@@ -106,16 +108,16 @@ end
 %% 2. On the load application area
 
 % Find the span in u-direction where to apply the load
-i1 = findKnotSpan(ub(1),U,nu);
-if (isscalar(ub))
+i1 = findKnotSpan(xib(1),Xi,nu);
+if (isscalar(xib))
     % If its a scalar one Gauss point sufficies
-    u = ub(1);    i2 = i1;
+    u = xib(1);    i2 = i1;
     ugauss = 1;   gwu = 1;
     mapu = 1;     is_on_u = 0;
 else
     % If its not a scalar adjust the quadrature respectively
-    i2 = findKnotSpan(ub(2),U,nu);
-    if ub(2)~=U(mu)    
+    i2 = findKnotSpan(xib(2),Xi,nu);
+    if xib(2)~=Xi(mu)    
         i2=i2-1;    
     end
     ugauss = ngauss(1);
@@ -123,16 +125,16 @@ else
 end
 
 % Find the span in v-direction where to apply the load
-j1 = findKnotSpan(vb(1),V,nv);
-if (isscalar(vb))
+j1 = findKnotSpan(etab(1),Eta,nv);
+if (isscalar(etab))
     % If its a scalar one Gauss point sufficies
-    v = vb(1);    j2 = j1;
+    v = etab(1);    j2 = j1;
     vgauss = 1;   gwv = 1;
     mapv = 1;     is_on_u = 1;
 else
     % If its not a scalar adjust the quadrature respectively
-    j2 = findKnotSpan(vb(2),V,nv);
-    if vb(2)~=V(mv)    
+    j2 = findKnotSpan(etab(2),Eta,nv);
+    if etab(2)~=Eta(mv)    
         j2=j2-1;    
     end
     vgauss = ngauss(2);
@@ -173,7 +175,7 @@ end
 for j = j1:j2
     for i = i1:i2
         % check if we are in a non-zero knot span
-        if (U(i+1)~=U(i) && V(j+1)~=V(j))
+        if (Xi(i+1)~=Xi(i) && Eta(j+1)~=Eta(j))
             
             %% 4i. Initialize element load vector
             V_nc_el = zeros(nDoF_loc,nDoF_loc); 
@@ -184,22 +186,22 @@ for j = j1:j2
                     %% 4ii.1. Compute integration parameters
                     
                     % load extension in u-direction
-                    if (isscalar(ub)==0)
+                    if (isscalar(xib)==0)
                         % map the quadrature point into the knot span in
                         % u-direction
-                        u = ( U(i+1)+U(i) + GPu(ku)*(U(i+1)-U(i)) )/2;
+                        u = ( Xi(i+1)+Xi(i) + GPu(ku)*(Xi(i+1)-Xi(i)) )/2;
                         % compute the respective Jacobian determinant
-                        mapu = (U(i+1)-U(i))/2;
+                        mapu = (Xi(i+1)-Xi(i))/2;
                         % issue quadrature weight in u-direction
                         gwu = GWu(ku);
                     end
                     % load extension in v-direction
-                    if (isscalar(vb)==0)
+                    if (isscalar(etab)==0)
                         % map the quadrature point into the knot span in
                         % v-direction
-                        v = ( V(j+1)+V(j) + GPv(kv)*(V(j+1)-V(j)) )/2;
+                        v = ( Eta(j+1)+Eta(j) + GPv(kv)*(Eta(j+1)-Eta(j)) )/2;
                         % compute the respective Jacobian determinant
-                        mapv = (V(j+1)-V(j))/2;
+                        mapv = (Eta(j+1)-Eta(j))/2;
                         % issue quadrature weight in v-direction
                         gwv = GWv(kv);
                     end
@@ -211,17 +213,17 @@ for j = j1:j2
                     gw = gwu*gwv;
                     
                     if isnumeric(mload)==0  
-                        m = mload(p,i,u,U,q,j,v,V,CP);  
+                        m = mload(p,i,u,Xi,q,j,v,Eta,CP);  
                     end
 
                     %% 4ii.2. Compute the basis functions and its derivatives at the parametric location
-                    [R,dR] = computeNurbsBasisFunctionsAndFirstDerivatives2D(i,p,u,U,j,q,v,V,CP);
+                    [R,dR] = computeNurbsBasisFunctionsAndFirstDerivatives2D(i,p,u,Xi,j,q,v,Eta,CP);
                     
                     %% 4ii.3. Compute the covariant, and contravariant basis as well as the normal to the surface vector and the curvature change vector with respect to the reference configuration
-                    [g_covariant,g3,dA,H,~,~,g_contravariant,~,Bv] = computeCovariantBaseVectorsDerivativesAndMetrics2D(i,p,u,U,j,q,v,V,CP);
+                    [g_covariant,g3,dA,H,~,~,g_contravariant,~,Bv] = computeCovariantBaseVectorsDerivativesAndMetrics2D(i,p,u,Xi,j,q,v,Eta,CP);
                    
                     %% 4ii.4. Compute the the normal and the tangent to the surface boundary vectors
-                    [n,t] = computeNormalAndTangentVectorsToBSplineSurfaceBoundary(i,p,u,U,j,q,v,V,CP,is_on_u);           
+                    [n,t] = computeNormalAndTangentVectorsToBSplineSurfaceBoundary(i,p,u,Xi,j,q,v,Eta,CP,is_on_u);           
                     
                     %% 4ii.5. Compute the B-operator matrix for the rotations in the linear setting
                     B_rotations = computeBOperatorMatrixForRotationsLinear(R,dR,g3,dA,g_covariant,H,g_contravariant,Bv,nNode_loc,n,t);
@@ -251,7 +253,7 @@ for j = j1:j2
                    
                     
                     %% 4ii.7. Compute the base vectors of the current configuration
-                    [g,~,~,~,~,~,~] = computeMetricsForKirchhoffLoveShellNonLinearCurrent(p,i,u,U,q,j,v,V,CPd);
+                    [g,~,~,~,~,~,~] = computeMetricsForKirchhoffLoveShellNonLinearCurrent(p,i,u,Xi,q,j,v,Eta,CPd);
                     
                     %% 4ii.8.. Compute the local force vector at the Gauss point
                     if is_on_u==1

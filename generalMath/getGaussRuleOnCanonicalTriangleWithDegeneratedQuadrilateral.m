@@ -1,4 +1,5 @@
-function [GP,GW] = getGaussRuleOnCanonicalTriangleWithDegeneratedQuadrilateral(noGP)
+function [GP, GW] = getGaussRuleOnCanonicalTriangleWithDegeneratedQuadrilateral ...
+    (numGP)
 %% Licensing
 %
 % License:         BSD License
@@ -13,7 +14,7 @@ function [GP,GW] = getGaussRuleOnCanonicalTriangleWithDegeneratedQuadrilateral(n
 % directions of the integration space.
 %
 %       Input :
-%    noPoints : Number of quadrature points
+%       numGP : Number of quadrature points
 %
 %      Output :
 %          GP : array containing the Gauss point coordinates in a list
@@ -39,7 +40,7 @@ function [GP,GW] = getGaussRuleOnCanonicalTriangleWithDegeneratedQuadrilateral(n
 %% 0. Read input
 
 % Number of Gauss points in one dimension
-noGP1D = sqrt(noGP);
+noGP1D = sqrt(numGP);
 
 % Check input
 if isinteger(noGP1D)
@@ -50,8 +51,8 @@ end
 counterGP = 1;
 
 %% 1. Initialize output arrays
-GP = zeros(noGP,2);
-GW = zeros(noGP,1);
+GP = zeros(numGP,2);
+GW = zeros(numGP,1);
 
 %% 2. Issue the Gauss point coordinates and weights over the canonical 1d space
 [GP1D,GW1D] = getGaussPointsAndWeightsOverUnitDomain(noGP1D);
@@ -67,7 +68,7 @@ for iEtaGP = 1:noGP1D
 end
 
 %% 4. Transform the Gauss points into the canonical triangle by degenerating the quadrilateral
-for iGP = 1:noGP
+for iGP = 1:numGP
     GP(iGP,1) = (1 + GP(iGP,1))*(1 - GP(iGP,2))/4;
     GP(iGP,2) = (1 + GP(iGP,2))/2;
     detJ = abs((1 - GP(iGP,2))/4);

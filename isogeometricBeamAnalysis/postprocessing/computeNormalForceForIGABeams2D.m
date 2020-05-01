@@ -1,4 +1,5 @@
-function N = computeNormalForceForIGABeams2D(knotSpanIndex,p,dHat,parameters,analysis,G,dR)
+function N = computeNormalForceForIGABeams2D ...
+    (knotSpanIndex, p, dHat, parameters, analysis, G, dR)
 %% Licensing
 %
 % License:         BSD License
@@ -64,4 +65,3 @@ EAxial = parameters.EYoung * parameters.A / L^2;
 N = EAxial*(epsilonX*G(1,1) + epsilonY*G(2,1));
 
 end
-

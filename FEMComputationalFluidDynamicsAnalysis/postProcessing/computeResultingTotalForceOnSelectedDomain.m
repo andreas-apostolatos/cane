@@ -23,7 +23,6 @@ function F = computeResultingTotalForceOnSelectedDomain(analysis, nodesDomain, F
 %                      spatial dimension over the selected domain
 %
 %% Function main body
-    
 F = zeros(analysis.noSpatialDimensions,1);
 DOFsDomain = analysis.noFields * nodesDomain - analysis.noSpatialDimensions;
 for k = 1:analysis.noSpatialDimensions

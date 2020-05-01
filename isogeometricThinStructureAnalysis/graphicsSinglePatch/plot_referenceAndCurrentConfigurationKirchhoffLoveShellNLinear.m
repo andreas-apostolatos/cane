@@ -1,5 +1,5 @@
-function index = plot_referenceAndCurrentConfigurationKirchhoffLoveShellNLinear...
-    (p,q,U,V,CP,CP_d,rb,technical_parameters,graph)
+function index = plot_referenceAndCurrentConfigurationKirchhoffLoveShellNLinear ...
+    (p, q, Xi, Eta, CP, CP_d, homDOFs, technical_parameters, propGraph)
 %% Licensing
 %
 % License:         BSD License
@@ -7,7 +7,7 @@ function index = plot_referenceAndCurrentConfigurationKirchhoffLoveShellNLinear.
 %
 % Main authors:    Andreas Apostolatos
 %
-% Function documentation
+%% Function documentation
 %
 % Plots two windows. The first one shows the deformed geometry with
 % loads and supports. The second one shows the strains or stresses on the
@@ -15,11 +15,18 @@ function index = plot_referenceAndCurrentConfigurationKirchhoffLoveShellNLinear.
 % non linear strain resultants.
 %
 %                Input :
+%                  p,q : The polynomial order along the xi- and
+%                        eta-parametric coordinates
+%               Xi,Eta : The knot vectors along the xi- and eta-parametric 
+%                        coordinates
 %                   CP : undeformed control points
 %                 CP_d : deformed control points
 % technical_parameters : structure containing the Young's modulus, the 
 %                        thickness of the shell and the Poisson ration
-%                graph : Structure containing all information on the graphs
+%              homDOFs : The global numbering of the DOFs where
+%                        homogeoneous Dirichlet boundary conditions are
+%                        applied
+%             ropGraph : Structure containing all information on the graphs
 %
 %               Output :
 %                        Graphics
@@ -33,8 +40,8 @@ function index = plot_referenceAndCurrentConfigurationKirchhoffLoveShellNLinear.
 %% Function main body
 
 % Read input
-mu = length(U);
-mv = length(V);
+mu = length(Xi);
+mv = length(Eta);
 nu = length(CP(:,1,1));
 nv = length(CP(1,:,1));
 Dm = technical_parameters.E*technical_parameters.t/(1-technical_parameters.nue^2)*[1 technical_parameters.nue 0; technical_parameters.nue 1 0; 0 0 (1-technical_parameters.nue)/2];
@@ -47,12 +54,12 @@ gridu = 49;
 gridv = 49;
 
 % deformed geometry, supports and load arrows
-[Xp1,Yp1,Zp1] = createBSplineSurface(p,q,U,V,CP_d,gridu,gridv);
-[xs1,ys1,zs1] = createSupports3D(CP,rb);
+[Xp1,Yp1,Zp1] = createBSplineSurface(p,q,Xi,Eta,CP_d,gridu,gridv);
+[xs1,ys1,zs1] = createSupports3D(CP,homDOFs);
 %[xf1,yf1,zf1] = create_arrows(CP,f);
 
 % Assign the correct numbering to the current graph
-figure(graph.index)
+figure(propGraph.index)
 
 subplot(2,1,1);
 
@@ -62,7 +69,7 @@ hold;
 
 % element edges
 isDeformed = 1;
-createEdges(p,q,U,V,CP_d,isDeformed,gridu,gridv)
+createEdges(p,q,Xi,Eta,CP_d,isDeformed,gridu,gridv)
 
 % supports
 for k =1:length(xs1(:,1))
@@ -95,26 +102,26 @@ tol=10e-10;
 l=1;  
 
 %incremental step for v
-r=(V(mv)-V(1))/49;    
+r=(Eta(mv)-Eta(1))/49;    
 
 % Initial value for the parametric coordinate v
-v=V(1);
+v=Eta(1);
 
-while v <= V(mv)+tol
-    j = findKnotSpan(v,V,nv);
-    s = (U(mu)-U(1))/49;  %incremental step for u
-    u = U(1);
+while v <= Eta(mv)+tol
+    j = findKnotSpan(v,Eta,nv);
+    s = (Xi(mu)-Xi(1))/49;  %incremental step for u
+    u = Xi(1);
     k = 1;
-  while u <= U(mu)+tol
-        i = findKnotSpan(u,U,nu);
-        P(k,l,1:3) = computePointCartesianCoordinatesOnBSplineSurface(p,i,u,U,q,j,v,V,CP);
-        if (graph.resultant==1)
-            eps_actual = computeVoigtStrainForKirchhoffLoveShellNonLinear(i,p,u,U,j,q,v,V,CP,CP_d);
+  while u <= Xi(mu)+tol
+        i = findKnotSpan(u,Xi,nu);
+        P(k,l,1:3) = computePointCartesianCoordinatesOnBSplineSurface(p,i,u,Xi,q,j,v,Eta,CP);
+        if (propGraph.resultant==1)
+            eps_actual = computeVoigtStrainForKirchhoffLoveShellNonLinear(i,p,u,Xi,j,q,v,Eta,CP,CP_d);
             n(k,l,1:3) = Dm*eps_actual(1:3);
             n(k,l,4) = 0.5*(n(k,l,1)+n(k,l,2) + sqrt((n(k,l,1)-n(k,l,2))^2 + 4*n(k,l,3)^2));
             n(k,l,5) = 0.5*(n(k,l,1)+n(k,l,2) - sqrt((n(k,l,1)-n(k,l,2))^2 + 4*n(k,l,3)^2));
-        elseif (graph.resultant==2)
-            kap_actual = computeVoigtCurvatureForKirchhoffLoveShellNonLinear(i,p,u,U,j,q,v,V,CP,CP_d);
+        elseif (propGraph.resultant==2)
+            kap_actual = computeVoigtCurvatureForKirchhoffLoveShellNonLinear(i,p,u,Xi,j,q,v,Eta,CP,CP_d);
             m(k,l,1:3) = Db*kap_actual(1:3);
             m(k,l,4) = 0.5*(m(k,l,1)+m(k,l,2) + sqrt((m(k,l,1)-m(k,l,2))^2 + 4*m(k,l,3)^2));
             m(k,l,5) = 0.5*(m(k,l,1)+m(k,l,2) - sqrt((m(k,l,1)-m(k,l,2))^2 + 4*m(k,l,3)^2));
@@ -136,8 +143,8 @@ end
 
 % plot
 subplot(2,1,2);
-if     (graph.resultant==1); surf(P(:,:,1),P(:,:,2),P(:,:,3),n(:,:,graph.component));
-elseif (graph.resultant==2); surf(P(:,:,1),P(:,:,2),P(:,:,3),m(:,:,graph.component));   end
+if     (propGraph.resultant==1); surf(P(:,:,1),P(:,:,2),P(:,:,3),n(:,:,propGraph.component));
+elseif (propGraph.resultant==2); surf(P(:,:,1),P(:,:,2),P(:,:,3),m(:,:,propGraph.component));   end
 shading interp;
 colormap('default');
 
@@ -154,35 +161,35 @@ colormap(invCOL);
 colorbar;
 hold on;
 isDeformed = 0;
-createEdges(p,q,U,V,CP,isDeformed,gridu,gridv);
+createEdges(p,q,Xi,Eta,CP,isDeformed,gridu,gridv);
 axis equal;
 xlabel('x','FontSize',14);
 ylabel('y','FontSize',14);
-if     (graph.resultant==1 && graph.component==1)
+if     (propGraph.resultant==1 && propGraph.component==1)
     title ('normal force n_{11}');
-elseif (graph.resultant==1 && graph.component==2)
+elseif (propGraph.resultant==1 && propGraph.component==2)
     title ('normal force n_{22}');
-elseif (graph.resultant==1 && graph.component==3)
+elseif (propGraph.resultant==1 && propGraph.component==3)
     title ('inplane shear n_{12}');
-elseif (graph.resultant==1 && graph.component==4)
+elseif (propGraph.resultant==1 && propGraph.component==4)
     title ('principal normal force n_1');
-elseif (graph.resultant==1 && graph.component==5)
+elseif (propGraph.resultant==1 && propGraph.component==5)
     title ('principal normal force n_2');
-elseif (graph.resultant==2 && graph.component==1)
+elseif (propGraph.resultant==2 && propGraph.component==1)
     title ('bending moment m_{11}');
-elseif (graph.resultant==2 && graph.component==2)
+elseif (propGraph.resultant==2 && propGraph.component==2)
     title ('bending moment m_{22}');
-elseif (graph.resultant==2 && graph.component==3)
+elseif (propGraph.resultant==2 && propGraph.component==3)
     title ('twisting moment m_{12}');
-elseif (graph.resultant==2 && graph.component==4)
+elseif (propGraph.resultant==2 && propGraph.component==4)
     title ('principal moment m_1');
-elseif (graph.resultant==2 && graph.component==5)
+elseif (propGraph.resultant==2 && propGraph.component==5)
     title ('principal moment m_2');
 end
 
 hold off;
 
 % Update the index of the graph
-index = graph.index + 1;
+index = propGraph.index + 1;
 
 end

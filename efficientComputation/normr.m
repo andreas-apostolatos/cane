@@ -18,3 +18,5 @@ function X = normr(Y)
 %
 %% Function main body
 X = Y./repmat(sqrt(sum(Y.*Y, 2)),1, size(Y, 2));
+
+end

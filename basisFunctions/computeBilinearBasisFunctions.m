@@ -1,4 +1,4 @@
-function [N,isInside] = computeBilinearBasisFunctions(u,v)
+function [N, isInside] = computeBilinearBasisFunctions(u, v)
 %% Licensing
 %
 % License:         BSD License

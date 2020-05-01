@@ -1,4 +1,5 @@
-function [varargout] = assembleSparseMatricies(EFT,noDOFs,noDOFsEl,varargin)
+function [varargout] = assembleSparseMatricies ...
+    (EFT, numDOFs, numDOFsEl, varargin)
 %% Licensing
 %
 % License:         BSD License
@@ -15,8 +16,8 @@ function [varargout] = assembleSparseMatricies(EFT,noDOFs,noDOFsEl,varargin)
 %
 %            Input :
 %              EFT : The element freedom tables of all elements
-%           noDOFs : The total number of degrees of freedom 
-%         noDOFsEl : The number of dofs per element
+%          numDOFs : The total number of degrees of freedom 
+%        numDOFsEl : The number of dofs per element
 %         varargin : The input element matrices
 %
 %           Output :
@@ -48,7 +49,7 @@ function [varargout] = assembleSparseMatricies(EFT,noDOFs,noDOFsEl,varargin)
 %% 0. Read input
 
 % number of elements is the second dimension of the element freedom table
-noElem = size(EFT,2);
+numElem = size(EFT,2);
 
 % transform the element freedom table in the right shape
 EFT = permute(EFT,[3,1,2]);
@@ -71,24 +72,24 @@ for matID = 1:nargin-3
     end
     
     %% 1iii. Check the input matrix for inconsistency in its dimensions
-    if sizeOfInput(2) ~= sizeOfInput(3) || sizeOfInput(2) ~= noDOFsEl
+    if sizeOfInput(2) ~= sizeOfInput(3) || sizeOfInput(2) ~= numDOFsEl
         error('Assembly of sparse matrices has failed due to inconsistent dimensions')
     end
     
     %% 1iv. Compute first indices of non-zero matrix entries
-    i = permute(reshape(reshape(permute(EFT(ones(1,noDOFsEl),:,:),[2,1,3]), ...
-        [noDOFsEl,1,noDOFsEl*noElem]),[1,1,noDOFsEl^2*noElem]),[3,2,1]);
+    i = permute(reshape(reshape(permute(EFT(ones(1,numDOFsEl),:,:),[2,1,3]), ...
+        [numDOFsEl,1,numDOFsEl*numElem]),[1,1,numDOFsEl^2*numElem]),[3,2,1]);
 
     %% 1v. Compute second indices of non-zero matrix entries
-    j = permute(reshape(reshape(EFT(ones(1,noDOFsEl),:,:),[noDOFsEl,1, ...
-        noDOFsEl*noElem]),[1,1,noDOFsEl^2*noElem]),[3,2,1]);
+    j = permute(reshape(reshape(EFT(ones(1,numDOFsEl),:,:),[numDOFsEl,1, ...
+        numDOFsEl*numElem]),[1,1,numDOFsEl^2*numElem]),[3,2,1]);
 
     %% 1vi. Compute values of non-zero matrix entries
     s = permute(reshape(reshape(permute(varargin{matID},[2,3,1]),...
-        [noDOFsEl,1,noDOFsEl*noElem]),[1,1,noDOFsEl^2*noElem]),[3,2,1]);
+        [numDOFsEl,1,numDOFsEl*numElem]),[1,1,numDOFsEl^2*numElem]),[3,2,1]);
 
     %% 1vii. Create the sparse matrix from the i, j and s arrays
-    varargout{matID} = sparse(i,j,s,noDOFs,noDOFs);
+    varargout{matID} = sparse(i,j,s,numDOFs,numDOFs);
 end
     
 end

@@ -1,23 +1,11 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function plot_BSplineCurve(p,Xi,CP,isNURBS,noEval,color,lineWidth)
+function plot_BSplineCurve(p, Xi, CP, isNURBS, numEval, color, lineWidth)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Plots a B-Spline curve.
@@ -26,7 +14,7 @@ function plot_BSplineCurve(p,Xi,CP,isNURBS,noEval,color,lineWidth)
 %          p: Polynomial order
 %        Xi : The knot vector
 %        CP : Set of control points and weights
-%    noEval : Number of sampling points to be used
+%   numEval : Number of sampling points to be used
 %     color : The color of the line to be plotted
 % lineWidth : The width of the line
 %
@@ -46,7 +34,7 @@ function plot_BSplineCurve(p,Xi,CP,isNURBS,noEval,color,lineWidth)
 
 %% 1. Get the coordinates of the sampling points on the curve
 [Xp,Yp,Zp] = createBSplineCurveOnCartesianSpace...
-    (p,Xi,CP,isNURBS,noEval);
+    (p,Xi,CP,isNURBS,numEval);
 
 %% 2. Create the geometry
 line(Xp,Yp,Zp,'Linewidth',lineWidth,'color',color);

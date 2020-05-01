@@ -1,4 +1,5 @@
-function CPd = computeDisplacedControlPointsIGABeams2D(CP,dhat,analysis)
+function CPd = computeDisplacedControlPointsIGABeams2D ...
+    (CP, dhat, analysis)
 %% Licensing
 %
 % License:         BSD License
@@ -42,4 +43,3 @@ elseif strcmp(analysis.type,'Timoshenko')
 end
 
 end
-

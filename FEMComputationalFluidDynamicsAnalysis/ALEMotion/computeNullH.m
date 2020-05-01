@@ -1,5 +1,5 @@
-function [dx,dy,dz] = ...
-    computeNullH(x,y,z,t,varargin)
+function [dx, dy, dz] = ...
+    computeNullH(x, y, z, t, varargin)
 %% Licensing
 %
 % License:         BSD License
@@ -21,7 +21,7 @@ function [dx,dy,dz] = ...
 %                       dx : movement in x coordinate of the current node
 %                       dy : movement in y coordinate of the current node
 %                       dz : movement in z coordinate of the current node
-
+%
 %% Function main body
 
 dx = 0;

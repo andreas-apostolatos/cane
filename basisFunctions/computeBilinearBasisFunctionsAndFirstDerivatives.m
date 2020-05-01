@@ -1,4 +1,5 @@
-function [dN,isInside] = computeBilinearBasisFunctionsAndFirstDerivatives(u,v)
+function [dN, isInside] = ...
+    computeBilinearBasisFunctionsAndFirstDerivatives(u, v)
 %% Licensing
 %
 % License:         BSD License

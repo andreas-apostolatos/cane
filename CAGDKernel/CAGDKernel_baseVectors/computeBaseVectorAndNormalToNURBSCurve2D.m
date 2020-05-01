@@ -1,4 +1,5 @@
-function [G1,G2] = computeBaseVectorAndNormalToNURBSCurve2D(knotSpan,p,CP,dR)
+function [G1, G2] = computeBaseVectorAndNormalToNURBSCurve2D ...
+    (knotSpan, p, CP, dR)
 %% Licensing
 %
 % License:         BSD License

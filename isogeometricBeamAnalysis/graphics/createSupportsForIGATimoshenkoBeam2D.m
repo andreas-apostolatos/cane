@@ -1,4 +1,5 @@
-function [xs,ys,zs] = createSupportsForIGATimoshenkoBeam2D(CP,rb)
+function [xs, ys, zs] = createSupportsForIGATimoshenkoBeam2D ...
+    (CP, homDOFs)
 %% Licensing
 %
 % License:         BSD License
@@ -14,7 +15,7 @@ function [xs,ys,zs] = createSupportsForIGATimoshenkoBeam2D(CP,rb)
 %
 %   Input : 
 %      CP : Control Point coordinates
-%      rd : Array containing information on the supports
+% homDOFs : Array containing information on the supports
 %
 %  Output :
 %      xs : x-coordinates of the support triangle vertices
@@ -43,12 +44,12 @@ step = 2*pi/noOfCircularSegments/numEval;
 % Initialize a counter for the supports
 counterSupports = 1;
 
-for l = 1:length(rb)
+for l = 1:length(homDOFs)
     % get the corresponding Control Point number p and indices CP(i,j)
-    p=ceil(rb(l)/3);
+    p=ceil(homDOFs(l)/3);
     j=ceil(p/nu);
     i=p-(j-1)*nu;
-    dir=rb(l)-((j-1)*nu+i-1)*3;
+    dir=homDOFs(l)-((j-1)*nu+i-1)*3;
     
     if (dir==1)              % (x-support)
         xs(counterSupports,1)=CP(i,1);

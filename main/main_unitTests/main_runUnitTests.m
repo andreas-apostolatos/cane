@@ -12,13 +12,14 @@
 %        - Isogeometric beam analysis
 %        - Isogeometric membrane analysis
 %        - Isogeometric Kichhoff-Love shell analysis
+%        - Finite element formulation of thermal conduction analysis
 %        - Finite element formulation of plate in membrane action analysis
 %        - Finite element formulation of the frictionless Signorini problem
 %        - Stabilized isogeometric analysis for incompressible flows
 %        - Stabilized finite element analysis for the Navier-Stokes problem
 %        - Shape optimization analysis
 %
-% Date : 18.04.2020
+% Date : 30.04.2020
 %
 %% Clear memnory and command window
 clc;
@@ -82,6 +83,16 @@ addpath('../../isogeometricThinStructureAnalysis/graphicsSinglePatch/',...
         '../../isogeometricThinStructureAnalysis/initialConditions/',...
         '../../isogeometricThinStructureAnalysis/weakDBCMembrane/',...
         '../../isogeometricThinStructureAnalysis/formFindingAnalysis/');
+
+% Add all functions related to heat transfer analysis
+addpath('../../FEMThermalConductionAnalysis/solvers/',...
+        '../../FEMThermalConductionAnalysis/solutionMatricesAndVectors/',...
+        '../../FEMThermalConductionAnalysis/loads/',...
+        '../../FEMThermalConductionAnalysis/graphics/',...
+        '../../FEMThermalConductionAnalysis/output/',...
+        '../../FEMThermalConductionAnalysis/initialConditions/',...
+        '../../FEMThermalConductionAnalysis/postprocessing/', ...
+        '../../FEMThermalConductionAnalysis/transientAnalysis/');
     
 % Add all functions related to plate in membrane action analysis
 addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
@@ -173,6 +184,10 @@ if isLight
         HasName('testIGAKirchhoffLoveShellAnalysis/testLinearKirchoffLoveShellMultipatchAnalysis'));
 end
 resultIGAKLShell = run(suiteClassIGAKLShell);
+
+%% Run the unit test cases for the finite element formulation of the thermal conduction analysis
+suiteClassFEMThermalConduction = TestSuite.fromClass(?testFEMThermalConductionAnalysis);
+resultFEMThermalConduction = run(suiteClassFEMThermalConduction);
 
 %% Run the unit test cases for the finite element formulation of the plate in membrane action analysis
 suiteClassFEMPlateInMembraneAction = TestSuite.fromClass(?testFEMPlateInMembraneActionAnalysis);

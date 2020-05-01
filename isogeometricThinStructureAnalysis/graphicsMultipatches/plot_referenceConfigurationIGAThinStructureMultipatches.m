@@ -1,5 +1,5 @@
-function index = plot_referenceConfigurationIGAThinStructureMultipatches...
-    (BSplinePatches,connections,color,graph,outMsg)
+function index = plot_referenceConfigurationIGAThinStructureMultipatches ...
+    (BSplinePatches, connections, color, graph, outMsg)
 %% Licensing
 %
 % License:         BSD License

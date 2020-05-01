@@ -1,4 +1,6 @@
-function [dExact,betaExact] = computeExactDispl4BernoulliCantileverBeamInUniformPressure(P,problemSettings)
+function [dExact, betaExact] = ...
+    computeExactDispl4BernoulliCantileverBeamInUniformPressure ...
+    (P, problemSettings)
 %% Licensing
 %
 % License:         BSD License

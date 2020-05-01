@@ -1,37 +1,27 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function irb = computeIGAVctDOFsInhomogeneousDirichletBC4IncompressibleFlow2D(irb,xi,eta,direction,CP)
+function inhomDOFs = ...
+    computeIGAVctDOFsInhomogeneousDirichletBC4IncompressibleFlow2D ...
+    (inhomDOFs, xi, eta, direction, CP)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function main body
 %
 % Returns the global numbering of the DOFs on which inhomogeneous Dirichlet
 % boundary conditions are prescribed.
 %
 %     Input :
-%       irb : The existing vector with the global numbering of the DOFs where
+% inhomDOFs : The existing vector with the global numbering of the DOFs where
 %             inhomogeneous Dirichlet boundary conditions are applied
 %    xi,eta : The surface parameters on the NURBS patch
 % direction : The direction of the DOF in the global coordinate system
 %        CP : The set of Control Point coordinates and weights
 %
 %    Output :
-%       irb : The updated vector with the global numbering of the DOFs 
+% inhomDOFs : The updated vector with the global numbering of the DOFs 
 %             where inhomogeneous Dirichlet boundary conditions are applied
 %
 % Function layout :
@@ -47,7 +37,7 @@ function irb = computeIGAVctDOFsInhomogeneousDirichletBC4IncompressibleFlow2D(ir
 %% 0. Read input
 
 % counters
-prbCounter = length(irb) + 1;
+prbCounter = length(inhomDOFs) + 1;
     
 % number of control points in u,v-direction
 nxi = length(CP(:,1,1));
@@ -57,10 +47,10 @@ neta = length(CP(1,:,1));
 for j = eta(1)*(neta-1)+1:eta(2)*(neta-1)+1
     for i = xi(1)*(nxi-1)+1:xi(2)*(nxi-1)+1
         % Get the DoF to be prescribed
-        irb(prbCounter) = 3*((j-1)*nxi + i-1) + direction;
+        inhomDOFs(prbCounter) = 3*((j-1)*nxi + i-1) + direction;
         
         % Round to nearest integer
-        irb(prbCounter) = round(irb(prbCounter));
+        inhomDOFs(prbCounter) = round(inhomDOFs(prbCounter));
         
         % Update counter
         prbCounter = prbCounter + 1;
@@ -70,10 +60,10 @@ end
 %% 2. Sort the output array and delete double entries
 
 % Sort the values
-irb = sort(irb);
+inhomDOFs = sort(inhomDOFs);
 
 % Delete double entries
-irb = unique(irb);
+inhomDOFs = unique(inhomDOFs);
 
 end
 

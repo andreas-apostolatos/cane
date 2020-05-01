@@ -1,5 +1,5 @@
-function  plot_postprocCurrentConfigurationIGAThinStructure...
-    (p,q,Xi,Eta,CP,isNURBS,xiGrid,etaGrid,rb,Fl,dHat,graph)
+function  plot_postprocCurrentConfigurationIGAThinStructure ...
+    (p, q, Xi, Eta, CP, isNURBS, xiGrid, etaGrid, homDOFs, Fl, dHat, graph)
 %% Licensing
 %
 % License:         BSD License
@@ -21,7 +21,7 @@ function  plot_postprocCurrentConfigurationIGAThinStructure...
 %                  B-Spline
 % xiGrid,etaGrid : The grid points used for the plotting of the NURBS
 %                  geometry
-%             rb : Vector containing information on the supports
+%        homDOFs : Vector containing information on the supports
 %             Fl : The applied load vector
 %           dHat : The displacement field of the Control Points
 %          graph : Information on the graphics
@@ -68,7 +68,7 @@ if strcmp(graph.postprocConfig,'reference')||strcmp(graph.postprocConfig,'refere
     [XpRef,YpRef,ZpRef] = createBSplineSurfaceOnCartesianSpace(p,q,Xi,Eta,CP,isNURBS,prestress,compPrestress,xiGrid,etaGrid);
 
     % Create the coordinates of the vertices of the support triangles
-    [xsRef,ysRef,zsRef] = createSupports3D(CP,rb);
+    [xsRef,ysRef,zsRef] = createSupports3D(CP,homDOFs);
 
     % Create the start and end points of the arrows representing the loads
     [xfRef,yfRef,zfRef] = createForceArrows3D(CP,Fl);
@@ -78,7 +78,7 @@ if strcmp(graph.postprocConfig,'current')||strcmp(graph.postprocConfig,'referenc
     [XpCur,YpCur,ZpCur] = createBSplineSurfaceOnCartesianSpace(p,q,Xi,Eta,CPd,isNURBS,prestress,compPrestress,xiGrid,etaGrid);
     
     % Create the coordinates of the vertices of the support triangles
-    [xsCur,ysCur,zsCur] = createSupports3D(CPd,rb);
+    [xsCur,ysCur,zsCur] = createSupports3D(CPd,homDOFs);
 
     % Create the start and end points of the arrows representing the loads
     [xfCur,yfCur,zfCur] = createForceArrows3D(CPd,Fl);

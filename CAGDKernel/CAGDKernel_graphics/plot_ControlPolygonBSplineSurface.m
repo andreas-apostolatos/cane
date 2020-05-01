@@ -17,7 +17,6 @@ function plot_ControlPolygonBSplineSurface(CP)
 %  Output : Graphics
 %
 %% Function main body
-
 for iCP = 1:length(CP(1, :, 1)) - 1
     for jCP = 1:length(CP(:, 1, 1)) - 1
         plot3(CP(jCP, iCP:iCP + 1, 1), CP(jCP, iCP:iCP + 1, 2), ...
@@ -31,8 +30,6 @@ for iCP = 1:length(CP(1, :, 1)) - 1
     plot3(CP(jCP, iCP:iCP + 1, 1), CP(jCP, iCP:iCP + 1, 2), ...
         CP(jCP, iCP:iCP + 1, 3), '--or');
 end
-
-% Update counter
 iCP = iCP + 1;
 for jCP =1:length(CP(:, 1, 1)) - 1
     plot3(CP(jCP:jCP + 1, iCP, 1), CP(jCP:jCP + 1, iCP, 2), ...

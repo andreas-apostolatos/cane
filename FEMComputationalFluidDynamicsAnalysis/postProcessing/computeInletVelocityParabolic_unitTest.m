@@ -1,5 +1,6 @@
 function valuesInhomDBCModified = ...
-    computeInletVelocityParabolic_unitTest(fldMsh, inhomDBC, valuesInhomDBC, Umid)
+    computeInletVelocityParabolic_unitTest ...
+    (fldMsh, inhomDBC, valuesInhomDBC, Umid)
 %% Licensing
 %
 % License:         BSD License

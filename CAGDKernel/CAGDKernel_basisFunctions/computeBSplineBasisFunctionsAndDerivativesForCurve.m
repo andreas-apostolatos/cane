@@ -1,4 +1,5 @@
-function dN = computeBSplineBasisFunctionsAndDerivativesForCurve(knotSpanIndex,p,xi,Xi,nDeriv)
+function dN = computeBSplineBasisFunctionsAndDerivativesForCurve ...
+    (knotSpanIndex, p, xi, Xi, nDeriv)
 %% Licensing
 %
 % License:         BSD License

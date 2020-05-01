@@ -9,8 +9,6 @@ function homDOFsLM = findInactiveLagrangeMultipliersContact2D...
 % Main authors:    Andreas Apostolatos
 %                  Marko Leskovar
 %
-% Date : 04.02.2020
-%
 %% Function documentation
 %
 % Returns the updated array of constrained Lagrange Multipliers DOFs based

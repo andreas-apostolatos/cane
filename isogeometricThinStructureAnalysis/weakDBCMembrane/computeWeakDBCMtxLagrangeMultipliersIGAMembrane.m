@@ -1,5 +1,6 @@
-function KWeakDBCLMMembrane = computeWeakDBCMtxLagrangeMultipliersIGAMembrane...
-    (BSplinePatch,connections,noDOFs,propCoupling)
+function KWeakDBCLMMembrane = ...
+    computeWeakDBCMtxLagrangeMultipliersIGAMembrane...
+    (BSplinePatch, connections, numDOFs, propCoupling)
 %% Licensing
 %
 % License:         BSD License
@@ -71,7 +72,7 @@ function KWeakDBCLMMembrane = computeWeakDBCMtxLagrangeMultipliersIGAMembrane...
 %                                                boundary conditions are
 %                                                applied
 %         connections : Dummy variable for this function
-%              noDOFs : The total number of DOFs for the multipatch
+%             numDOFs : The total number of DOFs for the multipatch
 %                       structure with the number of DOFs for the Lagrange 
 %                       Multipliers 
 %        propCoupling : Dummy variable for this function
@@ -159,7 +160,7 @@ EFT = zeros(1,noDOFsLoc);
 RMtx = zeros(3,noDOFsLoc);
 
 % % Initialize the output arrays
-KWeakDBCLMMembrane = zeros(noDOFs,noDOFs);
+KWeakDBCLMMembrane = zeros(numDOFs,numDOFs);
 
 %% 1. Loop over all the conditions
 for iCnd = 1:BSplinePatch.weakDBC.noCnd

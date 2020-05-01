@@ -1,5 +1,5 @@
 function index = plot_currentConfigurationIGABeamsLinear...
-    (analysis,p,Xi,CP,isNURBS,dHat,rb,parameters,graph,outMsg)
+    (analysis, p, Xi, CP, isNURBS, dHat, rb, parameters, graph, outMsg)
 %% Licensing
 %
 % License:         BSD License

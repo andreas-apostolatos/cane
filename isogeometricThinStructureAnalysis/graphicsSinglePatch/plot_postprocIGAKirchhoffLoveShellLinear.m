@@ -1,4 +1,5 @@
-function index = plot_postprocIGAKirchhoffLoveShellLinear(BSplinePatch,dHat,graph,outMsg)
+function index = plot_postprocIGAKirchhoffLoveShellLinear ...
+    (BSplinePatch, dHat, graph, outMsg)
 %% Licensing
 %
 % License:         BSD License

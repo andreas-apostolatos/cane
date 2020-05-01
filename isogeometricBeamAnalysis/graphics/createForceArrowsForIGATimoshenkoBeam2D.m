@@ -1,4 +1,5 @@
-function [xF,yF,zF] = createForceArrowsForIGATimoshenkoBeam2D(CP,F)
+function [xF, yF, zF] = createForceArrowsForIGATimoshenkoBeam2D ...
+    (CP, F)
 %% Licensing
 %
 % License:         BSD License

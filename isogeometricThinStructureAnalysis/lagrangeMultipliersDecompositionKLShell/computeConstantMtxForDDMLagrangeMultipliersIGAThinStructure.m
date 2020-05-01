@@ -1,5 +1,6 @@
-function KLagrangeMultipliers = computeConstantMtxForDDMLagrangeMultipliersIGAThinStructure...
-    (BSplinePatches,connections,noDOFs,propCoupling)
+function KLagrangeMultipliers = ...
+    computeConstantMtxForDDMLagrangeMultipliersIGAThinStructure ...
+    (BSplinePatches, connections, numDOFs, propCoupling)
 %% Licensing
 %
 % License:         BSD License
@@ -27,7 +28,7 @@ function KLagrangeMultipliers = computeConstantMtxForDDMLagrangeMultipliersIGATh
 %                            .mu : The NURBS discretization of the 
 %                                  interface traction moment field for each 
 %                                  defined interface
-%               noDOFs : The complete number of DOFs
+%              numDOFs : The complete number of DOFs
 %         propCoupling : Properties of the multipatch coupling
 %                           .alphaD : Vector containing the penalty factor
 %                                     for the displacements and for each 
@@ -86,7 +87,7 @@ function KLagrangeMultipliers = computeConstantMtxForDDMLagrangeMultipliersIGATh
 % else
 %     error('For this function the coupling method can be either lagrangeMultipliers or mortar but not %s',propCoupling.method);
 % end
-KLagrangeMultipliers = zeros(noDOFs,noDOFs);
+KLagrangeMultipliers = zeros(numDOFs,numDOFs);
 
 % Assign the master and slave relation
 isMaster = 1;

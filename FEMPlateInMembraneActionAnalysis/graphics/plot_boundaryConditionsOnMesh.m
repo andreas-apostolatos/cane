@@ -1,4 +1,4 @@
-function plot_boundaryConditionsOnMesh(mesh,hDBC,F)
+function plot_boundaryConditionsOnMesh(mesh, homDBC, F)
 %% Licensing
 %
 % License:         BSD License
@@ -12,7 +12,7 @@ function plot_boundaryConditionsOnMesh(mesh,hDBC,F)
 %
 %    Input :
 %     mesh : Nodes and elements of the mesh
-%     hDBC : Vector containing the the DOFs (via their global numbering)
+%   homDBC : Vector containing the the DOFs (via their global numbering)
 %            which are prescribed 
 %        F : Global load vector
 %    graph : On the graphics
@@ -23,7 +23,7 @@ function plot_boundaryConditionsOnMesh(mesh,hDBC,F)
 %% Function main body
 
 % Create the supports
-[xs,ys,zs] = createSupports(mesh.nodes,hDBC);
+[xs,ys,zs] = createSupports(mesh.nodes,homDBC);
 
 %supports
 for k =1:length(xs(:,1))

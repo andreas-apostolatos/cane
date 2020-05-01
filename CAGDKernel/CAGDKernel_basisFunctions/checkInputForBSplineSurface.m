@@ -1,5 +1,5 @@
-function checkInputForBSplineSurface ...
-    (p, numKnots_xi, numCPs_xi, q, numKnots_eta, numCPs_eta)
+function checkInputForBSplineSurface(p,numKnots_xi, numCPs_xi, ...
+    q, numKnots_eta, numCPs_eta)
 %% Licensing
 %
 % License:         BSD License
@@ -11,13 +11,13 @@ function checkInputForBSplineSurface ...
 %
 % checks compatibility of input parameters for a NURBS surface
 %
-%    Input :
+%                    Input :
 %                      p,q : polynomial degrees
-% numKnots_xi,numKnots_eta : number of knots in xi,eta-direction
-%     numCPs_xi,numCPs_eta : number of control points in xi,eta-direction
+% numKnots_xi,numKnots_eta : number of knots in u,v-direction
+%     numCPs_xi,numCPs_eta : number of control points in u,v-direction
 %
-% Output :
-%          Message on the compatibility
+%                   Output :
+%                            message on the compatibility
 %
 %% Function main body
 if (numCPs_xi + p + 1 ~= numKnots_xi)
