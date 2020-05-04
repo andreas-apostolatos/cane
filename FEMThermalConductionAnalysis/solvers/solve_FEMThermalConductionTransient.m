@@ -118,6 +118,9 @@ computeConstantProblemMatrices = 'undefined';
 propALE = 'undefined';
 computeUpdatedMesh = 'undefined';
 
+% Title for the output file
+title = 'linear transient 2D heat transfer analysis';
+
 % Get the DOF numbering for each component of the temperature field
 DOF4Output = 1:numDOFs;
 

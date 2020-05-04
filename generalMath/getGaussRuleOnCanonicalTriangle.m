@@ -4,6 +4,8 @@ function [GP,GW] = getGaussRuleOnCanonicalTriangle(polOrder)
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the Gauss Points and Weights for the exact integration of a

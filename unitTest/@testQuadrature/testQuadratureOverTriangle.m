@@ -4,6 +4,8 @@ function testQuadratureOverTriangle(testCase)
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Tests the Gauss quadrature over a triangle which is constructed using the

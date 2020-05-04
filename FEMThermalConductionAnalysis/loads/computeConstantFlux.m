@@ -9,16 +9,17 @@ function flux = computeConstantFlux(x, y, z, t, propNBC)
 %
 %% Function documentation
 %
-% Returns the applied fux at the given chorochronical location.
+% Returns the applied flux corresponding to the thermal conduction problem
+% dependent on the geometric location x, y, t and time t.
 %
 %       Input :
 %       x,y,z : The physical location where the load is applied
 %           t : The time instance
 %     propNBC : User-defined parameters for the load,
-%                  .tractionLoadVct : Externally applied traction vector
+%                  .flux : Externally applied flux
 %
 %      Output :
-%        load :  The load vector [loadx; loady; loadz]
+%        flux :  The applied flux
 %
 %% Function main body
 flux = propNBC.flux;

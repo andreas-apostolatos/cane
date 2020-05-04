@@ -24,7 +24,22 @@ function plot_NURBSCurve(p, q, Xi, Eta, CP, grid, par, xiEta, ...
 %   xiEta_end : End coordinate of the curve
 %
 %   Output : graphics
-%           
+%
+% Function layout :
+%
+%
+% 0. Read input
+%
+% 1. Create the points on the curve
+%
+% 2. Plot the line
+%
+% 3. Create the element edges
+%
+% 4. Plot the control polygon
+%
+% 5. Define graph properties
+%
 %% Function main body
 
 %% 0. Read input
@@ -55,3 +70,5 @@ xlabel('x', 'FontSize', 14);
 ylabel('y', 'FontSize', 14);
 zlabel('z', 'FontSize', 14);
 hold off;
+
+end

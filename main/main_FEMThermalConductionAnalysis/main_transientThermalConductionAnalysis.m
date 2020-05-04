@@ -117,7 +117,10 @@ elseif strcmp(caseName,'transientWallHeating')
     propThermalDynamics.temperatureInit = 200;
 elseif strcmp(caseName,'trapezoidalPlateHeatFlux') || strcmp(caseName,'rectangularPlateHeatFlux')
     propThermalDynamics.temperatureInit = 300;
-    propNBC.flux = 100; 
+    propNBC.flux = 100;
+else
+    propThermalDynamics.temperatureInit = 0;
+    propNBC.flux = 0;
 end
 
 %% Solve the transient heat transfer problem

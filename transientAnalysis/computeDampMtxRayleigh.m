@@ -1,7 +1,7 @@
-function damMtxRayleigh = computeDampMtxRayleigh(constMtx,...
-    computeProblemMatricesSteadyState,massMtx,noDOFs,BSplinePatches,...
-    connections,propCoupling,t,propTransientAnalysis,noWeakDBCCnd,...
-    isReferenceUpdated,tab,outMsg)
+function damMtxRayleigh = computeDampMtxRayleigh ...
+    (constMtx, computeProblemMatricesSteadyState, massMtx, numDOFs, ...
+    BSplinePatches, connections, propCoupling, t, propTransientAnalysis, ...
+    noWeakDBCCnd, isReferenceUpdated, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -19,7 +19,7 @@ function damMtxRayleigh = computeDampMtxRayleigh(constMtx,...
 %                                       of the problem matrix corresponding
 %                                       to the steady-state problem
 %                             massMtx : The mass matrix of the system
-%                              noDOFs : Number of DOFs for the structure
+%                             numDOFs : Number of DOFs for the structure
 %                      BSplinePatches : Array of B-Spline patches
 %                                   .p,q : The polynomial orders of the 
 %                                          B-Spline surface in both 
@@ -145,8 +145,8 @@ else
     tanMtxLoad = 'undefined';
 end
 noNonlinearIteration = 1;
-u = zeros(noDOFs,1);
-uDot = zeros(noDOFs,1);
+u = zeros(numDOFs,1);
+uDot = zeros(numDOFs,1);
 
 %% 1. Compute the linear stiffness matrix of the system
 [linStiffMtx,~,~,~,~] = ...

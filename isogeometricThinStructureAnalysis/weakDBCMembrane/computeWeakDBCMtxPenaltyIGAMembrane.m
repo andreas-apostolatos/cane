@@ -72,7 +72,7 @@ function KWeakDBCPenaltyMembrane = ...
 %                                                boundary conditions are
 %                                                applied
 %         connections : Dummy variable for this function
-%              noDOFs : Dummy variable for this function
+%             numDOFs : Dummy variable for this function
 %        propCoupling : Dummy variable for this function
 %
 % Function layout :
@@ -139,15 +139,15 @@ isNURBS = BSplinePatch.isNURBS;
 DOFNumbering = BSplinePatch.DOFNumbering;
 
 % Number of Control Points in xi-,eta- directions
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+numCPs_xi = length(CP(:, 1, 1));
+numCPs_eta = length(CP(1, :, 1));
 
 % Number of local DOFs
-noNodesLoc = (p+1)*(q+1);
+noNodesLoc = (p + 1)*(q + 1);
 noDOFsLoc = 3*noNodesLoc;
 
 % Number of DOFs
-noDOFs = 3*nxi*neta;
+numDOFs = 3*numCPs_xi*numCPs_eta;
 
 % Initialize the element freedom table
 EFT = zeros(1,noDOFsLoc);
@@ -156,7 +156,7 @@ EFT = zeros(1,noDOFsLoc);
 RMtx = zeros(3,noDOFsLoc);
 
 % Initialize the output arrays
-KWeakDBCPenaltyMembrane = zeros(noDOFs,noDOFs);
+KWeakDBCPenaltyMembrane = zeros(numDOFs,numDOFs);
 
 %% 1. Loop over all the conditions
 for counterCnd = 1:BSplinePatch.weakDBC.noCnd
@@ -171,8 +171,8 @@ for counterCnd = 1:BSplinePatch.weakDBC.noCnd
         couplingRegion = xiExtension;
 
         % Find the correct spans for the coupled region
-        spanStart = findKnotSpan(couplingRegion(1),Xi,nxi);
-        spanEnd = findKnotSpan(couplingRegion(2),Xi,nxi) + 1;
+        spanStart = findKnotSpan(couplingRegion(1),Xi,numCPs_xi);
+        spanEnd = findKnotSpan(couplingRegion(2),Xi,numCPs_xi) + 1;
 
         % Find the corresponding to the coupled region knot span
         weakDBCRgionOnKnotVector = Xi(spanStart:spanEnd);
@@ -181,7 +181,7 @@ for counterCnd = 1:BSplinePatch.weakDBC.noCnd
         eta = etaExtension(1);
 
         % Find the span where xiEta it lies in
-        etaSpan = findKnotSpan(eta,Eta,neta);
+        etaSpan = findKnotSpan(eta,Eta,numCPs_eta);
 
         % Flag on whether the coupling line is over xi
         isOnXi = true;
@@ -190,8 +190,8 @@ for counterCnd = 1:BSplinePatch.weakDBC.noCnd
         couplingRegion = etaExtension;
 
         % Find the correct spans for the coupled region
-        spanStart = findKnotSpan(couplingRegion(1),Eta,neta);   
-        spanEnd = findKnotSpan(couplingRegion(2),Eta,neta) + 1;
+        spanStart = findKnotSpan(couplingRegion(1),Eta,numCPs_eta);   
+        spanEnd = findKnotSpan(couplingRegion(2),Eta,numCPs_eta) + 1;
 
         % Find the corresponding to the coupled region knot span
         weakDBCRgionOnKnotVector = Eta(spanStart:spanEnd);
@@ -200,7 +200,7 @@ for counterCnd = 1:BSplinePatch.weakDBC.noCnd
         xi = xiExtension(1);
 
         % Find the span where uv it lies in
-        xiSpan = findKnotSpan(xi,Xi,nxi);
+        xiSpan = findKnotSpan(xi,Xi,numCPs_xi);
 
         % Flag on whether the coupling line is over eta
         isOnXi = false;
@@ -214,8 +214,8 @@ for counterCnd = 1:BSplinePatch.weakDBC.noCnd
         eta = etaExtension(1);
         
         % Find the correct spans for the point
-        xiSpan = findKnotSpan(xi,Xi,nxi);
-        etaSpan = findKnotSpan(eta,Eta,neta);
+        xiSpan = findKnotSpan(xi,Xi,numCPs_xi);
+        etaSpan = findKnotSpan(eta,Eta,numCPs_eta);
         
         % Find the corresponding to the coupled region knot span
         weakDBCRgionOnKnotVector = zeros(2,1);
@@ -266,10 +266,10 @@ for counterCnd = 1:BSplinePatch.weakDBC.noCnd
                 if ~isWeakDBCOverPoint
                     if isOnXi
                         xi = xiEta;
-                        xiSpan = findKnotSpan(xi,Xi,nxi);
+                        xiSpan = findKnotSpan(xi,Xi,numCPs_xi);
                     else
                         eta = xiEta;
-                        etaSpan = findKnotSpan(eta,Eta,neta);
+                        etaSpan = findKnotSpan(eta,Eta,numCPs_eta);
                     end
                 end
                 dR = computeIGABasisFunctionsAndDerivativesForSurface...

@@ -4,6 +4,8 @@ function [GP, GW] = getGaussPointsAndWeightsOverUnitDomain(n)
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the precomputed Gauss point locations and Gauss weights given the

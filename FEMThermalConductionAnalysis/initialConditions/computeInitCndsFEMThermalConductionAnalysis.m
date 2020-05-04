@@ -1,7 +1,7 @@
-function [u,uDot,uDDot,noTimeStep,propTransientAnalysis] = ...
+function [u, uDot, uDDot, noTimeStep, propTransientAnalysis] = ...
     computeInitCndsFEMThermalConductionAnalysis ...
-    (analysis,strMsh,DOF4Output,parameters,propTransientAnalysis, ...
-    VTKResultFile,caseName,pathToOutput)
+    (analysis, strMsh, DOF4Output, propParameters, propTransientAnalysis, ...
+    VTKResultFile, caseName, pathToOutput)
 %% Licensing
 %
 % License:         BSD License
@@ -34,7 +34,7 @@ function [u,uDot,uDDot,noTimeStep,propTransientAnalysis] = ...
 %               F : Global load vector corresponding to surface tractions
 %      bodyForces : Function handle to body force vector computation
 %        analysis : .type : The analysis type
-%      parameters : Problem specific technical parameters
+%  propParameters : Problem specific technical parameters
 % nLinearAnalysis :     .scheme : The employed nonlinear scheme
 %                    .tolerance : The residual tolerance
 %                      .maxIter : The maximum number of the nonlinear 

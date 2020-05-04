@@ -243,9 +243,7 @@ index = graph.index + 1;
 
 %% 4. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
     fprintf('Plotting the current configuration took %.2d seconds \n\n',computationalTime);
     fprintf('__________________Plotting Current Configuration Ended____________________\n');
     fprintf('##########################################################################\n\n\n');

@@ -10,6 +10,8 @@ QUESTION: Density
 VALUE: 7750
 QUESTION: Young_Modulus
 VALUE: 210000
+QUESTION: Density
+VALUE: 1.0
 QUESTION: Poisson_Ratio
 VALUE: 0.333
 QUESTION: Thickness
@@ -30,6 +32,8 @@ QUESTION: Density
 VALUE: 2710
 QUESTION: Young_Modulus
 VALUE: 70000
+QUESTION: Density
+VALUE: 1.0
 QUESTION: Poisson_Ratio
 VALUE: 0.333
 QUESTION: Thickness

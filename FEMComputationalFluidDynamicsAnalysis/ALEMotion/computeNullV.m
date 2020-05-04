@@ -21,6 +21,7 @@ function [dx, dy, dz] = ...
 %                       dx : movement in x coordinate of the current node
 %                       dy : movement in y coordinate of the current node
 %                       dz : movement in z coordinate of the current node
+%
 %% Function main body
 dx = NaN;
 dy = 0;

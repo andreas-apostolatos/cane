@@ -113,7 +113,7 @@ end
 
 %% 2. Check if convergence has been achieved
 if counter == newtonRapshon.maxIt
-    hasConverged = 0;
+    isConverged = 0;
 end
 
 end

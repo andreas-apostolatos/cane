@@ -78,7 +78,7 @@ function [tangMtxWeakDBCPenalty, resVctWeakDBCPenalty, BSplinePatch] = ...
 %                       dHat : The displacement solution vector from the 
 %                              previous nonlinear iteration step
 %                connections : Dummy variable for this function
-%                     noDOFs : Dummy variable for this function
+%                    numDOFs : Dummy variable for this function
 %               propCoupling : Dummy variable for this function
 %                tanStiffMtx : The tangent stiffness matrix at the current 
 %                              nonlinear iteration step
@@ -184,7 +184,7 @@ noCPsEl = (p+1)*(q+1);
 noDOFsEl = 3*noCPsEl;
 
 % Number of DOFs
-noDOFs = BSplinePatch.noDOFs;
+numDOFs = BSplinePatch.noDOFs;
 
 % Initialize the element freedom table
 EFT = zeros(1,noDOFsEl);
@@ -194,7 +194,7 @@ RMtx = zeros(3,noDOFsEl);
 
 % Initialize the output arrays
 tangMtxWeakDBCPenalty = 'undefined';
-resVctWeakDBCPenalty = zeros(noDOFs,1);
+resVctWeakDBCPenalty = zeros(numDOFs,1);
 
 %% 1. Loop over the conditions
 for iCnd = 1:BSplinePatch.weakDBC.noCnd

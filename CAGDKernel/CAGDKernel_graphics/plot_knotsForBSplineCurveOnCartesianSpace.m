@@ -52,23 +52,24 @@ for j = 1:length(Xi)
     xi = Xi(j);
     
     %% 1ii. Find the current knot span
-    knotSpan = findKnotSpan(xi,Xi,nxi);
+    knotSpan = findKnotSpan(xi, Xi, nxi);
     
     %% 1iii. Compute the NURBS basis functions at xi
-    nDeriv = 0;
-    R = computeIGABasisFunctionsAndDerivativesForCurve...
-        (knotSpan,p,xi,Xi,CP,isNURBS,nDeriv);
+    numDeriv = 0;
+    R = computeIGABasisFunctionsAndDerivativesForCurve ...
+        (knotSpan, p, xi, Xi, CP, isNURBS, numDeriv);
     
     %% 1iv. Compute the Cartesian coordinates of the point on space
-    Point(j,1:3) = computeCartesianCoordinatesOfAPointOnBSplineCurve(p,knotSpan,xi,Xi,CP,R);
+    Point(j, 1:3) = computeCartesianCoordinatesOfAPointOnBSplineCurve ...
+        (p, knotSpan, xi, Xi, CP, R);
 end
 
 %% 2. Plot all the element edges
-plot3(Point(:,1),Point(:,2),Point(:,3),'.','Markersize',10,'Color','green');
+plot3(Point(:, 1), Point(:, 2), Point(:, 3), '.', 'Markersize', 10, 'Color', 'green');
 axis equal;
 grid on;
-xlabel('x','FontSize',18);
-ylabel('y','FontSize',18);
-zlabel('z','FontSize',18);
+xlabel('x', 'FontSize', 18);
+ylabel('y', 'FontSize', 18);
+zlabel('z', 'FontSize', 18);
 
 end

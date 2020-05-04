@@ -54,10 +54,10 @@ else
     if ~isfield(postProc, 'nameDomain')
         error('postProc must define variable nameDomain');
     end
-    if ~isfield(postProc, 'nameDomain')
+    if ~isfield(postProc, 'nodesDomain')
         error('postProc must define variable nodesDomain');
     end
-    if ~isfield(postProc, 'nameDomain')
+    if ~isfield(postProc, 'computePostProc')
         error('postProc must define variable computePostProc');
     end
 end

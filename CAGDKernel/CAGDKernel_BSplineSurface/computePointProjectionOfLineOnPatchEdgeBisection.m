@@ -105,8 +105,9 @@ while counterIter < propBisection.maxIt && ~isConvergent
     PInP = P - PIn;
     
     %% 1iv. Compute the projection of the bisection point to the surface B-Spline patch
-    [xi,eta,Q,isProjected,noIter] = computeNearestPointProjectionOnBSplineSurface...
-        (P,p,Xi,q,Eta,CP,isNURBS,xi0,eta0,propNewtonRaphson);
+    [xi, eta, Q, isProjected, noIter] = ...
+        computeNearestPointProjectionOnBSplineSurface ...
+        (P, p, Xi, q, Eta, CP, isNURBS, xi0, eta0, propNewtonRaphson);
     
     %% 1v. Update the points projected in and out the patch
     if isProjected

@@ -154,7 +154,8 @@ function [u, CPHistory, residual, isConverged, FComplete, rankD, ...
 %                                        .gamma : Bossak parameter
 %                                       .TStart : Start time of the 
 %                                                 simulation
-%                                         .TEnd : End time of the simulation
+%                                         .TEnd : End time of the 
+%                                                 simulation
 %                                           .nT : Number of time steps
 %                                           .dt : Time step
 %                 .computeProblemMtrcsTransient : Function handle to the

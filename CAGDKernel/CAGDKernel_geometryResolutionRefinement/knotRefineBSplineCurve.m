@@ -133,9 +133,7 @@ end
 
 %% 4. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
     fprintf('\t Knot insertion took %d seconds \n\n',computationalTime);
     fprintf('_________________Knot Insertion Ended_________________\n');
     fprintf('######################################################\n\n\n');

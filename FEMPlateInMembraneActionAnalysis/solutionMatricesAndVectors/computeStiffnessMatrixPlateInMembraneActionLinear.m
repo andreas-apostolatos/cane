@@ -57,7 +57,7 @@ for i=1:length(mesh.elements)
     
     % Compute element stiffness matrix for the CST
     K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST...
-                                       (nodes,materialProperties,analysis);
+                                       (nodes,propParameters,propAnalysis);
     
     % Assemble to the global stiffness matrix via element freedom tables
     % Element freedom table

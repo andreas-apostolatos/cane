@@ -4,6 +4,8 @@ function bCoef = getBinomialCoefficients(a, b)
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
+% Main authors:    Andreas Apostolatos
+%
 %% Function Documentation 
 % 
 % Returns the binomial coefficient for a given pair of integers

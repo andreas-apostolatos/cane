@@ -68,9 +68,9 @@ end
 dF = computeDenominatorFunctionAndDerivativesForCurve(dN,knotSpanIndex,p,CP,numDeriv);
 
 %% 3. Loop over all the basis functions
-for i=0:p
+for i = 0:p
     %% 3i. Loop over all the derivatives
-    for j=0:numDeriv
+    for j = 0:numDeriv
         %% 3i.2. Compute the Control point index
         index = knotSpanIndex-p+i;
         

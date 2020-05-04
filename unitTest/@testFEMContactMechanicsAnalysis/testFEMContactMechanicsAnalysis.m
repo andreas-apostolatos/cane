@@ -18,5 +18,5 @@ methods (Test)
     testFrictionlessSignoriniContactWedge2D(testCase)
     testFrictionlessSignoriniContactHertz2D(testCase)
 end
-
+    
 end

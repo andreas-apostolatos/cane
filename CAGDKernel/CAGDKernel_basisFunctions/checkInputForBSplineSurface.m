@@ -13,8 +13,8 @@ function checkInputForBSplineSurface(p,numKnots_xi, numCPs_xi, ...
 %
 %                    Input :
 %                      p,q : polynomial degrees
-% numKnots_xi,numKnots_eta : number of knots in u,v-direction
-%     numCPs_xi,numCPs_eta : number of control points in u,v-direction
+% numKnots_xi,numKnots_eta : number of knots in xi,eta-direction
+%     numCPs_xi,numCPs_eta : number of control points in xi,eta-direction
 %
 %                   Output :
 %                            message on the compatibility

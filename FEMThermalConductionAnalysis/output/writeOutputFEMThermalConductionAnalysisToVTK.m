@@ -1,7 +1,7 @@
 function writeOutputFEMThermalConductionAnalysisToVTK ...
-    (analysis,propNLinearAnalysis,propTransientAnalysis,strMsh,...
-    parameters,d,dDot,dDDot,DOF4Output,caseName,pathToOutput,...
-    title,timeStepNo)
+    (propAnalysis, propNLinearAnalysis, propTransientAnalysis, strMsh, ...
+    parameters, d, dDot, dDDot, DOF4Output, caseName, pathToOutput, ...
+    title, noTimeStep)
 %% Licensing
 %
 % License:         BSD License
@@ -16,8 +16,9 @@ function writeOutputFEMThermalConductionAnalysisToVTK ...
 % a VTK file to be read by paraview.
 %
 %                  Input :
-%               analysis : Information on the analysis
-%                           .type: Analysis type
+%           propAnalysis : Structure containing general information on the 
+%                          analysis,
+%                               .type: Analysis type
 %    propNLinearAnalysis : Properties of the nonlinear method
 %                         .method : 'NEWTON_RAPHSON', 'UNDEFINED', etc
 % propTransientAnalysis : Properties of the transient analysis (dummy 
@@ -31,7 +32,7 @@ function writeOutputFEMThermalConductionAnalysisToVTK ...
 %              caseName : The name of the case in the inputGiD case folder
 %          pathToOutput : Path to the output file
 %                 title : The name of the output file
-%            timeStepNo : Number of the current time step
+%            noTimeStep : Number of the current time step
 %
 %                Output :
 %                         Write results into file
@@ -63,7 +64,7 @@ end
 [noElements,elementOrder] = size(strMsh.elements);
 
 output = fopen(strcat(pathToOutput,caseName,'/',caseName,'_',...
-    num2str(timeStepNo),'.vtk'),'w');
+    num2str(noTimeStep),'.vtk'),'w');
 
 % Transpose the nodal coordinates array
 XYZ = strMsh.nodes(1:noNodes,:)';

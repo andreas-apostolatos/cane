@@ -242,7 +242,7 @@ propGraph.index = propGraph.index + 1;
 figure(propGraph.index)
 plot(1:counterOpt - 1, minElSizeHistory(:, 1));
 xlabel('Optimization iteration');
-ylabel('');
+ylabel('Minimum element edge size');
 axis on;
 grid on;
 propGraph.index = propGraph.index + 1;

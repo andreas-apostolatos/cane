@@ -126,8 +126,6 @@ if strcmp(outMsg,'outputEnabled')
         fprintf('Load extension in eta parametric direction = [%.2d,%.2d]\n',etab(1),etab(2));
     end
     fprintf('_______________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -341,16 +339,14 @@ if isvector(FOutdated)
 end
 
 %% 5. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
     if isvector(FOutdated)
-        fprintf('Load vector update took %.2d seconds \n\n',computationalTime);
+        fprintf('Load vector update took %.2d seconds \n\n', computationalTime);
         fprintf('________________Load Vector Update Ended_______________\n');
         fprintf('#######################################################\n\n\n');
     else
-        fprintf('Load vector computation took %.2d seconds \n\n',computationalTime);
+        fprintf('Load vector computation took %.2d seconds \n\n', computationalTime);
         fprintf('____________Load Vector Computation Ended______________\n');
         fprintf('#######################################################\n\n\n');
     end

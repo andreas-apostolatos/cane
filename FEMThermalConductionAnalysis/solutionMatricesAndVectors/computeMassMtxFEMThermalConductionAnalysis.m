@@ -1,5 +1,5 @@
 function massMtx = computeMassMtxFEMThermalConductionAnalysis ...
-    (analysis, mesh, parameters, gaussInt)
+    (propAnalysis, mesh, parameters, gaussInt)
 %% Licensing
 %
 % License:         BSD License
@@ -14,7 +14,7 @@ function massMtx = computeMassMtxFEMThermalConductionAnalysis ...
 % 2D.
 %
 %               Input :
-%            analysis : Information on the analysis type
+%        propAnalysis : Information on the analysis type
 %                           .type : Analysis type
 %                mesh : The nodes and the elements of the underlying mesh
 %          parameters : The parameters the physical field

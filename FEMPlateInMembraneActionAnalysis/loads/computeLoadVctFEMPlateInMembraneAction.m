@@ -68,14 +68,12 @@ function F = computeLoadVctFEMPlateInMembraneAction...
 % 3. Appendix
 %
 %% Function main body
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('______________________________________________________________\n');
     fprintf('##############################################################\n');
     fprintf('Computation the global load vector for a FEM discretized plate\n');
     fprintf('in membrane action problem has been initiated\n');
     fprintf('______________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -196,10 +194,8 @@ for iElmnt = 1:length(propNBC.lines(:,1))
 end
 
 %% 3. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
     fprintf('\nComutation of the load vector took %.2d seconds \n\n',computationalTime);
     fprintf('_________________Load Vector Computation Ended________________\n');
     fprintf('##############################################################\n\n\n');

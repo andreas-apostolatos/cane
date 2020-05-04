@@ -82,7 +82,7 @@ timeStepNoString = fliplr(timeStepNoString);
 timeStepNo = str2double(timeStepNoString);
 
 %% 2. Compute the starting time of the simulation
-noTimeStep = timeStepNo;
+numTimeStep = timeStepNo;
 
 %% 3. Get the velocity and the pressure field of the current time step
 

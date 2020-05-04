@@ -6,6 +6,8 @@ function [xi,eta,Projected,isProjected,noIter] = ...
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 % 
 % Returns the nearest point projection of a given point P onto a given

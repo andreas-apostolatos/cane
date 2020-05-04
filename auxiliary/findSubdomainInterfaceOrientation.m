@@ -168,3 +168,5 @@ elseif norm(xStart1 - xEnd2) < tolerance && norm(xEnd1 - xStart2) < tolerance
 else
     error('The interface parametrization do not match');
 end
+
+end
