@@ -138,7 +138,8 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/
     
 % Add all functions related to the Finite Element Methods for
 % Fluid-Structure Interaction
-addpath('../../FEMComputationalFluidStructureInteractionAnalysis/solvers/');
+addpath('../../FEMComputationalFluidStructureInteractionAnalysis/ALEMotion/', ...
+        '../../FEMComputationalFluidStructureInteractionAnalysis/solvers/');
     
 % Add all functions related to parsing
 addpath('../../parsers/');

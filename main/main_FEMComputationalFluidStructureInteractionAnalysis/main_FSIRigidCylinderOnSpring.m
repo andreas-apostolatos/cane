@@ -52,7 +52,8 @@ addpath([path_prefix 'FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndV
         [path_prefix 'FEMComputationalFluidDynamicsAnalysis/postProcessing/']);
 
 % Add all functions related to Fluid-Structure interaction
-addpath([path_prefix 'FEMComputationalFluidStructureInteractionAnalysis/solvers']);
+addpath([path_prefix 'FEMComputationalFluidStructureInteractionAnalysis/ALEMotion'], ...
+        [path_prefix 'FEMComputationalFluidStructureInteractionAnalysis/solvers']);
     
 % Add all functions related to parsing
 addpath([path_prefix 'parsers/']);
