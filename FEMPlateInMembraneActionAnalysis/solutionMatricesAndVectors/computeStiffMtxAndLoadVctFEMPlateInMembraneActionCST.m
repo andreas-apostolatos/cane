@@ -202,10 +202,10 @@ for iGP = 1:numGP
 end
 
 %% 7. Assemble to the global system matrices
-% [K,FBody] = assembleSparseMatricies(EFT,noDOFs,noDOFsEl,KEl,FBodyEl);
 [K] = assembleSparseMatricies(EFT, numDOFs, numDOFsEl, stiffMtxEl);
+[FBody] = assembleSparseVectors(EFT, numDOFs, numDOFsEl, FBodyEl);
 
 %% 8. Update the force vector with the body force contributions
-% F = F + FBody;
+F = F + FBody;
 
 end

@@ -1,4 +1,5 @@
-function [varargout] = assembleVectors(EFT, numDOFs, numDOFsEl, varargin)
+function [varargout] = assembleSparseVectors ...
+    (EFT, numDOFs, numDOFsEl, varargin)
 %% Licensing
 %
 % License:         BSD License

@@ -79,8 +79,8 @@ propOutput.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
 propOutput.VTKResultFile = 'undefined';
 
 % Choose computation of the stiffness matrix
-% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
-computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
+computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
+% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
 
 % Quadrature for the stiffness matrix and the load vector of the problem
 % 'default', 'user'

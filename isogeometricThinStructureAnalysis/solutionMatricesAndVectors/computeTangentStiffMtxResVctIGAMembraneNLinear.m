@@ -179,37 +179,38 @@ parameters = BSplinePatch.parameters;
 thickness = parameters.t;
 
 % Number of knots in xi-,eta-direction
-mxi = length(Xi);
-meta = length(Eta);
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+numKnots_xi = length(Xi);
+numKnots_eta = length(Eta);
+numCPs_xi = length(CP(:, 1, 1));
+numCPs_eta = length(CP(1, :, 1));
 
 % Check input
-checkInputForBSplineSurface(p,mxi,nxi,q,meta,neta);
+checkInputForBSplineSurface ...
+    (p, numKnots_xi, numCPs_xi, q, numKnots_eta, numCPs_eta);
 
 % Number of DOFs per Control Point
-noDOFsPerCP = 3;
+numDOFsPerCP = 3;
 
 % Number of degrees of freedom for the whole structure
-noDOFs = length(dHat);
+numDOFs = length(dHat);
 
 % Number of Gauss Points in the element level
-noGPsEl = BSplinePatch.noGPsEl;
+numGPsEl = BSplinePatch.noGPsEl;
 
 % Number of Control Points and DOFs in the element level
-noCPsEl = (p+1)*(q+1);
-noDOFsEl = noDOFsPerCP*noCPsEl;
+numCPsEl = (p+1)*(q+1);
+numDOFsEl = numDOFsPerCP*numCPsEl;
 
 % Initialize the pagewise material matrix
-DmPage = zeros(BSplinePatch.noElmnts,3,3);
+DmPage = zeros(BSplinePatch.noElmnts, 3, 3);
 
 % Initialize the pagewise reference Control Point array
 if isReferenceUpdated
-    CPVctPage = zeros(BSplinePatch.noElmnts,noDOFsEl);
+    CPVctPage = zeros(BSplinePatch.noElmnts, numDOFsEl);
 end
 
 % Initialize the pagewise displaced Control Point array
-CPdVctPage = zeros(BSplinePatch.noElmnts,noDOFsEl);
+CPdVctPage = zeros(BSplinePatch.noElmnts, numDOFsEl);
 
 % On the application of weak Dirichlet boundary conditions
 isWeakDBC = false;
@@ -223,54 +224,61 @@ end
 minElAreaSize = 'undefined';
 
 % Initialize pagewise basis function matrices
-dRdxiMatrixPage = zeros(BSplinePatch.noElmnts,3,noDOFsEl);
-dRdetaMatrixPage = zeros(BSplinePatch.noElmnts,3,noDOFsEl);
+dRdxiMatrixPage = zeros(BSplinePatch.noElmnts, 3, numDOFsEl);
+dRdetaMatrixPage = zeros(BSplinePatch.noElmnts, 3, numDOFsEl);
 
 % Initialize pagewise element stiffness matrices and residual vectors
-tangStiffMtxElPage = zeros(BSplinePatch.noElmnts,noDOFsEl,noDOFsEl);
+tangStiffMtxElPage = zeros(BSplinePatch.noElmnts, numDOFsEl, numDOFsEl);
 if ~ischar(loadFactor)
-    resVctElPage = zeros(BSplinePatch.noElmnts,noDOFsEl);
+    resVctElPage = zeros(BSplinePatch.noElmnts, numDOFsEl);
 end
 
 %% 1. Loop over the elements in the B-Spline patch and reshape necessary 3D arrays
 for iElmnts = 1:BSplinePatch.noElmnts
     %% 1i. Assign the material matrices into a pagewise array
-    DmPage(iElmnts,:,:) = parameters.E*parameters.t/(1-parameters.nue^2)*...
+    DmPage(iElmnts, :, :) = parameters.E*parameters.t/(1 - parameters.nue^2)*...
         [1              parameters.nue 0
          parameters.nue 1              0
-         0              0              (1-parameters.nue)/2];
+         0              0              (1 - parameters.nue)/2];
      
     %% 1ii. Assign the 3D array for the reference Control Point array
     if isReferenceUpdated
-        CPPage = BSplinePatch.CP(BSplinePatch.xiIndexCP(iElmnts,:),BSplinePatch.etaIndexCP(iElmnts,:),1:3);
-        CPVctPage(iElmnts,:) = reshape(reshape(CPPage,[(p+1)*(q+1),3])',[3*(p+1)*(q+1),1]);
+        CPPage = BSplinePatch.CP(BSplinePatch.xiIndexCP(iElmnts, :), ...
+            BSplinePatch.etaIndexCP(iElmnts, :), 1:3);
+        CPVctPage(iElmnts, :) = reshape(reshape(CPPage, [(p + 1)*(q + 1), 3])', ...
+            [3*(p + 1)*(q + 1), 1]);
     end
     
     %% 1iii. Assign the 3D array for the displaced Control Point array
-    CPdPage = BSplinePatch.CPd(BSplinePatch.xiIndexCP(iElmnts,:),BSplinePatch.etaIndexCP(iElmnts,:),1:3);
-    CPdVctPage(iElmnts,:) = reshape(reshape(CPdPage,[(p+1)*(q+1),3])',[3*(p+1)*(q+1),1]);
+    CPdPage = BSplinePatch.CPd(BSplinePatch.xiIndexCP(iElmnts, :), ...
+        BSplinePatch.etaIndexCP(iElmnts, :), 1:3);
+    CPdVctPage(iElmnts, :) = reshape(reshape(CPdPage, [(p + 1)*(q + 1), 3])', ...
+        [3*(p + 1)*(q + 1), 1]);
 end
 
 %% 2. Get the function handle for the computation of the tangent stiffness and the residual load vector corresponding to the application of weak Dirichlet boundary conditions
 if isWeakDBC
-    if isfield(BSplinePatch.weakDBC,'method')
-        if isfield(BSplinePatch.weakDBC,'imposedMotion')    
-            if strcmp(BSplinePatch.weakDBC.method,'penalty')
-                computeTangMtxResVct = @computeWeakDBCTangMtxResVctPenaltyIGAMembrane;
-            elseif strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers')
-                computeTangMtxResVct = @computeWeakDBCTangMtxResVctLagrangeMultipliersIGAMembrane;
+    if isfield(BSplinePatch.weakDBC, 'method')
+        if isfield(BSplinePatch.weakDBC, 'imposedMotion')    
+            if strcmp(BSplinePatch.weakDBC.method, 'penalty')
+                computeTangMtxResVct = ...
+                    @computeWeakDBCTangMtxResVctPenaltyIGAMembrane;
+            elseif strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers')
+                computeTangMtxResVct = ...
+                    @computeWeakDBCTangMtxResVctLagrangeMultipliersIGAMembrane;
             end
         else
-            if strcmp(BSplinePatch.weakDBC.method,'penalty') || ...
-                    strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers')
+            if strcmp(BSplinePatch.weakDBC.method, 'penalty') || ...
+                    strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers')
                 computeTangMtxResVct = 'undefined';
             end
         end
-        if strcmp(BSplinePatch.weakDBC.method,'nitsche')
-            computeTangMtxResVct = @computeWeakDBCTangMtxResVctNitscheIGAMembrane;
-        elseif ~strcmp(BSplinePatch.weakDBC.method,'penalty') && ...
-               ~strcmp(BSplinePatch.weakDBC.method,'lagrangeMultipliers') && ...
-               ~strcmp(BSplinePatch.weakDBC.method,'nitsche')
+        if strcmp(BSplinePatch.weakDBC.method, 'nitsche')
+            computeTangMtxResVct = ...
+                @computeWeakDBCTangMtxResVctNitscheIGAMembrane;
+        elseif ~strcmp(BSplinePatch.weakDBC.method, 'penalty') && ...
+               ~strcmp(BSplinePatch.weakDBC.method, 'lagrangeMultipliers') && ...
+               ~strcmp(BSplinePatch.weakDBC.method, 'nitsche')
             error('Define a valid method for the application of weak Dirichlet boundary conditions in BSplinePatch.weakDBC.method')
         end
     else
@@ -278,12 +286,12 @@ if isWeakDBC
     end
 end
 isWeakDBCTangent = false;
-if isWeakDBC && isa(computeTangMtxResVct,'function_handle')
+if isWeakDBC && isa(computeTangMtxResVct, 'function_handle')
     isWeakDBCTangent = true;
 end
 
 %% 3. Loop over all Gauss points
-for iGPs = 1:noGPsEl
+for iGPs = 1:numGPsEl
     %% 3i. Compute the basis functions matrices pagewise
     %
     % for iCPs = 1:noCPsEl
@@ -299,59 +307,71 @@ for iGPs = 1:noGPsEl
     % end
     %
     % dR/dxi
-    dRdxiMatrixPage(:,1,noDOFsPerCP*(1:noCPsEl) - noDOFsPerCP + 1) = BSplinePatch.dRdXi(:,iGPs,:);
-    dRdxiMatrixPage(:,2,noDOFsPerCP*(1:noCPsEl) - noDOFsPerCP + 2) = BSplinePatch.dRdXi(:,iGPs,:);
-    dRdxiMatrixPage(:,3,noDOFsPerCP*(1:noCPsEl) - noDOFsPerCP + 3) = BSplinePatch.dRdXi(:,iGPs,:);
+    dRdxiMatrixPage(:, 1, numDOFsPerCP*(1:numCPsEl) - numDOFsPerCP + 1) = ...
+        BSplinePatch.dRdXi(:, iGPs, :);
+    dRdxiMatrixPage(:, 2, numDOFsPerCP*(1:numCPsEl) - numDOFsPerCP + 2) = ...
+        BSplinePatch.dRdXi(:, iGPs, :);
+    dRdxiMatrixPage(:, 3, numDOFsPerCP*(1:numCPsEl) - numDOFsPerCP + 3) = ...
+        BSplinePatch.dRdXi(:, iGPs, :);
     
     % dR/deta
-    dRdetaMatrixPage(:,1,noDOFsPerCP*(1:noCPsEl) - noDOFsPerCP + 1) = BSplinePatch.dRdEta(:,iGPs,:);
-    dRdetaMatrixPage(:,2,noDOFsPerCP*(1:noCPsEl) - noDOFsPerCP + 2) = BSplinePatch.dRdEta(:,iGPs,:);
-    dRdetaMatrixPage(:,3,noDOFsPerCP*(1:noCPsEl) - noDOFsPerCP + 3) = BSplinePatch.dRdEta(:,iGPs,:);
+    dRdetaMatrixPage(:, 1, numDOFsPerCP*(1:numCPsEl) - numDOFsPerCP + 1) = ...
+        BSplinePatch.dRdEta(:, iGPs, :);
+    dRdetaMatrixPage(:, 2, numDOFsPerCP*(1:numCPsEl) - numDOFsPerCP + 2) = ...
+        BSplinePatch.dRdEta(:, iGPs, :);
+    dRdetaMatrixPage(:, 3, numDOFsPerCP*(1:numCPsEl) - numDOFsPerCP + 3) = ...
+        BSplinePatch.dRdEta(:, iGPs, :);
     
     %% 3ii. Compute the prestress Voigt vectors pagewise
-    prestressActPage = squeeze(BSplinePatch.prestressVoigtVector(:,iGPs,:));
+    prestressActPage = squeeze(BSplinePatch.prestressVoigtVector(:, iGPs, :));
     
     %% 3iii. Get the covariant basis of the reference configuration pagewise
     if isReferenceUpdated
-        G1GP = pmtimes(dRdxiMatrixPage,CPVctPage);
-        G2GP = pmtimes(dRdetaMatrixPage,CPVctPage);
-        G1GPPage = reshape(G1GP,[BSplinePatch.noElmnts,1,3]);
-        G2GPPage = reshape(G2GP,[BSplinePatch.noElmnts,1,3]);
+        G1GP = pmtimes(dRdxiMatrixPage, CPVctPage);
+        G2GP = pmtimes(dRdetaMatrixPage, CPVctPage);
+        G1GPPage = reshape(G1GP, [BSplinePatch.noElmnts, 1, 3]);
+        G2GPPage = reshape(G2GP, [BSplinePatch.noElmnts, 1, 3]);
     else
-        G1GPPage = BSplinePatch.GXi(:,iGPs,:);
-        G2GPPage = BSplinePatch.GEta(:,iGPs,:);
+        G1GPPage = BSplinePatch.GXi(:, iGPs, :);
+        G2GPPage = BSplinePatch.GEta(:, iGPs, :);
     end
-    GGPCovariantPage = cat(2,G1GPPage,G2GPPage);
+    GGPCovariantPage = cat(2, G1GPPage, G2GPPage);
     
     %% 3iv. Compute the surface normal base vector pagewise
     if isReferenceUpdated
-        G3GP = cross(G1GP,G2GP);
-        G3GP_old = cross(squeeze(BSplinePatch.GXi(:,iGPs,:)),squeeze(BSplinePatch.GEta(:,iGPs,:)));
-        dA = sqrt(G3GP(:,1).^2 + G3GP(:,2).^2 + G3GP(:,3).^2);
-        dA_old = sqrt(G3GP_old(:,1).^2 + G3GP_old(:,2).^2 + G3GP_old(:,3).^2);
+        G3GP = cross(G1GP, G2GP);
+        G3GP_old = cross(squeeze(BSplinePatch.GXi(:, iGPs, :)), ...
+            squeeze(BSplinePatch.GEta(:, iGPs, :)));
+        dA = sqrt(G3GP(:, 1).^2 + G3GP(:, 2).^2 + G3GP(:, 3).^2);
+        dA_old = sqrt(G3GP_old(:, 1).^2 + G3GP_old(:, 2).^2 + G3GP_old(:, 3).^2);
         correctionFactorPage = dA_old.^(-1).*dA;
-        elementAreaOnGP = BSplinePatch.elementAreaOnGP(:,iGPs).*correctionFactorPage;
+        elementAreaOnGP = BSplinePatch.elementAreaOnGP(:, iGPs).*correctionFactorPage;
     else
-        elementAreaOnGP = BSplinePatch.elementAreaOnGP(:,iGPs);
+        elementAreaOnGP = BSplinePatch.elementAreaOnGP(:, iGPs);
     end
     
     %% 3v. Compute the covariant basis of the current configuration pagewise
-    g1Page = pmtimes(dRdxiMatrixPage,CPdVctPage);
-    g2Page = pmtimes(dRdetaMatrixPage,CPdVctPage);
+    g1Page = pmtimes(dRdxiMatrixPage, CPdVctPage);
+    g2Page = pmtimes(dRdetaMatrixPage, CPdVctPage);
 
     %% 3vi. Compute element tangent stiffness matrix, the residual internal load vector and the stiffness matrix needed for estimation of the stabilization parameter corresponding to the application of weak boundary conditions with the Nitsche method
-    [tangStiffMtxElOnGPPage,resVctElOnGPPage] = computeIGAElTangentStiffMtxResVctMembraneNLinear...
-        (dRdxiMatrixPage,dRdetaMatrixPage,GGPCovariantPage,g1Page,g2Page,thickness,DmPage,prestressActPage);
+    [tangStiffMtxElOnGPPage, resVctElOnGPPage] = ...
+        computeIGAElTangentStiffMtxResVctMembraneNLinear ...
+        (dRdxiMatrixPage, dRdetaMatrixPage, GGPCovariantPage, g1Page, ...
+        g2Page, thickness, DmPage, prestressActPage);
     
     %% 3vii. Add the contributions from the Gauss Point
-    tangStiffMtxElPage = tangStiffMtxElPage + pstimes(tangStiffMtxElOnGPPage,elementAreaOnGP);
+    tangStiffMtxElPage = tangStiffMtxElPage + ...
+        pstimes(tangStiffMtxElOnGPPage, elementAreaOnGP);
     if ~ischar(loadFactor)
-        resVctElPage = resVctElPage + pstimes(resVctElOnGPPage,elementAreaOnGP);
+        resVctElPage = resVctElPage + ...
+            pstimes(resVctElOnGPPage, elementAreaOnGP);
     end
 end
 
 %% 4. Assemble to the global tangent matrix and the stiffness matrix needed for estimation of the stabilization parameter corresponding to the application of weak boundary conditions with the Nitsche method
-tanStiffMtx = assembleSparseMatricies(BSplinePatch.EFT,noDOFs,noDOFsEl,tangStiffMtxElPage);
+tanStiffMtx = assembleSparseMatricies ...
+    (BSplinePatch.EFT, numDOFs, numDOFsEl, tangStiffMtxElPage);
 
 %% 5. Add existing tangent matrix from the application of follower loads
 if ~ischar(tanMtxLoad)
@@ -360,7 +380,8 @@ end
 
 %% 6. Assemble to the global residual vector
 if ~ischar(loadFactor)
-    resVct = assembleVectors(BSplinePatch.EFT,noDOFs,noDOFsEl,resVctElPage);
+    resVct = assembleSparseVectors ...
+        (BSplinePatch.EFT, numDOFs, numDOFsEl, resVctElPage);
 else
     resVct = 'undefined';
 end
@@ -379,22 +400,22 @@ if ~ischar(constMtx) && ~ischar(loadFactor)
 end
 
 %% 9. Compute the tangent stiffness matrix and residual load vector resulting from embedded into the patch cables
-if isfield(BSplinePatch,'cables')
+if isfield(BSplinePatch, 'cables')
     if BSplinePatch.cables.No > 0
-        [tanMtxCables,resVctCables] = ...
-            computeTangentStiffMtxResVctCablesInThinStructureAnalysis...
-            (BSplinePatch,noDOFs);
+        [tanMtxCables, resVctCables] = ...
+            computeTangentStiffMtxResVctCablesInThinStructureAnalysis ...
+            (BSplinePatch, numDOFs);
     end
 else
     tanMtxCables = 'undefined';
     resVctCables = 'undefined';
 end
-if isfield(BSplinePatch,'cables')
+if isfield(BSplinePatch, 'cables')
     if BSplinePatch.cables.No > 0
         tanStiffMtx = tanStiffMtx + tanMtxCables;
     end
 end
-if isfield(BSplinePatch,'cables') && ~ischar(loadFactor)
+if isfield(BSplinePatch, 'cables') && ~ischar(loadFactor)
     if BSplinePatch.cables.No > 0
         resVct = resVct + resVctCables;
     end
@@ -402,10 +423,10 @@ end
 
 %% 10. Compute the tangent matrix and residual vector contributions due to the application of weak boundary conditions
 if isWeakDBCTangent
-    [tanMtxWeakDBC,resVctWeakDBC,BSplinePatch] = computeTangMtxResVct...
-        (BSplinePatch,dHat,connections,noDOFs,propCoupling,tanStiffMtx,...
-        noPatch,noTimeStep,noNonlinearIteration,noWeakDBCCnd,...
-        thickness,t,propTransientAnalysis,tab,outMsg);
+    [tanMtxWeakDBC, resVctWeakDBC, BSplinePatch] = computeTangMtxResVct ...
+        (BSplinePatch, dHat, connections, numDOFs, propCoupling, ...
+        tanStiffMtx, noPatch, noTimeStep, noNonlinearIteration, ...
+        noWeakDBCCnd, thickness, t, propTransientAnalysis, tab, outMsg);
 else
     tanMtxWeakDBC = 'undefined';
     resVctWeakDBC = 'undefined';

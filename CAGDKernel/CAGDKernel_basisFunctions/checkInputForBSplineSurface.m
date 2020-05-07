@@ -1,5 +1,5 @@
-function checkInputForBSplineSurface(p,numKnots_xi, numCPs_xi, ...
-    q, numKnots_eta, numCPs_eta)
+function checkInputForBSplineSurface ...
+    (p, numKnots_xi, numCPs_xi, q, numKnots_eta, numCPs_eta)
 %% Licensing
 %
 % License:         BSD License

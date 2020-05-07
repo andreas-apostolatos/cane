@@ -25,7 +25,7 @@
 %% Clear memnory and command window
 clc;
 clear;
- 
+
 %% Includes
 
 % Add transient analysis functions
