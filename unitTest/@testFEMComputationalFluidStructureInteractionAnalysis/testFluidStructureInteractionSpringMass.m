@@ -62,6 +62,7 @@ end
 
 % Structural analysis
 propAnalysisStr.type = 'SDOF';
+propAnalysisStr.dir = 'y';
 
 % Function handle to the update of the values of the DOFs on the
 % inhomogeneous Dirichlet fluid boundary

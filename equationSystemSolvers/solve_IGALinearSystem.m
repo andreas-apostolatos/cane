@@ -311,7 +311,12 @@ if strcmp(outMsg, 'outputEnabled') && ~isTransient
 %     if rankD ~= 0
 %         fprintf(strcat(tab,'>> The system has rank deficiency equal to %d\n'), rankD);
 %     end
-    condK = cond(stiffMtx(freeDOFs, freeDOFs));
+    if issparse(stiffMtx)
+        computeConditionNumber = @condest;
+    else
+        computeConditionNumber = @cond;
+    end
+        condK = computeConditionNumber(stiffMtx(freeDOFs, freeDOFs));
 %     fprintf(strcat(tab, '>> The condition number of the system is %d\n'), condK);
 %     [~, eigVal] = eig(stiffMtx(freeDOFs, freeDOFs));
 %     eigVal(~eigVal) = Inf;

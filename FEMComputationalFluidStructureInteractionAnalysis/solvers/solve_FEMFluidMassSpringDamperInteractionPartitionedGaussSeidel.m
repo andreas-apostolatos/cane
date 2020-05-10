@@ -1,6 +1,6 @@
 function [up, d, upDot, dDot, upDDot, dDDot, resVctFld, resVctStr, ...
     fldMsh, strMsh, FFSIFld, FFSIStr, minElSizeFld, minElSizeStr] = ...
-    solve_FEMFluidStructureInteractionPartitionedGaussSeidel ...
+    solve_FEMFluidMassSpringDamperInteractionPartitionedGaussSeidel ...
     (propAnalysisFld, propAnalysisStr, upSaved, dSaved, ...
     upDotSaved, dDotSaved, upDDotSaved, dDDotSaved, ...
     fldMsh, strMsh, FFld, FStr, FFSIFld, FFSIStr, computeBodyForceVctFld, ...
@@ -305,6 +305,27 @@ function [up, d, upDot, dDot, upDDot, dDDot, resVctFld, resVctStr, ...
 
 %% 0. Read input
 
+% Check the mass-spring system
+if ~strcmp(propAnalysisStr.type, 'SDOF') && ...
+        ~strcmp(propAnalysisStr.type, '2DOF')
+    error('Analysis type %s is not yet supported for fluid-structure interaction', ...
+            propAnalysisStr.type);
+end
+if strcmp(propAnalysisStr.type, '2DOF')
+    if ~isfield(propAnalysisStr.dir)
+        error('propAnalysisStr must define field dir')
+    else
+        if ~ischar(propAnalysisStr.dir)
+            error('propAnalysisStr.dir must be a character x or y')
+        else
+            if ~strcmp(propAnalysisStr.dir, 'x') && ...
+                    ~strcmp(propAnalysisStr.dir, 'y')
+                error('propAnalysisStr.dir must either x or y')
+            end
+        end
+    end
+end
+
 % Check if ALE motion for the fluid problem is defined
 isALE = false;
 if ~ischar(propALE)
@@ -370,10 +391,10 @@ while counterCI <= propFSI.maxIter + 1
     
     %% 1iii. Compute the relative error based on the displacement field of the CSD problem
     if counterCI ~= 1
-        if abs(dSaved) > propFSI.tol
-            errCI = abs(d - d_k)/abs(dSaved);
+        if norm(dSaved) > propFSI.tol
+            errCI = norm(d - d_k)/norm(dSaved);
         else
-            errCI = abs(d - d_k);
+            errCI = norm(d - d_k);
         end
     end
     
@@ -401,8 +422,18 @@ while counterCI <= propFSI.maxIter + 1
         (d, dSaved, dDotSaved, dDDotSaved, propStrDynamics);
     
     %% 1vii. Solve the mesh motion problem and update the nodal coordinates and velocities
-    propALE.propUser.u = 0;
-    propALE.propUser.v = d;
+    if strcmp(propAnalysisStr.type, 'SDOF')
+        if strcmp(propAnalysisStr.dir, 'x')
+            propALE.propUser.u = d;
+            propALE.propUser.v = 0;
+        elseif strcmp(propAnalysisStr.dir, 'y')
+            propALE.propUser.u = 0;
+            propALE.propUser.v = d;
+        end
+    elseif strcmp(propAnalysisStr.type, '2DOF')
+        propALE.propUser.u = d(1, 1);
+        propALE.propUser.v = d(2, 1);
+    end
     propALE.propUser.w = 0;
     [fldMsh, uMeshALEFld, homDOFsFld, inhomDOFsFld, valuesInhomDOFsFld, ...
         freeDOFsFld] = computeUpdatedMeshFld ...
@@ -427,7 +458,11 @@ while counterCI <= propFSI.maxIter + 1
     %% 1x. Compute the forces acting on the FSI interface
     propPostProcFld = computePostProc ...
         (resVctFld, propAnalysisFld, propParametersFld, propPostProcFld);
-    FFSIStr = propPostProcFld.valuePostProc{1}(2,1);
+    if strcmp(propAnalysisStr.type, 'SDOF')
+        FFSIStr = propPostProcFld.valuePostProc{1}(2,1);
+    elseif strcmp(propAnalysisStr.type, '2DOF')
+        FFSIStr = propPostProcFld.valuePostProc{1}(1:2,1);
+    end
     
     %% 1xi. Save the solution of the CSD problem at the current Gauss-Seidel iteration
     d_k = d;

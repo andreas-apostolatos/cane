@@ -10,10 +10,10 @@
 % Task : Run unitTest cases for the following type of analysis,
 %        - Numerical quadrature
 %        - Isogeometric beam analysis
-%        - Isogeometric plate in membrane action analysis
 %        - Isogeometric membrane analysis
 %        - Isogeometric Kichhoff-Love shell analysis
 %        - Finite element formulation of thermal conduction analysis
+%        - Finite element formulation of plate in membrane action analysis
 %        - Finite element formulation of the frictionless Signorini problem
 %        - Stabilized isogeometric analysis for incompressible flows
 %        - Stabilized finite element analysis for the Navier-Stokes problem

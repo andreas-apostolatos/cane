@@ -82,7 +82,10 @@ end
 %% UI
 
 % Structural analysis
-propAnalysisStr.type = 'SDOF';
+propAnalysisStr.type = '2DOF'; %'SDOF'
+if strcmp(propAnalysisStr.type , 'SDOF')
+    propAnalysisStr.dir = 'y';
+end
 
 % Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMFluidStructureInteraction/';
@@ -94,7 +97,7 @@ updateInhomDOFsFld = 'undefined';
 % Fluid-structure interaction properties
 propFSI.relaxation = .3;
 propFSI.tol = 1e-3;
-propFSI.maxIter = 6e1;
+propFSI.maxIter = 1e2;
 
 % Choose solver for the fluid finite element equation system
 solve_FEMSystemFld = @solve_FEMNLinearSystem;
@@ -129,7 +132,7 @@ computeBodyForcesFld = @computeConstantVerticalFluidBodyForceVct;
 computeInitCndsFld = @computeInitialConditionsVMS4NSEBurnedIn;
 
 % On the writing the output function
-propOutputFld.isOutput = false;
+propOutputFld.isOutput = true;
 propOutputFld.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
 propOutputFld.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
@@ -148,9 +151,9 @@ solve_FEMSystemStr = @solve_FEMLinearSystem;
 propStrDynamics.method = 'EXPLICIT-EULER';
 if strcmp(propStrDynamics.method, 'EXPLICIT-EULER')
     propStrDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsEESDOF;
+        @computeProblemMtrcsEESpringMassSystem;
     propStrDynamics.computeUpdatedVct = ...
-        @computeBossakTIUpdatedVctAccelerationFieldEESDOF;
+        @computeBossakTIUpdatedVctAccelerationFieldEESpringMassSystem;
 else
     error('Time integration %s has not yet been implemented for the SDOF system', ...
         propStrDynamics.method);
@@ -160,12 +163,30 @@ propStrDynamics.T0 = propFldDynamics.T0;
 propStrDynamics.TEnd = propFldDynamics.TEnd;
 propStrDynamics.noTimeSteps = propFldDynamics.noTimeSteps;
 propStrDynamics.dt = propFldDynamics.dt;
-computeMassMtxStr = @computeMassMtxSDOF;
-computeMtxSteadyStateStr = @computeStiffMtxSDOF;
+if strcmp(propAnalysisStr.type, 'SDOF')
+    computeMassMtxStr = @computeMassMtxSDOF;
+elseif strcmp(propAnalysisStr.type, '2DOF')
+    computeMassMtxStr = @computeMassMtx2DOF;
+else
+    error('Analysis type %s is not yet supported', propAnalysisStr.type);
+end
+if strcmp(propAnalysisStr.type, 'SDOF')
+    computeMtxSteadyStateStr = @computeStiffMtxSDOF;
+elseif strcmp(propAnalysisStr.type, '2DOF')
+    computeMtxSteadyStateStr = @computeStiffMtx2DOF;
+else
+    error('Analysis type %s is not yet supported', propAnalysisStr.type);
+end
 propNLinearAnalysisStr = 'undefined';
 propIDBCStr = 'undefined';
 propGaussIntStr = 'undefined';
-computeInitCndsStr = @computeNullInitialConditionsSDOF;
+if strcmp(propAnalysisStr.type, 'SDOF')
+    computeInitCndsStr = @computeNullInitialConditionsSDOF;
+elseif strcmp(propAnalysisStr.type, '2DOF')
+    computeInitCndsStr = @computeNullInitialConditions2DOF;
+else
+    error('Analysis type %s is not yet supported', propAnalysisStr.type);
+end
 propOutputStr.isOutput = false;
 propOutputStr.VTKResultFile = 'undefined';
 caseNameStr = 'sdof';
@@ -189,7 +210,7 @@ propPostProcStr = 'undefined';
     'outputEnabled');
 
 %% Custom functions
-function [tanMtx, resVct] = computeProblemMtrcsEESDOF ...
+function [tanMtx, resVct] = computeProblemMtrcsEESpringMassSystem ...
     (d, dSaved, dDot, dDotSaved, dDDot, dDDotSaved, massMtx, damMtx, tanMtx, ...
     resVct, propTransientAnalysis)
     
@@ -201,7 +222,7 @@ function [tanMtx, resVct] = computeProblemMtrcsEESDOF ...
     % the Explicit-Euler time integration method
     resVct = resVct + massMtx*dSaved*(1/propTransientAnalysis.dt^2);
 end
-function  [dDot, dDDot] = computeBossakTIUpdatedVctAccelerationFieldEESDOF ...
+function  [dDot, dDDot] = computeBossakTIUpdatedVctAccelerationFieldEESpringMassSystem ...
     (d, dSaved, dDotSaved, dDDotSaved, propTransientAnalysis)
 
     % This function is dummy
@@ -216,6 +237,13 @@ function massMtx = computeMassMtxSDOF ...
     massMtx = PropParameters.m;
 
 end
+function massMtx = computeMassMtx2DOF ...
+    (propAnalysis, strMsh, PropParameters, propGaussInt)
+
+    % For the SDOF system the mass matrix is simply its mass
+    massMtx = eye(2, 2)*PropParameters.m;
+
+end
 function [stiffMtx, resVct, minElSize] = computeStiffMtxSDOF ...
     (propAnalysis, d, dSaved, dDot, dDotSaved, uMeshALE, ...
     precompStiffMtx, precomResVct, DOFNumbering, strMsh, F, ...
@@ -225,6 +253,24 @@ function [stiffMtx, resVct, minElSize] = computeStiffMtxSDOF ...
     % For the SDOF system the stiffness matrix is simply the spring 
     % stiffness
     stiffMtx = propParameters.k;
+    
+    % No body forces are assumed
+    resVct = F;
+    
+    % A point has no size
+    minElSize = 'undefined';
+
+end
+function [stiffMtx, resVct, minElSize] = computeStiffMtx2DOF ...
+    (propAnalysis, d, dSaved, dDot, dDotSaved, uMeshALE, ...
+    precompStiffMtx, precomResVct, DOFNumbering, strMsh, F, ...
+    loadFactor, computeBodyForces, propStrDynamics, t, ...
+    propParameters, propGaussInt)
+
+    % For the SDOF system the stiffness matrix is simply the spring 
+    % stiffness
+    stiffMtx = [1e5 0
+                0  1]*propParameters.k;
     
     % No body forces are assumed
     resVct = F;
@@ -253,6 +299,17 @@ function [d, dDot, dDDot, numTimeStep] = ...
     VTKResultFile, caseName, pathToFile)
 
     d = 0;
+    dDot = 'undefined';
+    dDDot = 'undefined';
+    numTimeStep = 0;
+
+end
+function [d, dDot, dDDot, numTimeStep] = ...
+    computeNullInitialConditions2DOF ...
+    (propAnalysisStr, strMsh, DOF4Output, propParameters, propStrDynamics, ... 
+    VTKResultFile, caseName, pathToFile)
+
+    d = zeros(2, 1);
     dDot = 'undefined';
     dDDot = 'undefined';
     numTimeStep = 0;

@@ -387,7 +387,8 @@ if strcmp(propAnalysis_A.type, 'NAVIER_STOKES_2D')
     numDOFs_A = 3*numNodes_A;
 elseif strcmp(propAnalysis_A.type, 'NAVIER_STOKES_3D')
     numDOFs_A = 4*numNodes_A;
-elseif strcmp(propAnalysis_A.type, 'planeStress') || strcmp(propAnalysis_A.type, 'planeStrain')
+elseif strcmp(propAnalysis_A.type, 'planeStress') || strcmp(propAnalysis_A.type, 'planeStrain') || ....
+        strcmp(propAnalysis_A.type, '2DOF')
     numDOFs_A = 2*numNodes_A;
 elseif strcmp(propAnalysisA.type, 'THERMAL_CONDUCTION_2D') || strcmp(propAnalysis_A.type, 'SDOF')
     numDOFs_A = numNodes_A;
@@ -403,7 +404,8 @@ if strcmp(propAnalysis_B.type, 'NAVIER_STOKES_2D')
     numDOFs_B = 3*numNodes_B;
 elseif strcmp(propAnalysis_B.type, 'NAVIER_STOKES_3D')
     numDOFs_B = 4*numNodes_B;
-elseif strcmp(propAnalysis_B.type, 'planeStress') || strcmp(propAnalysis_B.type, 'planeStrain')
+elseif strcmp(propAnalysis_B.type, 'planeStress') || strcmp(propAnalysis_B.type, 'planeStrain') || ....
+        strcmp(propAnalysis_B.type, '2DOF')
     numDOFs_B = 2*numNodes_B;
 elseif strcmp(propAnalysis_B.type, 'THERMAL_CONDUCTION_2D') || strcmp(propAnalysis_B.type, 'SDOF')
     numDOFs_B = numNodes_B;
