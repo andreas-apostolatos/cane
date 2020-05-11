@@ -432,7 +432,7 @@ else
 end
 
 %% 14. Load coupled fluid nodes for FSI
-block = regexp(fstring, 'FLUID_COUPLED_NODES', 'split'); 
+block = regexp(fstring, 'FLUID_FSI_NODES', 'split'); 
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)

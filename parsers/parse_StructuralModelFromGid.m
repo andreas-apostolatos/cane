@@ -314,7 +314,7 @@ else
 end
 
 %% 12. Load coupled structure nodes for FSI
-block = regexp(fstring, 'STRUCTURE_COUPLED_NODES', 'split'); 
+block = regexp(fstring, 'STRUCTURE_FSI_NODES', 'split'); 
 block(1) = [];
 out = cell(size(block));
 for k = 1:numel(block)
