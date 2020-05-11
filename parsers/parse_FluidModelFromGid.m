@@ -1,6 +1,6 @@
 function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
     propAnalysis, propParameters, propNLinearAnalysis, propFldDynamics, ...
-    propGaussInt, postProc] = ...
+    propGaussInt, postProc, propFSI] = ...
     parse_FluidModelFromGid(pathToCase, caseName, outMsg)
 %% Licensing
 %
@@ -81,6 +81,10 @@ function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
 %                          .nodesDomain : The global numbering of nodes
 %                                         that are part of the domains above
 %                      .computePostProc : function handles for calculation
+%             propFSI : Structure containing information on Fluid-Structure
+%                       interaction
+%                       .coupledNodeIDs : Global numbering of the FSI nodes
+%                      .numCoupledNodes : Number of FSI coupled nodes
 %
 % Function layout :
 %
@@ -110,7 +114,9 @@ function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
 % 
 % 13. Get edge connectivity arrays for the Neumann edges
 %
-% 14. Appendix
+% 14. Load the coupled fluid nodes for FSI
+%
+% 15. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
@@ -425,7 +431,23 @@ else
     propNBC = 'undefined';
 end
 
-%% 14. Appendix
+%% 14. Load coupled fluid nodes for FSI
+block = regexp(fstring, 'FLUID_COUPLED_NODES', 'split'); 
+block(1) = [];
+out = cell(size(block));
+for k = 1:numel(block)
+    out{k} = textscan(block{k}, '%f');
+end
+if ~isempty(out)
+    out = out{1};
+    propFSI.coupledNodeIDs = cell2mat(out(:, 1));
+    propFSI.numCoupledNodes = length(propFSI.coupledNodeIDs);
+else
+    propFSI.coupledNodeIDs = [];
+    propFSI.numCoupledNodes = 0;
+end
+
+%% 15. Appendix
 if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
     fprintf('\nParsing took %.2d seconds \n\n', computationalTime);
