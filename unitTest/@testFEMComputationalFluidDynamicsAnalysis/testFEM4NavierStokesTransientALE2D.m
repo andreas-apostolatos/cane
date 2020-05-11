@@ -36,7 +36,7 @@ function testFEM4NavierStokesTransientALE2D(testCase)
 %% 0. Read input
 
 % Define absolute tolerance
-absTol = 1e-15; % tolerance w.r.t our value
+absTol = 1e-14; % tolerance w.r.t our value
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';

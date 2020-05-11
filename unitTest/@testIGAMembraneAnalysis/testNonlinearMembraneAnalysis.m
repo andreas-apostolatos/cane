@@ -38,7 +38,7 @@ function testNonlinearMembraneAnalysis(testCase)
 %% 0. Read input
 
 % Define absolute tolerance
-absTol = 1e-15;
+absTol = 1e-12;
 absTolRelaxed8 = absTol*1e8;
 
 %% 1. Define the geometry in terms of NURBS

@@ -37,7 +37,7 @@ function testFrictionlessSignoriniContactWedge2D(testCase)
 % Define tolerances
 absTol = 1e-15;
 absTol0 = absTol*0;
-absTol2 = absTol*1e2;
+absTol2 = absTol*1e3;
 absTol7 = absTol2*1e5;
 
 %% 1. Parse data from GiD input file

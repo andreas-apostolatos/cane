@@ -46,7 +46,7 @@ function testTransientNonlinearMembraneAnalysis(testCase)
 %% 0. Read input
 
 % Define absolute tolerance
-absTol = 1e-14;
+absTol = 1e-12;
 
 %% 1. Define the multipatch geometry in terms of NURBS
 

@@ -38,7 +38,7 @@ function testFrictionlessSignoriniContactHertz2D(testCase)
 
 % Define tolerances for both cases
 absTol = 1e-15;
-absTol5 = absTol*1e5;
+absTol5 = absTol*1e6;
 
 %% 1. Parse data from GiD input file
 

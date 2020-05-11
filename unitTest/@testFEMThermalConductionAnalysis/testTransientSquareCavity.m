@@ -33,8 +33,8 @@ function testTransientSquareCavity(testCase)
 %% 0. Read input
 
 % Absolute tolerances
-absTol = 1e-15;
-absTol2 = 1e-15*1e2;
+absTol = 1e-12;
+absTol2 = 1e-12*1e2;
 
 %% 1. Parse data from GiD input file
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
