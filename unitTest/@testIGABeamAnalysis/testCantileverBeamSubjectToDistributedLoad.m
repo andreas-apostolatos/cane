@@ -73,22 +73,22 @@ L = 10;
 % Control Point coordinates and weights
 
 % x-coordinates
-CP(:,1) = [0 1]*L;
+CP(:, 1) = [0 1]*L;
 
 % y-coordinates
-CP(:,2) = [0 0]*L;      
+CP(:, 2) = [0 0]*L;      
 
 % z-coordinates
-CP(:,3) = [0 0];
+CP(:, 3) = [0 0];
 
 % weights
-CP(:,4) = [1 1];
+CP(:, 4) = [1 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
-isNURBS = 0;
-for i=length(CP(:,1));
-    if CP(i,4)~=1
-        isNURBS = 1;
+isNURBS = false;
+for i = length(CP(:, 1))
+    if CP(i, 4) ~= 1
+        isNURBS = true;
         break;
     end
 end
@@ -102,7 +102,7 @@ parameters.EYoung = 4e6;
 parameters.Nu = 0;
 
 % shear modulus (connected to epsilon_12 = E/(1+nu))
-parameters.GShear = parameters.EYoung/(2*(1+parameters.Nu));
+parameters.GShear = parameters.EYoung/(2*(1 + parameters.Nu));
 
 % shear correction factor
 parameters.alpha = 5/6;
@@ -125,8 +125,8 @@ parameters.Aq = parameters.alpha*parameters.A;
 %% 3. GUI
 
 % Integration
-% .type = 'automatic' : Default choice of Gauss points
-% .type = 'manual' : Manual choice of Gauss points
+% .type = 'default' : Default choice of Gauss points
+% .type = 'user' : Manual choice of Gauss points
 int.type = 'default';
 intError.type = 'user';
 
@@ -151,11 +151,11 @@ problemSettings.Aq = parameters.Aq;
 
 % Order elevation
 tp = 1;
-[Xi,CP,p] = degreeElevateBSplineCurve(p,Xi,CP,tp,'');
+[Xi, CP, p] = degreeElevateBSplineCurve(p, Xi, CP, tp, '');
 
 % Knot insertion
 n = 5;
-[Xi,CP] = knotRefineUniformlyBSplineCurve(n,p,Xi,CP,'');
+[Xi, CP] = knotRefineUniformlyBSplineCurve(n, p, Xi, CP, '');
 
 %% 5. Apply boundary conditions corresponding to the Benoulli beam analysis
 
@@ -163,19 +163,24 @@ n = 5;
 
 % Clamp the left edge of the beam
 homDOFs = [];
-xib = [Xi(1) Xi(p+1)]; dir = 1;
-homDOFs = findDofsForBernoulliBeams2D(homDOFs,xib,dir,CP);
-xib = [Xi(1) Xi(p+2)]; dir = 2;
-homDOFs = findDofsForBernoulliBeams2D(homDOFs,xib,dir,CP);
+xib = [Xi(1) Xi(p + 1)];
+dir = 1;
+homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
+xib = [Xi(1) Xi(p + 2)];
+dir = 2;
+homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
 
 % Neumann boundary conditions
 NBC.noCnd = 1;
 xib = [0 1];
 NBC.xiLoadExtension = {xib};
-NBC.loadAmplitude(1,1) = pLoad;
+NBC.etaLoadExtension = {'undefined'};
+NBC.loadAmplitude = {pLoad};
 loadDir = 2;
-NBC.loadDirection(1,1) = loadDir;
+NBC.loadDirection = {loadDir};
 NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGABernoulliBeam2D'};
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 %% 6. Define the analytical solution corresponding to the Bernoulli beam theory
 
@@ -279,13 +284,16 @@ expSolRelRotlErrL2Timoshenko = 1.419396956304162;
 
 %% 8. Solve the Bernoulli beam problem
 analysis.type = 'Bernoulli';
-[dHatBernoulli,FBernoulli,minElEdgeSizeBernoulli] = solve_IGABeamLinear2D...
-    (analysis,p,Xi,CP,homDOFs,NBC,parameters,isNURBS,solve_LinearSystem,int,'');
+[dHatBernoulli, FBernoulli, minElEdgeSizeBernoulli] = ...
+    solve_IGABeamLinear2D ...
+    (analysis, p, Xi, CP, homDOFs, NBC, parameters, isNURBS, ...
+    solve_LinearSystem, int, '');
 
 %% 9. Compute the relative error with respect to the analytical solution for the Bernoulli beam analysis
-[dispRelErrL2Bernouli,~] = computeErrIGABernoulliBeam2D(p,Xi,CP,isNURBS,...
-    dHatBernoulli,@computeExactDispl4BernoulliCantileverBeamInUniformPressure,...
-    problemSettings,intError,'');
+[dispRelErrL2Bernouli, ~] = computeErrIGABernoulliBeam2D ...
+    (p, Xi, CP, isNURBS, dHatBernoulli, ...
+    @computeExactDispl4BernoulliCantileverBeamInUniformPressure, ...
+    problemSettings, intError, '');
 
 %% 10. Apply boundary conditions corresponding to the Benoulli beam analysis
 
@@ -293,43 +301,58 @@ analysis.type = 'Bernoulli';
 
 % Clamp the left edge of the beam (3 DoFs two translations and 1 rotation)
 homDOFs = [];
-xib = [Xi(1) Xi(p+1)]; dir = 1;
-homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
-xib = [Xi(1) Xi(p+1)]; dir = 2;
-homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
-xib = [Xi(1) Xi(p+1)]; dir = 3;
-homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
+xib = [Xi(1) Xi(p + 1)];
+dir = 1;
+homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+xib = [Xi(1) Xi(p + 1)];
+dir = 2;
+homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+xib = [Xi(1) Xi(p + 1)];
+dir = 3;
+homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
 
 % Neumann boundary conditions
 NBC.noCnd = 1;
 xib = [0 1];
 NBC.xiLoadExtension = {xib};
-NBC.loadAmplitude(1,1) = pLoad;
+NBC.etaLoadExtension = {'undefined'};
+NBC.loadAmplitude = {pLoad};
 loadDir = 2;
-NBC.loadDirection(1,1) = loadDir;
+NBC.loadDirection = {loadDir};
 NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D'};
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 %% 11. Solve the Timoshenko beam problem
 analysis.type = 'Timoshenko';
-[dHatTimoshenko,FTimoshenko,minElEdgeSizeTimoshenko] = solve_IGABeamLinear2D...
-    (analysis,p,Xi,CP,homDOFs,NBC,parameters,isNURBS,solve_LinearSystem,int,'');
+[dHatTimoshenko, FTimoshenko, minElEdgeSizeTimoshenko] = ...
+    solve_IGABeamLinear2D ...
+    (analysis, p, Xi, CP, homDOFs, NBC, parameters, isNURBS, ...
+    solve_LinearSystem, int, '');
 
 %% 12. Compute the relative error with respect to the analytical solution for the Timoshenko beam analysis
-[relDisplErrL2Timoshenko,relRotErrL2Timoshenko] = computeErrIGATimoshenkoBeam2D...
-    (p,Xi,CP,isNURBS,dHatTimoshenko,...
-    @computeExactDispl4TimoshenkoCantileverBeamInUniformPressure,...
-    problemSettings,intError,'');
+[relDisplErrL2Timoshenko, relRotErrL2Timoshenko] = ...
+    computeErrIGATimoshenkoBeam2D ...
+    (p, Xi, CP, isNURBS, dHatTimoshenko, ...
+    @computeExactDispl4TimoshenkoCantileverBeamInUniformPressure, ...
+    problemSettings, intError, '');
 
 %% 13. Verify the results
-testCase.verifyEqual(dHatBernoulli,expSolDispBernoulli,'AbsTol',absTol);
-testCase.verifyEqual(FBernoulli,expSolFBernoulli,'AbsTol',absTolRelaxed4);
-testCase.verifyEqual(minElEdgeSizeBernoulli,expSolMinElEdgeSizeBernoulli,'AbsTol',absTol);
-testCase.verifyEqual(minElEdgeSizeBernoulli,expSolMinElEdgeSizeBernoulli,'AbsTol',absTol);
-testCase.verifyEqual(dispRelErrL2Bernouli,expSolDispRelErrL2Bernouli,'AbsTol',absTol);
-testCase.verifyEqual(dHatTimoshenko,expSolDispTimoshenko,'AbsTol',absTol);
-testCase.verifyEqual(FTimoshenko,expSolFTimoshenko,'AbsTol',absTolRelaxed4);
-testCase.verifyEqual(minElEdgeSizeTimoshenko,expSolMinElEdgeSizeTimoshenko,'AbsTol',absTol);
-testCase.verifyEqual(relDisplErrL2Timoshenko,expSolRelDisplErrL2Timoshenko,'AbsTol',absTol);
-testCase.verifyEqual(relRotErrL2Timoshenko,expSolRelRotlErrL2Timoshenko,'AbsTol',absTol);
+testCase.verifyEqual(dHatBernoulli, expSolDispBernoulli, 'AbsTol', absTol);
+testCase.verifyEqual(FBernoulli, expSolFBernoulli, 'AbsTol', absTolRelaxed4);
+testCase.verifyEqual(minElEdgeSizeBernoulli, expSolMinElEdgeSizeBernoulli, ...
+    'AbsTol', absTol);
+testCase.verifyEqual(minElEdgeSizeBernoulli, expSolMinElEdgeSizeBernoulli, ...
+    'AbsTol', absTol);
+testCase.verifyEqual(dispRelErrL2Bernouli, expSolDispRelErrL2Bernouli, ...
+    'AbsTol', absTol);
+testCase.verifyEqual(dHatTimoshenko, expSolDispTimoshenko, 'AbsTol', absTol);
+testCase.verifyEqual(FTimoshenko, expSolFTimoshenko, 'AbsTol', absTolRelaxed4);
+testCase.verifyEqual(minElEdgeSizeTimoshenko, expSolMinElEdgeSizeTimoshenko, ...
+    'AbsTol', absTol);
+testCase.verifyEqual(relDisplErrL2Timoshenko, expSolRelDisplErrL2Timoshenko, ...
+    'AbsTol',absTol);
+testCase.verifyEqual(relRotErrL2Timoshenko, expSolRelRotlErrL2Timoshenko, ...
+    'AbsTol', absTol);
 
 end

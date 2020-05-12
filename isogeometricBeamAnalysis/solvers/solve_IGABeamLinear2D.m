@@ -96,15 +96,10 @@ if strcmp(analysis.type, 'Bernoulli')
 elseif strcmp(analysis.type, 'Timoshenko')
     numDOFs = 3*numCPs_xi;
 end
-
-% Assign a sequential numbering to the system DOFs
-DOFSequentialNumbering = zeros(1, numDOFs);
-for i = 1:numDOFs
-    DOFSequentialNumbering(1, i) = i;
-end
+BSplinePatch.noDOFs = numDOFs;
 
 % Find the free DOFs of the system
-freeDOFs = DOFSequentialNumbering;
+freeDOFs = 1:numDOFs;
 freeDOFs(ismember(freeDOFs, homDOFs)) = [];
 
 % Create the dummy variables

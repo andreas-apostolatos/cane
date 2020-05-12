@@ -56,22 +56,22 @@ L = 10;
 % Control Point coordinates and weights
 
 % x-coordinates
-CP(:,1) = [0 1 1]*L;
+CP(:, 1) = [0 1 1]*L;
 
 % y-coordinates
-CP(:,2) = [1 1 0]*L;
+CP(:, 2) = [1 1 0]*L;
 
 % z-coordinates
-CP(:,3) = [0 0 0];
+CP(:, 3) = [0 0 0];
 
 % weights
-CP(:,4) = [1 1/sqrt(2) 1];
+CP(:, 4) = [1 1/sqrt(2) 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
-isNURBS = 0;
-for i=length(CP(:,1))
-    if CP(i,4)~=1
-        isNURBS = 1;
+isNURBS = false;
+for i = length(CP(:, 1))
+    if CP(i, 4) ~= 1
+        isNURBS = true;
         break;
     end
 end
@@ -80,24 +80,32 @@ end
 
 % Young's modulus (connected to epsilon_11 = E)
 parameters.EYoung = 4e6;
+
 % Poisson ration
 parameters.Nu = 0;
+
 % shear modulus (connected to epsilon_12 = E/(1+nu))
 parameters.GShear = parameters.EYoung/(2*(1+parameters.Nu));
+
 % shear correction factor
 parameters.alpha = 5/6;
+
 % width of the beam
 parameters.b = 1;
+
 % height of the beam
 parameters.h = 1;
+
 % cross sectional area
-parameters.A = parameters.b*parameters.h; 
+parameters.A = parameters.b*parameters.h;
+
 % Moment of inertia (I_z = I for a simple 2D case)
 parameters.I = parameters.b*(parameters.h^3)/12;
+
 % shear cross sectional area
 parameters.Aq = parameters.alpha*parameters.A;
 
-%% GUI
+%% UI
 
 % Analysis type (Bernoulli or Timoshenko Beam Theory)
 analysis.type = 'Timoshenko';
@@ -151,15 +159,18 @@ graph.plotBasisFunctionsAndDerivs = 0;
 
 % Order elevation
 tp = 1;
-[Xi,CP,p] = degreeElevateBSplineCurve(p,Xi,CP,tp,'outputEnabled');
+[Xi, CP, p] = degreeElevateBSplineCurve ...
+    (p, Xi, CP, tp, 'outputEnabled');
 
 % Knot insertion
 n = 1000;
-[Xi,CP] = knotRefineUniformlyBSplineCurve(n,p,Xi,CP,'outputEnabled');
+[Xi, CP] = knotRefineUniformlyBSplineCurve ...
+    (n, p, Xi, CP, 'outputEnabled');
 
 %% Plot the shape functions and their derivatives
 numEval = 149;
-graph.index = plot_IGABasisFunctionsAndDerivativesForCurve(p,Xi,CP,numEval,isNURBS,graph,'outputEnabled');
+graph.index = plot_IGABasisFunctionsAndDerivativesForCurve ...
+    (p, Xi, CP, numEval, isNURBS, graph, 'outputEnabled');
     
 %% Apply boundary conditions
 
@@ -167,37 +178,48 @@ graph.index = plot_IGABasisFunctionsAndDerivativesForCurve(p,Xi,CP,numEval,isNUR
 homDOFs = [];
 
 % Get the number of Control Points
-nxi = length(CP(:,1,1));
+numCPsxi = length(CP(:,1,1));
 
 % Get number of knots
-mxi = nxi + p + 1;
+numKnotsxi = numCPsxi + p + 1;
     
-if strcmp(analysis.type,'Bernoulli')
+if strcmp(analysis.type, 'Bernoulli')
     % Clamp left edge of the beam
-    xib = [Xi(1) Xi(1)]; dir = 1;
-    homDOFs = findDofsForBernoulliBeams2D(homDOFs,xib,dir,CP);
-%     homDOFs(length(homDOFs)+1) = 4;
+    xib = [Xi(1) Xi(1)];
+    dir = 1;
+    homDOFs = findDofsForBernoulliBeams2D ...
+        (homDOFs, xib, dir, CP);
+%     homDOFs(end + 1) = 4;
     
     % Clamp left edge of the beam
-    xib = [Xi(mxi) Xi(mxi)]; dir = 2;
-    homDOFs = findDofsForBernoulliBeams2D(homDOFs,xib,dir,CP);
-%     homDOFs(length(homDOFs)+1) = 2*nxi-3;
+    xib = [Xi(numKnotsxi) Xi(numKnotsxi)];
+    dir = 2;
+    homDOFs = findDofsForBernoulliBeams2D ...
+        (homDOFs, xib, dir, CP);
+%     homDOFs(end + 1) = 2*nxi - 3;
 %     homDOFs = sort(homDOFs);
     
-elseif strcmp(analysis.type,'Timoshenko')
+elseif strcmp(analysis.type, 'Timoshenko')
     % Fix displacents and rotations accordingly at each end of the beam
     
     % Clamp the left edge
-    xib = [Xi(1) Xi(p+1)]; dir = 1;
-    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
-    xib = [Xi(1) Xi(p+1)]; dir = 3;
-    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
+    xib = [Xi(1) Xi(p + 1)];
+    dir = 1;
+    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+    xib = [Xi(1) Xi(p + 1)];
+    dir = 3;
+    homDOFs = findDofsForTimoshenkoBeams2D ...
+        (homDOFs, xib, dir, CP);
     
     % Clamp the right edge
-    xib = [Xi(length(Xi)-p) Xi(length(Xi))]; dir = 2;
-    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
-    xib = [Xi(length(Xi)-p) Xi(length(Xi))]; dir = 3;
-    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
+    xib = [Xi(length(Xi) - p) Xi(length(Xi))];
+    dir = 2;
+    homDOFs = findDofsForTimoshenkoBeams2D ...
+        (homDOFs, xib, dir, CP);
+    xib = [Xi(length(Xi) - p) Xi(length(Xi))];
+    dir = 3;
+    homDOFs = findDofsForTimoshenkoBeams2D ...
+        (homDOFs, xib, dir, CP);
 end
 
 % Neumann boundary conditions
@@ -206,16 +228,16 @@ end
 NBC.noCnd = 1;
 xib = [0 1];
 NBC.xiLoadExtension = {xib};
+NBC.etaLoadExtension = {'undefined'};
 pLoad = 1e5;
-NBC.loadAmplitude(1,1) = pLoad;
+NBC.loadAmplitude = {pLoad};
 loadDir = 2;
-NBC.loadDirection(1,1) = loadDir;
-xib = [0 1];
+NBC.loadDirection = {loadDir};
 
 % On the application of a poiint load on the beam
-% u = 1;
+% xi = 1;
 % dir = 2;
-% F = computeLoadPointVectorBeams2D(F,u,p,U,CP,load,analysis,dir);
+% F = computeLoadPointVectorBeams2D(F,xi,p,Xi,CP,load,analysis,dir);
 
 %% Compute the load vector only for the visualization of the reference configuration
 for counterNBC = 1:NBC.noCnd

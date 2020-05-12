@@ -2533,6 +2533,7 @@ NBC1.loadAmplitude = {FAmp1};
 NBC1.loadDirection = {dirForce1};
 NBC1.computeLoadVct = {'computeLoadVctAreaIGAThinStructure'};
 NBC1.isFollower = true;
+NBC1.isTimeDependent = false;
 
 % Patch 2 :
 % _________
@@ -2547,7 +2548,8 @@ NBC2.etaLoadExtension = {etab2};
 NBC2.loadAmplitude = {FAmp2};
 NBC2.loadDirection = {dirForce2};
 NBC2.computeLoadVct = {'computeLoadVctAreaIGAThinStructure'};
-NBC2.isFollower(1, 1) = true;
+NBC2.isFollower = true;
+NBC2.isTimeDependent = false;
 
 % Patch 3 :
 % _________
@@ -2563,6 +2565,7 @@ NBC3.loadAmplitude = {FAmp3};
 NBC3.loadDirection = {dirForce3};
 NBC3.computeLoadVct = {'computeLoadVctAreaIGAThinStructure'};
 NBC3.isFollower = true;
+NBC3.isTimeDependent = false;
 
 % Patch 4 :
 % _________
@@ -2578,6 +2581,7 @@ NBC4.loadAmplitude = {FAmp4};
 NBC4.loadDirection = {dirForce4};
 NBC4.computeLoadVct = {'computeLoadVctAreaIGAThinStructure'};
 NBC4.isFollower = true;
+NBC4.isTimeDependent = false;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Interface parametrizations     %

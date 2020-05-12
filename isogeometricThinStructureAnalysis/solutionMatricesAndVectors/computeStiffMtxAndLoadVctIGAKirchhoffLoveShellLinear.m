@@ -296,14 +296,10 @@ for j = q + 1:numKnots_eta - q - 1
 end
 
 %% 4. Compute the exernally applied load vector
-F = zeros(numDOFs, 1);
-for iNBC = 1:NBC.noCnd
-    funcHandle = str2func(NBC.computeLoadVct{iNBC});
-    F = funcHandle ...
-        (F, BSplinePatch, NBC.xiLoadExtension{iNBC}, ...
-        NBC.etaLoadExtension{iNBC}, NBC.loadAmplitude{iNBC}, ...
-        NBC.loadDirection(iNBC, 1), NBC.isFollower(iNBC, 1), ...
-        t, int, '');
+if isfield(BSplinePatch, 'FGamma')
+    F = BSplinePatch.FGamma;
+else
+    F = 'undefined';
 end
 
 %% 5. Check output

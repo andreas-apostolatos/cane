@@ -193,6 +193,9 @@ function BSplinePatch = fillUpPatch ...
 %                                       the DOFs
 %                        .boundingBox : The bounding box containing the
 %                                       B-Spline patch
+%                   .isStiffMtxPrecom : Initialize flag on whether the
+%                                       underlying stiffness matrix is
+%                                       computed to false
 %
 % Function layout :
 %
@@ -299,6 +302,9 @@ for iXi = 1:length(BSplinePatch.CP(:, 1, 1))
     end
 end
 
+% Initialize flag on whether the stiffness matrix is precomputed
+BSplinePatch.isStiffMtxPrecom = false;
+
 % Number of knots in xi- and eta- directions
 mxi = length(Xi);
 meta = length(Eta);
@@ -344,7 +350,7 @@ if ~ischar(int)
         if strcmp(int.type, 'default')
             if strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis') || ...
                 strcmp(analysis.type, 'isogeometricMembraneAnalysis') || ...
-                strcmp(analysis.type,  'isogeometricPlateInMembraneActionAnalysis') || ...
+                strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis') || ...
                 strcmp(analysis.type, 'isogeometricIncompressibleFlowAnalysis')
                 numXiGP = p + 1;
                 numEtaGP = q + 1;
@@ -441,26 +447,26 @@ end
 BSplinePatch.knotSpan2ElmntNo = zeros(mxi - p - 1,meta - q - 1);
 
 %% 1. Create a DOF numbering for the B-Spline patch
-if strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis') || ...
-        strcmp(analysis.type,'isogeometricMembraneAnalysis') || ...
-        strcmp(analysis.type,'isogeometricIncompressibleFlowAnalysis')
+if strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis') || ...
+        strcmp(analysis.type, 'isogeometricMembraneAnalysis') || ...
+        strcmp(analysis.type, 'isogeometricIncompressibleFlowAnalysis')
     BSplinePatch.DOFNumbering = zeros(nxi, neta, 3);
     k = 1;
     for cpj = 1:neta
         for cpi = 1:nxi
-            BSplinePatch.DOFNumbering(cpi,cpj,1) = k;
-            BSplinePatch.DOFNumbering(cpi,cpj,2) = k + 1;
-            BSplinePatch.DOFNumbering(cpi,cpj,3) = k + 2;
+            BSplinePatch.DOFNumbering(cpi, cpj, 1) = k;
+            BSplinePatch.DOFNumbering(cpi, cpj, 2) = k + 1;
+            BSplinePatch.DOFNumbering(cpi, cpj, 3) = k + 2;
             k = k + 3;
         end
     end
-elseif strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
-    BSplinePatch.DOFNumbering = zeros(nxi,neta,2);
+elseif strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis')
+    BSplinePatch.DOFNumbering = zeros(nxi, neta, 2);
     k = 1;
     for cpj = 1:neta
         for cpi = 1:nxi
-            BSplinePatch.DOFNumbering(cpi,cpj,1) = k;
-            BSplinePatch.DOFNumbering(cpi,cpj,2) = k + 1;
+            BSplinePatch.DOFNumbering(cpi, cpj, 1) = k;
+            BSplinePatch.DOFNumbering(cpi, cpj, 2) = k + 1;
             k = k + 2;
         end
     end
@@ -480,28 +486,33 @@ for iEtaSpan = q + 1:meta - q - 1
                 BSplinePatch.etaKnotSpan(counterElmnts,1) - q + (0:q);
             
             %% 2ii. Create the EFT of the current element
-            if strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis') || ...
-                strcmp(analysis.type,'isogeometricMembraneAnalysis')
+            if strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis') || ...
+                strcmp(analysis.type, 'isogeometricMembraneAnalysis')
                 k = 1;
-                for cpj = iEtaSpan-q:iEtaSpan
-                    for cpi = iXiSpan-p:iXiSpan
-                        BSplinePatch.EFT(k,counterElmnts) = BSplinePatch.DOFNumbering(cpi,cpj,1);
-                        BSplinePatch.EFT(k+1,counterElmnts) = BSplinePatch.DOFNumbering(cpi,cpj,2);
-                        BSplinePatch.EFT(k+2,counterElmnts) = BSplinePatch.DOFNumbering(cpi,cpj,3);
+                for cpj = iEtaSpan - q:iEtaSpan
+                    for cpi = iXiSpan - p:iXiSpan
+                        BSplinePatch.EFT(k, counterElmnts) = ...
+                            BSplinePatch.DOFNumbering(cpi, cpj, 1);
+                        BSplinePatch.EFT(k + 1, counterElmnts) = ...
+                            BSplinePatch.DOFNumbering(cpi, cpj, 2);
+                        BSplinePatch.EFT(k + 2, counterElmnts) = ...
+                            BSplinePatch.DOFNumbering(cpi, cpj, 3);
                         k = k + 3;
                     end
                 end
-            elseif strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
+            elseif strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis')
                 k = 1;
-                for cpj = iEtaSpan-q:iEtaSpan
-                    for cpi = iXiSpan-p:iXiSpan
-                        BSplinePatch.EFT(k,counterElmnts) = BSplinePatch.DOFNumbering(cpi,cpj,1);
-                        BSplinePatch.EFT(k+1,counterElmnts) = BSplinePatch.DOFNumbering(cpi,cpj,2);
+                for cpj = iEtaSpan - q:iEtaSpan
+                    for cpi = iXiSpan - p:iXiSpan
+                        BSplinePatch.EFT(k, counterElmnts) = ...
+                            BSplinePatch.DOFNumbering(cpi, cpj, 1);
+                        BSplinePatch.EFT(k + 1, counterElmnts) = ...
+                            BSplinePatch.DOFNumbering(cpi, cpj, 2);
                         k = k + 2;
                     end
                 end
             end
-            BSplinePatch.knotSpan2ElmntNo(iXiSpan,iEtaSpan) = counterElmnts;
+            BSplinePatch.knotSpan2ElmntNo(iXiSpan, iEtaSpan) = counterElmnts;
             
             %% 2iii. Compute the determinant of the Jacobian to the transformation from the NURBS space (xi-eta) to the integration domain [-1,1]x[-1,1]
             %
@@ -512,7 +523,7 @@ for iEtaSpan = q + 1:meta - q - 1
             %         |                  eta_j+1 - eta_j |
             %         |        0         --------------- |
             %         |                          2       |
-            detJxiu = (Xi(iXiSpan+1)-Xi(iXiSpan))*(Eta(iEtaSpan+1)-Eta(iEtaSpan))/4;
+            detJxiu = (Xi(iXiSpan + 1) - Xi(iXiSpan))*(Eta(iEtaSpan + 1) - Eta(iEtaSpan))/4;
             
             %% 2iv. Initialize element area and counter for the Gauss Points in the element level
             elementArea = 0;
@@ -524,61 +535,65 @@ for iEtaSpan = q + 1:meta - q - 1
                     if ~ischar(numXiGP)
                         for cXi = 1:numXiGP
                             %% 2v.1. Compute and save the NURBS coordinates xi,eta of the Gauss Point coordinates in the bi-unit interval [-1, 1]
-                            xi = ( Xi(iXiSpan+1)+Xi(iXiSpan) + xiGP(cXi)*(Xi(iXiSpan+1)-Xi(iXiSpan)) )/2;
-                            eta = ( Eta(iEtaSpan+1)+Eta(iEtaSpan) + etaGP(cEta)*(Eta(iEtaSpan+1)-Eta(iEtaSpan)) )/2;
-                            BSplinePatch.xi(counterElmnts,counterGPEl) = xi;
-                            BSplinePatch.eta(counterElmnts,counterGPEl) = eta;
+                            xi = (Xi(iXiSpan + 1) + Xi(iXiSpan) + xiGP(cXi)*(Xi(iXiSpan + 1) - Xi(iXiSpan)))/2;
+                            eta = (Eta(iEtaSpan + 1) + Eta(iEtaSpan) + etaGP(cEta)*(Eta(iEtaSpan + 1) - Eta(iEtaSpan)))/2;
+                            BSplinePatch.xi(counterElmnts, counterGPEl) = xi;
+                            BSplinePatch.eta(counterElmnts, counterGPEl) = eta;
                     
                             %% 2v.2. Compute and save the NURBS basis functions and their derivatives according to the chosen analysis
-                            if strcmp(analysis.type,'isogeometricMembraneAnalysis') || ...
-                                    strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
-                                noDrvBasis = 1;
-                            elseif strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis') || ...
+                            if strcmp(analysis.type, 'isogeometricMembraneAnalysis') || ...
+                                    strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis')
+                                numDrvBasis = 1;
+                            elseif strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis') || ...
                                     strcmp(analysis.type, 'isogeometricIncompressibleFlowAnalysis')
-                                noDrvBasis = 2;
+                                numDrvBasis = 2;
                             end
-                            dR = computeIGABasisFunctionsAndDerivativesForSurface...
-                                (iXiSpan,p,xi,Xi,iEtaSpan,q,eta,Eta,CP,isNURBS,noDrvBasis);
-                            BSplinePatch.R(counterElmnts,counterGPEl,:) = dR(:,1);
+                            dR = computeIGABasisFunctionsAndDerivativesForSurface ...
+                                (iXiSpan, p, xi, Xi, iEtaSpan, q, eta, Eta, CP, ...
+                                isNURBS, numDrvBasis);
+                            BSplinePatch.R(counterElmnts, counterGPEl, :) = dR(:, 1);
                             if strcmp(analysis.type,'isogeometricMembraneAnalysis')
-                                BSplinePatch.dRdXi(counterElmnts,counterGPEl,:) = dR(:,2);
-                                BSplinePatch.dRdEta(counterElmnts,counterGPEl,:) = dR(:,3);
+                                BSplinePatch.dRdXi(counterElmnts, counterGPEl, :) = dR(:, 2);
+                                BSplinePatch.dRdEta(counterElmnts, counterGPEl, :) = dR(:, 3);
                             end
                     
                             %% 2v.3. Compute and save the covariant base vectors of the reference configuration
-                            if strcmp(analysis.type,'isogeometricMembraneAnalysis') || ...
-                                    strcmp(analysis.type,'isogeometricPlateInMembraneActionAnalysis')
-                                nDrvBaseVct = 0;
-                            elseif strcmp(analysis.type,'isogeometricKirchhoffLoveShellAnalysis')
-                                nDrvBaseVct = 1;
+                            if strcmp(analysis.type, 'isogeometricMembraneAnalysis') || ...
+                                    strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis')
+                                numDrvBaseVct = 0;
+                            elseif strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis')
+                                numDrvBaseVct = 1;
                             else
-                                nDrvBaseVct = 'undefined';
+                                numDrvBaseVct = 'undefined';
                             end
-                            if ~ischar(nDrvBaseVct)
-                                [dG1,dG2] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                                    (iXiSpan,p,iEtaSpan,q,CP,nDrvBaseVct,dR);
+                            if ~ischar(numDrvBaseVct)
+                                [dG1, dG2] = ...
+                                    computeBaseVectorsAndDerivativesForBSplineSurface ...
+                                    (iXiSpan, p, iEtaSpan, q, CP, numDrvBaseVct, dR);
                             end
-                            if strcmp(analysis.type,'isogeometricMembraneAnalysis') && ~ischar(nDrvBaseVct)
-                                BSplinePatch.GXi(counterElmnts,counterGPEl,:) = dG1(:,1);
-                                BSplinePatch.GEta(counterElmnts,counterGPEl,:) = dG2(:,1);
+                            if strcmp(analysis.type, 'isogeometricMembraneAnalysis') && ...
+                                    ~ischar(numDrvBaseVct)
+                                BSplinePatch.GXi(counterElmnts, counterGPEl, :) = dG1(:, 1);
+                                BSplinePatch.GEta(counterElmnts, counterGPEl, :) = dG2(:, 1);
                             end
                     
                             %% 2v.4. Compute and save the prestress values
-                            if strcmp(analysis.type,'isogeometricMembraneAnalysis')
+                            if strcmp(analysis.type, 'isogeometricMembraneAnalysis')
                                 % Check if a user defined coordinate system for the
                                 % prestresses is chosen
                                 isPrestressOverDefinedSystem = false;
-                                if isfield(parameters.prestress,'computeBaseVectors')
-                                    if ~isfield(parameters.prestress,'computeParametricCoordinates')
+                                if isfield(parameters.prestress, 'computeBaseVectors')
+                                    if ~isfield(parameters.prestress, 'computeParametricCoordinates')
                                         error('Function handle parameters.prestress.computeParametricCoordinates has to be defined when defining the prestress over a user-defined coordinate system');
                                     end
                                     isPrestressOverDefinedSystem = true;
                                 end
 
                                 % Compute the convective coordinates of the surface
-                                if isPrestressOverDefinedSystem || isa(parameters.prestress.voigtVector,'function_handle')
-                                    X = computeCartesianCoordinatesOfAPointOnBSplineSurface...
-                                        (iXiSpan,p,xi,Xi,iEtaSpan,q,eta,Eta,CP,dR(:,1));
+                                if isPrestressOverDefinedSystem || ...
+                                        isa(parameters.prestress.voigtVector,'function_handle')
+                                    X = computeCartesianCoordinatesOfAPointOnBSplineSurface ...
+                                        (iXiSpan, p, xi, Xi, iEtaSpan, q, eta, Eta, CP, dR(:, 1));
                                     theta = parameters.prestress.computeParametricCoordinates(X);
                                 end
 
@@ -587,35 +602,40 @@ for iEtaSpan = q + 1:meta - q - 1
                                 % coordinate system if a user defined coordinate
                                 % system is chosen
                                 if isPrestressOverDefinedSystem
-                                    GabCovariant = [dG1(:,1) dG2(:,1)]'*[dG1(:,1) dG2(:,1)];
-                                    GContravariant = GabCovariant\[dG1(:,1) dG2(:,1)]';
+                                    GabCovariant = [dG1(:, 1) dG2(:, 1)]'*[dG1(:, 1) dG2(:, 1)];
+                                    GContravariant = GabCovariant\[dG1(:, 1) dG2(:, 1)]';
                                     GContravariant = GContravariant';
-                                    eLC = computeLocalCartesianBasis4BSplineSurface([dG1(:,1) dG2(:,1)],GContravariant);
-                                    prestressBaseVct = parameters.prestress.computeBaseVectors(theta(1,1),theta(2,1));
-                                    T2LC = computeT2LocalCartesianBasis(prestressBaseVct,eLC);
+                                    eLC = computeLocalCartesianBasis4BSplineSurface ....
+                                        ([dG1(:, 1) dG2(:, 1)], GContravariant);
+                                    prestressBaseVct = ...
+                                        parameters.prestress.computeBaseVectors ...
+                                        (theta(1, 1), theta(2, 1));
+                                    T2LC = computeT2LocalCartesianBasis ...
+                                        (prestressBaseVct, eLC);
                                 else
-                                    T2LC = [1 0 0
-                                            0 1 0
-                                            0 0 1];
+                                    T2LC = eye(3, 3);
                                 end
 
                                 % Compute the prestress values
-                                if isa(parameters.prestress.voigtVector,'function_handle')
-                                    prestressVoigtVector = parameters.prestress.voigtVector(theta);
+                                if isa(parameters.prestress.voigtVector, 'function_handle')
+                                    prestressVoigtVector = ...
+                                        parameters.prestress.voigtVector(theta);
                                 else
-                                    prestressVoigtVector = parameters.prestress.voigtVector;
+                                    prestressVoigtVector = ...
+                                        parameters.prestress.voigtVector;
                                 end
 
                                 % Transform the vector to the local Cartesian space
                                 % if defined over a user defined coordinate system
-                                BSplinePatch.prestressVoigtVector(counterElmnts,counterGPEl,:) = ...
+                                BSplinePatch.prestressVoigtVector(counterElmnts, counterGPEl, :) = ...
                                     T2LC*prestressVoigtVector;
                             end
                     
                             %% 2v.4. Compute and save the surface normal of the reference configuration (third covariant base vector not normalized)
-                            if ~ischar(nDrvBaseVct)
-                                BSplinePatch.G3Tilde(:,counterGPs) = cross(dG1(:,1),dG2(:,1));
-                                dA = norm(BSplinePatch.G3Tilde(:,counterGPs));
+                            if ~ischar(numDrvBaseVct)
+                                BSplinePatch.G3Tilde(:, counterGPs) = ...
+                                    cross(dG1(:, 1), dG2(:, 1));
+                                dA = norm(BSplinePatch.G3Tilde(:, counterGPs));
                             end
                     
                             %% 2v.5. Compute and save the Gauss weight
@@ -626,9 +646,11 @@ for iEtaSpan = q + 1:meta - q - 1
                             end
                     
                             %% 2v.6 Compute the element area on the Gauss Point and add the contribution
-                            if ~ischar(int) && ~ischar(nDrvBaseVct)
-                                BSplinePatch.elementAreaOnGP(counterElmnts,counterGPEl) = dA*detJxiu*GW;
-                                elementArea = elementArea + BSplinePatch.elementAreaOnGP(counterElmnts,counterGPEl);
+                            if ~ischar(int) && ~ischar(numDrvBaseVct)
+                                BSplinePatch.elementAreaOnGP(counterElmnts, counterGPEl) = ...
+                                    dA*detJxiu*GW;
+                                elementArea = elementArea + ...
+                                    BSplinePatch.elementAreaOnGP(counterElmnts, counterGPEl);
                             else
                                 elementArea = 'undefined';
                             end

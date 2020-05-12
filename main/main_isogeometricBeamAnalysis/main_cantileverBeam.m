@@ -78,30 +78,51 @@ CP(:,3) = [0 0 0 0 0 0];
 CP(:,4) = [1 1 1 1 1 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
-isNURBS = 0;
-for i=length(CP(:,1))
-    if CP(i,4)~=1
-        isNURBS = 1;
+isNURBS = false;
+for i = length(CP(:, 1))
+    if CP(i, 4) ~= 1
+        isNURBS = true;
         break;
     end
 end
 
 %% Material constants
 
-parameters.EYoung = 1e7; % Young's modulus (connected to epsilon_11 = E)
-parameters.Nu = .3; % Poisson ration
-parameters.GShear = parameters.EYoung/(2*(1+parameters.Nu)); % shear modulus (connected to epsilon_12 = E/(1+nu))
-parameters.alpha = 5/6; % shear correction factor
-parameters.b = .1; % width of the beam
-parameters.h = .1; % height of the beam
-parameters.A = parameters.b*parameters.h; % cross sectional area
-parameters.I = parameters.b*(parameters.h^3)/12; % Moment of inertia (I_z = I for a simple 2D case)
-parameters.Aq = parameters.alpha*parameters.A; % shear cross sectional area
+% Young's modulus (connected to epsilon_11 = E)
+parameters.EYoung = 1e7;
+
+% Poisson ratio
+parameters.Nu = .3;
+
+% shear modulus (connected to epsilon_12 = E/(1+nu))
+parameters.GShear = parameters.EYoung/(2*(1 + parameters.Nu));
+
+% shear correction factor
+parameters.alpha = 5/6;
+
+% Width of the beam
+parameters.b = .1;
+
+% height of the beam
+parameters.h = .1;
+
+% cross sectional area
+parameters.A = parameters.b*parameters.h;
+
+% Moment of inertia (I_z = I for a simple 2D case)
+parameters.I = parameters.b*(parameters.h^3)/12;
+
+% shear cross sectional area
+parameters.Aq = parameters.alpha*parameters.A;
 
 %% GUI
 
 % Analysis type (Bernoulli or Timoshenko Beam Theory)
 analysis.type = 'Timoshenko';
+if ~strcmp(analysis.type, 'Bernoulli') && ...
+        ~strcmp(analysis.type, 'Timoshenko')
+    error('Choose valid analysis type')
+end
 
 % Choose linear equation solver
 solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
@@ -146,52 +167,70 @@ graph.plotBasisFunctionsAndDerivs = 1;
 
 % Order elevation
 tp = 0;
-[Xi,CP,p] = degreeElevateBSplineCurve(p,Xi,CP,tp,'outputEnabled');
+[Xi, CP, p] = degreeElevateBSplineCurve ...
+    (p, Xi, CP, tp, 'outputEnabled');
 
 % Knot insertion
 n = 0;
-[Xi,CP] = knotRefineUniformlyBSplineCurve(n,p,Xi,CP,'outputEnabled');
+[Xi, CP] = knotRefineUniformlyBSplineCurve ...
+    (n, p, Xi, CP, 'outputEnabled');
 % Rxi = [.25 .5 .5];
-% [Xi,CP] = knotRefineBSplineCurve(p,Xi,CP,Rxi,'outputEnabled');
+% [Xi, CP] = knotRefineBSplineCurve ...
+%     (p,Xi,CP,Rxi,'outputEnabled');
 
 %% Plot the shape functions and their derivatives
 numEval = 149;
-graph.index = plot_IGABasisFunctionsAndDerivativesForCurve...
-    (p,Xi,CP,numEval,isNURBS,graph,'outputEnabled');
+graph.index = plot_IGABasisFunctionsAndDerivativesForCurve ...
+    (p, Xi, CP, numEval, isNURBS, graph, 'outputEnabled');
 
 %% Apply boundary conditions
 
 % Dirichlet boundary conditions
 homDOFs = [];
     
-if strcmp(analysis.type,'Bernoulli')
+if strcmp(analysis.type, 'Bernoulli')
     % Clamp the left edge of the beam
-    xib = [Xi(1) Xi(p+1)]; dir = 1;
-    homDOFs = findDofsForBernoulliBeams2D(homDOFs,xib,dir,CP);
-    xib = [Xi(1) Xi(p+2)]; dir = 2;
-    homDOFs = findDofsForBernoulliBeams2D(homDOFs,xib,dir,CP);
+    xib = [Xi(1) Xi(p + 1)];
+    dir = 1;
+    homDOFs = findDofsForBernoulliBeams2D ...
+        (homDOFs, xib, dir, CP);
+    xib = [Xi(1) Xi(p + 2)];
+    dir = 2;
+    homDOFs = findDofsForBernoulliBeams2D ...
+        (homDOFs, xib, dir, CP);
     
     % Clamp the right edge of the beam
-%     ub = [U(length(U)-p) U(length(U))]; dir = 1;
-%     rb = findDofsForBernoulliBeams2D(rb,ub,dir,CP);
-%     ub = [U(length(U)-p-1) U(length(U))]; dir = 2;
-%     rb = findDofsForBernoulliBeams2D(rb,ub,dir,CP);
+%     xib = [Xi(length(Xi) - p) Xi(end)]; 
+%     dir = 1;
+%     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
+%     xib = [U(length(U)-p-1) U(length(U))];
+%     dir = 2;
+%     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
 elseif strcmp(analysis.type,'Timoshenko')
     % Clamp the left edge of the beam (3 DoFs two translations and 1 rotation)
-    xib = [Xi(1) Xi(p+1)]; dir = 1;
-    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
-    xib = [Xi(1) Xi(p+1)]; dir = 2;
-    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
-    xib = [Xi(1) Xi(p+1)]; dir = 3;
-    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
+    xib = [Xi(1) Xi(p + 1)];
+    dir = 1;
+    homDOFs = findDofsForTimoshenkoBeams2D ...
+        (homDOFs, xib, dir, CP);
+    xib = [Xi(1) Xi(p + 1)];
+    dir = 2;
+    homDOFs = findDofsForTimoshenkoBeams2D ...
+        (homDOFs, xib, dir, CP);
+    xib = [Xi(1) Xi(p + 1)];
+    dir = 3;
+    homDOFs = findDofsForTimoshenkoBeams2D ...
+        (homDOFs, xib, dir, CP);
 
     % Clamp the right edge of the beam (3 DoFs two translations and 1 rotation)
-%     ub = [U(length(U)-p) U(length(U))]; dir = 1;
-%     rb = findDofsForTimoshenkoBeams2D(rb,ub,dir,CP);
-%     ub = [U(length(U)-p) U(length(U))]; dir = 2;
-%     rb = findDofsForTimoshenkoBeams2D(rb,ub,dir,CP);
-%     ub = [U(length(U)-p) U(length(U))]; dir = 3;
-%     rb = findDofsForTimoshenkoBeams2D(rb,ub,dir,CP);
+%     xib = [Xi(end - p) Xi(end)];
+%     dir = 1;
+%     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+%     xib = [Xi(end - p) Xi(end)];
+%     dir = 2;
+%     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+%     xib = [Xi(end - p) Xi(end)];
+%     dir = 3;
+%     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
 end
 
 % Neumann boundary conditions
@@ -200,42 +239,55 @@ end
 NBC.noCnd = 1;
 xib = [0 1];
 NBC.xiLoadExtension = {xib};
+NBC.etaLoadExtension = {'undefined'};
 pLoad = - 1e2;
-NBC.loadAmplitude(1,1) = pLoad;
+NBC.loadAmplitude = {pLoad};
 loadDir = 2;
-NBC.loadDirection(1,1) = loadDir;
+NBC.loadDirection = {loadDir};
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 % On the application of a point load on the beam
 % xib = 1;
 % dir = 2;
-% F = computeLoadPointVectorBeams2D(F,p,Xi,CP,pLoad,xib,analysis,isNURBS,int,'outputEnabled');
+% F = computeLoadPointVectorForIGATimoshenkoBeam2D ...
+%     (F, BSplinePatch, xib, etab, pLoad, dir, isFollower, int, 'outputEnabled');
+
+%% Fill up computational patch
+BSplinePatch.p = p;
+BSplinePatch.Xi = Xi;
+BSplinePatch.CP = CP;
+BSplinePatch.isNURBS = isNURBS;
 
 %% Compute the load vector only for the visualization of the reference configuration
-for counterNBC = 1:NBC.noCnd
+for iNBC = 1:NBC.noCnd
     F = [];
-    if strcmp(analysis.type,'Bernoulli')
-        NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGABernoulliBeam2D'};
-    elseif strcmp(analysis.type,'Timoshenko')
+    if strcmp(analysis.type, 'Bernoulli')
+        NBC.computeLoadVct = ...
+            {'computeLoadVctLinePressureVectorForIGABernoulliBeam2D'};
+    elseif strcmp(analysis.type, 'Timoshenko')
         NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D'};
     end
-    funcHandle = str2func(NBC.computeLoadVct{counterNBC});
-    F = funcHandle(F,NBC.xiLoadExtension{counterNBC},p,Xi,...
-        CP,isNURBS,NBC.loadAmplitude(counterNBC,1),...
-        NBC.loadDirection(counterNBC,1),0,int,'');
+    funcHandle = str2func(NBC.computeLoadVct{iNBC});
+    F = funcHandle ...
+        (F, BSplinePatch, NBC.xiLoadExtension{iNBC}, ...
+        NBC.etaLoadExtension{iNBC}, NBC.loadAmplitude{iNBC}, ...
+        NBC.loadDirection{iNBC}, NBC.isFollower(iNBC,1), 0, int, '');
 end
 
 %% Plot reference configuration
-graph.index = plot_referenceConfigurationIGABeams...
-    (p,Xi,CP,isNURBS,homDOFs,F,analysis,graph,'outputEnabled');
+graph.index = plot_referenceConfigurationIGABeams ...
+    (p, Xi, CP, isNURBS, homDOFs, F, analysis, graph, 'outputEnabled');
 
 %% Solve the problem 
-[dHat,F,minElEdgeSize] = solve_IGABeamLinear2D...
-    (analysis,p,Xi,CP,homDOFs,NBC,parameters,isNURBS,solve_LinearSystem,...
-    int,'outputEnabled');
+[dHat, F, minElEdgeSize] = solve_IGABeamLinear2D ...
+    (analysis, p, Xi, CP, homDOFs, NBC, parameters, isNURBS, ...
+    solve_LinearSystem, int, 'outputEnabled');
 
 %% Postprocessing
-graph.index = plot_currentConfigurationIGABeamsLinear...
-    (analysis,p,Xi,CP,isNURBS,dHat,homDOFs,parameters,graph,'outputEnabled');
+graph.index = plot_currentConfigurationIGABeamsLinear ...
+    (analysis, p, Xi, CP, isNURBS, dHat, homDOFs, parameters, graph, ...
+    'outputEnabled');
 
 %% Benchmarking the solution
 problemSettings.Length = L;

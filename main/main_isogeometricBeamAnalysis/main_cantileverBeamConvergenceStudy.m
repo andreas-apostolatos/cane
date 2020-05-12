@@ -78,27 +78,42 @@ CP(:,3) = [0 0];
 CP(:,4) = [1 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
-isNURBS = 0;
-for i=length(CP(:,1))
-    if CP(i,4)~=1
-        isNURBS = 1;
+isNURBS = false;
+for i = length(CP(:, 1))
+    if CP(i, 4) ~= 1
+        isNURBS = true;
         break;
     end
 end
 
-%% On the testing
-
 %% Material constants
 
-parameters.EYoung = 4e6; % Young's modulus (connected to epsilon_11 = E)
-parameters.Nu = 0; % Poisson ration
-parameters.GShear = parameters.EYoung/(2*(1+parameters.Nu)); % shear modulus (connected to epsilon_12 = E/(1+nu))
-parameters.alpha = 5/6; % shear correction factor
-parameters.b = 1; % width of the beam
-parameters.h = 1; % height of the beam
-parameters.A = parameters.b*parameters.h; % cross sectional area
-parameters.I = parameters.b*(parameters.h^3)/12; % Moment of inertia (I_z = I for a simple 2D case)
-parameters.Aq = parameters.alpha*parameters.A; % shear cross sectional area
+% Young's modulus (connected to epsilon_11 = E)
+parameters.EYoung = 4e6;
+
+% Poisson ration
+parameters.Nu = 0;
+
+% shear modulus (connected to epsilon_12 = E/(1+nu))
+parameters.GShear = parameters.EYoung/(2*(1 + parameters.Nu));
+
+% shear correction factor
+parameters.alpha = 5/6;
+
+% width of the beam
+parameters.b = 1;
+
+% height of the beam
+parameters.h = 1;
+
+% cross sectional area
+parameters.A = parameters.b*parameters.h;
+
+% Moment of inertia (I_z = I for a simple 2D case)
+parameters.I = parameters.b*(parameters.h^3)/12;
+
+% shear cross sectional area
+parameters.Aq = parameters.alpha*parameters.A;
 
 %% GUI
 
@@ -155,66 +170,78 @@ graph.plotBasisFunctionsAndDerivs = 0;
 
 % Order elevation
 a = 1;
-if strcmp(analysis.type,'Bernoulli')
+if strcmp(analysis.type, 'Bernoulli')
     tp = a;
-elseif strcmp(analysis.type,'Timoshenko')
+elseif strcmp(analysis.type, 'Timoshenko')
     tp = a-1;
 end
-[Xi,CP,p] = degreeElevateBSplineCurve(p,Xi,CP,tp,'outputEnabled');
+[Xi, CP, p] = degreeElevateBSplineCurve ...
+    (p, Xi, CP, tp, 'outputEnabled');
 
 % Knot insertion
 n = 0;
-[Xi,CP] = knotRefineUniformlyBSplineCurve(n,p,Xi,CP,'outputEnabled');
+[Xi, CP] = knotRefineUniformlyBSplineCurve ...
+    (n, p, Xi, CP, 'outputEnabled');
 
 %% Perform a refinement study
 
 % Number of h-refinement steps
-nRef = 50;
+numRef = 50;
 
 % Initialize arrays
-errorDisplacements = zeros(nRef,1);
-errorRotations = zeros(nRef,1);
-minElSize = zeros(nRef,1);
+errorDisplacements = zeros(numRef, 1);
+errorRotations = zeros(numRef, 1);
+minElSize = zeros(numRef, 1);
 
 fprintf('---------------------------------------- \n');
 fprintf('| Loop over all the h-refinement steps | \n');
 fprintf('---------------------------------------- \n \n');
 
-for i=1:nRef
+for i = 1:numRef
     %% Print message on the current h-refinement
-    fprintf('\t Refinement step %d/%d \n',i,nRef);
+    fprintf('\t Refinement step %d/%d \n', i, numRef);
     fprintf('\t ----------------------- \n \n');
     
     %% Perform an h-refinement
-    [XiRef,CPRef] = knotRefineUniformlyBSplineCurve(10*i,p,Xi,CP,'');
-    fprintf('\t \t No. Elements = %d \n',length(XiRef));
+    [XiRef, CPRef] = knotRefineUniformlyBSplineCurve(10*i, p, Xi, CP, '');
+    fprintf('\t \t No. Elements = %d \n', length(XiRef));
     if strcmp(analysis.type,'Bernoulli')
-        fprintf('\t \t No. DOFs = %d \n',2*length(CPRef(:,1)));
+        fprintf('\t \t No. DOFs = %d \n', 2*length(CPRef(:, 1)));
     elseif strcmp(analysis.type,'Timoshenko')
-        fprintf('\t \t No. DOFs = %d \n',3*length(CPRef(:,1)));
+        fprintf('\t \t No. DOFs = %d \n', 3*length(CPRef(:, 1)));
     end
     fprintf('\n \n');
+    
+    %% Fill up computational patch
+    BSplinePatch.p = p;
+    BSplinePatch.Xi = XiRef;
+    BSplinePatch.CP = CPRef;
+    BSplinePatch.isNURBS = isNURBS;
     
     %% Compute the load vector
     % On the application of a pressure load on the beam
     NBC.noCnd = 1;
     xib = [0 1];
     NBC.xiLoadExtension = {xib};
+    NBC.etaLoadExtension = {'undefined'};
     pLoad = - 1e3;
-    NBC.loadAmplitude(1,1) = pLoad;
+    NBC.loadAmplitude = {pLoad};
     loadDir = 2;
-    NBC.loadDirection(1,1) = loadDir;
-    for counterNBC = 1:NBC.noCnd
+    NBC.loadDirection = {loadDir};
+    NBC.isFollower(1, 1) = false;
+    NBC.isTimeDependent(1, 1) = false;
+    for iNBC = 1:NBC.noCnd
         F = [];
         if strcmp(analysis.type,'Bernoulli')
             NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGABernoulliBeam2D'};
         elseif strcmp(analysis.type,'Timoshenko')
             NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D'};
         end
-        funcHandle = str2func(NBC.computeLoadVct{counterNBC});
-        F = funcHandle(F,NBC.xiLoadExtension{counterNBC},p,Xi,...
-            CP,isNURBS,NBC.loadAmplitude(counterNBC,1),...
-            NBC.loadDirection(counterNBC,1),0,int,'');
+        funcHandle = str2func(NBC.computeLoadVct{iNBC});
+        F = funcHandle ...
+            (F, BSplinePatch, NBC.xiLoadExtension{iNBC}, ...
+            NBC.etaLoadExtension{iNBC}, NBC.loadAmplitude{iNBC},...
+            NBC.loadDirection{iNBC}, NBC.isFollower(iNBC,1), 0, int, '');
     end
     
     %% Find the constrained DOFs
@@ -222,40 +249,55 @@ for i=1:nRef
     % Initialize the array of the constrained DOFs
     homDOFs = [];
     
-    if strcmp(analysis.type,'Bernoulli')
+    if strcmp(analysis.type, 'Bernoulli')
     % Clamp the left edge of the beam
-    xib = [XiRef(1) XiRef(p+1)]; dir = 1;
-    homDOFs = findDofsForBernoulliBeams2D(homDOFs,xib,dir,CPRef);
-    xib = [XiRef(1) XiRef(p+2)]; dir = 2;
-    homDOFs = findDofsForBernoulliBeams2D(homDOFs,xib,dir,CPRef);
+    xib = [XiRef(1) XiRef(p + 1)];
+    dir = 1;
+    homDOFs = findDofsForBernoulliBeams2D ...
+        (homDOFs, xib, dir, CPRef);
+    xib = [XiRef(1) XiRef(p + 2)];
+    dir = 2;
+    homDOFs = findDofsForBernoulliBeams2D ...
+        (homDOFs, xib, dir, CPRef);
     
     % Clamp the right edge of the beam
-    %     ub = [U(length(U)-p) U(length(U))]; dir = 1;
-    %     rb = findDofsForBernoulliBeams2D(rb,ub,dir,CP);
-    %     ub = [U(length(U)-p-1) U(length(U))]; dir = 2;
-    %     rb = findDofsForBernoulliBeams2D(rb,ub,dir,CP);
-    elseif strcmp(analysis.type,'Timoshenko')
+    %     xib = [Xi(end - p) Xi(end)];
+    %     dir = 1;
+    %     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
+    %     xib = [Xi(length(Xi) - p - 1) Xi(length(Xi))];
+    %     dir = 2;
+    %     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
+    elseif strcmp(analysis.type, 'Timoshenko')
         % Clamp the left edge of the beam (3 DoFs two translations and 1 rotation)
-        xib = [XiRef(1) XiRef(p+1)]; dir = 1;
-        homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CPRef);
-        xib = [XiRef(1) XiRef(p+1)]; dir = 2;
-        homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CPRef);
-        xib = [XiRef(1) XiRef(p+1)]; dir = 3;
-        homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CPRef);
+        xib = [XiRef(1) XiRef(p + 1)];
+        dir = 1;
+        homDOFs = findDofsForTimoshenkoBeams2D ...
+            (homDOFs, xib, dir, CPRef);
+        xib = [XiRef(1) XiRef(p + 1)];
+        dir = 2;
+        homDOFs = findDofsForTimoshenkoBeams2D ...
+            (homDOFs, xib, dir, CPRef);
+        xib = [XiRef(1) XiRef(p + 1)];
+        dir = 3;
+        homDOFs = findDofsForTimoshenkoBeams2D ...
+            (homDOFs, xib, dir, CPRef);
 
         % Clamp the right edge of the beam (3 DoFs two translations and 1 rotation)
-    %     ub = [U(length(U)-p) U(length(U))]; dir = 1;
-    %     rb = findDofsForTimoshenkoBeams2D(rb,ub,dir,CP);
-    %     ub = [U(length(U)-p) U(length(U))]; dir = 2;
-    %     rb = findDofsForTimoshenkoBeams2D(rb,ub,dir,CP);
-    %     ub = [U(length(U)-p) U(length(U))]; dir = 3;
-    %     rb = findDofsForTimoshenkoBeams2D(rb,ub,dir,CP);
+    %     xib = [Xi(end - p) Xi(end)];
+    %     dir = 1;
+    %     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+    %     xib = [Xi(end - p) Xi(end)];
+    %     dir = 2;
+    %     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+    %     xib = [Xi(end - p) Xi(end)];
+    %     dir = 3;
+    %     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
     end
     
     %% Solve the linear equation system
-    [dHat,~,minElSize(i,1)] = solve_IGABeamLinear2D...
-        (analysis,p,XiRef,CPRef,homDOFs,NBC,parameters,isNURBS,...
-        solve_LinearSystem,int,'');
+    [dHat, ~, minElSize(i, 1)] = solve_IGABeamLinear2D ...
+        (analysis, p, XiRef, CPRef, homDOFs, NBC, parameters, isNURBS, ...
+        solve_LinearSystem, int, '');
     
     %% Compute the relative error
     problemSettings.Length = L;
@@ -264,30 +306,33 @@ for i=1:nRef
     problemSettings.I = parameters.I;
     problemSettings.GShear = parameters.GShear;
     problemSettings.Aq = parameters.Aq;
-    if strcmp(analysis.type,'Bernoulli')
-        errorDisplacements(i,1) = computeErrIGABernoulliBeam2D(p,XiRef,CPRef,isNURBS,dHat,...
-        @computeExactDispl4BernoulliCantileverBeamInUniformPressure,...
-        problemSettings,intError,'');
+    if strcmp(analysis.type, 'Bernoulli')
+        errorDisplacements(i, 1) = ...
+            computeErrIGABernoulliBeam2D ...
+            (p, XiRef, CPRef, isNURBS, dHat, ...
+            @computeExactDispl4BernoulliCantileverBeamInUniformPressure,...
+            problemSettings, intError, '');
     elseif strcmp(analysis.type,'Timoshenko')
-        [errorDisplacements(i,1),errorRotations(i,1)] = computeErrIGATimoshenkoBeam2D...
-            (p,XiRef,CPRef,isNURBS,dHat,...
-        @computeExactDispl4TimoshenkoCantileverBeamInUniformPressure,...
-        problemSettings,intError,'');
+        [errorDisplacements(i, 1), errorRotations(i, 1)] = ...
+            computeErrIGATimoshenkoBeam2D ...
+            (p, XiRef, CPRef, isNURBS, dHat, ...
+            @computeExactDispl4TimoshenkoCantileverBeamInUniformPressure, ...
+            problemSettings, intError, '');
     end
 end
 
 %% Plot the convergence graphs
-[minElSize,pid] = sort(minElSize) ;
+[minElSize, pid] = sort(minElSize) ;
 errorDisplacements = errorDisplacements(pid);
 figure(graph.index)
-loglog(minElSize,errorDisplacements);
+loglog(minElSize, errorDisplacements);
 title('Refinement study over the L2-norm of the displacement');
 grid on;
 graph.index = graph.index + 1;
-if strcmp(analysis.type,'Timoshenko')
+if strcmp(analysis.type, 'Timoshenko')
     errorRotations = errorRotations(pid);
     figure(graph.index)
-    loglog(minElSize,errorRotations);
+    loglog(minElSize, errorRotations);
     title('Refinement study over the L2-norm of the rotation');
 end
 grid on;
