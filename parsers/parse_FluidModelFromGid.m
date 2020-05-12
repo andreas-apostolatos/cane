@@ -23,7 +23,9 @@ function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
 %              Output :
 %              fldMsh : Structure containing information on the mesh,
 %                           .nodes : The nodes in the FE mesh
+%                         .nodeIDs : Global numbering of the nodes
 %                        .elements : The elements in the FE mesh
+%                      .elementIDs : Global numbering of the elements
 %             homDOFs : The global numbering of the nodes where homogeneous
 %                       Dirichlet boundary conditions are applied
 %           inhomDOFs : The global numbering of the nodes where 
@@ -238,6 +240,7 @@ for k = 1:numel(block)
 end
 out = cell2mat(out);
 fldMsh.nodes = out(:,2:4);
+fldMsh.nodeIDs = out(:,1);
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Number of nodes in the mesh: %d \n', length(fldMsh.nodes(:,1)));
 end
@@ -258,6 +261,7 @@ for k = 1:numel(block)
 end
 out = cell2mat(out);
 fldMsh.elements = out(:, 2:end);
+fldMsh.elementIDs = out(:, 1);
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Number of elements in the mesh: %d \n', length(fldMsh.elements));
 end
