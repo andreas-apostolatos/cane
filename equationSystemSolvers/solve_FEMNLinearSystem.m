@@ -164,23 +164,6 @@ for iLS = 1:propNLinearAnalysis.noLoadSteps
             loadFactor, computeBodyForces, propTransientAnalysis, t, ...
             propParameters, propGaussInt);
         
-        
-        % My new debug function
-        [tanMtx_1, resVct_2, minElASize_2] = computeTangentStiffMtxResVctFEMPlateInMembraneActionCST ...
-            (propAnalysis, u, uSaved, uDot, uDotSaved, uMeshALE, ...
-            precompStiffMtx, precomResVct, DOFNumbering, mesh, F, ...
-            loadFactor, computeBodyForces, propTransientAnalysis, t, ...
-            propParameters, propGaussInt);
-        
-        % Convert matrix to full representation
-        tanMtx = full(tanMtx);
-        tanMtx_1 = full(tanMtx_1);
-        
-        % Compare if both matrices are equal
-        debug1 = min(min(abs(tanMtx-tanMtx_1) <= 1e-6));
-        
-        
-        
         %% 1ii.2. Compute the tangent stiffness matrix and the residual vector for the transient problem
         if isfield(propTransientAnalysis, 'timeDependence')
             if ~strcmp(propTransientAnalysis.timeDependence, 'STEADY_STATE')
