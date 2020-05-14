@@ -81,11 +81,11 @@ caseName = 'testTurek';
     (pathToCase, caseName, 'outputEnabled');
 
 
-%% Combine the data from parsers
+%% Create a global mesh from both parsers
 
 % Combine the nodes of both meshes together
 allNodes = [fldMsh.nodes;strMsh.nodes];
-[globalMsh.nodes,IA] = unique(allNodes,'rows');
+[globalMsh.nodes,uniqueNodeIDs] = unique(allNodes,'rows');
 
 % Combine the elements of both meshes together
 allElements = [fldMsh.elements;strMsh.elements(:,1:4)];
@@ -93,11 +93,44 @@ globalMsh.elements = sort(allElements,1);
 
 % Find the shared nodes between both meshes
 allNodes = allNodes(:,1);
-allNodes(IA) = [];
-sharedNodeIDs = allNodes;
+allNodes(uniqueNodeIDs) = [];
+globalMsh.coupledNodeIDs = allNodes;
 
 % Check if the coupled boundary nodes are equal for testing purposes
-checkEqual = isequal(propStrFSI.coupledNodeIDs, propFldFSI.coupledNodeIDs, sharedNodeIDs);
+checkEqual = isequal(propStrFSI.coupledNodeIDs, propFldFSI.coupledNodeIDs, globalMsh.coupledNodeIDs);
+
+%% Convert to local numbering for structure meshes
+for iEl = 1:size(strMsh.elements,1)
+    strMsh.elements(iEl,1) = iEl; 
+    strMsh.elements(iEl,2) = find(strMsh.nodes(:,1) == strMsh.elements(iEl,2));
+    strMsh.elements(iEl,3) = find(strMsh.nodes(:,1) == strMsh.elements(iEl,3));
+    strMsh.elements(iEl,4) = find(strMsh.nodes(:,1) == strMsh.elements(iEl,4));   
+end
+
+% Change the node numbering of FSI coupled boundary
+for iNode = 1:propStrFSI.numCoupledNodes
+    propStrFSI.coupledNodeIDs(iNode) = find(strMsh.nodes(:,1) == propStrFSI.coupledNodeIDs(iNode));
+end
+
+% Change the nodes numbering of structure mesh
+strMsh.nodes(:,1) = (1:size(strMsh.nodes,1))';
+
+%% Convert to local numbering for fluid mesh
+for iEl = 1:size(fldMsh.elements,1)
+    fldMsh.elements(iEl,1) = iEl; 
+    fldMsh.elements(iEl,2) = find(fldMsh.nodes(:,1) == fldMsh.elements(iEl,2));
+    fldMsh.elements(iEl,3) = find(fldMsh.nodes(:,1) == fldMsh.elements(iEl,3));
+    fldMsh.elements(iEl,4) = find(fldMsh.nodes(:,1) == fldMsh.elements(iEl,4));   
+end
+
+% Change the node numbering of FSI coupled boundary
+for iNode = 1:propStrFSI.numCoupledNodes
+    propFldFSI.coupledNodeIDs(iNode) = find(fldMsh.nodes(:,1) == propFldFSI.coupledNodeIDs(iNode));
+end
+
+% Change the nodes numbering of structure mesh
+fldMsh.nodes(:,1) = (1:size(fldMsh.nodes,1))';
+
 
 %% Plot coupled boundary nodes
 figure(1);
@@ -109,15 +142,15 @@ axis equal
 plot(globalMsh.nodes(:,2),globalMsh.nodes(:,3),'gx');
 
 % Plot all coupled structure nodes
-coupledNodesStr = globalMsh.nodes(propStrFSI.coupledNodeIDs,:);
+coupledNodesStr = strMsh.nodes(propStrFSI.coupledNodeIDs,:);
 plot(coupledNodesStr(:,2),coupledNodesStr(:,3),'ro');
 
 % Plot all coupled fluid nodes
-coupledNodesFld = globalMsh.nodes(propFldFSI.coupledNodeIDs,:);
+coupledNodesFld = fldMsh.nodes(propFldFSI.coupledNodeIDs,:);
 plot(coupledNodesFld(:,2),coupledNodesFld(:,3),'b+');
 
 % Plot coupled nodes that were automaticaly calculated
-sharedNodes = globalMsh.nodes(sharedNodeIDs,:);
+sharedNodes = globalMsh.nodes(globalMsh.coupledNodeIDs,:);
 plot(sharedNodes(:,2),sharedNodes(:,3),'bd');
 hold off
 
@@ -128,12 +161,26 @@ title('Fluid and Structure Nodes');
 axis equal
 
 % Plot Structure nodes
-strNodes = globalMsh.nodes(strMsh.nodes(:,1),:);
-plot(strNodes(:,2),strNodes(:,3),'ro');
+plot(strMsh.nodes(:,2),strMsh.nodes(:,3),'ro');
 
 % Plot Fluid nodes
-fldNodes = globalMsh.nodes(fldMsh.nodes(:,1),:);
-plot(fldNodes(:,2),fldNodes(:,3),'gx');
+plot(fldMsh.nodes(:,2),fldMsh.nodes(:,3),'gx');
+hold off
+
+%% Plot all structure and fluid mesh
+figure(3);
+hold on
+title('Fluid and Structure Meshes');
+axis equal
+
+% Plot Structure mesh
+trimesh(strMsh.elements(:,2:end), strMsh.nodes(:,2), strMsh.nodes(:,3), strMsh.nodes(:,4), ...
+    'edgecolor', 'black', 'facecolor', 'red');
+
+% Plot Fluid mesh
+trimesh(fldMsh.elements(:,2:end), fldMsh.nodes(:,2), fldMsh.nodes(:,3), fldMsh.nodes(:,4), ...
+    'edgecolor', 'black', 'facecolor', 'green');
+
 hold off
 
 %% END OF SCRIPT
