@@ -116,7 +116,7 @@ FBodyEl = zeros(numElmnts, numDOFsEl, 1);
 EFT = zeros(numDOFsEl, numElmnts);
 for iEFT = 1:numNodesEl
     for counterDOFsPerNode = 1:numDOFsPerNode - 1
-        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT)';
+        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT+1)';
         EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - counterDOFsPerNode), :) = ...
             EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - counterDOFsPerNode);
     end
@@ -129,9 +129,9 @@ euclideanNorm = @(nodes) sqrt(nodes(:, 1, 1).^2 + nodes(:, 2, 1).^2 + ...
     nodes(:, 3, 1).^2);
 
 % Get the nodes of the mesh
-nodes1 = strMsh.nodes(strMsh.elements(:, 1), :);
-nodes2 = strMsh.nodes(strMsh.elements(:, 2), :);
-nodes3 = strMsh.nodes(strMsh.elements(:, 3), :);
+nodes1 = strMsh.nodes(strMsh.elements(:, 2), 2:end);
+nodes2 = strMsh.nodes(strMsh.elements(:, 3), 2:end);
+nodes3 = strMsh.nodes(strMsh.elements(:, 4), 2:end);
 
 % get element sizes
 h = min( [euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...

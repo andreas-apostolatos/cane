@@ -81,7 +81,7 @@ sigma = zeros(3,noElements);
 %% 1. Loop over all the elements in the mesh
 for counterEl = 1:length(strMsh.elements(:,1))
     %% 1i. Get the element in the mesh
-    element = strMsh.elements(counterEl,:);
+    element = strMsh.elements(counterEl,2:end);
     
     %% 1ii. Cast the element with respect to the number of its nodes
     index = isnan(element);
@@ -97,7 +97,7 @@ for counterEl = 1:length(strMsh.elements(:,1))
     end
     
     %% 1iii. Get the nodes in the element
-    nodes = strMsh.nodes(element,:);
+    nodes = strMsh.nodes(element,2:end);
     
     %% 1iv. Create an Element Freedome Table (EFT)
     EFT = zeros(noDOFsEl,1);

@@ -137,7 +137,7 @@ propOutputFld.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
 propOutputFld.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
 %% Define the structural SDOF model
-strMsh.nodes = [0 0 0];
+strMsh.nodes = [1 0 0 0];
 strMsh.elements = [];
 homDOFsStr = [];
 inhomDOFsStr = [];

@@ -126,7 +126,7 @@ else
 end
 
 % Number of nodes per element
-element1 = mesh.elements(1,:);
+element1 = mesh.elements(1,2:end);
 if length(element1(~isnan(element1))) == 3
     noNodesElement = 3;
     elementType = 'triangle';
@@ -216,12 +216,12 @@ counter = 1;
 for iXi = 1:length(mesh.nodes)
     % Add the x and y components of the displacement field
     if ~isAnalysis3d
-        nodesCurrent(iXi,1) = mesh.nodes(iXi,1) + dHat(2*counter - 1);
-        nodesCurrent(iXi,2) = mesh.nodes(iXi,2) + dHat(2*counter);
+        nodesCurrent(iXi,1) = mesh.nodes(iXi,2) + dHat(2*counter - 1);
+        nodesCurrent(iXi,2) = mesh.nodes(iXi,3) + dHat(2*counter);
     else
-        nodesCurrent(iXi,1) = mesh.nodes(iXi,1) + dHat(3*counter - 2);
-        nodesCurrent(iXi,2) = mesh.nodes(iXi,2) + dHat(3*counter - 1);
-        nodesCurrent(iXi,3) = mesh.nodes(iXi,3) + dHat(3*counter);
+        nodesCurrent(iXi,1) = mesh.nodes(iXi,2) + dHat(3*counter - 2);
+        nodesCurrent(iXi,2) = mesh.nodes(iXi,3) + dHat(3*counter - 1);
+        nodesCurrent(iXi,3) = mesh.nodes(iXi,4) + dHat(3*counter);
     end
     
     % Update counter
@@ -241,7 +241,7 @@ end
 %% 3. Plot the Current configuration
 if isPlotting
     if strcmp(graph.visualization.geometry,'reference_and_current') || strcmp(graph.visualization.geometry,'current');
-        patch('faces',mesh.elements,'vertices',nodesCurrent,'facecolor',colorDomain,'edgecolor',colorEdge,'LineWidth',0.01);
+        patch('faces',mesh.elements(:,2:end),'vertices',nodesCurrent,'facecolor',colorDomain,'edgecolor',colorEdge,'LineWidth',0.01);
         hold on;
     end
 end
@@ -278,7 +278,7 @@ end
 %% 6. Plot the reference configuration
 if isPlotting
     if strcmp(graph.visualization.geometry,'reference_and_current') || strcmp(graph.visualization.geometry,'reference');
-        patch('faces',mesh.elements,'vertices',mesh.nodes,'facecolor',colorDomain,'edgecolor',colorEdge);
+        patch('faces',mesh.elements(:,2:end),'vertices',mesh.nodes(:,2:end),'facecolor',colorDomain,'edgecolor',colorEdge);
     end
     axis equal;
     axis on;
@@ -347,7 +347,7 @@ for iElmnts = 1:size(mesh.elements(:,1))
     eta = 0;
     
     %% 11iii. Get element from the mesh
-    element = mesh.elements(iElmnts,:);
+    element = mesh.elements(iElmnts,2:end);
     
     %% 11iv. Get coordinates of the element vertices
     if strcmp(elementType,'triangle')
@@ -363,15 +363,15 @@ for iElmnts = 1:size(mesh.elements(:,1))
     
     %% 11v. Get the vertices of the current element
     if strcmp(elementType,'triangle') || strcmp(elementType,'quadrilateral')
-        Pi = mesh.nodes(nodeI,:);
-        Pj = mesh.nodes(nodeJ,:);
-        Pk = mesh.nodes(nodeK,:);
+        Pi = mesh.nodes(nodeI,2:end);
+        Pj = mesh.nodes(nodeJ,2:end);
+        Pk = mesh.nodes(nodeK,2:end);
         pi = nodesCurrent(nodeI,:);
         pj = nodesCurrent(nodeJ,:);
         pk = nodesCurrent(nodeK,:);
     end
     if strcmp(elementType,'quadrilateral') 
-        Pl = mesh.nodes(nodeL,:);
+        Pl = mesh.nodes(nodeL,2:end);
         pl = nodesCurrent(nodeL,:);
     end
     

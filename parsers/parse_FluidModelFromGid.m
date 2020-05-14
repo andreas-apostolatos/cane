@@ -239,8 +239,7 @@ for k = 1:numel(block)
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
-fldMsh.nodes = out(:,2:4);
-fldMsh.nodeIDs = out(:,1);
+fldMsh.nodes = out(:,1:4);
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Number of nodes in the mesh: %d \n', length(fldMsh.nodes(:,1)));
 end
@@ -260,8 +259,7 @@ for k = 1:numel(block)
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
-fldMsh.elements = out(:, 2:end);
-fldMsh.elementIDs = out(:, 1);
+fldMsh.elements = out(:, 1:end);
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Number of elements in the mesh: %d \n', length(fldMsh.elements));
 end
@@ -414,8 +412,8 @@ if ~isempty(out)
             nodeJ = propNBC.nodes(j);
 
             % Find the element indices to which the nodes belong
-            [indexI, ~] = find(nodeI == fldMsh.elements);
-            [indexJ, ~] = find(nodeJ == fldMsh.elements);
+            [indexI, ~] = find(nodeI == fldMsh.elements(:,2:end));
+            [indexJ, ~] = find(nodeJ == fldMsh.elements(:,2:end));
 
             % Find the common elements to which the nodes belong to
             [idComElmnt, ~] = intersect(indexI, indexJ);

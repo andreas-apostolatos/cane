@@ -181,7 +181,7 @@ FBody = zeros(noDOFs, 1);
 EFT = zeros(noDOFsEl, noElmnts);
 for iEFT = 1:noNodesEl
     for counterDOFsPerNode = 1:noDOFsPerNode - 1
-        EFT(noDOFsPerNode*iEFT, :) = noDOFsPerNode*fldMsh.elements(:, iEFT)';
+        EFT(noDOFsPerNode*iEFT, :) = noDOFsPerNode*fldMsh.elements(:, iEFT+1)';
         EFT(noDOFsPerNode*iEFT - (noDOFsPerNode - counterDOFsPerNode), :) = ...
             EFT(noDOFsPerNode*iEFT, :) - (noDOFsPerNode - counterDOFsPerNode);
     end
@@ -205,10 +205,10 @@ euclideanNorm = @(nodes) sqrt(nodes(:, 1, 1).^2 + nodes(:, 2, 1).^2 + nodes(:, 3
 % Minimum element edge size
 if isAnalysis3D
     % Get the nodes of the mesh
-    nodes1 = fldMsh.nodes(fldMsh.elements(:, 1), :);
-    nodes2 = fldMsh.nodes(fldMsh.elements(:, 2), :);
-    nodes3 = fldMsh.nodes(fldMsh.elements(:, 3), :);
-    nodes4 = fldMsh.nodes(fldMsh.elements(:, 4), :);
+    nodes1 = fldMsh.nodes(fldMsh.elements(:, 2), 2:end);
+    nodes2 = fldMsh.nodes(fldMsh.elements(:, 3), 2:end);
+    nodes3 = fldMsh.nodes(fldMsh.elements(:, 4), 2:end);
+    nodes4 = fldMsh.nodes(fldMsh.elements(:, 5), 2:end);
     
     % get element sizes
     h = min( [ euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...
@@ -217,9 +217,9 @@ if isAnalysis3D
                [], 2);
 else
     % Get the nodes of the mesh
-    nodes1 = fldMsh.nodes(fldMsh.elements(:, 1), :);
-    nodes2 = fldMsh.nodes(fldMsh.elements(:, 2), :);
-    nodes3 = fldMsh.nodes(fldMsh.elements(:, 3), :);
+    nodes1 = fldMsh.nodes(fldMsh.elements(:, 2), 2:end);
+    nodes2 = fldMsh.nodes(fldMsh.elements(:, 3), 2:end);
+    nodes3 = fldMsh.nodes(fldMsh.elements(:, 4), 2:end);
     
 	% get element sizes
     h = min( [ euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...

@@ -168,15 +168,15 @@ end
 [GP,GW] = getGaussRuleOnCanonicalTriangle(noGP);
 
 %% 2. Get the coordinates of all nodes at once
-nodes1 = strMsh.nodes(strMsh.elements(:,1),:);
-nodes2 = strMsh.nodes(strMsh.elements(:,2),:);
-nodes3 = strMsh.nodes(strMsh.elements(:,3),:);
+nodes1 = strMsh.nodes(strMsh.elements(:,2),2:end);
+nodes2 = strMsh.nodes(strMsh.elements(:,3),2:end);
+nodes3 = strMsh.nodes(strMsh.elements(:,4),2:end);
 
 %% 3. Create the element freedom tables for all elements at once
 EFT = zeros(noDOFsEl,noElmnts);
 for counterEFT = 1:noNodesEl
     for counterDOFsPerNode = 1:noDOFsPerNode-1
-        EFT(noDOFsPerNode*counterEFT, :) = noDOFsPerNode*strMsh.elements(:,counterEFT)';
+        EFT(noDOFsPerNode*counterEFT, :) = noDOFsPerNode*strMsh.elements(:,counterEFT+1)';
         EFT(noDOFsPerNode*counterEFT-(noDOFsPerNode-counterDOFsPerNode), :) = ...
             EFT(noDOFsPerNode*counterEFT, :) - (noDOFsPerNode-counterDOFsPerNode);
     end

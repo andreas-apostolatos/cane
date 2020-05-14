@@ -50,10 +50,10 @@ K = zeros(no_dofs_global,no_dofs_global);
 for i=1:length(mesh.elements)
     
     % Get the current element in the mesh
-    element = mesh.elements(i,1:no_nodes_element);
+    element = mesh.elements(i,2:no_nodes_element);
     
     % Get the nodes of the triangle in a counterclockwise fashion
-    nodes = mesh.nodes(element,:);
+    nodes = mesh.nodes(element,2:end);
     
     % Compute element stiffness matrix for the CST
     K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST...

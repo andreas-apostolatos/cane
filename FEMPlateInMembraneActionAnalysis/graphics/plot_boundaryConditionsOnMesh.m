@@ -23,7 +23,7 @@ function plot_boundaryConditionsOnMesh(mesh, homDBC, F)
 %% Function main body
 
 % Create the supports
-[xs,ys,zs] = createSupports(mesh.nodes,homDBC);
+[xs,ys,zs] = createSupports(mesh.nodes(:,2:end),homDBC);
 
 %supports
 for k =1:length(xs(:,1))
@@ -34,7 +34,7 @@ end
 hold on;
 
 % Create the force arrows
-[xf,yf,zf] = createForceArrows(mesh.nodes,F);
+[xf,yf,zf] = createForceArrows(mesh.nodes(:,2:end),F);
 
 % load arrows  
 for k =1:length(xf(:,1))

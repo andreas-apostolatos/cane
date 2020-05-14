@@ -106,7 +106,7 @@ stiffMtxEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
 %% 1. Create the element freedom tables for all elements at once
 EFT = zeros(numDOFsEl, numElmnts);
 for iEFT = 1:numNodesEl
-        EFT(iEFT, :) = strMsh.elements(:, iEFT)';
+        EFT(iEFT, :) = strMsh.elements(:, iEFT+1)';
 end
 
 %% 2. Get the coordinates of the nodes in a matrix form
@@ -116,9 +116,9 @@ euclideanNorm = @(nodes) sqrt(nodes(:, 1, 1).^2 + nodes(:, 2, 1).^2 + ...
     nodes(:, 3, 1).^2);
 
 % Get the nodes of the mesh
-nodes1 = strMsh.nodes(strMsh.elements(:, 1), :);
-nodes2 = strMsh.nodes(strMsh.elements(:, 2), :);
-nodes3 = strMsh.nodes(strMsh.elements(:, 3), :);
+nodes1 = strMsh.nodes(strMsh.elements(:, 2), 2:end);
+nodes2 = strMsh.nodes(strMsh.elements(:, 3), 2:end);
+nodes3 = strMsh.nodes(strMsh.elements(:, 4), 2:end);
 
 % get element sizes
 h = min( [euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...

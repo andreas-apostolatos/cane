@@ -20,7 +20,7 @@ function  plot_EdgesTriangularMesh2D(mesh)
 %% Function main body
 
 % Plot the edges of the mesh
-cla,patch('vertices',mesh.nodes,'faces',mesh.elements,'edgecol','k','facecol','none');
+cla,patch('vertices',mesh.nodes(:,2:end),'faces',mesh.elements(:,2:end),'edgecol','k','facecol','none');
 % cla,patch('vertices',mesh.nodes,'faces',mesh.elements,'edgecol','k','facecol',[217 218 219]/255);
 
 end

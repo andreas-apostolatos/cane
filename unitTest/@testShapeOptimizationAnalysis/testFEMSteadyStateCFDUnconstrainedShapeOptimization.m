@@ -123,9 +123,9 @@ else
 end
 
 %% 4. Get the center of the cylinder in flow
-propALE.propUser.x0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 1));
-propALE.propUser.y0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 2));
-radiusInit = max(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 1)) - propALE.propUser.x0;
+propALE.propUser.x0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 2));
+propALE.propUser.y0 = mean(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 3));
+radiusInit = max(fldMsh.nodes(propPostproc.nodesDomain{1}(:, 1), 2)) - propALE.propUser.x0;
 
 %% 5. Initializations
 

@@ -86,12 +86,12 @@ end
 %% 2. Loop over all the elements in the mesh
 for iElmnts = 1:length(mesh.elements(:, 1))
     %% 2i. Get the element in the mesh
-    element = mesh.elements(iElmnts, :);
+    element = mesh.elements(iElmnts, 2:end);
     
     %% 2ii. Get the nodes in the element
-    Node1 = mesh.nodes(element(1, 1), :);
-    Node2 = mesh.nodes(element(1, 2), :);
-    Node3 = mesh.nodes(element(1, 3), :);
+    Node1 = mesh.nodes(element(1, 1), 2:end);
+    Node2 = mesh.nodes(element(1, 2), 2:end);
+    Node3 = mesh.nodes(element(1, 3), 2:end);
     
     %% 2iii. Create an Element Freedom Table (EFT)
     EFT = zeros(numDOFsEl, 1);

@@ -84,14 +84,12 @@ caseName = 'testTurek';
 %% Combine the data from parsers
 
 % Combine the nodes of both meshes together
-allNodes = [[fldMsh.nodeIDs;strMsh.nodeIDs],[fldMsh.nodes;strMsh.nodes]];
+allNodes = [fldMsh.nodes;strMsh.nodes];
 [globalMsh.nodes,IA] = unique(allNodes,'rows');
-globalMsh.nodes = globalMsh.nodes(:,2:4);
 
 % Combine the elements of both meshes together
-allElements = [[fldMsh.elementIDs;strMsh.elementIDs],[fldMsh.elements;strMsh.elements(:,1:3)]];
-allElements = sort(allElements,1);
-globalMsh.elements = allElements(:,2:4);
+allElements = [fldMsh.elements;strMsh.elements(:,1:4)];
+globalMsh.elements = sort(allElements,1);
 
 % Find the shared nodes between both meshes
 allNodes = allNodes(:,1);
@@ -108,19 +106,19 @@ title('Coupled Boudary Nodes');
 axis equal
 
 % Plot all mesh nodes
-plot(globalMsh.nodes(:,1),globalMsh.nodes(:,2),'gx');
+plot(globalMsh.nodes(:,2),globalMsh.nodes(:,3),'gx');
 
 % Plot all coupled structure nodes
 coupledNodesStr = globalMsh.nodes(propStrFSI.coupledNodeIDs,:);
-plot(coupledNodesStr(:,1),coupledNodesStr(:,2),'ro');
+plot(coupledNodesStr(:,2),coupledNodesStr(:,3),'ro');
 
 % Plot all coupled fluid nodes
 coupledNodesFld = globalMsh.nodes(propFldFSI.coupledNodeIDs,:);
-plot(coupledNodesFld(:,1),coupledNodesFld(:,2),'b+');
+plot(coupledNodesFld(:,2),coupledNodesFld(:,3),'b+');
 
 % Plot coupled nodes that were automaticaly calculated
 sharedNodes = globalMsh.nodes(sharedNodeIDs,:);
-plot(sharedNodes(:,1),sharedNodes(:,2),'bd');
+plot(sharedNodes(:,2),sharedNodes(:,3),'bd');
 hold off
 
 %% Plot all structure and fluid nodes
@@ -130,12 +128,12 @@ title('Fluid and Structure Nodes');
 axis equal
 
 % Plot Structure nodes
-strNodes = globalMsh.nodes(strMsh.nodeIDs,:);
-plot(strNodes(:,1),strNodes(:,2),'ro');
+strNodes = globalMsh.nodes(strMsh.nodes(:,1),:);
+plot(strNodes(:,2),strNodes(:,3),'ro');
 
 % Plot Fluid nodes
-fldNodes = globalMsh.nodes(fldMsh.nodeIDs,:);
-plot(fldNodes(:,1),fldNodes(:,2),'gx');
+fldNodes = globalMsh.nodes(fldMsh.nodes(:,1),:);
+plot(fldNodes(:,2),fldNodes(:,3),'gx');
 hold off
 
 %% END OF SCRIPT

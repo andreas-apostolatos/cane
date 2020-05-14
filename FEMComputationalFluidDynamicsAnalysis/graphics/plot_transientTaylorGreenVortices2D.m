@@ -59,16 +59,16 @@ numGridPts_x = 49;
 numGridPts_y = 49;
 
 % Lower left corner
-x0(1) = min(fldMsh.nodes(:,1));
-x0(2) = min(fldMsh.nodes(:,2));
+x0(1) = min(fldMsh.nodes(:,2));
+x0(2) = min(fldMsh.nodes(:,3));
 
 % Lower right corner
-x1(1) = max(fldMsh.nodes(:,1));
-x1(2) = min(fldMsh.nodes(:,2));
+x1(1) = max(fldMsh.nodes(:,2));
+x1(2) = min(fldMsh.nodes(:,3));
 
 % Upper left corner
-x2(1) = min(fldMsh.nodes(:,1));
-x2(2) = max(fldMsh.nodes(:,2));
+x2(1) = min(fldMsh.nodes(:,2));
+x2(2) = max(fldMsh.nodes(:,3));
 
 % Length step at x- and y- direction
 dx = (x1 - x0)/numGridPts_x;
