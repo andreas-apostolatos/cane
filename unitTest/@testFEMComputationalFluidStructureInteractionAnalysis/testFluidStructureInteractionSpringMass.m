@@ -36,7 +36,7 @@ function testFluidStructureInteractionSpringMass(testCase)
 %% 0. Read input
 
 % Define absolute tolerance
-absTol = 1e-8;
+absTol = 1e-15;
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';

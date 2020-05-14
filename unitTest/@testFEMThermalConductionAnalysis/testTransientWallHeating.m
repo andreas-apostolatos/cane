@@ -34,8 +34,8 @@ function testTransientWallHeating(testCase)
 %% 0. Read input
 
 % Absolute tolerances
-absTol = 1e-12;
-absTol3 = 1e-12*1e3;
+absTol = 1e-15;
+absTol3 = 1e-15*1e3;
 
 %% 1. Parse data from GiD input file
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
