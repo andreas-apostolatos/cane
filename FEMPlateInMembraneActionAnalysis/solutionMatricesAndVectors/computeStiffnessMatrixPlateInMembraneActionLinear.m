@@ -50,7 +50,7 @@ K = zeros(no_dofs_global,no_dofs_global);
 for i=1:length(mesh.elements)
     
     % Get the current element in the mesh
-    element = mesh.elements(i,2:no_nodes_element);
+    element = mesh.elements(i,2:no_nodes_element+1);
     
     % Get the nodes of the triangle in a counterclockwise fashion
     nodes = mesh.nodes(element,2:end);

@@ -64,12 +64,12 @@ contactLength = 0;
 %% 1. Loop over all active contact nodes
 for i = 1:length(nodeIDs_active)
     %% 1i. Find the elements indices to which nodeI belongs to
-    [indexI, ~] = find(nodeIDs_active(i) == mesh.elements(:,2:4));
+    [indexI, ~] = find(nodeIDs_active(i) == mesh.elements(:,2:end));
     
     %% 1ii. Loop over remaining to the right active contact nodes
     for j = i + 1:length(nodeIDs_active)
         %% 1ii.1. Find the elements indices to which the nodeJ belongs to
-        [indexJ, ~] = find(nodeIDs_active(j) == mesh.elements(:,2:4));
+        [indexJ, ~] = find(nodeIDs_active(j) == mesh.elements(:,2:end));
         
         %% 1ii.2. Loop over all elements containing nodeJ
         for k = 1:length(indexJ)

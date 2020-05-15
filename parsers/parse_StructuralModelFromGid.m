@@ -22,9 +22,7 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %              Output :
 %              strMsh : Structure containing information on the mesh,
 %                           .nodes : The nodes in the FE mesh
-%                         .nodeIDs : Global numbering of the nodes
 %                        .elements : The elements in the FE mesh
-%                      .elementIDs : Global numbering of the elements
 %             homDOFs : The global numbering of the nodes where homogeneous
 %                       Dirichlet boundary conditions are applied
 %           inhomDOFs : The global numbering of the nodes where 

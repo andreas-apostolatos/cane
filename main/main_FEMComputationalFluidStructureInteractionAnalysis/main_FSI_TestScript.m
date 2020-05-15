@@ -99,7 +99,7 @@ globalMsh.coupledNodeIDs = allNodes;
 % Check if the coupled boundary nodes are equal for testing purposes
 checkEqual = isequal(propStrFSI.coupledNodeIDs, propFldFSI.coupledNodeIDs, globalMsh.coupledNodeIDs);
 
-%% Convert to local numbering for structure meshes
+%% Convert to local numbering for structure meshe
 for iEl = 1:size(strMsh.elements,1)
     strMsh.elements(iEl,1) = iEl; 
     strMsh.elements(iEl,2) = find(strMsh.nodes(:,1) == strMsh.elements(iEl,2));
