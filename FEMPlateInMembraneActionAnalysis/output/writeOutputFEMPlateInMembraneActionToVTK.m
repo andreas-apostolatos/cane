@@ -62,17 +62,17 @@ end
 [noNodes,~] = size(strMsh.nodes);
 
 % Number of elements in the mesh
-[noElements,elementOrder] = size(strMsh.elements);
+[noElements,elementOrder] = size(strMsh.elements(:,2:end));
 
 output = fopen(strcat(pathToOutput,caseName,'/',caseName,'_',...
     num2str(noTimeStep),'.vtk'),'w');
 
 % Transpose the nodal coordinates array
-XYZ = strMsh.nodes(1:noNodes,:)';
+XYZ = strMsh.nodes(1:noNodes,2:end)';
 
 % Re-arrange the element numbering to start from zero
 elements = zeros(elementOrder,noElements);
-elements(1:elementOrder,1:noElements) = strMsh.elements(1:noElements,1:elementOrder)' - 1;
+elements(1:elementOrder,1:noElements) = strMsh.elements(1:noElements,2:elementOrder+1)' - 1;
 
 %% 1. Compute the strain [3,[epsilonXX epsilonYY epsilonXY]] and stress vectors [3,[sigmaXX sigmaYY sigmaXY]]
 if strcmp(propNLinearAnalysis.method,'UNDEFINED')

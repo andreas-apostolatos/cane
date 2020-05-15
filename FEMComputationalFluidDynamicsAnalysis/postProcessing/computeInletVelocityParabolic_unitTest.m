@@ -35,7 +35,7 @@ function valuesInhomDBCModified = ...
 inletNodes = floor(inhomDBC/3) + mod(inhomDBC,3 );
 
 % Sort according to y-coordinate
-[sortedCoordinates, rowIndices] = sort(fldMsh.nodes(inletNodes,2),'ascend');
+[sortedCoordinates, rowIndices] = sort(fldMsh.nodes(inletNodes,3),'ascend');
 
 % Find the inlet height and relative y-coordinate of each node
 H = sortedCoordinates(end) - sortedCoordinates(1);

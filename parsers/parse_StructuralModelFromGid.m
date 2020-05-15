@@ -1,6 +1,6 @@
 function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
     propAnalysis, propParameters, propNLinearAnalysis, propStrDynamics, ...
-    propGaussInt, propContact] = ...
+    propGaussInt, propContact, propFSI] = ...
     parse_StructuralModelFromGid(pathToCase, caseName, outMsg)
 %% Licensing
 %
@@ -70,6 +70,10 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %                       are going to be in potential contact
 %                            .nodeIDs : Global numbering of contact nodes
 %                       numberOfNodes : number of contact nodes
+%             propFSI : Structure containing information on Fluid-Structure
+%                       interaction
+%                       .coupledNodeIDs : Global numbering of the FSI nodes
+%                      .numCoupledNodes : Number of FSI coupled nodes
 %
 % Function layout :
 %
@@ -95,9 +99,11 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %
 % 11. Load the nodes that are candidates for contact
 %
-% 12. Get edge connectivity arrays for the Neumann edges
+% 12. Load the coupled structure nodes for FSI
 %
-% 13. Appendix
+% 13. Get edge connectivity arrays for the Neumann edges
+%
+% 14. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
@@ -208,7 +214,7 @@ for k = 1:numel(block)
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
-strMsh.nodes = out(:, 2:4);
+strMsh.nodes = out(:, 1:4);
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Number of nodes in the mesh: %d \n', length(strMsh.nodes(:, 1)));
 end
@@ -223,7 +229,7 @@ for k = 1:numel(block)
 end
 out = cell2mat(out);
 noNodes = length(out(1, :));
-strMsh.elements = out(:, 2:noNodes);
+strMsh.elements = out(:, 1:noNodes);
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Number of elements in the mesh: %d \n', length(strMsh.elements));
 end
@@ -307,7 +313,23 @@ else
     propContact.numNodes = 0;
 end
 
-%% 12. Get edge connectivity arrays for the Neumann edges
+%% 12. Load coupled structure nodes for FSI
+block = regexp(fstring, 'STRUCTURE_FSI_NODES', 'split'); 
+block(1) = [];
+out = cell(size(block));
+for k = 1:numel(block)
+    out{k} = textscan(block{k}, '%f');
+end
+if ~isempty(out)
+    out = out{1};
+    propFSI.coupledNodeIDs = cell2mat(out(:, 1));
+    propFSI.numCoupledNodes = length(propFSI.coupledNodeIDs);
+else
+    propFSI.coupledNodeIDs = [];
+    propFSI.numCoupledNodes = 0;
+end
+
+%% 13. Get edge connectivity arrays for the Neumann edges
 if strcmp(outMsg, 'outputEnabled')
     fprintf('>> Neumann boundary edges: %d \n', length(propNBC.nodes) - 1);
 end
@@ -320,8 +342,8 @@ for i = 1:length(propNBC.nodes)
         nodeJ = propNBC.nodes(j);
 
         % Find the element indices to which the nodes belong
-        [indexI, ~] = find(nodeI == strMsh.elements);
-        [indexJ, ~] = find(nodeJ == strMsh.elements);
+        [indexI, ~] = find(nodeI == strMsh.elements(:,2:end));
+        [indexJ, ~] = find(nodeJ == strMsh.elements(:,2:end));
 
         % Find the common elements to which the nodes belong to
         [idComElmnt, ~] = intersect(indexI, indexJ);
@@ -339,7 +361,7 @@ for i = 1:length(propNBC.nodes)
 end
 propNBC.fctHandle = fctHandle;
 
-%% 13. Appendix
+%% 14. Appendix
 if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
     fprintf('\nParsing took %.2d seconds \n\n', computationalTime);

@@ -97,7 +97,7 @@ noNodes = length(strMsh.nodes(:,1));
 noDOFs = 2*noNodes;
 
 % Initialize the minimum element edge size
-firstElementInMesh = strMsh.elements(1,:);
+firstElementInMesh = strMsh.elements(1,2:end);
 firstElementInMesh(isnan(firstElementInMesh)) = [];
 noElNodes = length(firstElementInMesh);
 if noElNodes == 3
@@ -107,7 +107,7 @@ elseif noElNodes == 4
 else
     error('The computation of the element stiffness matrix for a %d-noded element has not been implemented',noElNodes);
 end
-nodes = strMsh.nodes(firstElementInMesh,:);
+nodes = strMsh.nodes(firstElementInMesh,2:end);
 if strcmp(elementType,'linearTriangle')
     minElEdgeSize = min([norm(nodes(1,:)-nodes(2,:)) norm(nodes(1,:)-nodes(3,:)) norm(nodes(2,:)-nodes(3,:))]);
 elseif strcmp(elementType,'bilinearQuadrilateral')
@@ -162,7 +162,7 @@ end
 %% 2. Loop over all the elements in the mesh
 for counterEl = 1:length(strMsh.elements(:,1))
     %% 2i. Get the element in the mesh and find the number of its nodes
-    element = strMsh.elements(counterEl,:);
+    element = strMsh.elements(counterEl,2:end);
     element(isnan(element)) = [];
     noElNodes = length(element);
     if noElNodes == 3
@@ -184,7 +184,7 @@ for counterEl = 1:length(strMsh.elements(:,1))
     %% 2ii. Get the nodes in the element
     nodes = zeros(noElNodes,3);
     for counterNodesEl = 1:noElNodes
-        nodes(counterNodesEl,:) = strMsh.nodes(element(1,counterNodesEl),:);
+        nodes(counterNodesEl,:) = strMsh.nodes(element(1,counterNodesEl),2:end);
     end
     
     %% 2iii. Create an Element Freedome Table (EFT)

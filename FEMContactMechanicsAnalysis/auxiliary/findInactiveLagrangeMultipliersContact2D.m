@@ -97,7 +97,7 @@ for iSeg = 1:segmentsContact.numSegments
             u = dHat_stiffMtxLM(DOF);
 
             % Get the coordinates of the current node
-            node = mesh.nodes(propContact.nodeIDs(iNode),1:2);
+            node = mesh.nodes(propContact.nodeIDs(iNode),2:3);
 
             % Compute the displaced coordinates of the current node
             nodeDisp = node + u';
@@ -137,7 +137,7 @@ for iSeg = 1:segmentsContact.numSegments
                 u = dHat_stiffMtxLM(DOF);
                 
                 % Get the coordinates of the current node
-                node = mesh.nodes(propContact.nodeIDs(iNode),1:2); 
+                node = mesh.nodes(propContact.nodeIDs(iNode),2:3); 
                 
                 % Compute the displaced coordinates of the current node
                 nodeDisp = node + u';

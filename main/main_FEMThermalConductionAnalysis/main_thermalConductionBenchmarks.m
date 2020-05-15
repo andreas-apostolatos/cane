@@ -131,8 +131,8 @@ end
 propPostproc.k = 200;
 
 % Compute the height and the width of the computational domain
-propPostproc.height = abs(max(thermalMsh.nodes(:, 2)) - min(thermalMsh.nodes(:, 2)));
-propPostproc.width = abs(max(thermalMsh.nodes(:, 1)) - min(thermalMsh.nodes(:, 1)));
+propPostproc.height = abs(max(thermalMsh.nodes(:, 3)) - min(thermalMsh.nodes(:, 3)));
+propPostproc.width = abs(max(thermalMsh.nodes(:, 2)) - min(thermalMsh.nodes(:, 2)));
 
 %% Define a function to compute analytical results 
 if strcmp(caseName, 'transientSquareCavity')
