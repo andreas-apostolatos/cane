@@ -30,9 +30,9 @@ function testCantileverBeamTransient(testCase)
 %% 0. Read input
 
 % Absolute tolerances
-absTol = 1e-14;
+absTol = 1e-10;
 if ~isunix
-    absTolWin = absTol*1e1;
+    absTolWin = absTol;
 end
 
 % Get indices of entries of the matrix which fail when the tests run in
@@ -89,7 +89,7 @@ computeInitCnds = @computeInitCndsFEMPlateInMembraneAction;
 
 % Function handle to the computation of the steady-state stiffness matrix
 % and force vector
-computeProblemMatricesSteadyState = @computeTangentStiffMtxResVctFEMPlateInMembraneAction;
+computeProblemMatricesSteadyState = @computeTangentStiffMtxResVctFEMPlateInMembraneActionCST;
 
 % Function handle to the nonlinear finite element solver
 solve_FEMSystem = @solve_FEMNLinearSystem;
@@ -1349,7 +1349,7 @@ expSoldHistory(:,43:51) = [   -0.040090901717518  -0.040090934730944  -0.0400909
                                                0                   0                   0                   0                   0                   0                   0                   0                   0];
 
 % Define the expected solution in terms of the minimum element area
-expSolminElSize = 0.031250000000000;
+expSolminElSize = 0.249994499939499;
 
 %% 5. Verify the results
 if isunix

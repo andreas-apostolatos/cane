@@ -52,12 +52,12 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
-% caseName = 'cantileverBeamPlaneStress';
+caseName = 'cantileverBeamPlaneStress';
 % caseName = 'PlateWithAHolePlaneStress';
 % caseName = 'PlateWithMultipleHolesPlaneStress';
 % caseName = 'InfinitePlateWithAHolePlaneStress';
 % caseName = 'unitTest_curvedPlateTipShearPlaneStress';
-caseName = 'NACA2412_AoA5_CSD';
+% caseName = 'NACA2412_AoA5_CSD';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
