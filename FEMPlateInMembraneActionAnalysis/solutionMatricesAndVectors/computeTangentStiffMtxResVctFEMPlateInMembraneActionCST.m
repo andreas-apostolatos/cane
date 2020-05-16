@@ -14,7 +14,7 @@ function [tanMtx, resVct, minElEdgeSize] = ...
 %
 %% Function documentation
 %
-% Returns the tangential stiffness matrix and residue vector corresponding 
+% Returns the tangent stiffness matrix and residue vector corresponding 
 % to the geometrically nonlinear plate in membrane action analysis using 
 % the Constant Strain Triangle (CST) for the displacement field 
 % discretization.
@@ -102,6 +102,7 @@ function [tanMtx, resVct, minElEdgeSize] = ...
 %
 %  6xii. Compute the body force vector at the Gauss point page-wise
 % <-
+%
 % 7. Assemble the global system matrices and vectors
 %
 % 8. Update the force vector with the body force contributions
@@ -138,7 +139,7 @@ resIntEl = zeros(numElmnts, numDOFsEl, 1);
 EFT = zeros(numDOFsEl, numElmnts);
 for iEFT = 1:numNodesEl
     for counterDOFsPerNode = 1:numDOFsPerNode - 1
-        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT+1)';
+        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT + 1)';
         EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - counterDOFsPerNode), :) = ...
             EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - counterDOFsPerNode);
     end
@@ -156,8 +157,8 @@ nodes2 = strMsh.nodes(strMsh.elements(:, 3), 2:end);
 nodes3 = strMsh.nodes(strMsh.elements(:, 4), 2:end);
 
 % get element sizes
-h = min( [euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...
-          euclideanNorm(nodes2 - nodes3)], [], 2);
+h = min([euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...
+    euclideanNorm(nodes2 - nodes3)], [], 2);
 
 %% 3. Get the minimum element edge size
 minElEdgeSize = min(h);
@@ -206,16 +207,16 @@ for iGP = 1:numGP
     %% 6iv. Compute the deformation gradient tensor F at the Gauss point
     
     % Get the derivates of the basis functions
-    dNdX = dN(:,:,2:3);
+    dNdX = dN(:, :, 2:3);
     
     % Get the displacement vector
     uEl = u(EFT');
-    uEl = reshape(uEl,numElmnts,2,3);
+    uEl = reshape(uEl,numElmnts, 2, 3);
     
     % Build an identity (unit) matrix
-    I_Mtx = zeros(numElmnts,2,2);
-    I_Mtx(:,1,1) = ones(numElmnts,1);
-    I_Mtx(:,2,2) = ones(numElmnts,1);   
+    I_Mtx = zeros(numElmnts, 2, 2);
+    I_Mtx(:, 1, 1) = ones(numElmnts, 1);
+    I_Mtx(:, 2, 2) = ones(numElmnts, 1);   
     
     % Compute the deformation gradient tensor
     FDefGrad = I_Mtx + pmtimes(uEl, dNdX);
@@ -239,42 +240,41 @@ for iGP = 1:numGP
            pstimes(pmtimes(pmtimes(ptranspose(B), C), B)*GW(iGP), detJxxi);
     
     %% 6vii. Compute the Green-Lagrange strain tensor (page-wise) and re-arrange it to the Voigt notation
-    epsilonGLTensor = 0.5*(pmtimes(ptranspose(FDefGrad),FDefGrad) - I_Mtx);
-    epsilonGLVoigt = [epsilonGLTensor(:,1,1), epsilonGLTensor(:,2,2), 2*epsilonGLTensor(:,1,2)];
+    epsilonGLTensor = 0.5*(pmtimes(ptranspose(FDefGrad), FDefGrad) - I_Mtx);
+    epsilonGLVoigt = [epsilonGLTensor(:, 1, 1), epsilonGLTensor(:, 2, 2), 2*epsilonGLTensor(:, 1, 2)];
     
     %% 6viii. Compute the Cauchy stress tensor (page-wise) out of the Voigt Green-Lagrange strain vector
     stressCauchyVoigt = pmtimes(C, epsilonGLVoigt);
     
     % Assemble the Cauchy stress tensor
-    stressCauchyTensor(:,2,2) = stressCauchyVoigt(:,2);
-    stressCauchyTensor(:,2,1) = stressCauchyVoigt(:,3);
-    stressCauchyTensor(:,1,2) = stressCauchyVoigt(:,3);
-    stressCauchyTensor(:,1,1) = stressCauchyVoigt(:,1);  
+    stressCauchyTensor(:, 2, 2) = stressCauchyVoigt(:, 2);
+    stressCauchyTensor(:, 2, 1) = stressCauchyVoigt(:, 3);
+    stressCauchyTensor(:, 1, 2) = stressCauchyVoigt(:, 3);
+    stressCauchyTensor(:, 1, 1) = stressCauchyVoigt(:, 1);  
    
     %% 6ix. Compute the element geometric stiffness matrix at the Gauss point page-wise
     
     % Compute the H matrix
-    H = pmtimes(pmtimes(dNdX,stressCauchyTensor),ptranspose(dNdX));
+    H = pmtimes(pmtimes(dNdX, stressCauchyTensor), ptranspose(dNdX));
     
     % Assemble the temporary geometric stifness matrix 
-    tanMtxGeoEl_temp = zeros(numElmnts, numDOFsEl, numDOFsEl);
+    tanMtxGeoElGP = zeros(numElmnts, numDOFsEl, numDOFsEl);
     for i = 1:numNodesEl
-        tanMtxGeoEl_temp(:, 1, 2*i - 1) = H(:, 1, i);
-        tanMtxGeoEl_temp(:, 3, 2*i - 1) = H(:, 2, i);
-        tanMtxGeoEl_temp(:, 5, 2*i - 1) = H(:, 3, i);
+        tanMtxGeoElGP(:, 1, 2*i - 1) = H(:, 1, i);
+        tanMtxGeoElGP(:, 3, 2*i - 1) = H(:, 2, i);
+        tanMtxGeoElGP(:, 5, 2*i - 1) = H(:, 3, i);
         
-        tanMtxGeoEl_temp(:, 2, 2*i) = H(:, 1, i);
-        tanMtxGeoEl_temp(:, 4, 2*i) = H(:, 2, i);
-        tanMtxGeoEl_temp(:, 6, 2*i) = H(:, 3, i);
+        tanMtxGeoElGP(:, 2, 2*i) = H(:, 1, i);
+        tanMtxGeoElGP(:, 4, 2*i) = H(:, 2, i);
+        tanMtxGeoElGP(:, 6, 2*i) = H(:, 3, i);
     end
     
     % Compute the element geometric stiffness matrix
-    tanMtxGeoEl = tanMtxGeoEl + pstimes((tanMtxGeoEl_temp*GW(iGP)),detJxxi);
-    
+    tanMtxGeoEl = tanMtxGeoEl + pstimes((tanMtxGeoElGP*GW(iGP)),detJxxi);
     
     %% 6x. Compute the internal residual K(u)*u at the Gauss point page-wise
     resIntEl = resIntEl + ...
-        pstimes(pmtimes(ptranspose(B),stressCauchyVoigt)*GW(iGP), detJxxi);
+        pstimes(pmtimes(ptranspose(B), stressCauchyVoigt)*GW(iGP), detJxxi);
 
 	%% 6xi. Form the basis functions matrix at the Gauss Point page-wise
     N = zeros(numElmnts, 2, numDOFsEl);
@@ -290,10 +290,9 @@ for iGP = 1:numGP
 end
 
 %% 7. Assemble the global system matrices and vectors
-[tanMtx] = assembleSparseMatricies(EFT, numDOFs, numDOFsEl, tanMtxMatEl, tanMtxGeoEl);
-
-[FBody] = assembleSparseVectors(EFT, numDOFs, numDOFsEl, FBodyEl);
-[resVctInt] = assembleSparseVectors(EFT, numDOFs, numDOFsEl, resIntEl);
+[tanMtx] = assembleSparseMatricies ...
+    (EFT, numDOFs, numDOFsEl, tanMtxMatEl, tanMtxGeoEl);
+[resVctInt, FBody] = assembleSparseVectors(EFT, numDOFs, numDOFsEl, resIntEl, FBodyEl);
 
 %% 8. Update the force vector with the body force contributions
 resVct = resVctInt - loadFactor*(FBody + F);

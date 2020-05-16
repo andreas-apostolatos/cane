@@ -66,13 +66,14 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 % caseName = 'flowAroundCylinderAdaptiveFine';
 % caseName = 'BenchmarkHigStrRefined';
 % caseName = 'flowAroundCylinderAdaptiveALE';
-caseName = 'cylinder2D_backAndForth_ALE';
+% caseName = 'cylinder2D_backAndForth_ALE';
 % caseName = 'NACA2412_AoA5_CFD';
 % caseName = 'flowAroundCylinder3D'; % need to find the case
 % caseName = 'unitTest_semisphere';
 % caseName = 'semisphereEl150000';
 % caseName = 'squareObstacleInFlow';
 % caseName = 'flowAroundSquareObjectBoundaryLayerPowerLaw'; % problemZero, needs then ALE module
+caseName = 'cane_logo';
 
 % Parse the data
 [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
