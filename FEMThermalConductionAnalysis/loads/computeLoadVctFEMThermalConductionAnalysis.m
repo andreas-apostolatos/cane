@@ -107,17 +107,17 @@ end
 for iElmnt = 1:length(propNBC.lines(:, 1))
     %% 2i. Get the nodes which are on the Neumann boundary
     nodeIDs = propNBC.lines(iElmnt, 1:2);
-    x1 = strMsh.nodes(nodeIDs(1), :);
-    x2 = strMsh.nodes(nodeIDs(2), :);
+    x1 = strMsh.nodes(nodeIDs(1), 2:end);
+    x2 = strMsh.nodes(nodeIDs(2), 2:end);
     
     %% 2ii. Get the nodes of the element on the Neumann boundary
     elementID = propNBC.lines(iElmnt, 3);
-    element = strMsh.elements(elementID, :);
+    element = strMsh.elements(elementID, 2:end);
     index = isnan(element);
     element(index) = [];
     numNodesEl = length(element);
     numDOFsEl = numNodesEl;
-    nodes = strMsh.nodes(element, :);
+    nodes = strMsh.nodes(element, 2:end);
     
     %% 2iii. Get the function handle for this type of loading
     if ischar(propNBC.fctHandle(iElmnt, :))

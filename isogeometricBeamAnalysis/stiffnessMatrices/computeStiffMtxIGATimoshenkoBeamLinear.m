@@ -216,13 +216,11 @@ for i = p + 1:length(Xi) - p - 1
     end
 end
 
-%% 3. Compute the exernally applied load vector
-F = zeros(numDOFs, 1);
-for iNBC = 1:NBC.noCnd
-    funcHandle = str2func(NBC.computeLoadVct{iNBC});
-    F = funcHandle(F, NBC.xiLoadExtension{iNBC}, p, Xi, ...
-        CP, isNURBS, NBC.loadAmplitude(iNBC,1), ...
-        NBC.loadDirection(iNBC, 1), t, int, '');
+%% 3. Get the exernally applied load vector
+if isfield(BSplinePatch, 'FGamma')
+    F = BSplinePatch.FGamma;
+else
+    F = 'undefined';
 end
 
 %% 4. Check output

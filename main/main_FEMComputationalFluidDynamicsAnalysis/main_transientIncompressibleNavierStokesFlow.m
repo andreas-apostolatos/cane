@@ -111,7 +111,7 @@ if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw')
         indexNode = ceil(indexDOF/noDOFsPerNode);
 
         % Get the nodal coordinates
-        coordsNode = fldMsh.nodes(indexNode,:);
+        coordsNode = fldMsh.nodes(indexNode,2:end);
 
         % Compute the value according to the law
         presValue = computeOneSeventhPowerLaw ...

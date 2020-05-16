@@ -240,6 +240,24 @@ function [u, CPHistory, residual, isConverged, FComplete, rankD, ...
 %
 % 1. Update the time-dependent inhomogeneous Dirichlet boundary conditions
 %
+% 2. Compute the load vector of the multipatch structure
+% ->
+%    2i. Initialize the load vector of the patch
+%
+%   2ii. Get the Neumann boundary conditions of the current patch
+%
+%  2iii. Loop over the Neumann boundary conditions of the current patch
+%  ->
+%        2iii.1. Initialize the load vector for the current condition
+%
+%        2iii.2. Get the function handle for the load vector computation
+%
+%        2iii.3. Compute the load vector and the tangent matrix resulting from the application of follower loads
+%
+%        2iii.4. Add The compute external load vector into the B-Spline array
+%  <-
+% <-
+%
 % 2. Compute the linear matrices of the system
 %
 % 3. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
@@ -267,6 +285,13 @@ noWeakDBCCnd = 'undefined';
 isReferenceUpdated = 'undefined';
 isConverged = true;
 
+% Get the number of patches
+if ~iscell(BSplinePatches)
+    error('BSplinePatches must be a cell array representing the computational multipatch geometry');
+else
+    numPatches = length(BSplinePatches);
+end
+
 % The residual for a linear analysis is zero
 residual = 0;
 
@@ -290,7 +315,39 @@ if ~ischar(propIDBC)
     end
 end
 
-%% 2. Compute the linear matrices of the system
+%% 2. Compute the load vector of the multipatch structure
+for iPatches = 1:numPatches
+    %% 2i. Initialize the load vector of the patch
+    BSplinePatches{iPatches}.FGamma = zeros(BSplinePatches{iPatches}.noDOFs, 1);
+    
+    %% 2ii. Get the Neumann boundary conditions of the current patch
+    NBC = BSplinePatches{iPatches}.NBC;
+
+    %% 2iii. Loop over the Neumann boundary conditions of the current patch
+    for iNBC = 1:NBC.noCnd
+        %% 2iii.1. Initialize the load vector for the current condition
+        FGamma = zeros(BSplinePatches{iPatches}.noDOFs, 1);
+        
+        %% 2iii.2. Get the function handle for the load vector computation
+        funcHandle = str2func(NBC.computeLoadVct{iNBC});
+        
+        %% 2iii.3. Compute the load vector and the tangent matrix resulting from the application of follower loads
+        if ~(propTransientAnalysis.isStaticStep && NBC.isTimeDependent(iNBC, 1))
+            [FGamma, ~] = funcHandle ...
+                (FGamma, BSplinePatches{iPatches}, ...
+                NBC.xiLoadExtension{iNBC}, NBC.etaLoadExtension{iNBC}, ...
+                NBC.loadAmplitude{iNBC}, NBC.loadDirection{iNBC}, ...
+                NBC.isFollower(iNBC, 1), t, BSplinePatches{iPatches}.int, ...
+                '');
+        end
+        
+        %% 2iii.4. Add The compute external load vector into the B-Spline array
+        BSplinePatches{iPatches}.FGamma = BSplinePatches{iPatches}.FGamma + ...
+            FGamma;
+    end
+end
+
+%% 3. Compute the linear matrices of the system
 if strcmp(outMsg, 'outputEnabled') && ~isTransient
     fprintf(strcat(tab, '>> Computing the system matrix and right hand side vector\n'));
 end
@@ -330,12 +387,12 @@ else
     minEig = 'undefined';
 end
 
-%% 3. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
+%% 4. Update the right-hand side vector if inhomogeneous Dirichlet boundary conditions are encountered
 if norm(valuesInhomDOFs) ~= 0
     RHS = RHS - stiffMtx(:, inhomDOFs)*valuesInhomDOFs';
 end
 
-%% 4. Solve the linear equation system
+%% 5. Solve the linear equation system
 if strcmp(outMsg, 'outputEnabled') && ~isTransient
     fprintf(strcat(tab, '>> Solving the linear system of %d equations\n'), length(RHS(freeDOFs)));
 end
@@ -345,15 +402,15 @@ if ~hasLinearSystemConverged
     error('Linear equation solver has not converged');
 end
 
-%% 5. Re-assemble to the complete vector of unknowns
+%% 6. Re-assemble to the complete vector of unknowns
 u(freeDOFs) = uRed;
 u(homDOFs) = 0;
 u(inhomDOFs) = valuesInhomDOFs;
 
-%% 6. Compute the complete force vector
+%% 7. Compute the complete force vector
 FComplete = stiffMtx*u;
 
-%% 7. Appendix
+%% 8. Appendix
 if strcmp(outMsg,'outputEnabled') && ~isTransient
     fprintf('\n');
 end

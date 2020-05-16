@@ -103,6 +103,7 @@ propGraph = 'undefined';
 
 % Steady-state analysis
 propTransientAnalysis.computeProblemMtrcsTransient = 'undefined';
+propTransientAnalysis.isStaticStep = true;
 
 % The applied analysis is steady-state
 t = 0;

@@ -141,12 +141,12 @@ t = propFldDynamics.T0;
 for iElement = 1:size(fldMsh.elements,1)
 
     % Find the node IDs of an element
-    node_IDs = fldMsh.elements(iElement,:);
+    node_IDs = fldMsh.elements(iElement,2:end);
     
     % Find the node coordinates of an element
-    vertexI = fldMsh.nodes(node_IDs(1),1:2);
-    vertexJ = fldMsh.nodes(node_IDs(2),1:2);
-    vertexK = fldMsh.nodes(node_IDs(3),1:2);
+    vertexI = fldMsh.nodes(node_IDs(1),2:3);
+    vertexJ = fldMsh.nodes(node_IDs(2),2:3);
+    vertexK = fldMsh.nodes(node_IDs(3),2:3);
     
     % Compute basis functions and check if the point is inside the element
     [N, ~, isInside] = computeCST2DBasisFunctions ...

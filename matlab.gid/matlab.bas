@@ -102,6 +102,14 @@ STRUCTURE_FORCE_NODES*\
 *endif
 *end loop
 
+STRUCTURE_FSI_NODES*\
+*set Cond Structure-Coupled-Nodes *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*NodesNum *\
+*end loop
+
 STRUCTURE_CONTACT_NODES*\
 *set Cond Structure-Contact *nodes
 *loop nodes OnlyInCond
@@ -224,6 +232,14 @@ FLUID_DIRICHLET_ALE_NODES*\
 *format "%8i"
 
 *NodesNum *cond(FunctionHandleToALEMotion) *cond(FreeBoundary)*\
+*end loop
+
+FLUID_FSI_NODES*\
+*set Cond Fluid-Coupled-Nodes *nodes
+*loop nodes OnlyInCond
+*format "%8i"
+
+*NodesNum *\
 *end loop
 
 FLUID_POST_PROC_NODES*\

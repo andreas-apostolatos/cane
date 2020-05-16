@@ -111,9 +111,9 @@ caseName = strcat('refinementStudyCurvedBeamTipShear/', 'curvedBeamTipShear_over
 
 % Find the global numbering of the selected for postprocessing node
 for counterNodes = 1:length(strMsh.nodes)
-    if strMsh.nodes(counterNodes,1) == nodeCoord(1,1) && ...
-        strMsh.nodes(counterNodes,2) == nodeCoord(1,2) && ...
-        strMsh.nodes(counterNodes,3) == nodeCoord(1,3)
+    if strMsh.nodes(counterNodes,2) == nodeCoord(1,1) && ...
+        strMsh.nodes(counterNodes,3) == nodeCoord(1,2) && ...
+        strMsh.nodes(counterNodes,4) == nodeCoord(1,3)
         nodeID = counterNodes;
     end
 end
@@ -171,9 +171,9 @@ for counterRefStep = 1:noRef
     
     % Find the global node numbering of the slected for postprocessing node
     for counterNodes = 1:length(strMsh.nodes)
-        if strMsh.nodes(counterNodes, 1) == nodeCoord(1, 1) && ...
-            strMsh.nodes(counterNodes, 2) == nodeCoord(1, 2) && ...
-            strMsh.nodes(counterNodes, 3) == nodeCoord(1, 3)
+        if strMsh.nodes(counterNodes, 2) == nodeCoord(1, 1) && ...
+            strMsh.nodes(counterNodes, 3) == nodeCoord(1, 2) && ...
+            strMsh.nodes(counterNodes, 4) == nodeCoord(1, 3)
             nodeID = counterNodes;
         end
     end
@@ -204,7 +204,7 @@ for counterRefStep = 1:noRef
         norm(displacementOverkill);
     
     % Get a node on the Neumann boundary
-    nodeNeumann = strMsh.nodes(propNBC.nodes(1, 1), :);
+    nodeNeumann = strMsh.nodes(propNBC.nodes(1, 1), 2:end);
     
     % Get the corresponding function handle for the computation of the load
     funHandle = str2func(propNBC.fctHandle(1, :));

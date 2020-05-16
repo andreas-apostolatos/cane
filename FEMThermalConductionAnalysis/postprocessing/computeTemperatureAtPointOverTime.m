@@ -108,12 +108,12 @@ t = propHeatDynamics.T0;
 for iElement = 1:size(mesh.elements, 1)
 
     % Find the node IDs of an element
-    node_IDs = mesh.elements(iElement, :);
+    node_IDs = mesh.elements(iElement, 2:end);
     
     % Find the node coordinates of an element
-    vertexI = mesh.nodes(node_IDs(1), 1:2);
-    vertexJ = mesh.nodes(node_IDs(2), 1:2);
-    vertexK = mesh.nodes(node_IDs(3), 1:2);
+    vertexI = mesh.nodes(node_IDs(1), 2:3);
+    vertexJ = mesh.nodes(node_IDs(2), 2:3);
+    vertexK = mesh.nodes(node_IDs(3), 2:3);
     
     % Compute basis functions and check if the point is inside the element
     [N, ~, isInside] = computeCST2DBasisFunctions ...

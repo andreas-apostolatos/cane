@@ -197,12 +197,6 @@ else
     FBody = [];
 end
 
-% Get the Neumann boundary conditions
-NBC = BSplinePatch.NBC;
-
-% Initialize load vector
-BSplinePatch.FGamma = zeros(BSplinePatch.noDOFs, 1);
-
 % Compute a nessecary pre-factor for the Bossak time integration scheme
 if isTransient
     preFactor = (1 - propFldDynamics.alphaBeta)/propFldDynamics.gamma/ ...
@@ -212,52 +206,6 @@ end
 % Initialize minimum element area size
 minElementSize = 1e4;
 minElASize = minElementSize;
-
-%% 1. Check for the presence of a non-conservative loading and if there exists 
-isConservative = true;
-tanMtxLoad = 'undefined';
-for iNBC = 1:NBC.noCnd
-    if NBC.isFollower(iNBC, 1)
-        isConservative = false;
-        tanMtxLoad = zeros(BSplinePatch.noDOFs);
-        BSplinePatch.FNonConservative = zeros(BSplinePatch.noDOFs, 1);
-        break;
-    end
-end
-if ~isConservative
-    BSplinePatch.FNonConservative = zeros(BSplinePatch.noDOFs, 1);
-end
-
-%% 2. Compute the load vector corresponding to boundary applied fluxes
-for iNBC = 1:NBC.noCnd
-    %% 2i. Initialize the load vector for the current condition
-    FGamma = zeros(BSplinePatch.noDOFs,1);
-
-    %% 2ii. Get the function handle for the load vector computation
-    funcHandle = str2func(NBC.computeLoadVct{iNBC});
-
-    %% 2iii. Compute the load vector and the tangent matrix resulting from the application of follower loads
-    if ~(propFldDynamics.isStaticStep && NBC.isTimeDependent(iNBC, 1))
-        [FGamma, tanMtxLoadPatch] = ...
-            funcHandle ...
-            (FGamma, BSplinePatch, NBC.xiLoadExtension{iNBC}, ...
-            NBC.etaLoadExtension{iNBC}, NBC.loadAmplitude{iNBC}, ...
-            NBC.loadDirection{iNBC}, NBC.isFollower(iNBC,1), t, ...
-            propInt, '');
-        if NBC.isFollower(iNBC, 1)
-            tanMtxLoad = tanMtxLoad + tanMtxLoadPatch;
-        end
-    end
-
-    %% 2iv. If the loading is not conservative add the contribution to the non-conservative load vector
-    if NBC.isFollower(iNBC, 1)
-        BSplinePatch.FNonConservative = BSplinBSplinePatchePatch.FNonConservative + ...
-            FGamma;
-    end
-
-    %% 2v. Add The compute external load vector into the B-Spline array
-    BSplinePatch.FGamma = BSplinePatch.FGamma + FGamma;
-end
 
 %% 1. Choose an integration rule
 

@@ -1,9 +1,9 @@
-function [tanStiffMtx,resVct,BSplinePatch,propCoupling,minElArea] = ...
-    computeTangentStiffMtxIGAKirchhoffLoveShellNLinear...
-    (constMtx,tanMtxLoad,dHat,dHatSaved,dHatDot,dDotSaved,BSplinePatch,...
-    connections,propCoupling,loadFactor,noPatch,noTimeStep,...
-    noNonlinearIteration,noWeakDBCCnd,t,propTransientAnalysis,...
-    isReferenceUpdated,tab,outMsg)
+function [tanStiffMtx, resVct, BSplinePatch, propCoupling, minElArea] = ...
+    computeTangentStiffMtxIGAKirchhoffLoveShellNLinear ...
+    (constMtx, tanMtxLoad, dHat, dHatSaved, dHatDot, dDotSaved, ...
+    BSplinePatch, connections, propCoupling, loadFactor, noPatch, ...
+    noTimeStep, noNonlinearIteration, noWeakDBCCnd, t, ...
+    propTransientAnalysis, isReferenceUpdated, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -181,82 +181,81 @@ parameters = BSplinePatch.parameters;
 int = BSplinePatch.int;
 
 % Number of knots in xi-,eta-direction
-mxi = length(Xi);
-meta = length(Eta);
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+numKnots_xi = length(Xi);
+numKnots_eta = length(Eta);
+numCPs_xi = length(CP(:, 1, 1));
+numCPs_eta = length(CP(1, :, 1));
 
 % Check input
-checkInputForBSplineSurface(p,mxi,nxi,q,meta,neta);
+checkInputForBSplineSurface ...
+    (p, numKnots_xi, numCPs_xi, q, numKnots_eta, numCPs_eta);
 
 % Initialize minimum element area in the IGA mesh
 tolerance = 1e-4;
-if abs(CP(1,1,1)-CP(nxi,1,1)) >= tolerance
-    minElArea = abs(CP(1,1,1)-CP(nxi,1,1));
+if abs(CP(1, 1, 1) - CP(numCPs_xi, 1, 1)) >= tolerance
+    minElArea = abs(CP(1, 1, 1) - CP(numCPs_xi, 1, 1));
 else
-    minElArea = CP(1,1,1)-CP(1,neta,1);
+    minElArea = CP(1, 1, 1) - CP(1, numCPs_eta, 1);
 end
 
 % Number of degrees of freedom for the whole structure
-nDOFs = 3*nxi*neta;
+numDOFs = 3*numCPs_xi*numCPs_eta;
 
 % Number of degrees of freedom for the element
-nDOFsEl = 3*(p+1)*(q+1);
+numDOFsEl = 3*(p + 1)*(q + 1);
 
 % Initialize global stiffness matrix and internal force vector
-tanStiffMtx = zeros(nDOFs,nDOFs);
-FI = zeros(nDOFs,1);
+tanStiffMtx = zeros(numDOFs, numDOFs);
+FI = zeros(numDOFs, 1);
 
 %% 1. Compute the material matrices
 
 % Compute the membrane material matrix
-Dm = parameters.E*parameters.t/(1-parameters.nue^2)*...
+Dm = parameters.E*parameters.t/(1 - parameters.nue^2)*...
     [1              parameters.nue 0
 	 parameters.nue 1              0
-     0              0              (1-parameters.nue)/2];
+     0              0              (1 - parameters.nue)/2];
                                                  
 % Compute the bending material matrix
-Db = parameters.E*parameters.t^3/(12*(1-parameters.nue^2))*...
+Db = parameters.E*parameters.t^3/(12*(1 - parameters.nue^2))*...
     [1              parameters.nue 0
      parameters.nue 1              0 
-     0              0              (1-parameters.nue)/2];
+     0              0              (1 - parameters.nue)/2];
 
 %% 2. Choose an integration rule
 
 % Select the integration scheme
-if strcmp(int.type,'default')
-    xiNGP = p + 1;
-    etaNGP = q + 1;
-elseif strcmp(int.type,'user')
-    xiNGP = int.xiNGP;
-    etaNGP = int.etaNGP;
+if strcmp(int.type, 'default')
+    numGPxi = p + 1;
+    numGPeta = q + 1;
+elseif strcmp(int.type, 'user')
+    numGPxi = int.xiNGP;
+    numGPeta = int.etaNGP;
 end
 
 % Issue the Gauss Point coordinates and weights
-[xiGP,xiGW] = getGaussPointsAndWeightsOverUnitDomain(xiNGP);
-[etaGP,etaGW] = getGaussPointsAndWeightsOverUnitDomain(etaNGP);
+[GPxi, GWxi] = getGaussPointsAndWeightsOverUnitDomain(numGPxi);
+[GPeta, GWeta] = getGaussPointsAndWeightsOverUnitDomain(numGPeta);
 
 %% 3. loops over elements
-for j = q+1:meta-q-1
-    for i = p+1:mxi-p-1
+for j = q + 1:numKnots_eta - q - 1
+    for i = p + 1:numKnots_xi - p - 1
         % check if element is greater than zero
-        if (Xi(i+1)~=Xi(i) && Eta(j+1)~=Eta(j))
-            %% 3i. Create an element freedome table
+        if (Xi(i + 1) ~= Xi(i) && Eta(j + 1) ~= Eta(j))
+            %% 3i. Create an element freedom table
             
             % Initialize element freedome table
-            EFT = zeros(1,nDOFsEl);
+            EFT = zeros(1, numDOFsEl);
             
             % initialize counter
             k = 1;
             
             % relation global-local dof
-            for cpj = j-q:j
-                for cpi = i-p:i
-                    EFT(k) = DOFNumbering(cpi,cpj,1);
-                    EFT(k+1) = DOFNumbering(cpi,cpj,2);
-                    EFT(k+2) = DOFNumbering(cpi,cpj,3);
-                    
-                    % Update counter
+            for cpj = j - q:j
+                for cpi = i - p:i
+                    EFT(k) = DOFNumbering(cpi, cpj, 1);
+                    EFT(k + 1) = DOFNumbering(cpi, cpj, 2);
+                    EFT(k + 2) = DOFNumbering(cpi, cpj, 3);
                     k = k + 3;
                 end
             end
@@ -270,60 +269,60 @@ for j = q+1:meta-q-1
             %         |                  eta_j+1 - eta_j |
             %         |        0         --------------- |
             %         |                          2       |
-            detJxiu = (Xi(i+1)-Xi(i))*(Eta(j+1)-Eta(j))/4;
+            detJxiu = (Xi(i + 1) - Xi(i))*(Eta(j + 1) - Eta(j))/4;
             
             %% 3iii. Initialize the element area
-            elementArea = 0;
+            areaEl = 0;
             
             %% 3iv. Loop over all Gauss points
-            for cEta = 1:etaNGP
-                for cXi = 1:xiNGP
+            for cEta = 1:numGPeta
+                for cXi = 1:numGPxi
                     %% 3iv.1. Compute the NURBS coordinates xi,eta of the Gauss Point coordinates in the bi-unit interval [-1, 1]
-                    xi = ( Xi(i+1)+Xi(i) + xiGP(cXi)*(Xi(i+1)-Xi(i)) )/2;
-                    eta = ( Eta(j+1)+Eta(j) + etaGP(cEta)*(Eta(j+1)-Eta(j)) )/2;
+                    xi = (Xi(i + 1) + Xi(i) + GPxi(cXi)*(Xi(i + 1) - Xi(i)))/2;
+                    eta = (Eta(j + 1) + Eta(j) + GPeta(cEta)*(Eta(j + 1) - Eta(j)))/2;
                     
                     %% 3iv.2. Compute the NURBS basis function and up to their second derivatives at the Gauss Point
-                    nDrvBasis = 2;
-                    dR = computeIGABasisFunctionsAndDerivativesForSurface...
-                        (i,p,xi,Xi,j,q,eta,Eta,CP,isNURBS,nDrvBasis);
+                    numDrvBasis = 2;
+                    dR = computeIGABasisFunctionsAndDerivativesForSurface ...
+                        (i, p, xi, Xi, j, q, eta, Eta, CP, isNURBS, numDrvBasis);
                     
                     %% 3iv.3. Compute the covariant base vectors of the reference configuration and their first derivatives
-                    nDrvBaseVct = 1;
-                    [dG1,dG2] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                        (i,p,j,q,CP,nDrvBaseVct,dR);
+                    numDrvBaseVct = 1;
+                    [dG1, dG2] = computeBaseVectorsAndDerivativesForBSplineSurface ...
+                        (i, p, j, q, CP, numDrvBaseVct, dR);
                  
                     %% 3iv.4. Compute the surface normal of the reference configuration (third covariant base vector not normalized)
-                    G3Tilde = cross(dG1(:,1),dG2(:,1));
+                    G3Tilde = cross(dG1(:, 1), dG2(:, 1));
                     
                     %% 3iv.5. Compute the legth of G3Tilde (= area dA of the undeformed configuration)
                     dA = norm(G3Tilde);
                     
                     %% 3iv.6. Compute covariant base vectors of the current configuration and their first derivatives
-                    nDrvBaseVctCur = 1;
-                    [dg1,dg2] = computeBaseVectorsAndDerivativesForBSplineSurface...
-                        (i,p,j,q,CPd,nDrvBaseVctCur,dR);
+                    numDrvBaseVctCur = 1;
+                    [dg1, dg2] = computeBaseVectorsAndDerivativesForBSplineSurface ...
+                        (i, p, j, q, CPd, numDrvBaseVctCur, dR);
                     
                     %% 3iv.7. Compute the surface normal of the reference configuration (third covariant base vector not normalized)
-                    g3Tilde = cross(dg1(:,1),dg2(:,1));
+                    g3Tilde = cross(dg1(:, 1), dg2(:, 1));
                     
                     %% 3iv.8. Compute element tangent stiffness matrix and residual internal load vector
-                    [KTElOnGP,FIElOnGP] = computeIGAElTangentStiffMtxKirchhoffLoveShellNLinear...
-                        (p,q,dR,[dG1(:,1) dG2(:,1)],[dG1(:,2) dG2(:,2) dG1(:,3)],...
-                        G3Tilde,[dg1(:,1) dg2(:,1)],[dg1(:,2) dg2(:,2) dg1(:,3)],...
-                        g3Tilde,Dm,Db);
+                    [KTElOnGP, FIElOnGP] = computeIGAElTangentStiffMtxKirchhoffLoveShellNLinear ...
+                        (p, q, dR, [dG1(:, 1) dG2(:, 1)], [dG1(:, 2) dG2(:, 2) dG1(:, 3)], ...
+                        G3Tilde, [dg1(:, 1) dg2(:, 1)], [dg1(:, 2) dg2(:, 2) dg1(:, 3)], ...
+                        g3Tilde, Dm, Db);
                     
                     %% 3iv.9 Compute the element area on the Gauss Point and add the contribution
-                    elementAreaOnGP = dA*detJxiu*xiGW(cXi)*etaGW(cEta);
-                    elementArea = elementArea + elementAreaOnGP;
+                    elementAreaOnGP = dA*detJxiu*GWxi(cXi)*GWeta(cEta);
+                    areaEl = areaEl + elementAreaOnGP;
                     
                     %% 3iv.10. Add the contributions from the Gauss Point to the global matrix
-                    tanStiffMtx(EFT,EFT) = tanStiffMtx(EFT,EFT) + KTElOnGP*elementAreaOnGP;
+                    tanStiffMtx(EFT, EFT) = tanStiffMtx(EFT, EFT) + KTElOnGP*elementAreaOnGP;
                     FI(EFT) = FI(EFT) + FIElOnGP*elementAreaOnGP;
                 end
             end
             %% 3v. Find the minimum element area in the isogemetric mesh
-            if elementArea<minElArea
-                minElArea = elementArea;
+            if areaEl < minElArea
+                minElArea = areaEl;
             end
         end
     end
@@ -331,8 +330,8 @@ end
 
 %% 4. Assign the symmetric part to the stiffness matrix
 KTt = tanStiffMtx';
-for i=1:nDOFs
-    KTt(i,i) = 0;
+for i = 1:numDOFs
+    KTt(i, i) = 0;
 end
 tanStiffMtx = tanStiffMtx + KTt;
 
