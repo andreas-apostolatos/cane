@@ -149,7 +149,8 @@ else
 end
    
 %% Define the initial condition function
-computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
+% computeInitialConditions = @computeNullInitialConditionsFEM4NSE;
+computeInitialConditions = @computeConstantInitialConditionsFEM4NSE;
 % computeInitialConditions = @computeInitialConditionsFromVTKFileFEM4NSE;
 
 %% Solve the CFD problem
@@ -170,6 +171,28 @@ if isstruct(propPostproc) && ~ischar(FHistory)
             (FHistory(:, iTimeStep), propAnalysis, parameters, propPostproc);
         forcesOnCylinder(iTimeStep, :) = propPostproc.valuePostProc{1}'; 
     end
+end
+
+%% Custom functions
+function [up, upDot, upDDot, numTimeStep] = ...
+    computeConstantInitialConditionsFEM4NSE ...
+    (propAnalysis, fldMsh, DOF4Output, parameters, fldDynamics, ... 
+    VTKResultFile, caseName, pathToFile)
+    
+    if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
+        numDOFsNode = 3;
+    elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
+        numDOFsNode = 4;
+    end
+    numNodes = length(fldMsh.nodes(:,1));
+    numDOFs = numDOFsNode*numNodes;
+
+    % Initialize output arrays
+    up = ones(numDOFs, 1)*1;
+    upDot = zeros(numDOFs, 1);
+    upDDot = 'undefined';
+    numTimeStep = 0;
+    
 end
 
 %% END OF THE SCRIPT
