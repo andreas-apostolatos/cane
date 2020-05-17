@@ -10,12 +10,12 @@ function [up, d, upDot, dDot, upDDot, dDDot, resVctFld, resVctStr, ...
     precomResVctStr, computeMtxSteadyStateFld, computeMtxSteadyStateStr, ...
     solve_FEMEquationSystemFld, solve_FEMEquationSystemStr, ...
     DOFNumberingFld, DOFNumberingStr, freeDOFsFld, freeDOFsStr, homDOFsFld, ...
-    homDOFsStr, inhomDOFsFld, inhomDOFsStr, valuesInhomDOFsFld, valuesInhomDOFsStr, ...
-    propALE, propALEStr, computeUpdatedMeshFld, computeUpdatedMeshStr, ...
-    solve_LinearSystemFld, solve_LinearSystemStr, propFldDynamics, propStrDynamics, ...
-    t, propNLinearAnalysisFld, propNLinearAnalysisStr, propFSI, ...
-    propPostProcFld, propPostProcStr, propGaussIntFld, propGaussIntStr, ...
-    tab, outMsg)
+    homDOFsStr, inhomDOFsFld, inhomDOFsStr, valuesInhomDOFsFld, ...
+    valuesInhomDOFsStr, propALE, propALEStr, computeUpdatedMeshFld, ...
+    computeUpdatedMeshStr, solve_LinearSystemFld, solve_LinearSystemStr, ...
+    propFldDynamics, propStrDynamics, t, propNLinearAnalysisFld, ...
+    propNLinearAnalysisStr, propFSIFld, propFSIStr, propFSI, propPostProcFld, ...
+    propPostProcStr, propGaussIntFld, propGaussIntStr, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -28,110 +28,113 @@ function [up, d, upDot, dDot, upDDot, dDDot, resVctFld, resVctStr, ...
 % Returns the converged solution for the coupled fluid-structure
 % interaction iterations using the partitioned Gauss-Seidel approach.
 %
-%                     Input :
-%             fldMsh,strMsh : Structures containing the fluid and the
-%                             structural meshes,
-%                           .initialNodes : Initial nodes in the finite
-%                                           element mesh
-%                                  .nodes : Current nodes in the finite
-%                                           element mesh
-%                               .elements : Elements in the finite element
-%                                           mesh
-%                 FFld,FStr : Externally applied load vectors for the fluid
-%                             and the structural problems
-%           FFSIFld,FFSIStr : Interface forces vectors from the previous
-%                             Gauss-Seidel coupling iterations
-%    computeBodyForceVctFld : Function handle to the computation of the 
-%                             body forces for the structural problem
-%    computeBodyForceVctStr : Function handle to the computation of the 
-%                             body forces for the fluid problem
-%         propParametersFld : Structure containing the flow parameters,
-%                                  .nue : Dynamic viscosity
-%         propParametersStr : Structure containing the material properties 
-%                             of the structure,
-%                                    .k : Spring stiffness (SDOF)
-%                                    .m : Spring mass (SDOF)
-%                                    .E : Young's modulus (MDOF)
-%                                  .nue : Poisson ratio (MDOF)
-%                                  .rho : Structural density (MDOF)
-%                                    .t : Structural thickness (MDOF)
-%                        up : Initial guess for the velocity/pressure field
-%                         d : Initial guess for the displacement field
-%                     upDot : Fluid acceleration field of the previous time
-%                             step
-%                      dDot : Structural velocity field of the previous 
-%                             time step
-%                    upDDot : Dummy variable
-%                     dDDot : Structural accelration field of the previous
-%                             time step
-%                massMtxFld : Fluid mass matrix (dummy for the VMS-
-%                             stabilized solver because the mass matrix is 
-%                             nonlinear to the primal solution field due to 
-%                             VMS stabilizaation)
-%                massMtxStr : Structural mass matrix
-%                dampMtxFld : Fluid damping matrix (dummy variable)
-%                dampMtxStr : Structural damping matrix
-%        precompStiffMtxFld : Constant part of the fluid tangent stiffness 
-%                             matrix
-%        precompStiffMtxStr : Constant part of the structural tangent 
-%                             stiffness matrix
-%           precomResVctFld : Constant part of the fluid residual vector
-%           precomResVctStr : Constant part of the structural residual 
-%                             vector
-%  computeMtxSteadyStateFld : Function handle to the computation of the
-%                             steady-state tangent stiffness matrix and
-%                             residual vector for the fluid problem
-%  computeMtxSteadyStateStr : Function handle to the computation of the
-%                             steady-state tangent stiffness matrix and
-%                             residual vector for the structural problem
-% solve_FEMEquationSystemFld : solve_FEMLinearSystem or
-%                              solver_FEMNLinearSystem
-% solve_FEMEquationSystemStr : solve_FEMLinearSystem or
-%                              solver_FEMNLinearSystem
-%            DOFNumberingFld : Global numbering of the DOFs for the fluid
-%                              problem
-%            DOFNumberingStr : Global numbering of the DOFs for the
-%                              structural problem
-%    freeDOFsFld,freeDOFsStr : Vectors containing the free DOFs of the
+%                      Input :
+%              fldMsh,strMsh : Structures containing the fluid and the
+%                              structural meshes,
+%                            .initialNodes : Initial nodes in the finite
+%                                            element mesh
+%                                   .nodes : Current nodes in the finite
+%                                            element mesh
+%                                .elements : Elements in the finite element
+%                                            mesh
+%                  FFld,FStr : Externally applied load vectors for the 
 %                              fluid and the structural problems
-%      homDOFsFld,homDOFsStr : Vectors containing the global numbering of
-%                              the DOFs where homogeneneous Dirichlet
-%                              boundary conditions are applied
-%  inhomDOFsFld,inhomDOFsStr : Vectors containing the global numbering of
-%                              the DOFs where inhomogeneneous Dirichlet
-%                              boundary conditions are applied
-%         valuesInhomDOFsFld : Prescribed values of the DOFs on the 
-%                              inhomogeneous Dirichlet boundary of the
-%                              fluid
-%         valuesInhomDOFsStr : Prescribed values of the DOFs on the 
-%                              inhomogeneous Dirichlet boundary of the
-%                              structure
-%                    propALE : Structure containing information about the 
-%                              ALE motion of the fluid along the FSI
-%                              interface,
-%                                   .nodes : IDs of the fluid nodes on the 
-%                                            ALE boundary
-%                               .fctHandle : Function handles to the
-%                                            computation of the ALE motion
-%                                            at each node on the ALE
-%                                            boundary
-%                                            boundary
-%                                  .isFree : Vector of flags indicating
-%                                            whether the fluid motion is
-%                                            dictated by the ALE motion at
-%                                            each node on the ALE boundary
-%                 propALEStr : Dummy variable for this function
-%      computeUpdatedMeshFld : Function handle to the computation of the
-%                              updated mesh corresponding to the fluid ALE
-%                              formulation
-%      computeUpdatedMeshStr : Dummy variable for this function
-%      solve_LinearSystemFld : Function handle to the linear equation
-%                              system solver for the fluid problem
-%      solve_LinearSystemStr : Function handle to the linear equation
-%                              system solver for the structural problem
-%            propFldDynamics : Structure containing information on the 
-%                              fluid dynamics,
-%                              .method : The time integration method
+%            FFSIFld,FFSIStr : Interface forces vectors from the previous
+%                              Gauss-Seidel coupling iterations
+%     computeBodyForceVctFld : Function handle to the computation of the 
+%                              body forces for the structural problem
+%     computeBodyForceVctStr : Function handle to the computation of the 
+%                              body forces for the fluid problem
+%          propParametersFld : Structure containing the flow parameters,
+%                                   .nue : Dynamic viscosity
+%          propParametersStr : Structure containing the material properties 
+%                              of the structure,
+%                                     .k : Spring stiffness (SDOF)
+%                                     .m : Spring mass (SDOF)
+%                                     .E : Young's modulus (MDOF)
+%                                   .nue : Poisson ratio (MDOF)
+%                                   .rho : Structural density (MDOF)
+%                                     .t : Structural thickness (MDOF)
+%                         up : Initial guess for the velocity/pressure 
+%                              field
+%                          d : Initial guess for the displacement field
+%                      upDot : Fluid acceleration field of the previous 
+%                              time step
+%                       dDot : Structural velocity field of the previous 
+%                              time step
+%                     upDDot : Dummy variable
+%                      dDDot : Structural accelration field of the previous
+%                              time step
+%                 massMtxFld : Fluid mass matrix (dummy for the VMS-
+%                              stabilized solver because the mass matrix is 
+%                              nonlinear to the primal solution field due 
+%                              to VMS stabilizaation)
+%                 massMtxStr : Structural mass matrix
+%                 dampMtxFld : Fluid damping matrix (dummy variable)
+%                 dampMtxStr : Structural damping matrix
+%         precompStiffMtxFld : Constant part of the fluid tangent stiffness 
+%                              matrix
+%         precompStiffMtxStr : Constant part of the structural tangent 
+%                              stiffness matrix
+%            precomResVctFld : Constant part of the fluid residual vector
+%            precomResVctStr : Constant part of the structural residual 
+%                              vector
+%   computeMtxSteadyStateFld : Function handle to the computation of the
+%                              steady-state tangent stiffness matrix and
+%                              residual vector for the fluid problem
+%   computeMtxSteadyStateStr : Function handle to the computation of the
+%                             steady-state tangent stiffness matrix and
+%                              residual vector for the structural problem
+%  solve_FEMEquationSystemFld : solve_FEMLinearSystem or
+%                               solver_FEMNLinearSystem
+%  solve_FEMEquationSystemStr : solve_FEMLinearSystem or
+%                               solver_FEMNLinearSystem
+%             DOFNumberingFld : Global numbering of the DOFs for the fluid
+%                               problem
+%             DOFNumberingStr : Global numbering of the DOFs for the
+%                               structural problem
+%     freeDOFsFld,freeDOFsStr : Vectors containing the free DOFs of the
+%                               fluid and the structural problems
+%       homDOFsFld,homDOFsStr : Vectors containing the global numbering of
+%                               the DOFs where homogeneneous Dirichlet
+%                               boundary conditions are applied
+%   inhomDOFsFld,inhomDOFsStr : Vectors containing the global numbering of
+%                               the DOFs where inhomogeneneous Dirichlet
+%                               boundary conditions are applied
+%          valuesInhomDOFsFld : Prescribed values of the DOFs on the 
+%                               inhomogeneous Dirichlet boundary of the
+%                               fluid
+%          valuesInhomDOFsStr : Prescribed values of the DOFs on the 
+%                               inhomogeneous Dirichlet boundary of the
+%                               structure
+%                     propALE : Structure containing information about the 
+%                               ALE motion of the fluid along the FSI
+%                               interface,
+%                                    .nodes : IDs of the fluid nodes on the 
+%                                             ALE boundary
+%                                .fctHandle : Function handles to the
+%                                             computation of the ALE motion
+%                                             at each node on the ALE
+%                                             boundary
+%                                             boundary
+%                                   .isFree : Vector of flags indicating
+%                                             whether the fluid motion is
+%                                             dictated by the ALE motion at
+%                                             each node on the ALE boundary
+%                  propALEStr : Dummy variable for this function
+%       computeUpdatedMeshFld : Function handle to the computation of the
+%                               updated mesh corresponding to the fluid ALE
+%                               formulation
+%       computeUpdatedMeshStr : Dummy variable for this function
+%       solve_LinearSystemFld : Function handle to the linear equation
+%                               system solver for the fluid problem
+%       solve_LinearSystemStr : Function handle to the linear equation
+%                               system solver for the structural problem
+%             propFldDynamics : Structure containing information on the 
+%                               fluid dynamics,
+%                                                 .method : The time 
+%                                                           integration 
+%                                                           method
 %                           .computeProblemMtrcsTransient : Function handle
 %                                                           to the
 %                                                           computation of
@@ -156,9 +159,9 @@ function [up, d, upDot, dDot, upDDot, dDDot, resVctFld, resVctStr, ...
 %                                            .noTimeSteps : Number of time 
 %                                                           steps
 %                                                     .dt : Time step size
-%            propStrDynamics : Structure containing information on the 
-%                              structural dynamics,
-%                              .method : The time integration method
+%             propStrDynamics : Structure containing information on the 
+%                               structural dynamics,
+%                               .method : The time integration method
 %                           .computeProblemMtrcsTransient : Function handle
 %                                                           to the
 %                                                           computation of
@@ -177,19 +180,27 @@ function [up, d, upDot, dDot, upDDot, dDDot, resVctFld, resVctStr, ...
 %                                            .noTimeSteps : Number of time 
 %                                                           steps
 %                                                     .dt : Time step size
-%                          t : Time instance
-%     propNLinearAnalysisFld : Structure containing information on the 
-%                              nonlinear fluid analysis,
-%                                .method : The nonlinear solution scheme
-%                                   .eps : The residual tolerance
-%                               .maxIter : The maximum number of nonlinear
-%                                          iterations
-%     propNLinearAnalysisStr : Structure containing information on the 
-%                              nonlinear structural analysis,
-%                                .method : The nonlinear solution scheme
-%                                   .eps : The residual tolerance
-%                               .maxIter : The maximum number of nonlinear
-%                                          iterations
+%                           t : Time instance
+%      propNLinearAnalysisFld : Structure containing information on the 
+%                               nonlinear fluid analysis,
+%                                 .method : The nonlinear solution scheme
+%                                    .eps : The residual tolerance
+%                                .maxIter : The maximum number of nonlinear
+%                                           iterations
+%      propNLinearAnalysisStr : Structure containing information on the 
+%                               nonlinear structural analysis,
+%                                 .method : The nonlinear solution scheme
+%                                    .eps : The residual tolerance
+%                                .maxIter : The maximum number of nonlinear
+%                                           iterations
+%                  propFSIFld : Structure containing information of the
+%                               structural wet surface,
+%                                .nodes : Global numbering of the nodes on
+%                                         the wet surface of the structure
+%                  propFSIStr : Structure containing information of the
+%                               fluid dry surface,
+%                                .nodes : Global numbering of the nodes on
+%                                         the dry surface of the fluid
 %                    propFSI : Structure containing information on the FSI
 %                              coupling algorithm,
 %                               .relaxation : Under-relaxation factor
@@ -311,7 +322,7 @@ if ~strcmp(propAnalysisStr.type, 'SDOF') && ...
     error('Analysis type %s is not yet supported for fluid-structure interaction', ...
             propAnalysisStr.type);
 end
-if strcmp(propAnalysisStr.type, '2DOF')
+if strcmp(propAnalysisStr.type, 'DOF')
     if ~isfield(propAnalysisStr.dir)
         error('propAnalysisStr must define field dir')
     else

@@ -82,9 +82,8 @@ function [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
 %                                         that are part of the domains above
 %                      .computePostProc : function handles for calculation
 %             propFSI : Structure containing information on Fluid-Structure
-%                       interaction
-%                       .coupledNodeIDs : Global numbering of the FSI nodes
-%                      .numCoupledNodes : Number of FSI coupled nodes
+%                       interaction,
+%                           .nodes : Global numbering of the FSI nodes
 %
 % Function layout :
 %
@@ -440,11 +439,9 @@ for k = 1:numel(block)
 end
 if ~isempty(out)
     out = out{1};
-    propFSI.coupledNodeIDs = cell2mat(out(:, 1));
-    propFSI.numCoupledNodes = length(propFSI.coupledNodeIDs);
+    propFSI.nodes = cell2mat(out(:, 1));
 else
-    propFSI.coupledNodeIDs = [];
-    propFSI.numCoupledNodes = 0;
+    propFSI.nodes = [];
 end
 
 %% 15. Appendix

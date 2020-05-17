@@ -55,17 +55,17 @@ function [epsilon, sigma] = ...
 %% 0. Read input
 
 % Number of nodes in the mesh
-noElements = length(strMsh.elements);
+numElements = length(strMsh.elements);
 
 % Compute the material matrix for the given problem (The shear entry is 
 % multiplied by two so that it returns the true strain field and not the 
 % one needed for the computation of the internal virtual work)
-if strcmp(analysis.type,'planeStress')
+if strcmp(analysis.type, 'planeStress')
     preFactor = parameters.E/(1 - parameters.nue^2);
     C = preFactor*[1              parameters.nue  0
                    parameters.nue 1               0
                    0              0               (1 - parameters.nue)/2];
-elseif strcmp(analysis.type,'planeStrain')
+elseif strcmp(analysis.type, 'planeStrain')
     preFactor = parameters.E*(1 - parameters.nue)/(1 + parameters.nue)/(1 - 2*parameters.nue);
     C = preFactor*[1                                 parameters.nue/(1 - parameters.nue) 0
                    parameters.nue/(1-parameters.nue) 1                                   0
@@ -73,62 +73,66 @@ elseif strcmp(analysis.type,'planeStrain')
 end
 
 % Initialize output arrays
-epsilon = zeros(3,noElements);
-sigma = zeros(3,noElements);
+epsilon = zeros(3, numElements);
+sigma = zeros(3, numElements);
 
 %% 1. Loop over all the elements in the mesh
-for counterEl = 1:length(strMsh.elements(:,1))
+for iElmnts = 1:length(strMsh.elements(:, 1))
     %% 1i. Get the element in the mesh
-    element = strMsh.elements(counterEl,2:end);
+    element = strMsh.elements(iElmnts, 2:end);
+    [~, ~, element] = ...
+        intersect(element', strMsh.nodes(:, 1), 'rows', 'stable');
     
     %% 1ii. Cast the element with respect to the number of its nodes
     index = isnan(element);
     element(index) = [];
-    noNodesEl = length(element);
-    noDOFsEl = 2*noNodesEl;
-    if noNodesEl == 3
+    numNodesEl = length(element);
+    numDOFsEl = 2*numNodesEl;
+    if numNodesEl == 3
         elementType = 'linearTriangle';
-    elseif noNodesEl == 4
+    elseif numNodesEl == 4
         elementType = 'bilinearQuadrilateral';
     else
-        error('Postprocessing computations for a %d-noded element has not been implemented',length(element))
+        error('Postprocessing computations for a %d-noded element has not been implemented', ...
+            length(element))
     end
     
     %% 1iii. Get the nodes in the element
-    nodes = strMsh.nodes(element,2:end);
+    nodesMsh = strMsh.nodes(element, 2:end);
     
     %% 1iv. Create an Element Freedome Table (EFT)
-    EFT = zeros(noDOFsEl,1);
-    for counterEFT = 1:noNodesEl
-        EFT(2*counterEFT-1) = 2*element(1,counterEFT)-1;
-        EFT(2*counterEFT) = 2*element(1,counterEFT);
+    EFT = zeros(numDOFsEl, 1);
+    for iEFT = 1:numNodesEl
+        EFT(2*iEFT-1) = 2*element(iEFT, 1)-1;
+        EFT(2*iEFT) = 2*element(iEFT, 1);
     end
     
     %% 1v. Compute the basis functions and their derivatives at the Gauss Point
-    if strcmp(elementType,'linearTriangle')
-        [dN,~] = computeCST2DBasisFunctionsAndFirstDerivatives(nodes(1,:),nodes(2,:),nodes(3,:),0,0);
-    elseif strcmp(elementType,'bilinearQuadrilateral')
-        dN = zeros(noNodesEl,3);
+    if strcmp(elementType, 'linearTriangle')
+        [dN, ~] = computeCST2DBasisFunctionsAndFirstDerivatives ...
+            (nodesMsh(1, :), nodesMsh(2, :), nodesMsh(3, :), 0, 0);
+    elseif strcmp(elementType, 'bilinearQuadrilateral')
+        dN = zeros(numNodesEl, 3);
         warning('The postprocessing computations for a bilinear quadrilateral are still incomplete');
     end
     
     %% 1vi. Form the B-Operator matrix for the plate in membrane action problem
-    B = zeros(3,noDOFsEl);
-    for counterBOperator = 1:noNodesEl
-        B(1,2*counterBOperator-1) = dN(counterBOperator,2);
-        B(2,2*counterBOperator) = dN(counterBOperator,3);
-        B(3,2*counterBOperator-1) = dN(counterBOperator,3);
-        B(3,2*counterBOperator) = dN(counterBOperator,2);
+    B = zeros(3, numDOFsEl);
+    for iBOperator = 1:numNodesEl
+        B(1, 2*iBOperator - 1) = dN(iBOperator, 2);
+        B(2, 2*iBOperator) = dN(iBOperator, 3);
+        B(3, 2*iBOperator - 1) = dN(iBOperator, 3);
+        B(3, 2*iBOperator) = dN(iBOperator, 2);
     end
      
     %% 1vii. Compute the strain vector in a Voigt notation at the current element
-    epsilon(:,counterEl) = B*dHat(EFT);
+    epsilon(:, iElmnts) = B*dHat(EFT);
     
     %% 1viii. Compute the stress vector in a Voigt notation at the current element
-    sigma(:,counterEl) = C*epsilon(:,counterEl);
+    sigma(:, iElmnts) = C*epsilon(:,iElmnts);
     
     %% 1ix. Correct the shear component of the strain epsilon = [epsilonXX epsilonYY 2*epsilonXY]
-    epsilon(3,counterEl) = epsilon(3,counterEl)/2;
+    epsilon(3, iElmnts) = epsilon(3,iElmnts)/2;
 end
 
 end

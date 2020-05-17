@@ -66,46 +66,48 @@ function [tanMtx, resVct, minElEdgeSize] = ...
 %
 % 0. Read input
 %
-% 1. Create the element freedom tables for all elements at once
+% 1. Get the index of the nodes of each element in the array of nodes
 %
-% 2. Get the coordinates of the nodes in a matrix form
+% 2. Create the element freedom tables for all elements at once
 %
-% 3. Get the minimum element edge size
+% 3. Get the coordinates of the nodes in a matrix form
 %
-% 4. Numerical quadrature
+% 4. Get the minimum element edge size
 %
-% 5. Compute the material matrices for each element
+% 5. Numerical quadrature
 %
-% 6. Loop over all the quadrature points
+% 6. Compute the material matrices for each element
+%
+% 7. Loop over all the quadrature points
 % ->
-%    6i. Transform the Gauss Point location from the parameter to the physical space
+%    7i. Transform the Gauss Point location from the parameter to the physical space
 %
-%   6ii. Compute the basis functions and their derivatives at the Gauss Point
+%   7ii. Compute the basis functions and their derivatives at the Gauss Point
 %
-%  6iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
+%  7iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
 %
-%   6iv. Compute the deformation gradient tensor F at the Gauss point
+%   7iv. Compute the deformation gradient tensor F at the Gauss point
 %  
-%    6v. Form the B-Operator matrix corresponding to the current configuration at the Gauss point page-wise
+%    7v. Form the B-Operator matrix corresponding to the current configuration at the Gauss point page-wise
 %
-%   6vi. Compute the material stifness matrix at the Gauss point page-wise
+%   7vi. Compute the material stifness matrix at the Gauss point page-wise
 %
-%  6vii. Compute the Green-Lagrange strain tensor (page-wise) and re-arrange it to the Voigt notation
+%  7vii. Compute the Green-Lagrange strain tensor (page-wise) and re-arrange it to the Voigt notation
 %
-% 6viii. Compute the Cauchy stress tensor (page-wise) out of the Voigt Green-Lagrange strain vector
+% 7viii. Compute the Cauchy stress tensor (page-wise) out of the Voigt Green-Lagrange strain vector
 %
-%   6ix. Compute the element geometric stiffness matrix at the Gauss point page-wise
+%   7ix. Compute the element geometric stiffness matrix at the Gauss point page-wise
 %
-%    6x. Compute the internal residual K(u)*u at the Gauss point page-wise
+%    7x. Compute the internal residual K(u)*u at the Gauss point page-wise
 %
-%   6xi. Form the basis functions matrix at the Gauss Point page-wise
+%   7xi. Form the basis functions matrix at the Gauss Point page-wise
 %
-%  6xii. Compute the body force vector at the Gauss point page-wise
+%  7xii. Compute the body force vector at the Gauss point page-wise
 % <-
 %
-% 7. Assemble the global system matrices and vectors
+% 8. Assemble the global system matrices and vectors
 %
-% 8. Update the force vector with the body force contributions
+% 9. Update the force vector with the body force contributions
 %
 %% Functions main body
 
@@ -135,35 +137,38 @@ tanMtxGeoEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
 FBodyEl = zeros(numElmnts, numDOFsEl, 1);
 resIntEl = zeros(numElmnts, numDOFsEl, 1);
 
-%% 1. Create the element freedom tables for all elements at once
+%% 1. Get the index of the nodes of each element in the array of nodes
+[~, idx] = ismember(strMsh.elements(:, 2:numNodesEl + 1), strMsh.nodes(:, 1));
+
+%% 2. Create the element freedom tables for all elements at once
 EFT = zeros(numDOFsEl, numElmnts);
 for iEFT = 1:numNodesEl
-    for counterDOFsPerNode = 1:numDOFsPerNode - 1
-        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT + 1)';
-        EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - counterDOFsPerNode), :) = ...
-            EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - counterDOFsPerNode);
+    for iDOFsPerNode = 1:numDOFsPerNode - 1
+        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*idx(:, iEFT)';
+        EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - iDOFsPerNode), :) = ...
+            EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - iDOFsPerNode);
     end
 end
 
-%% 2. Get the coordinates of the nodes in a matrix form
+%% 3. Get the coordinates of the nodes in a matrix form
 
 % define function to calculate euclidean norm
 euclideanNorm = @(nodes) sqrt(nodes(:, 1, 1).^2 + nodes(:, 2, 1).^2 + ...
     nodes(:, 3, 1).^2);
 
 % Get the nodes of the mesh
-nodes1 = strMsh.nodes(strMsh.elements(:, 2), 2:end);
-nodes2 = strMsh.nodes(strMsh.elements(:, 3), 2:end);
-nodes3 = strMsh.nodes(strMsh.elements(:, 4), 2:end);
+nodesI = strMsh.nodes(idx(:, 1), 2:end);
+nodesJ = strMsh.nodes(idx(:, 2), 2:end);
+nodesK = strMsh.nodes(idx(:, 3), 2:end);
 
 % get element sizes
-h = min([euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...
-    euclideanNorm(nodes2 - nodes3)], [], 2);
+h = min([euclideanNorm(nodesI - nodesJ) euclideanNorm(nodesI - nodesK) ...
+    euclideanNorm(nodesJ - nodesK)], [], 2);
 
-%% 3. Get the minimum element edge size
+%% 4. Get the minimum element edge size
 minElEdgeSize = min(h);
 
-%% 4. Numerical quadrature
+%% 5. Numerical quadrature
 if strcmp(propInt.type, 'default')
     numGP = 2;
 elseif strcmp(propInt.type, 'user')
@@ -171,7 +176,7 @@ elseif strcmp(propInt.type, 'user')
 end
 [GP, GW] = getGaussRuleOnCanonicalTriangle(numGP);
 
-%% 5. Compute the material matrices for each element
+%% 6. Compute the material matrices for each element
 C = zeros(numElmnts, 3, 3);
 if strcmp(propAnalysis.type, 'planeStress')
     preFactor = propParameters.E/(1 - propParameters.nue^2);
@@ -192,19 +197,19 @@ for iElmnts = 1:numElmnts
     C(iElmnts, :, :) = CEl;
 end
 
-%% 6. Loop over all the quadrature points
+%% 7. Loop over all the quadrature points
 for iGP = 1:numGP
-    %% 6i. Transform the Gauss Point location from the parameter to the physical space
-    xGP = GP(iGP, 1)*nodes1 + GP(iGP, 2)*nodes2 + (1 - GP(iGP, 1) - GP(iGP, 2))*nodes3;
+    %% 7i. Transform the Gauss Point location from the parameter to the physical space
+    xGP = GP(iGP, 1)*nodesI + GP(iGP, 2)*nodesJ + (1 - GP(iGP, 1) - GP(iGP, 2))*nodesK;
     
-    %% 6ii. Compute the basis functions and their derivatives at the Gauss Point
+    %% 7ii. Compute the basis functions and their derivatives at the Gauss Point
     [dN, area] = computeCST2DBasisFunctionsAndFirstDerivatives ...
-            (nodes1, nodes2, nodes3, xGP(:, 1, :), xGP(:, 2, :));
+            (nodesI, nodesJ, nodesK, xGP(:, 1, :), xGP(:, 2, :));
     
-    %% 6iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
+    %% 7iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
     detJxxi = 2*area;
     
-    %% 6iv. Compute the deformation gradient tensor F at the Gauss point
+    %% 7iv. Compute the deformation gradient tensor F at the Gauss point
     
     % Get the derivates of the basis functions
     dNdX = dN(:, :, 2:3);
@@ -221,29 +226,29 @@ for iGP = 1:numGP
     % Compute the deformation gradient tensor
     FDefGrad = I_Mtx + pmtimes(uEl, dNdX);
     
-    %% 6v. Form the B-Operator matrix corresponding to the current configuration at the Gauss point page-wise
+    %% 7v. Form the B-Operator matrix corresponding to the current configuration at the Gauss point page-wise
     B = zeros(numElmnts, 3, numDOFsEl);
     for i = 1:numNodesEl
-        B(:, 1, 2*i - 1) = pmtimes( dNdX(:, i, 1), FDefGrad(:,1,1) );
-        B(:, 2, 2*i - 1) = pmtimes( dNdX(:, i, 2), FDefGrad(:,1,2) );
-        B(:, 3, 2*i - 1) = pmtimes( dNdX(:, i, 1), FDefGrad(:,1,2) ) + ...
-                           pmtimes( dNdX(:, i, 2), FDefGrad(:,1,1) );
+        B(:, 1, 2*i - 1) = pmtimes(dNdX(:, i, 1), FDefGrad(:, 1, 1));
+        B(:, 2, 2*i - 1) = pmtimes(dNdX(:, i, 2), FDefGrad(:, 1, 2));
+        B(:, 3, 2*i - 1) = pmtimes(dNdX(:, i, 1), FDefGrad(:, 1, 2)) + ...
+                           pmtimes(dNdX(:, i, 2), FDefGrad(:, 1, 1));
                        
-        B(:, 1, 2*i) = pmtimes( dNdX(:, i, 1), FDefGrad(:,2,1) );
-        B(:, 2, 2*i) = pmtimes( dNdX(:, i, 2), FDefGrad(:,2,2) );
-        B(:, 3, 2*i) = pmtimes( dNdX(:, i, 1), FDefGrad(:,2,2) ) + ...
-                       pmtimes( dNdX(:, i, 2), FDefGrad(:,2,1) );
+        B(:, 1, 2*i) = pmtimes( dNdX(:, i, 1), FDefGrad(:, 2, 1));
+        B(:, 2, 2*i) = pmtimes( dNdX(:, i, 2), FDefGrad(:, 2, 2));
+        B(:, 3, 2*i) = pmtimes( dNdX(:, i, 1), FDefGrad(:, 2, 2)) + ...
+                       pmtimes( dNdX(:, i, 2), FDefGrad(:, 2, 1));
     end
     
-    %% 6vi. Compute the material stifness matrix at the Gauss point page-wise
+    %% 7vi. Compute the material stifness matrix at the Gauss point page-wise
     tanMtxMatEl = tanMtxMatEl + ...
            pstimes(pmtimes(pmtimes(ptranspose(B), C), B)*GW(iGP), detJxxi);
     
-    %% 6vii. Compute the Green-Lagrange strain tensor (page-wise) and re-arrange it to the Voigt notation
+    %% 7vii. Compute the Green-Lagrange strain tensor (page-wise) and re-arrange it to the Voigt notation
     epsilonGLTensor = 0.5*(pmtimes(ptranspose(FDefGrad), FDefGrad) - I_Mtx);
     epsilonGLVoigt = [epsilonGLTensor(:, 1, 1), epsilonGLTensor(:, 2, 2), 2*epsilonGLTensor(:, 1, 2)];
     
-    %% 6viii. Compute the Cauchy stress tensor (page-wise) out of the Voigt Green-Lagrange strain vector
+    %% 7viii. Compute the Cauchy stress tensor (page-wise) out of the Voigt Green-Lagrange strain vector
     stressCauchyVoigt = pmtimes(C, epsilonGLVoigt);
     
     % Assemble the Cauchy stress tensor
@@ -252,7 +257,7 @@ for iGP = 1:numGP
     stressCauchyTensor(:, 1, 2) = stressCauchyVoigt(:, 3);
     stressCauchyTensor(:, 1, 1) = stressCauchyVoigt(:, 1);  
    
-    %% 6ix. Compute the element geometric stiffness matrix at the Gauss point page-wise
+    %% 7ix. Compute the element geometric stiffness matrix at the Gauss point page-wise
     
     % Compute the H matrix
     H = pmtimes(pmtimes(dNdX, stressCauchyTensor), ptranspose(dNdX));
@@ -272,29 +277,29 @@ for iGP = 1:numGP
     % Compute the element geometric stiffness matrix
     tanMtxGeoEl = tanMtxGeoEl + pstimes((tanMtxGeoElGP*GW(iGP)),detJxxi);
     
-    %% 6x. Compute the internal residual K(u)*u at the Gauss point page-wise
+    %% 7x. Compute the internal residual K(u)*u at the Gauss point page-wise
     resIntEl = resIntEl + ...
         pstimes(pmtimes(ptranspose(B), stressCauchyVoigt)*GW(iGP), detJxxi);
 
-	%% 6xi. Form the basis functions matrix at the Gauss Point page-wise
+	%% 7xi. Form the basis functions matrix at the Gauss Point page-wise
     N = zeros(numElmnts, 2, numDOFsEl);
     for i = 1:numNodesEl
         N(:, 1, 2*i - 1) = dN(:, i, 1);
         N(:, 2, 2*i) = dN(:, i, 1);
     end
     
-    %% 6xii. Compute the body force vector at the Gauss point page-wise
+    %% 7xii. Compute the body force vector at the Gauss point page-wise
     bF = computeBodyForces(xGP(:, 1), xGP(:, 2), xGP(:, 3));
     FBodyEl = FBodyEl + ...
         pstimes(pmtimes(ptranspose(N), ptranspose(bF(:, :, 1:2)))*GW(iGP), detJxxi);
 end
 
-%% 7. Assemble the global system matrices and vectors
+%% 8. Assemble the global system matrices and vectors
 [tanMtx] = assembleSparseMatricies ...
     (EFT, numDOFs, numDOFsEl, tanMtxMatEl, tanMtxGeoEl);
 [resVctInt, FBody] = assembleSparseVectors(EFT, numDOFs, numDOFsEl, resIntEl, FBodyEl);
 
-%% 8. Update the force vector with the body force contributions
+%% 9. Update the force vector with the body force contributions
 resVct = resVctInt - loadFactor*(FBody + F);
 
 end

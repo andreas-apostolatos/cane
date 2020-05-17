@@ -35,7 +35,7 @@ function testTransientWallHeating(testCase)
 
 % Absolute tolerances
 absTol = 1e-15;
-absTol3 = 1e-15*1e3;
+absTol4 = 1e-15*1e4;
 
 %% 1. Parse data from GiD input file
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
@@ -149,7 +149,7 @@ expSolResultantNumerical = 1.0e+02*[   2.000000000000000
 expSolMinElSize = 0.062500000000000;
 
 %% 7. Verify the results
-testCase.verifyEqual(resultantNumerical, expSolResultantNumerical,'AbsTol', absTol3);
+testCase.verifyEqual(resultantNumerical, expSolResultantNumerical,'AbsTol', absTol4);
 testCase.verifyEqual(minElSize,expSolMinElSize,'AbsTol',absTol);
 
 end

@@ -1,7 +1,7 @@
 function [K, F, minElEdgeSize] = ...
     computeStiffMtxAndLoadVctFEMThermalConductionAnalysisCST ...
     (propAnalysis, u, uSaved, uDot, uDotSaved, uMeshALE, ...
-    precompStiffMtx, precomResVct, DOFNumbering, strMsh, F, ...
+    precompStiffMtx, precomResVct, DOFNumbering, thrMsh, F, ...
     loadFactor, computeBodyForces, propStrDynamics, t, ...
     propParameters, propInt)
 %% Licensing
@@ -35,7 +35,7 @@ function [K, F, minElEdgeSize] = ...
 %      precomResVct : Constant part of the residual vector which can be
 %                     precomputed
 %      DOFNumbering : The global numbering of the DOFs
-%            strMsh : Nodes and elements in the mesh
+%            thrMsh : Nodes and elements in the mesh
 %                 F : The global load vector corresponding to surface
 %                     tractions
 %        loadFactor : Load factor, nessecary for nonlinear computations 
@@ -56,7 +56,7 @@ function [K, F, minElEdgeSize] = ...
 %
 % 0. Read input
 %
-% 1. Create the element freedom tables for all elements at once
+% 1. Create the element freedom tables for all elements at once using the index of the nodes for each element in the array of nodes
 %
 % 2. Get the coordinates of the nodes in a matrix form
 %
@@ -86,7 +86,7 @@ function [K, F, minElEdgeSize] = ...
 %% 0. Read input
 
 % Number of nodes in the mesh
-numNodes = length(strMsh.nodes(:, 1));
+numNodes = length(thrMsh.nodes(:, 1));
 
 % Number of DOFs in the mesh
 numDOFs = numNodes;
@@ -98,16 +98,13 @@ numNodesEl = 3;
 numDOFsEl = numNodesEl;
 
 % Total number of elements in the mesh
-numElmnts = length(strMsh.elements(:, 1));
+numElmnts = length(thrMsh.elements(:, 1));
 
 % Initialize output arrays
 stiffMtxEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
 
-%% 1. Create the element freedom tables for all elements at once
-EFT = zeros(numDOFsEl, numElmnts);
-for iEFT = 1:numNodesEl
-        EFT(iEFT, :) = strMsh.elements(:, iEFT+1)';
-end
+%% 1. Create the element freedom tables for all elements at once using the index of the nodes for each element in the array of nodes
+[~, EFT] = ismember(thrMsh.elements(:, 2:numNodesEl + 1), thrMsh.nodes(:, 1));
 
 %% 2. Get the coordinates of the nodes in a matrix form
 
@@ -116,13 +113,13 @@ euclideanNorm = @(nodes) sqrt(nodes(:, 1, 1).^2 + nodes(:, 2, 1).^2 + ...
     nodes(:, 3, 1).^2);
 
 % Get the nodes of the mesh
-nodes1 = strMsh.nodes(strMsh.elements(:, 2), 2:end);
-nodes2 = strMsh.nodes(strMsh.elements(:, 3), 2:end);
-nodes3 = strMsh.nodes(strMsh.elements(:, 4), 2:end);
+nodesI = thrMsh.nodes(EFT(:, 1), 2:end);
+nodesJ = thrMsh.nodes(EFT(:, 2), 2:end);
+nodesK = thrMsh.nodes(EFT(:, 3), 2:end);
 
 % get element sizes
-h = min( [euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...
-          euclideanNorm(nodes2 - nodes3)], [], 2);
+h = min( [euclideanNorm(nodesI - nodesJ) euclideanNorm(nodesI - nodesK) ...
+          euclideanNorm(nodesJ - nodesK)], [], 2);
 
 %% 3. Get the minimum element edge size
 minElEdgeSize = min(h);
@@ -138,11 +135,11 @@ end
 %% 5. Loop over all the quadrature points
 for iGP = 1:numGP
     %% 5i. Transform the Gauss Point location from the parameter to the physical space
-    xGP = GP(iGP, 1)*nodes1 + GP(iGP, 2)*nodes2 + (1 - GP(iGP, 1) - GP(iGP, 2))*nodes3;
+    xGP = GP(iGP, 1)*nodesI + GP(iGP, 2)*nodesJ + (1 - GP(iGP, 1) - GP(iGP, 2))*nodesK;
     
     %% 5ii. Compute the basis functions and their derivatives at the Gauss Point
     [dN, area] = computeCST2DBasisFunctionsAndFirstDerivatives ...
-            (nodes1, nodes2, nodes3, xGP(:, 1, :), xGP(:, 2, :));
+            (nodesI, nodesJ, nodesK, xGP(:, 1, :), xGP(:, 2, :));
         
     %% 5iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
     detJxxi = 2*area;
@@ -165,6 +162,6 @@ for iGP = 1:numGP
 end
 
 %% 6. Assemble to the global system matrix
-K = assembleSparseMatricies(EFT, numDOFs, numDOFsEl, stiffMtxEl);
+K = assembleSparseMatricies(EFT', numDOFs, numDOFsEl, stiffMtxEl);
 
 end

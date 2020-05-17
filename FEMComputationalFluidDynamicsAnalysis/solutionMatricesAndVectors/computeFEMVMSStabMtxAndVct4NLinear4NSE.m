@@ -102,38 +102,40 @@ function [K, resVct, minElEdgeSize] = ...
 %
 % 0. Read input
 %
-% 1. Create the element freedom tables for all elements at once
+% 1. Get the index of the nodes of each element in the array of nodes
 %
-% 2. Get the element discrete solution vector of the previous Newton iteration step
+% 2. Create the element freedom tables for all elements at once
 %
-% 3. Get the dicrete mesh velocity vector (0 since we don't do ALE) GOT TO BE FIXED
+% 3. Get the element discrete solution vector of the previous Newton iteration step
 %
-% 4. Get the coordinates of the nodes in a matrix form
+% 4. Get the dicrete mesh velocity vector (0 since we don't do ALE) GOT TO BE FIXED
 %
-% 5. Get the minimum element edge size
+% 5. Get the coordinates of the nodes in a matrix form
 %
-% 6. Choose an integration rule
+% 6. Get the minimum element edge size
 %
-% 7. Loop over all the quadrature points
+% 7. Choose an integration rule
+%
+% 8. Loop over all the quadrature points
 % ->
-%    7i. Transform the Gauss Point location from the parameter to the physical space
+%    8i. Transform the Gauss Point location from the parameter to the physical space
 %
-%   7ii. Compute the basis functions and their derivatives at the Gauss Point
+%   8ii. Compute the basis functions and their derivatives at the Gauss Point
 %
-%  7iii. Compute the determinant of the Jacobian transformation from the physical to the parent space
+%  8iii. Compute the determinant of the Jacobian transformation from the physical to the parent space
 %
-%   7iv. Compute the tangent stiffness, the mass matrix and the body force vector on the Gauss Point
+%   8iv. Compute the tangent stiffness, the mass matrix and the body force vector on the Gauss Point
 %
-%    7v. Compute the load vector corresponding to the body force vector of the system
+%    8v. Compute the load vector corresponding to the body force vector of the system
 %
-%   7vi. Add the contributions from the Gauss point
+%   8vi. Add the contributions from the Gauss point
 % <-
 %
-% 8. Add the contribution from the Gauss Point and assemble to the global system
+% 9. Add the contribution from the Gauss Point and assemble to the global system
 %
-% 9. Compute the system matrix corresponding to the Bossak time integration scheme
+% 10. Compute the system matrix corresponding to the Bossak time integration scheme
 %
-% 10. Compute the right-hand side vector corresponding to the Bossak time integration scheme
+% 11. Compute the right-hand side vector corresponding to the Bossak time integration scheme
 %
 %% Function main body
 
@@ -177,27 +179,30 @@ preFactor = (1 - propFldDynamics.alphaBeta)/propFldDynamics.gamma/ ...
 % Initialize the global body force vector
 FBody = zeros(numDOFs, 1);
 
-%% 1. Create the element freedom tables for all elements at once
+%% 1. Get the index of the nodes of each element in the array of nodes
+[~, idx] = ismember(fldMsh.elements(:, 2:numNodesEl + 1), fldMsh.nodes(:, 1));
+
+%% 2. Create the element freedom tables for all elements at once
 EFT = zeros(numDOFsEl, numElmnts);
 for iEFT = 1:numNodesEl
     for iDOFsPerNode = 1:numDOFsPerNode - 1
-        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*fldMsh.elements(:, iEFT+1)';
+        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*idx(:, iEFT)';
         EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - iDOFsPerNode), :) = ...
             EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - iDOFsPerNode);
     end
 end
 
-%% 2. Get the element discrete solution vector of the previous Newton iteration step
+%% 3. Get the element discrete solution vector of the previous Newton iteration step
 upEl = up(EFT);
 
-%% 3. Get the dicrete mesh velocity vector
+%% 4. Get the dicrete mesh velocity vector
 if ~ischar(uMeshALE)
     uMeshALEEL = uMeshALE(EFT);
 else
     uMeshALEEL = zeros(numDOFsEl, 1);
 end
 
-%% 4. Get the coordinates of the nodes in a matrix form
+%% 5. Get the coordinates of the nodes in a matrix form
 
 % define function to calculate euclidean norm
 euclideanNorm = @(nodes) sqrt(nodes(:, 1, 1).^2 + nodes(:, 2, 1).^2 + nodes(:, 3, 1).^2);
@@ -205,31 +210,33 @@ euclideanNorm = @(nodes) sqrt(nodes(:, 1, 1).^2 + nodes(:, 2, 1).^2 + nodes(:, 3
 % Minimum element edge size
 if isAnalysis3D
     % Get the nodes of the mesh
-    nodes1 = fldMsh.nodes(fldMsh.elements(:, 2), 2:end);
-    nodes2 = fldMsh.nodes(fldMsh.elements(:, 3), 2:end);
-    nodes3 = fldMsh.nodes(fldMsh.elements(:, 4), 2:end);
-    nodes4 = fldMsh.nodes(fldMsh.elements(:, 5), 2:end);
+    [~, idx] = ismember(fldMsh.elements(:, 2:5), fldMsh.nodes(:, 1));
+    nodesI = fldMsh.nodes(idx(:, 1), 2:end);
+    nodesJ = fldMsh.nodes(idx(:, 2), 2:end);
+    nodesK = fldMsh.nodes(idx(:, 3), 2:end);
+    nodesL = fldMsh.nodes(idx(:, 4), 2:end);
     
     % get element sizes
-    h = min( [ euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...
-               euclideanNorm(nodes2 - nodes3) euclideanNorm(nodes4 - nodes1) ...
-               euclideanNorm(nodes4 - nodes2) euclideanNorm(nodes4 - nodes3)], ...
+    h = min( [ euclideanNorm(nodesI - nodesJ) euclideanNorm(nodesI - nodesK) ...
+               euclideanNorm(nodesJ - nodesK) euclideanNorm(nodesL - nodesI) ...
+               euclideanNorm(nodesL - nodesJ) euclideanNorm(nodesL - nodesK)], ...
                [], 2);
 else
     % Get the nodes of the mesh
-    nodes1 = fldMsh.nodes(fldMsh.elements(:, 2), 2:end);
-    nodes2 = fldMsh.nodes(fldMsh.elements(:, 3), 2:end);
-    nodes3 = fldMsh.nodes(fldMsh.elements(:, 4), 2:end);
+    [~, idx] = ismember(fldMsh.elements(:, 2:4), fldMsh.nodes(:, 1));
+    nodesI = fldMsh.nodes(idx(:, 1), 2:end);
+    nodesJ = fldMsh.nodes(idx(:, 2), 2:end);
+    nodesK = fldMsh.nodes(idx(:, 3), 2:end);
     
 	% get element sizes
-    h = min( [ euclideanNorm(nodes1 - nodes2) euclideanNorm(nodes1 - nodes3) ...
-               euclideanNorm(nodes2 - nodes3)], [], 2);
+    h = min( [ euclideanNorm(nodesI - nodesJ) euclideanNorm(nodesI - nodesK) ...
+               euclideanNorm(nodesJ - nodesK)], [], 2);
 end
 
-%% 5. Get the minimum element edge size
+%% 6. Get the minimum element edge size
 minElEdgeSize = min(h);
 
-%% 6. Choose an integration rule
+%% 7. Choose an integration rule
 if strcmp(propGaussInt.type, 'default')
     noGP = 1;
 elseif strcmp(propGaussInt.type, 'user')
@@ -241,44 +248,44 @@ else
     [GP, GW] = getGaussRuleOnCanonicalTriangle(noGP);
 end
 
-%% 7. Loop over all the quadrature points
+%% 8. Loop over all the quadrature points
 for iGP = 1:noGP
-    %% 7i. Transform the Gauss Point location from the parameter to the physical space
+    %% 8i. Transform the Gauss Point location from the parameter to the physical space
     if isAnalysis3D
-        xGP = GP(iGP, 1)*nodes1 + GP(iGP, 2)*nodes2 + GP(iGP, 3)*nodes3 + ...
-        (1 - GP(iGP, 1) - GP(iGP, 2) - GP(iGP, 3))*nodes4;
+        xGP = GP(iGP, 1)*nodesI + GP(iGP, 2)*nodesJ + GP(iGP, 3)*nodesK + ...
+        (1 - GP(iGP, 1) - GP(iGP, 2) - GP(iGP, 3))*nodesL;
     else
-        xGP = GP(iGP, 1)*nodes1 + GP(iGP, 2)*nodes2 + (1 - GP(iGP, 1) - GP(iGP, 2))*nodes3;
+        xGP = GP(iGP, 1)*nodesI + GP(iGP, 2)*nodesJ + (1 - GP(iGP, 1) - GP(iGP, 2))*nodesK;
     end
 
-    %% 7ii. Compute the basis functions and their derivatives at the Gauss Point
+    %% 8ii. Compute the basis functions and their derivatives at the Gauss Point
     if isAnalysis3D
         [dN, area] = computeCST3DBasisFunctionsAndFirstDerivatives ...
-            (nodes1, nodes2, nodes3, nodes4, xGP(:, 1, :), xGP(:, 2, :), xGP(:, 3, :));
+            (nodesI, nodesJ, nodesK, nodesL, xGP(:, 1, :), xGP(:, 2, :), xGP(:, 3, :));
     else
         [dN, area] = computeCST2DBasisFunctionsAndFirstDerivatives ...
-            (nodes1, nodes2, nodes3, xGP(:, 1, :), xGP(:, 2, :));
+            (nodesI, nodesJ, nodesK, xGP(:, 1, :), xGP(:, 2, :));
     end
     
-    %% 7iii. Compute the determinant of the Jacobian transformation from the physical to the parent space
+    %% 8iii. Compute the determinant of the Jacobian transformation from the physical to the parent space
     if isAnalysis3D
         detJxxi = 1.*area;
     else
         detJxxi = 2.*area;
     end
     
-    %% 7iv. Compute the tangent stiffness, the mass matrix and the body force vector on the Gauss Point
+    %% 8iv. Compute the tangent stiffness, the mass matrix and the body force vector on the Gauss Point
     [KLineaElOnGP, KNLineaElOnGP, massMtxElOnGP, FBodyElOnGP] = ...
         computeFEMVMSStabElTangentStiffMtxMassMtxLoadVctNLinear4NSE ...
         (xGP(1, 1), xGP(1, 2), xGP(1, 3), t, upEl, uMeshALEEL, dN, ...
         computeBodyForces, propParameters, h, propFldDynamics, isAnalysis3D);
 
-    %% 7v. Compute the load vector corresponding to the body force vector of the system
+    %% 8v. Compute the load vector corresponding to the body force vector of the system
     if norm(FBodyElOnGP) ~= 0
         FBody(EFT) = FBodyElOnGP(EFT) + FBodyElOnGP*GW(iGP)*detJxxi;
     end
     
-    %% 7vi. Add the contributions from the Gauss point
+    %% 8vi. Add the contributions from the Gauss point
     KLineaEl = KLineaEl + pstimes(KLineaElOnGP*GW(iGP), detJxxi);
     KNLineaEl = KNLineaEl + pstimes(KNLineaElOnGP*GW(iGP), detJxxi);
     if strcmp(propFldDynamics.timeDependence, 'TRANSIENT')
@@ -287,7 +294,7 @@ for iGP = 1:noGP
     FBodyEl = FBodyEl + FBodyElOnGP;
 end
 
-%% 8. Add the contribution from the Gauss Point and assemble to the global system
+%% 9. Add the contribution from the Gauss Point and assemble to the global system
 if strcmp(propFldDynamics.timeDependence, 'TRANSIENT')
     [KLinear, KNLinear, massMtx] = assembleSparseMatricies ...
         (EFT, numDOFs, numDOFsEl, KLineaEl, KNLineaEl, massMtxEl);
@@ -298,14 +305,14 @@ else
     error('wrong time dependence selected, see input file');
 end
 
-%% 9. Compute the system matrix corresponding to the Bossak time integration scheme
+%% 10. Compute the system matrix corresponding to the Bossak time integration scheme
 if strcmp(propFldDynamics.timeDependence, 'TRANSIENT')
     K = preFactor*massMtx + KLinear + KNLinear;
 elseif strcmp(propFldDynamics.timeDependence, 'STEADY_STATE')
     K = KLinear + KNLinear;
 end
 
-%% 10. Compute the right-hand side vector corresponding to the Bossak time integration scheme
+%% 11. Compute the right-hand side vector corresponding to the Bossak time integration scheme
 if strcmp(propFldDynamics.timeDependence, 'TRANSIENT')
     resVct = (preFactor*massMtx + KLinear)*up - (FBody + loadFactor*F) - ...
             ((1-propFldDynamics.alphaBeta)/propFldDynamics.gamma/ ...

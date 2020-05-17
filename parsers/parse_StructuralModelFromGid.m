@@ -71,9 +71,8 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %                            .nodeIDs : Global numbering of contact nodes
 %                       numberOfNodes : number of contact nodes
 %             propFSI : Structure containing information on Fluid-Structure
-%                       interaction
-%                       .coupledNodeIDs : Global numbering of the FSI nodes
-%                      .numCoupledNodes : Number of FSI coupled nodes
+%                       interaction,
+%                           .nodes : Global numbering of the FSI nodes
 %
 % Function layout :
 %
@@ -322,11 +321,9 @@ for k = 1:numel(block)
 end
 if ~isempty(out)
     out = out{1};
-    propFSI.coupledNodeIDs = cell2mat(out(:, 1));
-    propFSI.numCoupledNodes = length(propFSI.coupledNodeIDs);
+    propFSI.nodes = cell2mat(out(:, 1));
 else
-    propFSI.coupledNodeIDs = [];
-    propFSI.numCoupledNodes = 0;
+    propFSI.nodes = [];
 end
 
 %% 13. Get edge connectivity arrays for the Neumann edges
@@ -359,7 +356,6 @@ for i = 1:length(propNBC.nodes)
         end
     end
 end
-% propNBC.fctHandle = fctHandle;
 
 %% 14. Appendix
 if strcmp(outMsg, 'outputEnabled')

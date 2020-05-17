@@ -158,17 +158,19 @@ end
 for iEl = 1:length(strMsh.elements(:, 1))
     %% 2i. Get the element in the mesh
     element = strMsh.elements(iEl, 2:end);
+    [~, ~, element] = ...
+        intersect(element', strMsh.nodes(:, 1), 'rows', 'stable');
     
     %% 2ii. Get the nodes in the element
     node1 = strMsh.nodes(element(1, 1), 2:end);
-    node2 = strMsh.nodes(element(1, 2), 2:end);
-    node3 = strMsh.nodes(element(1, 3), 2:end);
+    node2 = strMsh.nodes(element(2, 1), 2:end);
+    node3 = strMsh.nodes(element(3, 1), 2:end);
     
     %% 2iii. Create an Element Freedom Table (EFT)
     EFT = zeros(numDOFsEl, 1);
     for iEFT = 1:numNodesEl
-        EFT(2*iEFT - 1) = 2*element(1, iEFT) - 1;
-        EFT(2*iEFT) = 2*element(1, iEFT);
+        EFT(2*iEFT - 1) = 2*element(iEFT, 1) - 1;
+        EFT(2*iEFT) = 2*element(iEFT, 1);
     end
     
     %% 2iv. Re-arrange the element displacement vector as [u1x u1y; u2x u2y; u3x u3y]

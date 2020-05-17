@@ -34,7 +34,7 @@ function testTransientSquareCavity(testCase)
 
 % Absolute tolerances
 absTol = 1e-15;
-absTol2 = 1e-15*1e2;
+absTol3 = 1e-15*1e3;
 
 %% 1. Parse data from GiD input file
 pathToCase = '../../inputGiD/FEMThermalConductionAnalysis/';
@@ -81,7 +81,8 @@ elseif strcmp(propThermalDynamics.method,'CRANK_NICOLSON')
     propThermalDynamics.computeUpdatedVct = ...
         @computeBETITransientUpdatedVctAccelerationField;
 else
-    error('Invalid time integration method selected in propStrDynamics.method as %s',propThermalDynamics.method);
+    error('Invalid time integration method selected in propStrDynamics.method as %s', ...
+        propThermalDynamics.method);
 end
 
 % Define the initial condition function 
@@ -148,7 +149,7 @@ expSolResultantNumerical = 1.0e+02*[   3.000000000000000
 expSolMinElSize = 0.062500000000000;
 
 %% 7. Verify the results
-testCase.verifyEqual(resultantNumerical, expSolResultantNumerical,'AbsTol', absTol2);
+testCase.verifyEqual(resultantNumerical, expSolResultantNumerical,'AbsTol', absTol3);
 testCase.verifyEqual(minElSize,expSolMinElSize,'AbsTol',absTol);
 
 end

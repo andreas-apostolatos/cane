@@ -40,26 +40,28 @@ function massMtx = computeMassMtxFEMPlateInMembraneActionCST ...
 %
 % 0. Read input
 %
-% 1. Create the element freedom tables for all elements at once
+% 1. Get the index of the nodes of each element in the array of nodes
 %
-% 2. Get the coordinates of the nodes in a matrix form
+% 2. Create the element freedom tables for all elements at once
 %
-% 3. Numnerical quadrature
+% 3. Get the coordinates of the nodes in a matrix form
 %
-% 4. Loop over all the quadrature points
+% 4. Numnerical quadrature
+%
+% 5. Loop over all the quadrature points
 % ->
-%    4i. Transform the Gauss Point location from the parameter to the physical space
+%    5i. Transform the Gauss Point location from the parameter to the physical space
 %
-%   4ii. Compute the basis functions and their derivatives at the Gauss Point
+%   5ii. Compute the basis functions and their derivatives at the Gauss Point
 %
-%  4iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
+%  5iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
 %
-%   4iv. Form the basis functions matrix at the Gauss Point page-wise
+%   5iv. Form the basis functions matrix at the Gauss Point page-wise
 %
-%    4v. Compute the element mass matrices at the Gauss point page-wise
+%    5v. Compute the element mass matrices at the Gauss point page-wise
 % <-
 %
-% 5. Assemble to the global mass matrix
+% 6. Assemble to the global mass matrix
 %
 %% Functions main body
 
@@ -84,26 +86,27 @@ numDOFsPerNode = 2;
 numDOFsEl = 2*numNodesEl;
 
 % Initialize output
-% massMtx = zeros(numDOFs,numDOFs);
-
 massMtxEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
 
-%% 1. Create the element freedom tables for all elements at once
+%% 1. Get the index of the nodes of each element in the array of nodes
+[~, idx] = ismember(strMsh.elements(:, 2:numNodesEl + 1), strMsh.nodes(:, 1));
+
+%% 2. Create the element freedom tables for all elements at once
 EFT = zeros(numDOFsEl, numElmnts);
 for iEFT = 1:numNodesEl
     for iDOFsPerNode = 1:numDOFsPerNode - 1
-        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*strMsh.elements(:, iEFT+1)';
+        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*idx(:, iEFT)';
         EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - iDOFsPerNode), :) = ...
             EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - iDOFsPerNode);
     end
 end
 
-%% 2. Get the coordinates of the nodes in a matrix form
-nodes1 = strMsh.nodes(strMsh.elements(:, 2), 2:end);
-nodes2 = strMsh.nodes(strMsh.elements(:, 3), 2:end);
-nodes3 = strMsh.nodes(strMsh.elements(:, 4), 2:end);
+%% 3. Get the coordinates of the nodes in a matrix form
+nodesI = strMsh.nodes(idx(:, 1), 2:end);
+nodesJ = strMsh.nodes(idx(:, 2), 2:end);
+nodesK = strMsh.nodes(idx(:, 3), 2:end);
 
-%% 3. Numnerical quadrature
+%% 4. Numnerical quadrature
 if strcmp(propGaussInt.type, 'default')
     numGP = 2;
 elseif strcmp(propGaussInt.type, 'user')
@@ -111,31 +114,31 @@ elseif strcmp(propGaussInt.type, 'user')
 end
 [GP, GW] = getGaussRuleOnCanonicalTriangle(numGP);
 
-%% 4. Loop over all the quadrature points
+%% 5. Loop over all the quadrature points
 for iGP = 1:numGP
-    %% 4i. Transform the Gauss Point location from the parameter to the physical space
-    xGP = GP(iGP, 1)*nodes1 + GP(iGP, 2)*nodes2 + (1 - GP(iGP, 1) - GP(iGP, 2))*nodes3;
+    %% 5i. Transform the Gauss Point location from the parameter to the physical space
+    xGP = GP(iGP, 1)*nodesI + GP(iGP, 2)*nodesJ + (1 - GP(iGP, 1) - GP(iGP, 2))*nodesK;
     
-    %% 4ii. Compute the basis functions and their derivatives at the Gauss Point
+    %% 5ii. Compute the basis functions and their derivatives at the Gauss Point
     [dN, area] = computeCST2DBasisFunctionsAndFirstDerivatives ...
-            (nodes1, nodes2, nodes3, xGP(:, 1, :), xGP(:, 2, :));
+            (nodesI, nodesJ, nodesK, xGP(:, 1, :), xGP(:, 2, :));
     
-    %% 4iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
+    %% 5iii. Compute the determinant of the Jacobian for the transformation from the physical to the parameter spce
     detJxxi = 2*area;
     
-	%% 4iv. Form the basis functions matrix at the Gauss Point page-wise
+	%% 5iv. Form the basis functions matrix at the Gauss Point page-wise
     N = zeros(numElmnts, 2, numDOFsEl);
     for i = 1:numNodesEl
         N(:, 1, 2*i - 1) = dN(:, i, 1);
         N(:, 2, 2*i) = dN(:, i, 1);
     end
     
-    %% 4v. Compute the element mass matrices at the Gauss point page-wise
+    %% 5v. Compute the element mass matrices at the Gauss point page-wise
     massMtxEl = massMtxEl + ...
            pstimes(pmtimes(ptranspose(N), N)*propParameters.rho*GW(iGP), detJxxi);
 end
 
-%% 5. Assemble to the global mass matrix
+%% 6. Assemble to the global mass matrix
 [massMtx] = assembleSparseMatricies(EFT, numDOFs, numDOFsEl, massMtxEl);
 
 end
