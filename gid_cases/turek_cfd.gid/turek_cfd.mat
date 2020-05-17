@@ -1,0 +1,50 @@
+BOOK:Solids
+NUMBER: 1 MATERIAL: Steel
+QUESTION: Type#CB#(Lin-Elast-Isotropic,Heat-Transfer,whatever)
+VALUE: Lin-Elast-Isotropic
+DEPENDENCIES: (Lin-Elast-Isotropic,RESTORE,Density,#CURRENT#,RESTORE,Young_Modulus,#CURRENT#,RESTORE,Poisson_Ratio,#CURRENT#,RESTORE,Thickness,#CURRENT#,HIDE,Thermal_Conductivity,#CURRENT#,HIDE,Specific_Heat,#CURRENT#)
+DEPENDENCIES: (Heat-Transfer,RESTORE,Density,#CURRENT#,RESTORE,Thermal_Conductivity,#CURRENT#,RESTORE,Specific_Heat,#CURRENT#,HIDE,Young_Modulus,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#,HIDE,Thickness,#CURRENT#)
+DEPENDENCIES: (whatever,HIDE,Density,#CURRENT#,HIDE,Young_Modulus,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#,HIDE,Thickness,#CURRENT#,HIDE,Thermal_Conductivity,#CURRENT#,HIDE,Specific_Heat,#CURRENT#)
+QUESTION: Density
+VALUE: 7750
+QUESTION: Young_Modulus
+VALUE: 210000
+QUESTION: Poisson_Ratio
+VALUE: 0.333
+QUESTION: Thickness
+VALUE: 1.0
+QUESTION: Thermal_Conductivity
+VALUE: 50
+QUESTION: Specific_Heat
+VALUE: 420
+END MATERIAL
+NUMBER: 2 MATERIAL: Aluminium
+QUESTION: Type#CB#(Lin-Elast-Isotropic,Heat-Transfer,whatever)
+VALUE: Lin-Elast-Isotropic
+DEPENDENCIES: (Lin-Elast-Isotropic,RESTORE,Density,#CURRENT#,RESTORE,Young_Modulus,#CURRENT#,RESTORE,Poisson_Ratio,#CURRENT#,RESTORE,Thickness,#CURRENT#,HIDE,Thermal_Conductivity,#CURRENT#,HIDE,Specific_Heat,#CURRENT#)
+DEPENDENCIES: (Heat-Transfer,RESTORE,Density,#CURRENT#,RESTORE,Thermal_Conductivity,#CURRENT#,RESTORE,Specific_Heat,#CURRENT#,HIDE,Young_Modulus,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#,HIDE,Thickness,#CURRENT#)
+DEPENDENCIES: (whatever,HIDE,Density,#CURRENT#,HIDE,Young_Modulus,#CURRENT#,HIDE,Poisson_Ratio,#CURRENT#,HIDE,Thickness,#CURRENT#,HIDE,Thermal_Conductivity,#CURRENT#,HIDE,Specific_Heat,#CURRENT#)
+QUESTION: Density
+VALUE: 2710
+QUESTION: Young_Modulus
+VALUE: 70000
+QUESTION: Poisson_Ratio
+VALUE: 0.333
+QUESTION: Thickness
+VALUE: 1.0
+QUESTION: Thermal_Conductivity
+VALUE: 205
+QUESTION: Specific_Heat
+VALUE: 887
+END MATERIAL
+BOOK:Fluids
+NUMBER: 3 MATERIAL: Water
+QUESTION: Type#CB#(Newtonian,whatever)
+VALUE: Newtonian
+DEPENDENCIES: (Newtonian,RESTORE,Density,#CURRENT#,RESTORE,Dynamic_Viscosity,#CURRENT#)
+DEPENDENCIES: (whatever,HIDE,Density,#CURRENT#,HIDE,Dynamic_Viscosity,#CURRENT#)
+QUESTION: Density
+VALUE: 1.0
+QUESTION: Dynamic_Viscosity
+VALUE: 1e-3
+END MATERIAL

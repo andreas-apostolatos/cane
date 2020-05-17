@@ -144,46 +144,46 @@ noNodes = length(fldMsh.nodes(:, 1));
 
 % Number of DOFs per node
 if strcmp(propAnalysis.type, 'NAVIER_STOKES_2D')
-    noDOFsPerNode = 3;
+    numDOFsPerNode = 3;
+    numNodesEl = 3;
     isAnalysis3D = false;
-    noNodesEl = 3;
 elseif strcmp(propAnalysis.type, 'NAVIER_STOKES_3D')
-    noDOFsPerNode = 4;
+    numDOFsPerNode = 4;
+    numNodesEl = 4;
     isAnalysis3D = true;
-    noNodesEl = 4;
 else
     error('Wrong analysis type specified')
 end
 
 % Total number of elements in the mesh
-noElmnts = length(fldMsh.elements(:, 1));
+numElmnts = length(fldMsh.elements(:, 1));
 
 % Total number of degrees of freedom
-noDOFs = noDOFsPerNode*noNodes;
+numDOFs = numDOFsPerNode*noNodes;
 
 % Number of degrees of freedom per element
-noDOFsEl = noDOFsPerNode*noNodesEl;
+numDOFsEl = numDOFsPerNode*numNodesEl;
 
 % Initialize arrays
-KLineaEl = zeros(noElmnts, noDOFsEl, noDOFsEl);
-KNLineaEl = zeros(noElmnts, noDOFsEl, noDOFsEl);
-massMtxEl = zeros(noElmnts, noDOFsEl, noDOFsEl);
-FBodyEl = zeros(noDOFsEl, 1);
+KLineaEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
+KNLineaEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
+massMtxEl = zeros(numElmnts, numDOFsEl, numDOFsEl);
+FBodyEl = zeros(numDOFsEl, 1);
 
 % Compute a nessecary pre-factor for the Bossak time integration scheme
 preFactor = (1 - propFldDynamics.alphaBeta)/propFldDynamics.gamma/ ...
     propFldDynamics.dt;
 
 % Initialize the global body force vector
-FBody = zeros(noDOFs, 1);
+FBody = zeros(numDOFs, 1);
 
 %% 1. Create the element freedom tables for all elements at once
-EFT = zeros(noDOFsEl, noElmnts);
-for iEFT = 1:noNodesEl
-    for counterDOFsPerNode = 1:noDOFsPerNode - 1
-        EFT(noDOFsPerNode*iEFT, :) = noDOFsPerNode*fldMsh.elements(:, iEFT+1)';
-        EFT(noDOFsPerNode*iEFT - (noDOFsPerNode - counterDOFsPerNode), :) = ...
-            EFT(noDOFsPerNode*iEFT, :) - (noDOFsPerNode - counterDOFsPerNode);
+EFT = zeros(numDOFsEl, numElmnts);
+for iEFT = 1:numNodesEl
+    for iDOFsPerNode = 1:numDOFsPerNode - 1
+        EFT(numDOFsPerNode*iEFT, :) = numDOFsPerNode*fldMsh.elements(:, iEFT+1)';
+        EFT(numDOFsPerNode*iEFT - (numDOFsPerNode - iDOFsPerNode), :) = ...
+            EFT(numDOFsPerNode*iEFT, :) - (numDOFsPerNode - iDOFsPerNode);
     end
 end
 
@@ -194,7 +194,7 @@ upEl = up(EFT);
 if ~ischar(uMeshALE)
     uMeshALEEL = uMeshALE(EFT);
 else
-    uMeshALEEL = zeros(noDOFsEl, 1);
+    uMeshALEEL = zeros(numDOFsEl, 1);
 end
 
 %% 4. Get the coordinates of the nodes in a matrix form
@@ -230,15 +230,11 @@ end
 minElEdgeSize = min(h);
 
 %% 6. Choose an integration rule
-
-% Get the number of Gauss Points in xi and eta directions
 if strcmp(propGaussInt.type, 'default')
     noGP = 1;
 elseif strcmp(propGaussInt.type, 'user')
     noGP = propGaussInt.domainNoGP;
 end
-
-% Get the Gauss Point coordinates a weights
 if isAnalysis3D
     [GP, GW] = getGaussRuleOnCanonicalTetrahedron(noGP);
 else
@@ -294,10 +290,10 @@ end
 %% 8. Add the contribution from the Gauss Point and assemble to the global system
 if strcmp(propFldDynamics.timeDependence, 'TRANSIENT')
     [KLinear, KNLinear, massMtx] = assembleSparseMatricies ...
-        (EFT, noDOFs, noDOFsEl, KLineaEl, KNLineaEl, massMtxEl);
+        (EFT, numDOFs, numDOFsEl, KLineaEl, KNLineaEl, massMtxEl);
 elseif strcmp(propFldDynamics.timeDependence, 'STEADY_STATE')
     [KLinear, KNLinear] = assembleSparseMatricies ...
-        (EFT, noDOFs, noDOFsEl, KLineaEl, KNLineaEl);
+        (EFT, numDOFs, numDOFsEl, KLineaEl, KNLineaEl);
 else
     error('wrong time dependence selected, see input file');
 end

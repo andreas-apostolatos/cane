@@ -1,4 +1,4 @@
-function [GP,GW] = getGaussRuleOnCanonicalTriangle(polOrder)
+function [GP, GW] = getGaussRuleOnCanonicalTriangle(polOrder)
 %% Licensing
 %
 % License:         BSD License

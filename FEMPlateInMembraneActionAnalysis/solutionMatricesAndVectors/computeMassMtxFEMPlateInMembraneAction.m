@@ -1,5 +1,5 @@
-function [massMtx] = computeMassMtxFEMPlateInMembraneAction...
-    (analysis, mesh, parameters, gaussInt)
+function massMtx = computeMassMtxFEMPlateInMembraneAction ...
+    (analysis, strMsh, propParameters, propGaussInt)
 %% Licensing
 %
 % License:         BSD License
@@ -15,9 +15,15 @@ function [massMtx] = computeMassMtxFEMPlateInMembraneAction...
 %               Input :
 %            analysis : Information on the analysis type
 %                           .type : Analysis type
-%                mesh : The nodes and the elements of the underlying mesh
-%          parameters : The parameters the physical field
-%            gaussInt : On the spatial integration
+%              strMsh : The nodes and the elements of the underlying mesh
+%      propParameters : Structure containing information on the material 
+%                       parameters,
+%                           .nue : Density
+%                             .E : Young's modulus
+%                           .nue : Poisson ratio
+%                             .t : Thickness
+%        propGaussInt : Structure containing information on the numerical 
+%                       integration,
 %                           .type : 'default', 'user'
 %                     .domainNoGP : Number of Gauss Points for the domain 
 %                                   integration
@@ -25,7 +31,7 @@ function [massMtx] = computeMassMtxFEMPlateInMembraneAction...
 %                                   integration            
 %            
 %              Output :
-%             massMtx : The mass matrix of the system
+%             massMtx : The mass matrix
 %
 % Function layout :
 %
@@ -60,54 +66,54 @@ function [massMtx] = computeMassMtxFEMPlateInMembraneAction...
 %% 0. Read input
 
 % Number of nodes in the mesh
-noNodes = length(mesh.nodes(:,1));
+numNodes = length(strMsh.nodes(:,1));
 
 % Number of DOFs in the mesh
-noDOFs = 2*noNodes;
+numDOFs = 2*numNodes;
 
 % Number of nodes at the element level
-noNodesEl = 3;
+numNodesEl = 3;
 
 % Number of DOFs at the element level
-noDOFsEl = 2*noNodesEl;
+numDOFsEl = 2*numNodesEl;
 
 % Initialize output
-massMtx = zeros(noDOFs,noDOFs);
+massMtx = zeros(numDOFs,numDOFs);
 
 %% 1. Numnerical quadrature
-if strcmp(gaussInt.type,'default')
-    noGP = 2;
-elseif strcmp(gaussInt.type,'user')
-    noGP = gaussInt.domainNoGP;
+if strcmp(propGaussInt.type, 'default')
+    numGP = 2;
+elseif strcmp(propGaussInt.type, 'user')
+    numGP = propGaussInt.domainNoGP;
 end
-[GP,GW] = getGaussRuleOnCanonicalTriangle(noGP);
+[GP, GW] = getGaussRuleOnCanonicalTriangle(numGP);
 
 %% 2. Loop over all the elements in the mesh
-for iElmnts = 1:length(mesh.elements(:,1))
+for iElmnts = 1:length(strMsh.elements(:, 1))
     %% 2i. Get the element in the mesh
-    element = mesh.elements(iElmnts,2:end);
+    element = strMsh.elements(iElmnts, 2:end);
     
     %% 2ii. Get the nodes in the element
-    Node1 = mesh.nodes(element(1,1),2:end);
-    Node2 = mesh.nodes(element(1,2),2:end);
-    Node3 = mesh.nodes(element(1,3),2:end);
+    nodeI = strMsh.nodes(element(1, 1), 2:end);
+    nodeJ = strMsh.nodes(element(1, 2), 2:end);
+    nodeK = strMsh.nodes(element(1, 3), 2:end);
     
     %% 2iii. Create an Element Freedom Table (EFT)
-    EFT = zeros(noDOFsEl,1);
-    for counterEFT = 1:noNodesEl
-        EFT(2*counterEFT-1) = 2*element(1,counterEFT)-1;
-        EFT(2*counterEFT) = 2*element(1,counterEFT);
+    EFT = zeros(numDOFsEl, 1);
+    for iEFT = 1:numNodesEl
+        EFT(2*iEFT - 1) = 2*element(1, iEFT) - 1;
+        EFT(2*iEFT) = 2*element(1, iEFT);
     end
     
     %% 2iv. Loop over the quadrature points
-    for iGP = 1:noGP
+    for iGP = 1:numGP
         %% 2iv.1. Transform the Gauss Point location from the parameter to the physical space
-        XGP = GP(iGP,1)*Node1(1,:) + GP(iGP,2)*Node2(1,:) + ...
-            (1-GP(iGP,1)-GP(iGP,2))*Node3(1,:);
+        XGP = GP(iGP, 1)*nodeI(1, :) + GP(iGP, 2)*nodeJ(1, :) + ...
+            (1 - GP(iGP, 1) - GP(iGP, 2))*nodeK(1, :);
         
         %% 2iv.2. Compute the basis functions and their derivatives at the Gauss Point
-        [dN,Area,isInside] = computeCST2DBasisFunctionsAndFirstDerivatives...
-            (Node1,Node2,Node3,XGP(1,1),XGP(1,2));
+        [dN, Area, isInside] = computeCST2DBasisFunctionsAndFirstDerivatives ...
+            (nodeI, nodeJ, nodeK, XGP(1, 1), XGP(1, 2));
         if ~isInside
             error('Gauss point coordinates found outside the CST triangle');
         end
@@ -116,11 +122,12 @@ for iElmnts = 1:length(mesh.elements(:,1))
         DetJxxi = 2*Area;
         
         %% 2iv.4. Compute the element mass matrix at the Gauss Point
-        NMtx = [dN(1,1) 0       dN(2,1) 0       dN(3,1) 0
-                0       dN(1,1) 0       dN(2,1) 0       dN(3,1)];
+        NMtx = [dN(1, 1) 0        dN(2, 1) 0        dN(3, 1) 0
+                0        dN(1, 1) 0        dN(2, 1) 0        dN(3, 1)];
         
         %% 2iv.5. Assemble the local mass matrix global mass matrix via the EFT
-        massMtx(EFT,EFT) = massMtx(EFT,EFT) + parameters.rho*(NMtx'*NMtx)*DetJxxi*GW;
+        massMtx(EFT, EFT) = massMtx(EFT, EFT) + ...
+            propParameters.rho*(NMtx'*NMtx)*DetJxxi*GW(iGP, 1);
     end
 end
 

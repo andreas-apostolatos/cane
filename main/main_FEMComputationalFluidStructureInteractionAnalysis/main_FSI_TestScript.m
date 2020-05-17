@@ -64,7 +64,8 @@ addpath([path_prefix 'efficientComputation/']);
 
 %% Parse the data from the GiD input file
 pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
-caseName = 'testTurek';
+% caseName = 'testTurek';
+caseName = 'turek_fsi';
 
 % Parse fluid model from GiD
 [fldMsh, homDOFsFld, inhomDOFsFld, valuesInhomDOFsFld, propALE, ~, ...

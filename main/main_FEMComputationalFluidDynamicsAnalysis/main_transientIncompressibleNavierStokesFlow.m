@@ -73,7 +73,8 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 % caseName = 'semisphereEl150000';
 % caseName = 'squareObstacleInFlow';
 % caseName = 'flowAroundSquareObjectBoundaryLayerPowerLaw'; % problemZero, needs then ALE module
-caseName = 'cane_logo';
+% caseName = 'cane_logo';
+caseName = 'turek_cfd';
 
 % Parse the data
 [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...

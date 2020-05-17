@@ -1,12 +1,12 @@
-BeginZE C:/Users/marki/Desktop/testTurek.gid/testTurek.vv
-   x -0.0635006874799728394 1.08418989181518555
-   y 0.453460931777954102 -0.0636242777109146118
-   z -4.14578104019165039 4.14578104019165039
+BeginZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/testTurek.gid/testTurek.vv
+   x -0.0727411508560180664 2.77812576293945312
+   y 1.03900432586669922 -0.547282934188842773
+   z -2.02082967758178711 2.02082967758178711
    e 1.3819270133972168
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 0.296607464551925659 0.200824394822120667 0
+   c 0.606011152267456055 0.202353715896606445 0
    pd 0
    pno 0
    pfo 0
@@ -29,7 +29,7 @@ BeginZE C:/Users/marki/Desktop/testTurek.gid/testTurek.vv
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE C:/Users/marki/Desktop/testTurek.gid/testTurek.vv
+EndZE /home/andreas/FEAPStructuralAnalysisInstituteTUM/cane/gid_cases/testTurek.gid/testTurek.vv
 
 BeginMirror
    Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror

@@ -359,7 +359,7 @@ for i = 1:length(propNBC.nodes)
         end
     end
 end
-propNBC.fctHandle = fctHandle;
+% propNBC.fctHandle = fctHandle;
 
 %% 14. Appendix
 if strcmp(outMsg, 'outputEnabled')

@@ -56,13 +56,17 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 
-caseName = 'curvedPlateTipShearPlaneStressTransient';
+% caseName = 'curvedPlateTipShearPlaneStressTransient';
 % caseName = 'cantileverBeamPlaneStressTransientNLinear';
+caseName = 'turek_csd';
 
 % Parse the data from the GiD input file
 [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, propAnalysis, ...
     parameters, propNLinearAnalysis, propStrDynamics, propGaussInt] = ...
     parse_StructuralModelFromGid(pathToCase, caseName, 'outputEnabled');
+
+% Define traction vector
+propNBC.tractionLoadVct = [0; -1e1; 0];
 
 %% UI
 
@@ -76,7 +80,7 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 computeInitCnds = @computeInitCndsFEMPlateInMembraneAction;
 
 % Define the amplitude of the externally applied load and time duration
-propNBC.tractionVector = [-1e2; 0; 0];
+propNBC.tractionVector = [-1e-1; 0; 0];
 propNBC.endTime = 1;
 
 % Assign the function handles for the computation of the stiffness matrix 
@@ -99,7 +103,8 @@ if isLinear
     computeProblemMatricesSteadyState = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
     solve_FEMSystem = @solve_FEMLinearSystem;
 else
-    computeProblemMatricesSteadyState = @computeTangentStiffMtxResVctFEMPlateInMembraneAction;
+%     computeProblemMatricesSteadyState = @computeTangentStiffMtxResVctFEMPlateInMembraneAction;
+    computeProblemMatricesSteadyState = @computeTangentStiffMtxResVctFEMPlateInMembraneActionCST;
     solve_FEMSystem = @solve_FEMNLinearSystem;
 end
 

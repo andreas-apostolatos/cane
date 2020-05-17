@@ -174,15 +174,15 @@ end
 %% 5. Compute the material matrices for each element
 C = zeros(numElmnts, 3, 3);
 if strcmp(propAnalysis.type, 'planeStress')
-    preFactor = propParameters.E/(1-propParameters.nue^2);
-    CEl = preFactor*[1              propParameters.nue 0
-                     propParameters.nue 1              0
-                     0              0             (1 - propParameters.nue)/2];
+    preFactor = propParameters.E/(1 - propParameters.nue^2);
+    CEl = preFactor*[1                      propParameters.nue 0
+                     propParameters.nue 1                      0
+                     0                      0                  (1 - propParameters.nue)/2];
 elseif strcmp(propAnalysis.type, 'planeStrain')
-    preFactor = propParameters.E*(1 - propParameters.nue)/(1+propParameters.nue)/(1 - 2*propParameters.nue);
-    CEl = preFactor*[1                                   propParameters.nue/(1 - propParameters.nue) 0
-                     propParameters.nue/(1 - propParameters.nue) 1                                   0
-                     0                                   0                                   (1 - 2*propParameters.nue)/2/(1 - propParameters.nue)];
+    preFactor = propParameters.E*(1 - propParameters.nue)/(1 + propParameters.nue)/(1 - 2*propParameters.nue);
+    CEl = preFactor*[1                                              propParameters.nue/(1 - propParameters.nue) 0
+                     propParameters.nue/(1 - propParameters.nue) 1                                              0
+                     0                                              0                                           (1 - 2*propParameters.nue)/2/(1 - propParameters.nue)];
 else
     error('Select a valid analysis type in analysis.type');
 end
