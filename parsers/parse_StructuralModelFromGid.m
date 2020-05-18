@@ -260,6 +260,10 @@ numDBCNodes = length(out)/(numDOFsNodeGiD + 1);
 for i = 1:numDBCNodes
     % Get the Dirichlet node ID
     nodeID = out((numDOFsNodeGiD + 1)*i-numDOFsNodeGiD);
+    nodeID = find(nodeID == strMsh.nodes(:, 1));
+    if isempty(nodeID)
+        error('The ID of the node is not found in the array of nodes');
+    end
     
     % Get the x-component of the prescribed value
     for j = 1:numDOFsPerNode

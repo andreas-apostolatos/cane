@@ -1,4 +1,4 @@
-function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
+function [thrMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
     propAnalysis, propParameters, propNLinearAnalysis, propThermalDynamics, ...
     propGaussInt] = parse_ThermalModelFromGid(pathToCase, caseName, outMsg)
 %% Licensingprop
@@ -20,7 +20,8 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %              outMsg : On the output information on the command window
 %
 %              Output :
-%              strMsh : On the structural mesh   
+%              thrMsh : Structure containing information on the thermal 
+%                       mesh,
 %                           .nodes : The nodes in the FE mesh
 %                        .elements : The elements in the FE mesh
 %             homDOFs : The global numbering of the nodes where homogeneous
@@ -91,11 +92,11 @@ function [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, ...
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
-    fprintf('_____________________________________________________________\n');
-    fprintf('#############################################################\n');
-    fprintf('Parsing data from GiD input file for a heat transfer boundary\n');
-    fprintf('value problem has been initiated\n');
-    fprintf('_____________________________________________________________\n\n');
+    fprintf('_________________________________________________________\n');
+    fprintf('#########################################################\n');
+    fprintf('Parsing data from GiD input file for a thermal conduction\n');
+    fprintf('boundary value problem has been initiated\n');
+    fprintf('_________________________________________________________\n\n');
     tic;
 end
 
@@ -191,9 +192,9 @@ for k = 1:numel(block)
     out{k} = horzcat(out{k}{:});
 end
 out = cell2mat(out);
-strMsh.nodes = out(:, 1:4);
+thrMsh.nodes = out(:, 1:4);
 if strcmp(outMsg, 'outputEnabled')
-    fprintf('>> Number of nodes in the mesh: %d \n', length(strMsh.nodes(:, 1)));
+    fprintf('>> Number of nodes in the mesh: %d \n', length(thrMsh.nodes(:, 1)));
 end
 
 %% 8. Load the structural elements by connectivity arrays
@@ -206,9 +207,9 @@ for k = 1:numel(block)
 end
 out = cell2mat(out);
 noNodes = length(out(1, :));
-strMsh.elements = out(:, 1:noNodes);
+thrMsh.elements = out(:, 1:noNodes);
 if strcmp(outMsg, 'outputEnabled')
-    fprintf('>> Number of elements in the mesh: %d \n', length(strMsh.elements));
+    fprintf('>> Number of elements in the mesh: %d \n', length(thrMsh.elements));
 end
 
 %% 9. Load the nodes on which homogeneous Dirichlet boundary conditions are applied
@@ -238,6 +239,10 @@ numDBCNodes = length(out)/(numDOFsNodeGiD + 1);
 for i = 1:numDBCNodes
     % Get the Dirichlet node ID
     nodeID = out((numDOFsNodeGiD + 1)*i - numDOFsNodeGiD);
+    nodeID = find(nodeID == thrMsh.nodes(:, 1));
+    if isempty(nodeID)
+        error('The ID of the node is not found in the array of nodes');
+    end
     
     % Get the x-component of the prescribed value
     for j = 1:numDOFsNode
@@ -295,8 +300,8 @@ for i = 1:length(propNBC.nodes)
         nodeJ = propNBC.nodes(j);
 
         % Find the element indices to which the nodes belong
-        [indexI, ~] = find(nodeI == strMsh.elements(:,2:end));
-        [indexJ, ~] = find(nodeJ == strMsh.elements(:,2:end));
+        [indexI, ~] = find(nodeI == thrMsh.elements(:,2:end));
+        [indexJ, ~] = find(nodeJ == thrMsh.elements(:,2:end));
 
         % Find the common elements to which the nodes belong to
         [idComElmnt, ~] = intersect(indexI, indexJ);
@@ -317,8 +322,8 @@ end
 if strcmp(outMsg,'outputEnabled')
     computationalTime = toc;
     fprintf('\nParsing took %.2d seconds \n\n', computationalTime);
-    fprintf('_________________________Parsing Ended__________________________\n');
-    fprintf('################################################################\n\n\n');
+    fprintf('_______________________Parsing Ended________________________\n');
+    fprintf('############################################################\n\n\n');
 end
 
 end

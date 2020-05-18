@@ -1,0 +1,555 @@
+function [up, dHat, upDot, dDot, upDDot, dDDot, resVctFld, resVctStr, ...
+    fldMsh, strMsh, FFSIFld, FFSIStr, minElSizeFld, minElSizeStr] = ...
+    solve_FEMFluidStructureInteractionPartitionedGaussSeidel ...
+    (propAnalysisFld, propAnalysisStr, upSaved, dSaved, ...
+    upDotSaved, dDotSaved, upDDotSaved, dDDotSaved, ...
+    fldMsh, strMsh, FFld, FStr, FFSIFld, FFSIStr, computeBodyForceVctFld, ...
+    computeBodyForceVctStr, propParametersFld, propParametersStr, up, dHat, ...
+    upDot, dDot, upDDot, dDDot, massMtxFld, massMtxStr, dampMtxFld, ...
+    dampMtxStr, precompStiffMtxFld, precompStiffMtxStr, precomResVctFld, ...
+    precomResVctStr, computeMtxSteadyStateFld, computeMtxSteadyStateStr, ...
+    solve_FEMEquationSystemFld, solve_FEMEquationSystemStr, ...
+    DOFNumberingFld, DOFNumberingStr, freeDOFsFld, freeDOFsStr, homDOFsFld, ...
+    homDOFsStr, inhomDOFsFld, inhomDOFsStr, valuesInhomDOFsFld, ...
+    valuesInhomDOFsStr, propALE, propALEStr, computeUpdatedMeshFld, ...
+    computeUpdatedMeshStr, solve_LinearSystemFld, solve_LinearSystemStr, ...
+    propFldDynamics, propStrDynamics, t, propNLinearAnalysisFld, ...
+    propNLinearAnalysisStr, propFSIFld, propFSIStr, propFSI, propPostProcFld, ...
+    propPostProcStr, propGaussIntFld, propGaussIntStr, tab, outMsg)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
+%% Function documentation
+%
+% Returns the converged solution for the coupled fluid-structure
+% interaction iterations using the partitioned Gauss-Seidel approach. The
+% approaches assumes a fully flexible two-dimensional structure.
+%
+%                      Input :
+%              fldMsh,strMsh : Structures containing the fluid and the
+%                              structural meshes,
+%                            .initialNodes : Initial nodes in the finite
+%                                            element mesh
+%                                   .nodes : Current nodes in the finite
+%                                            element mesh
+%                                .elements : Elements in the finite element
+%                                            mesh
+%                  FFld,FStr : Externally applied load vectors for the 
+%                              fluid and the structural problems
+%            FFSIFld,FFSIStr : Interface forces vectors from the previous
+%                              Gauss-Seidel coupling iterations
+%     computeBodyForceVctFld : Function handle to the computation of the 
+%                              body forces for the structural problem
+%     computeBodyForceVctStr : Function handle to the computation of the 
+%                              body forces for the fluid problem
+%          propParametersFld : Structure containing the flow parameters,
+%                                   .nue : Dynamic viscosity
+%          propParametersStr : Structure containing the material properties 
+%                              of the structure,
+%                                     .k : Spring stiffness (SDOF)
+%                                     .m : Spring mass (SDOF)
+%                                     .E : Young's modulus (MDOF)
+%                                   .nue : Poisson ratio (MDOF)
+%                                   .rho : Structural density (MDOF)
+%                                     .t : Structural thickness (MDOF)
+%                         up : Initial guess for the velocity/pressure 
+%                              field
+%                       dHat : Initial guess for the displacement field
+%                      upDot : Fluid acceleration field of the previous 
+%                              time step
+%                       dDot : Structural velocity field of the previous 
+%                              time step
+%                     upDDot : Dummy variable
+%                      dDDot : Structural accelration field of the previous
+%                              time step
+%                 massMtxFld : Fluid mass matrix (dummy for the VMS-
+%                              stabilized solver because the mass matrix is 
+%                              nonlinear to the primal solution field due 
+%                              to VMS stabilizaation)
+%                 massMtxStr : Structural mass matrix
+%                 dampMtxFld : Fluid damping matrix (dummy variable)
+%                 dampMtxStr : Structural damping matrix
+%         precompStiffMtxFld : Constant part of the fluid tangent stiffness 
+%                              matrix
+%         precompStiffMtxStr : Constant part of the structural tangent 
+%                              stiffness matrix
+%            precomResVctFld : Constant part of the fluid residual vector
+%            precomResVctStr : Constant part of the structural residual 
+%                              vector
+%   computeMtxSteadyStateFld : Function handle to the computation of the
+%                              steady-state tangent stiffness matrix and
+%                              residual vector for the fluid problem
+%   computeMtxSteadyStateStr : Function handle to the computation of the
+%                             steady-state tangent stiffness matrix and
+%                              residual vector for the structural problem
+%  solve_FEMEquationSystemFld : solve_FEMLinearSystem or
+%                               solver_FEMNLinearSystem
+%  solve_FEMEquationSystemStr : solve_FEMLinearSystem or
+%                               solver_FEMNLinearSystem
+%             DOFNumberingFld : Global numbering of the DOFs for the fluid
+%                               problem
+%             DOFNumberingStr : Global numbering of the DOFs for the
+%                               structural problem
+%     freeDOFsFld,freeDOFsStr : Vectors containing the free DOFs of the
+%                               fluid and the structural problems
+%       homDOFsFld,homDOFsStr : Vectors containing the global numbering of
+%                               the DOFs where homogeneneous Dirichlet
+%                               boundary conditions are applied
+%   inhomDOFsFld,inhomDOFsStr : Vectors containing the global numbering of
+%                               the DOFs where inhomogeneneous Dirichlet
+%                               boundary conditions are applied
+%          valuesInhomDOFsFld : Prescribed values of the DOFs on the 
+%                               inhomogeneous Dirichlet boundary of the
+%                               fluid
+%          valuesInhomDOFsStr : Prescribed values of the DOFs on the 
+%                               inhomogeneous Dirichlet boundary of the
+%                               structure
+%                     propALE : Structure containing information about the 
+%                               ALE motion of the fluid along the FSI
+%                               interface,
+%                                    .nodes : IDs of the fluid nodes on the 
+%                                             ALE boundary
+%                                .fctHandle : Function handles to the
+%                                             computation of the ALE motion
+%                                             at each node on the ALE
+%                                             boundary
+%                                             boundary
+%                                   .isFree : Vector of flags indicating
+%                                             whether the fluid motion is
+%                                             dictated by the ALE motion at
+%                                             each node on the ALE boundary
+%                  propALEStr : Dummy variable for this function
+%       computeUpdatedMeshFld : Function handle to the computation of the
+%                               updated mesh corresponding to the fluid ALE
+%                               formulation
+%       computeUpdatedMeshStr : Dummy variable for this function
+%       solve_LinearSystemFld : Function handle to the linear equation
+%                               system solver for the fluid problem
+%       solve_LinearSystemStr : Function handle to the linear equation
+%                               system solver for the structural problem
+%             propFldDynamics : Structure containing information on the 
+%                               fluid dynamics,
+%                                                 .method : The time 
+%                                                           integration 
+%                                                           method
+%                           .computeProblemMtrcsTransient : Function handle
+%                                                           to the
+%                                                           computation of
+%                                                           the transient
+%                                                           problem 
+%                                                           matrices
+%                                      .computeUpdatedVct : Function handle
+%                                                           to the update
+%                                                           of the solution 
+%                                                           and its time
+%                                                           derivatives
+%                                              .alphaBeta : Parameter for 
+%                                                           the Bossak 
+%                                                           scheme
+%                                                  .gamma : Parameter for 
+%                                                           the Bossak 
+%                                                           scheme
+%                                                 .TStart : Start time of 
+%                                                           the simulation
+%                                                   .TEnd : End time of the 
+%                                                           simulation
+%                                            .noTimeSteps : Number of time 
+%                                                           steps
+%                                                     .dt : Time step size
+%             propStrDynamics : Structure containing information on the 
+%                               structural dynamics,
+%                               .method : The time integration method
+%                           .computeProblemMtrcsTransient : Function handle
+%                                                           to the
+%                                                           computation of
+%                                                           the transient
+%                                                           problem 
+%                                                           matrices
+%                                      .computeUpdatedVct : Function handle
+%                                                           to the update
+%                                                           of the solution 
+%                                                           and its time
+%                                                           derivatives
+%                                                 .TStart : Start time of 
+%                                                           the simulation
+%                                                   .TEnd : End time of the 
+%                                                           simulation
+%                                            .noTimeSteps : Number of time 
+%                                                           steps
+%                                                     .dt : Time step size
+%                           t : Time instance
+%      propNLinearAnalysisFld : Structure containing information on the 
+%                               nonlinear fluid analysis,
+%                                 .method : The nonlinear solution scheme
+%                                    .eps : The residual tolerance
+%                                .maxIter : The maximum number of nonlinear
+%                                           iterations
+%      propNLinearAnalysisStr : Structure containing information on the 
+%                               nonlinear structural analysis,
+%                                 .method : The nonlinear solution scheme
+%                                    .eps : The residual tolerance
+%                                .maxIter : The maximum number of nonlinear
+%                                           iterations
+%                  propFSIFld : Structure containing information of the
+%                               structural wet surface,
+%                                .nodes : Global numbering of the nodes on
+%                                         the wet surface of the structure
+%                  propFSIStr : Structure containing information of the
+%                               fluid dry surface,
+%                                .nodes : Global numbering of the nodes on
+%                                         the dry surface of the fluid
+%                    propFSI : Structure containing information on the FSI
+%                              coupling algorithm,
+%                               .relaxation : Under-relaxation factor
+%                                      .tol : Relative residual tolerance
+%                                             on the displacement field
+%            propPostProcFld : Structure containing information on the
+%                              computation of postprocessing resultants for
+%                              the fluid problem,
+%                               .nameDomain : Name of the domain onto which
+%                                             postprocessing resultants are
+%                                             to be computed
+%                              .nodesDomain : IDs of the nodes which are on
+%                                             the selected domain
+%                          .computePostProc : Function handle to the
+%                                             computation of the desirable 
+%                                             resultant
+%            propPostProcStr : Structure containing information on the
+%                              computation of postprocessing resultants for
+%                              the structural problem,
+%                               .nameDomain : Name of the domain onto which
+%                                             postprocessing resultants are
+%                                             to be computed
+%                              .nodesDomain : IDs of the nodes which are on
+%                                             the selected domain
+%                          .computePostProc : Function handle to the
+%                                             computation of the desirable 
+%                                             resultant
+%            propGaussIntFld : Structure containing information on the
+%                              numerical integration for the fluid problem,
+%                              .type : 'default', 'user'
+%                        .domainNoGP : Number of Gauss Points for the 
+%                                      domain integration
+%                      .boundaryNoGP : Number of Gauss Points for the
+%                                      boundary integration
+%            propGaussIntStr : Structure containing information on the
+%                              numerical integration for the structural 
+%                              problem,
+%                              .type : 'default', 'user'
+%                        .domainNoGP : Number of Gauss Points for the 
+%                                      domain integration
+%                      .boundaryNoGP : Number of Gauss Points for the
+%                                      boundary integration
+%                                tab : Tabulation when outputting
+%                                      information on the command window
+%                             outMsg : Enables outputting information on
+%                                      the command window when chosen as
+%                                      'outputEnabled'
+%
+%                     Output :
+%                         up : The velocity/pressure fluid fields of the
+%                              coupled problem at the given time step
+%                          d : The displacement structural field of the
+%                              coupled problem at the given time step
+%                      upDot : The fluid acceleration field of the coupled
+%                              system at the given time step
+%                       dDot : The structural velocity field of the coupled
+%                              system at the given time step
+%                     upDDot : Variable containing dummy content
+%                      dDDot : The structural acceleration field of the
+%                              coupled system at the given time step
+%                  resVctFld : The complete fluid residual vector of the
+%                              coupled system at the given time step
+%                  resVctStr : The complete structural residual vector of
+%                              the coupled system at the given time step
+%                     fldMsh : The updated fluid mesh due to the mesh
+%                              motion
+%                     strMsh : The updated structural mesh (only makes 
+%                              sense for updated Lagrangian formulations)
+%                    FFSIFld : The forces acting on the fluid FSI interface
+%                              of the coupled system at the given time step
+%                    FFSIStr : The forces acting on the structural FSI 
+%                              interface of the coupled system at the given 
+%                              time step
+%               minElSizeFld : The minimum element edge size in the fluid
+%                              finite element mesh
+%               minElSizeStr : The minimume element edge size in the
+%                              structural finite element mesh
+%
+% Function layout :
+%
+% 0. Read input
+%
+% 1. Loop over all the Gauss-Seidel iterations
+% ->
+%    1i. Solve the CSD problem
+%
+%   1ii. Update the displacement of the CSD problem using a relaxation method
+%
+%  1iii. Compute the relative error based on the displacement field of the CSD problem
+%
+%   1iv. Print progress message
+%
+%    1v. Check convergence
+%
+%   1vi. Update the time derivatives of the CSD solution field
+%
+%  1vii. Solve the mesh motion problem and update the nodal coordinates and velocities
+%
+% 1viii. Solve the CFD problem
+%
+%   1ix. Update the time derivatives of the CFD solution fields
+%
+%    1x. Compute the forces acting on the FSI interface
+%
+%   1xi. Save the solution of the CSD problem at the current Gauss-Seidel iteration
+%
+%  1xii. Update the coupling iteration counter
+% <-
+%
+% 2. Check if the maximum number of Gauss-Seidel iterations has been exceeded
+%
+%% Function main body
+
+%% 0. Read input
+
+% Check the mass-spring system
+if ~strcmp(propAnalysisStr.type, 'planeStress') && ...
+        ~strcmp(propAnalysisStr.type, 'planeStrain')
+    error('Analysis type %s is not yet supported for fluid-structure interaction', ...
+            propAnalysisStr.type);
+end
+
+% Check if ALE motion for the fluid problem is defined
+isALE = false;
+if ~ischar(propALE)
+    if isstruct(propALE)
+        if ~isfield(propALE, 'nodes')
+            error('Structure propALE must defined member variable nodes');
+        else
+            numNodesALE = length(propALE.nodes(:, 1));
+        end
+        if ~isfield(propALE, 'fctHandle')
+            error('Structure propALE must defined member variable fctHandle');
+        else
+            numFctHandlesALE = length(propALE.fctHandle);
+        end
+        if ~isfield(propALE, 'isFree')
+            error('Structure propALE must defined member variable isFree');
+        else
+            numIsFreeALE = length(propALE.isFree(:, 1));
+        end
+        if numNodesALE ~= numFctHandlesALE || numNodesALE ~= numIsFreeALE || ...
+                numFctHandlesALE ~= numIsFreeALE
+            error('Arrays propALE.nodes, propALE.fctHandle and propALE.isFree must have the same length');
+        end
+        isALE = true;
+    end
+end
+if ~isALE
+    error('No ALE motion is defined for the fluid problem but fluid-structure interaction analysis is selected');
+end
+
+% Initialize dummy arrays
+uMeshALEStr = 'undefined';
+
+% Save the old Cartesian coordinates of the nodes in the fluid mesh
+nodesSaved = fldMsh.nodes;
+
+% Save arrays containing the global DOF numberings
+homDOFsFldSaved = homDOFsFld;
+inhomDOFsFldSaved = inhomDOFsFld;
+valuesInhomDOFsFldSaved = valuesInhomDOFsFld;
+freeDOFsFldSaved = freeDOFsFld;
+
+% Initialize coupling iteration counter
+counterCI = 1;
+
+%% 1. Loop over all the Gauss-Seidel iterations
+while counterCI <= propFSI.maxIter + 1
+    %% 1i. Solve the CSD problem
+    [dHat, resVctStr, ~, minElSizeStr] = ...
+        solve_FEMEquationSystemStr ...
+        (propAnalysisStr, dSaved, dDotSaved, dDDotSaved, strMsh, FStr + FFSIStr, ...
+        computeBodyForceVctStr, propParametersStr, dHat, dDot, dDDot, ...
+        massMtxStr, dampMtxStr, precompStiffMtxStr, precomResVctStr, ...
+        computeMtxSteadyStateStr, DOFNumberingStr, freeDOFsStr, ...
+        homDOFsStr, inhomDOFsStr, valuesInhomDOFsStr, uMeshALEStr, ...
+        solve_LinearSystemStr, propStrDynamics, t, propNLinearAnalysisStr, ...
+        propGaussIntStr, strcat(tab,'\t'), 'outputEnabled');
+    
+    %% 1ii. Update the displacement of the CSD problem using a relaxation method
+    if counterCI > 1
+        dHat = dHat*propFSI.relaxation + d_k*(1 - propFSI.relaxation);
+    end
+    
+    %% 1iii. Compute the relative error based on the displacement field of the CSD problem
+    if counterCI ~= 1
+        if norm(dSaved) > propFSI.tol
+            errCI = norm(dHat - d_k)/norm(dSaved);
+        else
+            errCI = norm(dHat - d_k);
+        end
+    end
+    
+    %% 1iv. Print progress message
+    if counterCI ~= 1
+        if strcmp(outMsg, 'outputEnabled')
+            msgCI = sprintf(strcat([tab '\t'], '\tCoupling iteration %d with relative error %d\n'), ...
+                counterCI - 1, errCI);
+            fprintf(msgCI);
+        end
+    end
+    
+    %% 1v. Check convergence
+    if counterCI ~= 1
+        if errCI < propFSI.tol
+            if strcmp(outMsg, 'outputEnabled')
+                fprintf('\n');
+            end
+            break;
+        end
+    end
+    
+    %% 1vi. Update the time derivatives of the CSD solution field
+    [dDot, dDDot] = propStrDynamics.computeUpdatedVct ...
+        (dHat, dSaved, dDotSaved, dDDotSaved, propStrDynamics);
+    
+    %% 1vii. Solve the mesh motion problem and update the nodal coordinates and velocities
+    
+    % Initialize dummy arrays
+    uSaved_pseudoStr = 'undefined'; 
+    uDotSaved_pseudoStr = 'undefined'; 
+    uDDotSaved_pseudoStr = 'undefined'; 
+    uDot_pseudoStr = 'undefined';
+    uDDot_pseudoStr = 'undefined';
+    massMtx_pseudoStr = 'undefined';
+    dampMtx_pseudoStr = 'undefined';
+    precompStiffMtx_pseudoStr = 'undefined';
+    precomResVct_pseudoStr = 'undefined';
+    propNLinearAnalysis_pseudoStr = 'undefined';
+    propStrDynamics_pseudoStr = 'undefined';
+%     tab = 'undefined';
+    propInt_pseudoStr.type = 'default';
+    propAnalysis_pseudoStr.type = 'planeStress';
+    
+    % The material properties of the pseudo-structural solver
+    parameters_pseudoStr.nue = 0;
+    parameters_pseudoStr.E = 1e3;
+
+    % Zero body forces
+    computeBodyForces_pseudoStr = @(x,y,z,t) zeros(length(x), 1, 3);
+    
+    numNodes = length(fldMsh.nodes(:, 1));
+    
+    uMeshALEFld = zeros(3*numNodes,1);
+    
+    numDOFs = 2*numNodes;
+    
+    [~, ~, nodeIdxALEFld] = intersect(propALE.nodes, fldMsh.nodes(:, 1), 'rows', 'stable');
+    homDOFs_pseudoStr = reshape(vertcat(2*nodeIdxALEFld' - 1, 2*nodeIdxALEFld'), 1, [])';
+    
+    [~, ~, nodeIdxFld] = intersect(propFSIFld.nodes, fldMsh.nodes(:, 1), 'rows', 'stable');
+    inhomDOFs_preudoStr = reshape(vertcat(2*nodeIdxFld' - 1, 2*nodeIdxFld'), 1, [])';
+    
+    [~, ~, nodeIdxStr] = intersect(propFSIStr.nodes, strMsh.nodes(:, 1), 'rows', 'stable');
+    DOFsIdx = reshape(vertcat(2*nodeIdxStr' - 1, 2*nodeIdxStr'), 1, [])';
+    valuesInhomDOFs_pseudoStr = dHat(DOFsIdx);
+    
+    DOFNumbering_presudoStr = 1:numDOFs;
+    
+    prescribedDOFs_pseudoStr = mergesorted(homDOFs_pseudoStr, inhomDOFs_preudoStr);
+    prescribedDOFs_pseudoStr = unique(prescribedDOFs_pseudoStr);
+    
+    freeDOFs_pseudoStr = DOFNumbering_presudoStr;
+    freeDOFs_pseudoStr(ismember(freeDOFs_pseudoStr, prescribedDOFs_pseudoStr)) = [];
+    
+    
+    dHatALE = zeros(numDOFs, 1);
+    
+    [dHatALE, ~, ~, ~] = solve_FEMLinearSystem...
+        (propAnalysis_pseudoStr, uSaved_pseudoStr, uDotSaved_pseudoStr, ...
+        uDDotSaved_pseudoStr, fldMsh, zeros(numDOFs, 1), ...
+        computeBodyForces_pseudoStr, parameters_pseudoStr, dHatALE, ...
+        uDot_pseudoStr, uDDot_pseudoStr, massMtx_pseudoStr, ...
+        dampMtx_pseudoStr, precompStiffMtx_pseudoStr, precomResVct_pseudoStr, ...
+        @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST, ...
+        DOFNumbering_presudoStr, freeDOFs_pseudoStr, ...
+        homDOFs_pseudoStr, inhomDOFs_preudoStr, valuesInhomDOFs_pseudoStr, ...
+        uMeshALEFld, solve_LinearSystemFld, propStrDynamics_pseudoStr, t, ...
+        propNLinearAnalysis_pseudoStr, propInt_pseudoStr, tab, '');
+
+    % Move the nodes on the mesh following the prescribed motion
+    fldMsh.nodes(:, 2) = fldMsh.initialNodes(:, 2) + dHatALE(1:2:end - 1, 1);
+    fldMsh.nodes(:, 3) = fldMsh.initialNodes(:, 3) + dHatALE(2:2:end, 1);
+    
+    % Prescribe the velocity on the FSI interface
+    uMeshALEFld(1:3:end - 2, 1) = (fldMsh.nodes(:, 2) - nodesSaved(:, 2))/propFldDynamics.dt;
+    uMeshALEFld(1:3:end - 1, 1) = (fldMsh.nodes(:, 3) - nodesSaved(:, 3))/propFldDynamics.dt;
+    
+    % Update the inhomogeneous DOFs of the fluid
+    inhomDOFsFld_FSI = reshape(vertcat(vertcat(3*nodeIdxFld' - 2, 3*nodeIdxFld' - 1), 3*nodeIdxFld'), 1, [])';
+    valuesInhomDOFsFld_FSI = uMeshALEFld(inhomDOFsFld_FSI);
+    
+    % Add the inhomogenoues DOFs from the FSI interface to the complete set
+    % of inhomogeneous DOFs
+    inhomDOFsFld = horzcat(inhomDOFsFld, inhomDOFsFld_FSI');
+    [inhomDOFsFld, idxSort] = sort(inhomDOFsFld);
+    
+    valuesInhomDOFsFld = horzcat(valuesInhomDOFsFld, valuesInhomDOFsFld_FSI');
+    valuesInhomDOFsFld = valuesInhomDOFsFld(idxSort);
+    
+    homDOFsFld(ismember(homDOFsFld, inhomDOFsFld)) = [];
+    prescribedDOFsFld = mergesorted(homDOFsFld, inhomDOFsFld);
+    freeDOFsFld(ismember(freeDOFsFld, prescribedDOFsFld)) = [];
+    
+    %% 1viii. Solve the CFD problem
+    [up, resVctFld, ~, minElSizeFld] = ...
+        solve_FEMEquationSystemFld ...
+        (propAnalysisFld, upSaved, upDotSaved, upDDotSaved, fldMsh, FFld, ...
+        computeBodyForceVctFld, propParametersFld, up, upDot, upDDot, ...
+        massMtxFld, dampMtxFld, precompStiffMtxFld, precomResVctFld, ...
+        computeMtxSteadyStateFld, DOFNumberingFld, freeDOFsFld, ...
+        homDOFsFld, inhomDOFsFld, valuesInhomDOFsFld, uMeshALEFld, ...
+        solve_LinearSystemFld, propFldDynamics, t, propNLinearAnalysisFld, ...
+        propGaussIntFld, strcat(tab,'\t'), 'outputEnabled');
+    
+    %% 1ix. Update the time derivatives of the CFD solution fields
+    [upDot, upDDot] = propFldDynamics.computeUpdatedVct ...
+        (up, upSaved, upDotSaved, upDDotSaved, propFldDynamics);
+    
+    %% 1x. Compute the forces acting on the FSI interface
+    
+    propPostProcFld.nameDomain{1} = 'drySurface';
+    propPostProcFld.nodesDomain{1} = nodeIdxFld;
+    propPostProcFld.computePostProc{1} = ...
+        'computeForceVctOnSelectedDomain';
+    
+    propPostProcFld = computePostProc ...
+        (resVctFld, propAnalysisFld, propParametersFld, propPostProcFld);
+    
+    FFSIFld = propPostProcFld.valuePostProc{1};
+    FFSIFld = reshape(vertcat(FFSIFld(1:3:end - 2, 1)', FFSIFld(2:3:end - 1, 1)'), 1, [])';
+    
+    FFSIStr(DOFsIdx) =  FFSIFld;
+    
+    %% 1xi. Save the solution of the CSD problem at the current Gauss-Seidel iteration
+    d_k = dHat;
+    
+    %% 1xii. Update the coupling iteration counter
+    counterCI = counterCI + 1;
+end
+
+%% 2. Check if the maximum number of Gauss-Seidel iterations has been exceeded
+if counterCI == propFSI.maxIter + 2    
+     if strcmp(outMsg, 'outputEnabled')
+        warning('Maximum number of coupling iterations has been reached');
+        fprintf('\n');
+     end
+end
+
+end

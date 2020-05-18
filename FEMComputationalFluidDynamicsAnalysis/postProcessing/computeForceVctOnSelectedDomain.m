@@ -1,4 +1,4 @@
-function F = computeResultingTotalForceOnSelectedDomain ...
+function F = computeForceVctOnSelectedDomain ...
     (analysis, nodesDomain, FComplete, parameters)
 %% Licensing
 %
@@ -10,7 +10,7 @@ function F = computeResultingTotalForceOnSelectedDomain ...
 %
 %% Function documentation
 %
-% Return total resulting force acting on the selected boundary.
+% Return the force vector on the nodes of the selected boundary.
 %
 %              Input :
 %           analysis : Analysis type and number of dimensions
@@ -24,11 +24,10 @@ function F = computeResultingTotalForceOnSelectedDomain ...
 %                      spatial dimension over the selected domain
 %
 %% Function main body
-F = zeros(analysis.noSpatialDimensions,1);
-DOFsDomain = analysis.noFields * nodesDomain - analysis.noSpatialDimensions;
-for k = 1:analysis.noSpatialDimensions
-    activeDOFsDomain = DOFsDomain + (k-1);
-    F(k,1) = -parameters.rho * sum(FComplete(activeDOFsDomain(1:end)));
-end
+
+DOFs = reshape(vertcat(vertcat(analysis.noFields*nodesDomain' - (analysis.noFields - 1), ...
+    analysis.noFields*nodesDomain' - (analysis.noFields - 2)), ...
+    analysis.noFields*nodesDomain' - (analysis.noFields - 3)), 1, [])';
+F = - parameters.rho*FComplete(DOFs, 1);
 
 end

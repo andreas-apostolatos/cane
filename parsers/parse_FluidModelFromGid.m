@@ -293,6 +293,10 @@ noDBCNodes = length(out)/(numDOFsNodeGiD + 1);
 for i = 1:noDBCNodes
     % Get the Dirichlet node ID
     nodeID = out((numDOFsNodeGiD + 1)*i - numDOFsNodeGiD);
+    nodeID = find(nodeID == fldMsh.nodes(:, 1));
+    if isempty(nodeID)
+        error('The ID of the node is not found in the array of nodes');
+    end
     
     % Get the x-component of the prescribed value
     for jCounter = 1:length(numDOFsNodeArray)
