@@ -83,6 +83,9 @@ numDOFs = noDOFsNode*numNodes;
 % Number of elements in the mesh
 [numElements, elementOrder] = size(fldMsh.elements(:,2:end));
 
+% Get the index of the nodes of each element in the array of nodes
+
+
 % Arrange the velocity and pressure field arranged into a 2D array as per
 % [[x-comp y-comp z-comp pressure],noNodes]
 if isAnalysis3D
@@ -111,10 +114,16 @@ if ( elementOrder == elOrder )
     fprintf(1, '  The output data will use linear elements.\n' );
 end
 
+% Get the indices of the nodes in the element list with respect to their
+% ordering in the nodes array (necessary step when the node IDs are not 
+% sequentially numbered starting from 1)
+[~, idxElements] = ...
+    ismember(fldMsh.elements(:, 2:elementOrder + 1), fldMsh.nodes(:, 1));
+
 % Re-arrange the element numbering to start from zero
 elements = zeros(elementOrder, numElements);
 elements(1:elementOrder, 1:numElements) = ...
-    fldMsh.elements(1:numElements, 2:elementOrder+1)' - 1;
+    idxElements(1:numElements, 1:elementOrder)' - 1;
 
 %% 1. Write out the data for the color plots
 

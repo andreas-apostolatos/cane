@@ -73,7 +73,10 @@ faceColor = [217 218 219]/255;
 %% 1. Plot the geometry together with the loads and the boundary conditions
 plot(2);
 hold on;
-trimesh(strMsh.elements(:,2:end), strMsh.nodes(:,2), strMsh.nodes(:,3), strMsh.nodes(:,4), ...
+[~, idxElements] = ismember(strMsh.elements(:, 2:end - 1), strMsh.nodes(:, 1));
+% trimesh(strMsh.elements(:,2:end), strMsh.nodes(:,2), strMsh.nodes(:,3), strMsh.nodes(:,4), ...
+%     'edgecolor', edgeColor, 'facecolor', faceColor);
+trimesh(idxElements, strMsh.nodes(:,2), strMsh.nodes(:,3), strMsh.nodes(:,4), ...
     'edgecolor', edgeColor, 'facecolor', faceColor);
 plot_boundaryConditionsOnMesh(strMsh, homDOFs, F);
 

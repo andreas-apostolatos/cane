@@ -1,5 +1,5 @@
 function writeOutputFEMThermalConductionAnalysisToVTK ...
-    (propAnalysis, propNLinearAnalysis, propTransientAnalysis, strMsh, ...
+    (propAnalysis, propNLinearAnalysis, propTransientAnalysis, thrMsh, ...
     parameters, d, dDot, dDDot, DOF4Output, caseName, pathToOutput, ...
     title, noTimeStep)
 %% Licensing
@@ -23,7 +23,7 @@ function writeOutputFEMThermalConductionAnalysisToVTK ...
 %                         .method : 'NEWTON_RAPHSON', 'UNDEFINED', etc
 % propTransientAnalysis : Properties of the transient analysis (dummy 
 %                         variable for this function)
-%                strMsh : Nodes and elements in the mesh
+%                thrMsh : Nodes and elements in the mesh
 %            parameters : The technical parameters of the problem
 %                     d : The solution (temperature) field
 %            dDot,dDDot : Dummy variables
@@ -58,20 +58,27 @@ if ~isExistent
 end
 
 %  Number of nodes in the mesh
-[noNodes,~] = size(strMsh.nodes);
+[noNodes,~] = size(thrMsh.nodes);
 
 % Number of elements in the mesh
-[noElements,elementOrder] = size(strMsh.elements(:,2:end));
+[noElements,elementOrder] = size(thrMsh.elements(:, 2:end));
 
 output = fopen(strcat(pathToOutput,caseName,'/',caseName,'_',...
     num2str(noTimeStep),'.vtk'),'w');
 
 % Transpose the nodal coordinates array
-XYZ = strMsh.nodes(1:noNodes,2:end)';
+XYZ = thrMsh.nodes(1:noNodes,2:end)';
+
+% Get the indices of the nodes in the element list with respect to their
+% ordering in the nodes array (necessary step when the node IDs are not 
+% sequentially numbered starting from 1)
+[~, idxElements] = ...
+    ismember(thrMsh.elements(:, 2:elementOrder + 1), thrMsh.nodes(:, 1));
 
 % Re-arrange the element numbering to start from zero
 elements = zeros(elementOrder,noElements);
-elements(1:elementOrder,1:noElements) = strMsh.elements(1:noElements,2:elementOrder+1)' - 1;
+elements(1:elementOrder, 1:noElements) = ...
+    idxElements(1:noElements,1:elementOrder)' - 1;
 
 %% 1. Re-arrange the solution vector into a 2D array as [[x-comp y-comp z-comp],noNodes]
 nodalTemperature = [d(DOF4Output(1,:))'; zeros(1, noNodes); zeros(1,noNodes)];

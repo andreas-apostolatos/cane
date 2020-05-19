@@ -117,7 +117,6 @@ function [up, dHat, upDot, dDot, upDDot, dDDot, resVctFld, resVctStr, ...
 %                                             computation of the ALE motion
 %                                             at each node on the ALE
 %                                             boundary
-%                                             boundary
 %                                   .isFree : Vector of flags indicating
 %                                             whether the fluid motion is
 %                                             dictated by the ALE motion at
@@ -361,16 +360,27 @@ uMeshALEStr = 'undefined';
 nodesSaved = fldMsh.nodes;
 
 % Save arrays containing the global DOF numberings
-homDOFsFldSaved = homDOFsFld;
-inhomDOFsFldSaved = inhomDOFsFld;
-valuesInhomDOFsFldSaved = valuesInhomDOFsFld;
-freeDOFsFldSaved = freeDOFsFld;
+% homDOFsFldSaved = homDOFsFld;
+% inhomDOFsFldSaved = inhomDOFsFld;
+% valuesInhomDOFsFldSaved = valuesInhomDOFsFld;
+% freeDOFsFldSaved = freeDOFsFld;
+
+% Debug
+graph.index = 1;
 
 % Initialize coupling iteration counter
 counterCI = 1;
 
 %% 1. Loop over all the Gauss-Seidel iterations
 while counterCI <= propFSI.maxIter + 1
+    %% Debug
+%     figure(graph.index)
+%     segmentsContact = [];
+%     plot_referenceConfigurationFEMPlateInMembraneAction ...
+%         (strMsh, propAnalysisStr, FFSIStr, homDOFsStr, segmentsContact, ...
+%         graph, '');
+%     close(graph.index);
+    
     %% 1i. Solve the CSD problem
     [dHat, resVctStr, ~, minElSizeStr] = ...
         solve_FEMEquationSystemStr ...
@@ -380,7 +390,7 @@ while counterCI <= propFSI.maxIter + 1
         computeMtxSteadyStateStr, DOFNumberingStr, freeDOFsStr, ...
         homDOFsStr, inhomDOFsStr, valuesInhomDOFsStr, uMeshALEStr, ...
         solve_LinearSystemStr, propStrDynamics, t, propNLinearAnalysisStr, ...
-        propGaussIntStr, strcat(tab,'\t'), 'outputEnabled');
+        propGaussIntStr, strcat(tab,'\t'), '');
     
     %% 1ii. Update the displacement of the CSD problem using a relaxation method
     if counterCI > 1
@@ -419,93 +429,18 @@ while counterCI <= propFSI.maxIter + 1
     [dDot, dDDot] = propStrDynamics.computeUpdatedVct ...
         (dHat, dSaved, dDotSaved, dDDotSaved, propStrDynamics);
     
-    %% 1vii. Solve the mesh motion problem and update the nodal coordinates and velocities
-    
-    % Initialize dummy arrays
-    uSaved_pseudoStr = 'undefined'; 
-    uDotSaved_pseudoStr = 'undefined'; 
-    uDDotSaved_pseudoStr = 'undefined'; 
-    uDot_pseudoStr = 'undefined';
-    uDDot_pseudoStr = 'undefined';
-    massMtx_pseudoStr = 'undefined';
-    dampMtx_pseudoStr = 'undefined';
-    precompStiffMtx_pseudoStr = 'undefined';
-    precomResVct_pseudoStr = 'undefined';
-    propNLinearAnalysis_pseudoStr = 'undefined';
-    propStrDynamics_pseudoStr = 'undefined';
-%     tab = 'undefined';
-    propInt_pseudoStr.type = 'default';
-    propAnalysis_pseudoStr.type = 'planeStress';
-    
-    % The material properties of the pseudo-structural solver
-    parameters_pseudoStr.nue = 0;
-    parameters_pseudoStr.E = 1e3;
-
-    % Zero body forces
-    computeBodyForces_pseudoStr = @(x,y,z,t) zeros(length(x), 1, 3);
-    
-    numNodes = length(fldMsh.nodes(:, 1));
-    
-    uMeshALEFld = zeros(3*numNodes,1);
-    
-    numDOFs = 2*numNodes;
-    
-    [~, ~, nodeIdxALEFld] = intersect(propALE.nodes, fldMsh.nodes(:, 1), 'rows', 'stable');
-    homDOFs_pseudoStr = reshape(vertcat(2*nodeIdxALEFld' - 1, 2*nodeIdxALEFld'), 1, [])';
-    
-    [~, ~, nodeIdxFld] = intersect(propFSIFld.nodes, fldMsh.nodes(:, 1), 'rows', 'stable');
-    inhomDOFs_preudoStr = reshape(vertcat(2*nodeIdxFld' - 1, 2*nodeIdxFld'), 1, [])';
-    
+    %% Map the interface displacement field
     [~, ~, nodeIdxStr] = intersect(propFSIStr.nodes, strMsh.nodes(:, 1), 'rows', 'stable');
     DOFsIdx = reshape(vertcat(2*nodeIdxStr' - 1, 2*nodeIdxStr'), 1, [])';
-    valuesInhomDOFs_pseudoStr = dHat(DOFsIdx);
+    scaling = 1.0;
+    dHatInterface = scaling*dHat(DOFsIdx)';
     
-    DOFNumbering_presudoStr = 1:numDOFs;
-    
-    prescribedDOFs_pseudoStr = mergesorted(homDOFs_pseudoStr, inhomDOFs_preudoStr);
-    prescribedDOFs_pseudoStr = unique(prescribedDOFs_pseudoStr);
-    
-    freeDOFs_pseudoStr = DOFNumbering_presudoStr;
-    freeDOFs_pseudoStr(ismember(freeDOFs_pseudoStr, prescribedDOFs_pseudoStr)) = [];
-    
-    
-    dHatALE = zeros(numDOFs, 1);
-    
-    [dHatALE, ~, ~, ~] = solve_FEMLinearSystem...
-        (propAnalysis_pseudoStr, uSaved_pseudoStr, uDotSaved_pseudoStr, ...
-        uDDotSaved_pseudoStr, fldMsh, zeros(numDOFs, 1), ...
-        computeBodyForces_pseudoStr, parameters_pseudoStr, dHatALE, ...
-        uDot_pseudoStr, uDDot_pseudoStr, massMtx_pseudoStr, ...
-        dampMtx_pseudoStr, precompStiffMtx_pseudoStr, precomResVct_pseudoStr, ...
-        @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST, ...
-        DOFNumbering_presudoStr, freeDOFs_pseudoStr, ...
-        homDOFs_pseudoStr, inhomDOFs_preudoStr, valuesInhomDOFs_pseudoStr, ...
-        uMeshALEFld, solve_LinearSystemFld, propStrDynamics_pseudoStr, t, ...
-        propNLinearAnalysis_pseudoStr, propInt_pseudoStr, tab, '');
-
-    % Move the nodes on the mesh following the prescribed motion
-    fldMsh.nodes(:, 2) = fldMsh.initialNodes(:, 2) + dHatALE(1:2:end - 1, 1);
-    fldMsh.nodes(:, 3) = fldMsh.initialNodes(:, 3) + dHatALE(2:2:end, 1);
-    
-    % Prescribe the velocity on the FSI interface
-    uMeshALEFld(1:3:end - 2, 1) = (fldMsh.nodes(:, 2) - nodesSaved(:, 2))/propFldDynamics.dt;
-    uMeshALEFld(1:3:end - 1, 1) = (fldMsh.nodes(:, 3) - nodesSaved(:, 3))/propFldDynamics.dt;
-    
-    % Update the inhomogeneous DOFs of the fluid
-    inhomDOFsFld_FSI = reshape(vertcat(vertcat(3*nodeIdxFld' - 2, 3*nodeIdxFld' - 1), 3*nodeIdxFld'), 1, [])';
-    valuesInhomDOFsFld_FSI = uMeshALEFld(inhomDOFsFld_FSI);
-    
-    % Add the inhomogenoues DOFs from the FSI interface to the complete set
-    % of inhomogeneous DOFs
-    inhomDOFsFld = horzcat(inhomDOFsFld, inhomDOFsFld_FSI');
-    [inhomDOFsFld, idxSort] = sort(inhomDOFsFld);
-    
-    valuesInhomDOFsFld = horzcat(valuesInhomDOFsFld, valuesInhomDOFsFld_FSI');
-    valuesInhomDOFsFld = valuesInhomDOFsFld(idxSort);
-    
-    homDOFsFld(ismember(homDOFsFld, inhomDOFsFld)) = [];
-    prescribedDOFsFld = mergesorted(homDOFsFld, inhomDOFsFld);
-    freeDOFsFld(ismember(freeDOFsFld, prescribedDOFsFld)) = [];
+    %% 1vii. Solve the mesh motion problem and update the nodal coordinates and velocities
+    [fldMsh, uMeshALEFld, homDOFsFld, inhomDOFsFld, valuesInhomDOFsFld, ...
+        freeDOFsFld] = ...
+        computeUpdatedMeshAndVelocitiesPseudoStrFSIALE2D ...
+        (fldMsh, nodesSaved, homDOFsFld, inhomDOFsFld, valuesInhomDOFsFld, ...
+        freeDOFsFld, dHatInterface, propALE, propFSIFld, propFldDynamics);
     
     %% 1viii. Solve the CFD problem
     [up, resVctFld, ~, minElSizeFld] = ...
@@ -516,13 +451,31 @@ while counterCI <= propFSI.maxIter + 1
         computeMtxSteadyStateFld, DOFNumberingFld, freeDOFsFld, ...
         homDOFsFld, inhomDOFsFld, valuesInhomDOFsFld, uMeshALEFld, ...
         solve_LinearSystemFld, propFldDynamics, t, propNLinearAnalysisFld, ...
-        propGaussIntFld, strcat(tab,'\t'), 'outputEnabled');
+        propGaussIntFld, strcat(tab,'\t'), '');
     
     %% 1ix. Update the time derivatives of the CFD solution fields
     [upDot, upDDot] = propFldDynamics.computeUpdatedVct ...
         (up, upSaved, upDotSaved, upDDotSaved, propFldDynamics);
     
-    %% 1x. Compute the forces acting on the FSI interface
+    %% Debug
+%     pathToOutput = '../../outputVTK/FEMFluidStructureInteraction/';
+%     caseNameFld = horzcat('turek_fsi', '_fluid');
+%     titleFld = 'Stabilized finite element formulation for the 2D incopmpressible Navier Stokes equations';
+%     
+%     numDOFsFld = 3*length(fldMsh.nodes(:, 1));
+%     
+%     DOF4OutputFld = [1:3:numDOFsFld - 2
+%                      2:3:numDOFsFld - 1
+%                      3:3:numDOFsFld];
+% 
+%     writeOutputFEMIncompressibleFlowToVTK ....
+%         (propAnalysisFld, propNLinearAnalysisFld, propFldDynamics, fldMsh, ...
+%         propParametersFld, up, upDot, upDDot, DOF4OutputFld, caseNameFld, ....
+%         pathToOutput, titleFld, counterCI);
+    
+    %% 1x. Transfer the forces onto the structure
+    
+    [~, ~, nodeIdxFld] = intersect(propFSIFld.nodes, fldMsh.nodes(:, 1), 'rows', 'stable');
     
     propPostProcFld.nameDomain{1} = 'drySurface';
     propPostProcFld.nodesDomain{1} = nodeIdxFld;

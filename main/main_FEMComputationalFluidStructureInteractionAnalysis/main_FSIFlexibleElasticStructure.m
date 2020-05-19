@@ -97,7 +97,7 @@ pathToOutput = '../../outputVTK/FEMFluidStructureInteraction/';
 
 % Fluid-structure interaction properties
 propFSI.relaxation = .3;
-propFSI.tol = 1e-3;
+propFSI.tol = 1e-5;
 propFSI.maxIter = 1e2;
 
 %% Function handle to the solution procedure of the coupled system
