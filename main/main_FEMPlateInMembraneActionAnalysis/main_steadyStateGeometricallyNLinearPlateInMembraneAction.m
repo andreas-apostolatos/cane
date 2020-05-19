@@ -104,13 +104,13 @@ dHat = zeros(numDOFs,1);
     propGaussInt, propVTK, caseName, pathToOutput, 'outputEnabled');
 
 %% Postprocessing
-graph.visualization.geometry = 'reference_and_current';
-resultant = 'stress';
-component = 'y';
-nodeIDs_active = [];
-contactSegments = [];
-graph.index = plot_currentConfigurationAndResultants ...
-    (propAnalysis, strMsh, homDOFs, dHat, nodeIDs_active, ...
-    contactSegments, parameters, resultant, component, graph);
+% graph.visualization.geometry = 'reference_and_current';
+% resultant = 'stress';
+% component = 'y';
+% nodeIDs_active = [];
+% contactSegments = [];
+% graph.index = plot_currentConfigurationAndResultants ...
+%     (propAnalysis, strMsh, homDOFs, dHat, nodeIDs_active, ...
+%     contactSegments, parameters, resultant, component, graph);
 
 %% END OF THE SCRIPT

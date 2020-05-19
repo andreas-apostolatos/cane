@@ -37,17 +37,15 @@ function [epsilon, sigma] = ...
 %
 %  1iii. Get the nodes in the element
 %
-%   1iv. Create an Element Freedome Table (EFT)
+%   1iv. Compute the basis functions and their derivatives at the Gauss Point
 %
-%    1v. Compute the basis functions and their derivatives at the Gauss Point
+%    1v. Compute the displacement gradient components
 %
-%   1vi. Form the B-Operator matrix for the plate in membrane action problem
+%   1vi. Compute the strain vector in a Voigt notation at the current element
 %
-%  1vii. Compute the strain vector in a Voigt notation at the current element
+%  1vii. Compute the stress vector in a Voigt notation at the current element
 %
-% 1viii. Compute the stress vector in a Voigt notation at the current element
-%
-%   1ix. Correct the shear component of the strain epsilon = [epsilonXX epsilonYY 2*epsilonXY]
+% 1viii. Correct the shear component of the strain epsilon = [epsilonXX epsilonYY 2*epsilonXY]
 % <-
 %
 %% Function main body
@@ -89,7 +87,6 @@ for iEl = 1:length(strMsh.elements(:, 1))
     index = isnan(element);
     element(index) = [];
     numNodesEl = length(element);
-    numDOFsEl = 2*numNodesEl;
     if numNodesEl == 3
         elementType = 'linearTriangle';
     elseif numNodesEl == 4
@@ -101,15 +98,8 @@ for iEl = 1:length(strMsh.elements(:, 1))
     
     %% 1iii. Get the nodes in the element
     nodesMsh = strMsh.nodes(element, 2:end);
-    
-    %% 1iv. Create an Element Freedome Table (EFT)
-    EFT = zeros(numDOFsEl, 1);
-    for iEFT = 1:numNodesEl
-        EFT(2*iEFT - 1) = 2*element(iEFT, 1) - 1;
-        EFT(2*iEFT) = 2*element(iEFT, 1);
-    end
-    
-    %% 1v. Compute the basis functions and their derivatives at the Gauss Point
+
+    %% 1iv. Compute the basis functions and their derivatives at the Gauss Point
     if strcmp(elementType, 'linearTriangle')
         [dN, ~] = computeCST2DBasisFunctionsAndFirstDerivatives ...
             (nodesMsh(1, :), nodesMsh(2, :), nodesMsh(3, :), 0, 0);
@@ -117,24 +107,26 @@ for iEl = 1:length(strMsh.elements(:, 1))
         dN = zeros(numNodesEl, 3);
         warning('The postprocessing computations for a bilinear quadrilateral are still incomplete');
     end
-    
-    %% 1vi. Form the B-Operator matrix for the plate in membrane action problem
-    B = zeros(3, numDOFsEl);
-    for iBOperator = 1:numNodesEl
-        B(1, 2*iBOperator - 1) = dN(iBOperator, 2);
-        B(2, 2*iBOperator) = dN(iBOperator, 3);
-        B(3, 2*iBOperator - 1) = dN(iBOperator, 3);
-        B(3, 2*iBOperator) = dN(iBOperator, 2);
+
+    %% 1v. Compute the displacement gradient components
+    uGrad = zeros(2, 2);
+    for iNodeEl = 1:numNodesEl
+        uGrad(1, 1) = uGrad(1, 1) + dN(iNodeEl, 2)*dHat(2*element(iNodeEl, 1) - 1, 1);
+        uGrad(2, 2) = uGrad(2, 2) + dN(iNodeEl, 3)*dHat(2*element(iNodeEl, 1), 1);
+        uGrad(1, 2) = uGrad(1, 2) + dN(iNodeEl, 3)*dHat(2*element(iNodeEl, 1) - 1, 1);
+        uGrad(2, 1) = uGrad(2, 1) + dN(iNodeEl, 2)*dHat(2*element(iNodeEl, 1), 1);
     end
-     
-    %% 1vii. Compute the strain vector in a Voigt notation at the current element
-    epsilon(:, iEl) = B*dHat(EFT);
-    
-    %% 1viii. Compute the stress vector in a Voigt notation at the current element
+
+    %% 1vi. Compute the strain vector in a Voigt notation at the current element
+    epsilon(:, iEl) = [uGrad(1, 1) + 1/2*(uGrad(1, 1)^2 + uGrad(2, 1)^2)
+                       uGrad(2, 2) + 1/2*(uGrad(1, 2)^2 + uGrad(2, 2)^2)
+                       uGrad(1, 2) + uGrad(2, 1) + uGrad(1, 1)*uGrad(1, 2) + uGrad(2, 1)*uGrad(2, 2)];
+
+    %% 1vii. Compute the stress vector in a Voigt notation at the current element
     sigma(:, iEl) = C*epsilon(:, iEl);
-    
-    %% 1ix. Correct the shear component of the strain epsilon = [epsilonXX epsilonYY 2*epsilonXY]
-    epsilon(3, iEl) = epsilon(3, iEl)/2;
+
+    %% 1viii. Correct the shear component of the strain epsilon = [epsilonXX epsilonYY 2*epsilonXY]
+    epsilon(3, iEl) = 1/2*epsilon(3, iEl);
 end
 
 end

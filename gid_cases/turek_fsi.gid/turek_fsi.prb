@@ -33,7 +33,7 @@ VALUE: 0
 QUESTION: STR_End_Time
 VALUE: 10
 QUESTION: STR_Number_of_Time_Steps
-VALUE: 100
+VALUE: 1e3
 QUESTION: STR_Adaptive_Time_Stepping#CB#(true,false)
 VALUE: false
 TITLE: STRUCTURE_INTEGRATION

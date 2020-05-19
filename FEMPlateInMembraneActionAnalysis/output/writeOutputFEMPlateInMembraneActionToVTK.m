@@ -76,21 +76,21 @@ XYZ = strMsh.nodes(1:noNodes,2:end)';
 % sequentially numbered starting from 1)
 [~, idxElements] = ...
     ismember(strMsh.elements(:, 2:elementOrder + 1), strMsh.nodes(:, 1));
+idxElements(idxElements == 0) = NaN;
 
 % Re-arrange the element numbering to start from zero
 elements = zeros(elementOrder,noElements);
-% elements(1:elementOrder,1:noElements) = ...
-%     idxElements(1:noElements,1:elementOrder)' - 1;
-elements(1:elementOrder,1:noElements) = strMsh.elements(1:noElements,2:elementOrder+1)' - 1;
+elements(1:elementOrder,1:noElements) = ...
+    idxElements(1:noElements,1:elementOrder)' - 1;
+% elements(1:elementOrder,1:noElements) = strMsh.elements(1:noElements,2:elementOrder+1)' - 1;
 
 %% 1. Compute the strain [3,[epsilonXX epsilonYY epsilonXY]] and stress vectors [3,[sigmaXX sigmaYY sigmaXY]]
-if strcmp(propNLinearAnalysis.method, 'UNDEFINED')
-    [epsilon,sigma] = computePostprocFEMPlateInMembraneActionCSTLinear...
-        (strMsh,analysis,parameters,d);
+if strcmp(propNLinearAnalysis.method,'UNDEFINED')
+    [epsilon, sigma] = computePostprocFEMPlateInMembraneActionCSTLinear ...
+        (strMsh, analysis, parameters, d);
 elseif strcmp(propNLinearAnalysis.method, 'NEWTON_RAPHSON')
-    [epsilon,sigma] = computePostprocFEMPlateInMembraneActionCSTNLinear...
-        (strMsh,analysis,parameters,d);
-    warning('Postpsocessing tensors are computed with the linear strain measures');
+    [epsilon, sigma] = computePostprocFEMPlateInMembraneActionCSTNLinear ...
+        (strMsh, analysis, parameters, d);
 else
     error('Selected nonlinear method unknown');
 end
