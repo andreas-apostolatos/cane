@@ -461,13 +461,10 @@ while counterCI <= propFSI.maxIter + 1
 %     pathToOutput = '../../outputVTK/FEMFluidStructureInteraction/';
 %     caseNameFld = horzcat('turek_fsi', '_fluid');
 %     titleFld = 'Stabilized finite element formulation for the 2D incopmpressible Navier Stokes equations';
-%     
 %     numDOFsFld = 3*length(fldMsh.nodes(:, 1));
-%     
 %     DOF4OutputFld = [1:3:numDOFsFld - 2
 %                      2:3:numDOFsFld - 1
 %                      3:3:numDOFsFld];
-% 
 %     writeOutputFEMIncompressibleFlowToVTK ....
 %         (propAnalysisFld, propNLinearAnalysisFld, propFldDynamics, fldMsh, ...
 %         propParametersFld, up, upDot, upDDot, DOF4OutputFld, caseNameFld, ....

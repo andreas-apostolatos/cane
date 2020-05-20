@@ -127,8 +127,8 @@ propIDBCFld = 'undefined';
 computeBodyForcesFld = @computeConstantVerticalFluidBodyForceVct;
 
 % Function handle to the computation of the initial conditions
-computeInitCndsFld = @computeNullInitialConditionsFEM4NSE;
-% computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSEWrapper;
+% computeInitCndsFld = @computeNullInitialConditionsFEM4NSE;
+computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSEWrapper;
 % computeInitCndsFld = @computeInitialConditionsVMS4NSEBurnedIn;
 
 % Choose function handles to the computation of the transient matrices and
@@ -146,7 +146,7 @@ end
 % On the writing the output function
 propOutputFld.isOutput = true;
 propOutputFld.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
-propOutputFld.VTKResultFile = '_contourPlots_1001'; % '_contourPlots_75'
+propOutputFld.VTKResultFile = '_contourPlots_180'; % '_contourPlots_75'
 
 %% Structural dynamics
 
@@ -237,13 +237,15 @@ function [up, upDot, upDDot, numTimeStep] = ...
     (analysis, fldMsh, DOF4Output, parameters, fldDynamics, ...
     VTKResultFile, caseNameDummy, pathToFileDummy)
 
-    caseName = 'turek_cfd';
+    caseName = 'turek_fsi';
     pathToFile = '../../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
 
     [up, upDot, upDDot, numTimeStep] = ... 
         computeInitialConditionsFromVTKFileFEM4NSE ...
         (analysis, fldMsh, DOF4Output, parameters, fldDynamics, ...
         VTKResultFile, caseName, pathToFile);
+    
+    numTimeStep = 0;
 
 end
 

@@ -44,7 +44,7 @@ VALUE: Newtonian
 DEPENDENCIES: (Newtonian,RESTORE,Density,#CURRENT#,RESTORE,Dynamic_Viscosity,#CURRENT#)
 DEPENDENCIES: (whatever,HIDE,Density,#CURRENT#,HIDE,Dynamic_Viscosity,#CURRENT#)
 QUESTION: Density
-VALUE: 1.0
+VALUE: 1000.0
 QUESTION: Dynamic_Viscosity
 VALUE: 1e-3
 END MATERIAL

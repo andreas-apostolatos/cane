@@ -192,6 +192,7 @@ dHatALE = zeros(numDOFs, 1);
 for iALE = 1:length(propALE.nodes(:,1))
     %% 1i. Find the node ID in the node cloud
     nodeID = propALE.nodes(iALE,1);
+    [~, nodeID] = ismember(nodeID, msh.nodes(:, 1));
 
     %% 1ii. Get the coordinates of the node
     x = msh.initialNodes(nodeID,2);
@@ -257,6 +258,7 @@ msh.nodes(:, 3) = msh.initialNodes(:, 3) + dHatALE(2:2:end, 1);
 for iALE = 1:length(propALE.nodes(:, 1))
     %% 6i. Find the node ID
     nodeID = propALE.nodes(iALE, 1);
+    [~, nodeID] = ismember(nodeID, msh.nodes(:, 1));
     
     %% 6ii. Check whether the node belongs to a node on the free stream
     isFree = propALE.isFree(iALE, 1);
