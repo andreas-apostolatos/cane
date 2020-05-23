@@ -459,17 +459,6 @@ if isfield(propOutput_A, 'isOutput')
 else
     error('Structure propOutput_A should define boolean isOutput');
 end
-if isWriteOutVariables_A
-    uHistory_A = 'undefined';
-    resVctHistory_A = 'undefined';
-else
-    uHistory_A = zeros(numDOFs_A, propTransientAnalysis.noTimeSteps + 1);
-    resVctHistory_A = zeros(numDOFs_A, propTransientAnalysis.noTimeSteps + 1);
-end
-
-% Initialize interface force vectors
-FInterface_A = zeros(numDOFs_A, 1);
-FInterface_B = zeros(numDOFs_B, 1);
 
 % BVP B
 % -----
@@ -494,13 +483,6 @@ if isfield(propOutput_B, 'isOutput')
 else
     error('Structure propOutput_B should define boolean isOutput');
 end
-if isWriteOutVariables_B
-    uHistory_B = 'undefined';
-    resVctHistory_B = 'undefined';
-else
-    uHistory_B = zeros(numDOFs_B, propTransientAnalysis.noTimeSteps + 1);
-    resVctHistory_B = zeros(numDOFs_B, propTransientAnalysis.noTimeSteps + 1);
-end
 
 %% 1. Get the initial values for the discrete solution vector and its first and second order rate
 
@@ -519,6 +501,19 @@ if isfield(propOutput_A, 'VTKResultFile')
 else
     error('Structure propOutput_A should define string VTKResultFile');
 end
+if isWriteOutVariables_A
+    uHistory_A = 'undefined';
+    resVctHistory_A = 'undefined';
+else
+    uHistory_A = ...
+        zeros(numDOFs_A, propTransientAnalysis.noTimeSteps + 1 - numTimeStep_A);
+    resVctHistory_A = ...
+        zeros(numDOFs_A, propTransientAnalysis.noTimeSteps + 1 - numTimeStep_A);
+end
+
+% Initialize interface force vectors
+FInterface_A = zeros(numDOFs_A, 1);
+FInterface_B = zeros(numDOFs_B, 1);
 
 % BVP B
 % -----
@@ -534,6 +529,15 @@ if isfield(propOutput_B, 'VTKResultFile')
     end
 else
     error('Structure propOutput_B should define string VTKResultFile');
+end
+if isWriteOutVariables_B
+    uHistory_B = 'undefined';
+    resVctHistory_B = 'undefined';
+else
+    uHistory_B = ...
+        zeros(numDOFs_B, propTransientAnalysis.noTimeSteps + 1 - numTimeStep_B);
+    resVctHistory_B = ...
+        zeros(numDOFs_B, propTransientAnalysis.noTimeSteps + 1 - numTimeStep_B);
 end
 
 % Check if the time step counters match
@@ -555,24 +559,28 @@ numTimeStep = numTimeStep + 1;
 % -----
 
 if isWriteOutVariables_A
-    propOutput_A.writeOutputToFile ...
-        (propAnalysis_A, propNLinearAnalysis_A, propTransientAnalysis_A, ...
-        mesh_A, propParameters_A, u_A, uDot_A, uDDot_A, DOF4Output_A, ...
-        caseName_A, pathToOutput_A, title_A, numTimeStep);
+    if numTimeStep_A == 0
+        propOutput_A.writeOutputToFile ...
+            (propAnalysis_A, propNLinearAnalysis_A, propTransientAnalysis_A, ...
+            mesh_A, propParameters_A, u_A, uDot_A, uDDot_A, DOF4Output_A, ...
+            caseName_A, pathToOutput_A, title_A, numTimeStep);
+    end
 else
-    uHistory_A(:,numTimeStep) = u_A;
+    uHistory_A(:,numTimeStep - numTimeStep_A) = u_A;
 end
 
 % BVP B
 % -----
 
 if isWriteOutVariables_B
-    propOutput_B.writeOutputToFile ...
-        (propAnalysis_B, propNLinearAnalysis_B, propTransientAnalysis_B, ...
-        mesh_B, propParameters_B, u_B, uDot_B, uDDot_B, DOF4Output_B, ...
-        caseName_B, pathToOutput_B, title_B, numTimeStep);
+    if numTimeStep_A == 0
+        propOutput_B.writeOutputToFile ...
+            (propAnalysis_B, propNLinearAnalysis_B, propTransientAnalysis_B, ...
+            mesh_B, propParameters_B, u_B, uDot_B, uDDot_B, DOF4Output_B, ...
+            caseName_B, pathToOutput_B, title_B, numTimeStep);
+    end
 else
-    uHistory_B(:,numTimeStep) = u_B;
+    uHistory_B(:,numTimeStep - numTimeStep_B) = u_B;
 end
 
 %% 4. Compute the mass matrices of the systems

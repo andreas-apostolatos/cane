@@ -83,6 +83,39 @@ caseNameStr = 'turek_fsi';
     (pathToCase, caseNameStr, 'outputEnabled');
 caseNameStr = horzcat('turek_fsi', '_structure');
 
+%% Apply a non-constant inlet
+if strcmp(caseNameFld, 'turek_fsi_fluid')
+        
+    % Define number of DOFs per node
+    noDOFsPerNode = 3;
+    
+    % Define a parabolic inlet velocity
+    u_max = 2;
+    computeInletVelocity = @(x,y,z) u_max*6*y*(0.41 - y)/0.1681;
+
+    % Loop over all inlet DOFs
+    for i = 1:length(inhomDOFsFld)
+        % Find the inlet DOF
+        idxDOF = inhomDOFsFld(1, i);
+
+        % Find the corresponding node
+        indexNode = ceil(idxDOF/noDOFsPerNode);
+
+        % Get the nodal coordinates
+        XYZ = fldMsh.nodes(indexNode, 2:end);
+
+        % Compute the value according to the law
+        presValue = computeInletVelocity(XYZ(1, 1), XYZ(1, 2), XYZ(1, 3));
+
+        % Cartesian direction
+        cartDir = idxDOF - (noDOFsPerNode*ceil(idxDOF/noDOFsPerNode) - noDOFsPerNode);
+
+        if cartDir == 1
+            valuesInhomDOFsFld(1, i) = presValue;
+        end
+    end
+end
+
 %% UI
 
 % Choose the equation system solver for the fluid and the structural problems
@@ -96,7 +129,8 @@ solve_LinearSystemStr = @solve_LinearSystemMatlabBackslashSolver;
 pathToOutput = '../../outputVTK/FEMFluidStructureInteraction/';
 
 % Fluid-structure interaction properties
-propFSI.relaxation = .3;
+propFSI.relaxationMethod = 'constant'; % 'constant', 'aitken'
+propFSI.relaxation = 3e-1;
 propFSI.tol = 1e-5;
 propFSI.maxIter = 1e2;
 
@@ -128,7 +162,8 @@ computeBodyForcesFld = @computeConstantVerticalFluidBodyForceVct;
 
 % Function handle to the computation of the initial conditions
 % computeInitCndsFld = @computeNullInitialConditionsFEM4NSE;
-computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSEWrapper;
+% computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSEWrapper;
+computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSE;
 % computeInitCndsFld = @computeInitialConditionsVMS4NSEBurnedIn;
 
 % Choose function handles to the computation of the transient matrices and
@@ -146,7 +181,7 @@ end
 % On the writing the output function
 propOutputFld.isOutput = true;
 propOutputFld.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
-propOutputFld.VTKResultFile = '_contourPlots_180'; % '_contourPlots_75'
+propOutputFld.VTKResultFile = '_contourPlots_139'; % '_contourPlots_21'
 
 %% Structural dynamics
 
@@ -171,7 +206,9 @@ propIDBCStr = 'undefined';
 computeBodyForcesStr = @computeConstantVerticalStructureBodyForceVct;
 
 % Function handle to the computation of the initial conditions
-computeInitCndsStr = @computeInitCndsFEMPlateInMembraneAction;
+% computeInitCndsStr = @computeInitCndsFEMPlateInMembraneAction;
+computeInitCndsStr = ...
+    @computeInitialConditionsFromVTKFileFEMPlateInMembraneAction;
 
 % Choose function handles to the computation of the transient matrices and
 % to the updates of the solution vector for the fluid problem
@@ -193,7 +230,7 @@ end
 % On the writing the output function
 propOutputStr.isOutput = true;
 propOutputStr.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
-propOutputStr.VTKResultFile = 'undefined'; % '_contourPlots_75'
+propOutputStr.VTKResultFile = '_contourPlots_139'; % '_contourPlots_2'
 
 % Postprocessing properties for the CSD problem
 propPostProcStr = 'undefined';

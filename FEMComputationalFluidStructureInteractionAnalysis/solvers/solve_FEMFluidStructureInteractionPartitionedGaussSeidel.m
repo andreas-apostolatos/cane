@@ -366,7 +366,7 @@ nodesSaved = fldMsh.nodes;
 % freeDOFsFldSaved = freeDOFsFld;
 
 % Debug
-graph.index = 1;
+% graph.index = 1;
 
 % Initialize coupling iteration counter
 counterCI = 1;

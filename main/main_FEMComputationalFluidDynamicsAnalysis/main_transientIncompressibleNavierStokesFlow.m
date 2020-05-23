@@ -76,8 +76,8 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 caseName = 'cane_logo';
 
 % Burn-in CFD simulation for the turek FSI benchmark
-% pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
-% caseName = 'turek_fsi';
+pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
+caseName = 'turek_fsi';
 
 % Parse the data
 [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
@@ -96,34 +96,48 @@ propVTK.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
 propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
 %% Apply a non-constant inlet
-if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw')
+if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw') || ...
+        strcmp(caseName, 'turek_fsi')
     % Define number of DOFs per node
     noDOFsPerNode = 3;
 
     % Define the corresponding law
-    u_max = 10;
+    if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw')
+        u_max = 10;
+    elseif strcmp(caseName, 'turek_fsi')
+        u_max = 2;
+    end
     computeOneSeventhPowerLaw = @(x,y,z) [u_max*y^(1/7)
                                           0
                                           0
                                           0];
+    computeParabolicLaw = @(x,y,z) u_max*6*y*(0.41 - y)/0.1681*[1
+                                                                0
+                                                                0
+                                                                0];
+    if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw')
+        computeInletVelocity = computeOneSeventhPowerLaw;
+    else
+        computeInletVelocity = computeParabolicLaw;
+    end
 
     % Loop over all inlet DOFs
     for i = 1:length(inhomDOFs)
         % Find the inlet DOF
-        indexDOF = inhomDOFs(1,i);
+        idxDOF = inhomDOFs(1, i);
 
         % Find the corresponding node
-        indexNode = ceil(indexDOF/noDOFsPerNode);
+        indexNode = ceil(idxDOF/noDOFsPerNode);
 
         % Get the nodal coordinates
-        coordsNode = fldMsh.nodes(indexNode,2:end);
+        coordsNode = fldMsh.nodes(indexNode, 2:end);
 
         % Compute the value according to the law
-        presValue = computeOneSeventhPowerLaw ...
-            (coordsNode(1,1), coordsNode(1,2), coordsNode(1,3));
+        presValue = computeInletVelocity ...
+            (coordsNode(1, 1), coordsNode(1, 2), coordsNode(1, 3));
 
         % Cartesian direction
-        cartDir = indexDOF - (noDOFsPerNode*ceil(indexDOF/noDOFsPerNode) - noDOFsPerNode);
+        cartDir = idxDOF - (noDOFsPerNode*ceil(idxDOF/noDOFsPerNode) - noDOFsPerNode);
 
         if cartDir == 1
             valuesInhomDOFs(1,i) = presValue(1,1);
@@ -131,7 +145,7 @@ if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw')
     end
 end
 
-%% GUI
+%% UI
 if strcmp(propFldDynamics.method, 'BOSSAK')
     propFldDynamics.computeProblemMtrcsTransient = ...
         @computeProblemMtrcsBossakFEM4NSE;

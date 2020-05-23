@@ -8,7 +8,7 @@ DEPENDENCIES: (whatever,HIDE,Density,#CURRENT#,HIDE,Young_Modulus,#CURRENT#,HIDE
 QUESTION: Density
 VALUE: 1000
 QUESTION: Young_Modulus
-VALUE: 1400000
+VALUE: 5.6E6
 QUESTION: Poisson_Ratio
 VALUE: 0.4
 QUESTION: Thickness

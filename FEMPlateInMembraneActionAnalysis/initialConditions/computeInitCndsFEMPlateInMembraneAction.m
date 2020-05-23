@@ -56,9 +56,10 @@ function [u, uDot, uDDot, numTimeStep, propTransientAnalysis] = ...
 %
 %% Function main body
 numNodes = length(strMsh.nodes(:, 1));
-u(numNodes*2, 1) = 0;
-uDot(numNodes*2, 1) = 0;
-uDDot(numNodes*2, 1) = 0;
+numDOFs = 2*numNodes;
+u = zeros(numDOFs, 1);
+uDot = zeros(numDOFs, 1);
+uDDot = zeros(numDOFs, 1);
 
 % Modify structure of transient analysis properties
 % propTransientAnalysis.dt = propTransientAnalysis.noTimeSteps;

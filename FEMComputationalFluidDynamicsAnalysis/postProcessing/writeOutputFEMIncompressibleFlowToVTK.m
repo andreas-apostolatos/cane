@@ -83,9 +83,6 @@ numDOFs = noDOFsNode*numNodes;
 % Number of elements in the mesh
 [numElements, elementOrder] = size(fldMsh.elements(:,2:end));
 
-% Get the index of the nodes of each element in the array of nodes
-
-
 % Arrange the velocity and pressure field arranged into a 2D array as per
 % [[x-comp y-comp z-comp pressure],noNodes]
 if isAnalysis3D
@@ -194,9 +191,7 @@ end
 %% 3. Write out the data for the rates of the primary fields
 
 % Check whether there is an output unit, if not create one
-directoryName = ...
-    strcat('../../outputVTK/FEMComputationalFluidDynamicsAnalysis/', ...
-    caseName, '/upRates');
+directoryName = strcat(pathToOutput, caseName, '/upRates');
 isExistent = exist(directoryName, 'dir');
 if ~isExistent
     mkdir(directoryName);
@@ -210,7 +205,7 @@ fprintf(outputUnitUPRates, '# The rates of the velocity and pressure fields\n');
 fprintf(outputUnitUPRates, '\n');
 fprintf(outputUnitUPRates, 'upRates \n');
 str = [num2str(upDot), repmat(' \n', numDOFs, 1)]'; 
-fprintf(outputUnitColorPlots, reshape(str, 1, size(str, 1) * size(str, 2)));
+fprintf(outputUnitUPRates, reshape(str, 1, size(str, 1) * size(str, 2)));
 
 %% 4. Close the file for writting out the results of the rates to the primary fields
 fclose(outputUnitUPRates);
