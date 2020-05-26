@@ -63,46 +63,57 @@ addpath([path_prefix 'parsers/']);
 % Add all functions related to the efficient computation functions
 addpath([path_prefix 'efficientComputation/']);
 
-%% Parse the fluid setup from the GiD input file
+%% Case name
 pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
-caseNameFld = 'turek_fsi';
+% caseName = 'turek_fsi';
+caseName = 'building_fsi';
+
+%% Parse the fluid setup from the GiD input file
+caseNameFld = caseName;
 [fldMsh, homDOFsFld, inhomDOFsFld, valuesInhomDOFsFld, propALE, propNBCFld, ...
     propAnalysisFld, propParametersFld, propNLinearAnalysisFld, ...
     propFldDynamics, propGaussIntFld, propPostProcFld, propFSIFld] = ...
     parse_FluidModelFromGid ...
     (pathToCase, caseNameFld, 'outputEnabled');
-caseNameFld = horzcat('turek_fsi', '_fluid');
+caseNameFld = horzcat(caseNameFld, '_fluid');
 
 %% Parse the structural setup from the GiD input file
-pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
-caseNameStr = 'turek_fsi';
+caseNameStr = caseName;
 [strMsh, homDOFsStr, inhomDOFsStr, valuesInhomDOFsStr, propNBCStr, ...
     propAnalysisStr, propParametersStr, propNLinearAnalysisStr, ...
     propStrDynamics, propGaussIntStr, ~, propFSIStr] = ...
     parse_StructuralModelFromGid...
     (pathToCase, caseNameStr, 'outputEnabled');
-caseNameStr = horzcat('turek_fsi', '_structure');
+caseNameStr = horzcat(caseNameStr, '_structure');
 
 %% Apply a non-constant inlet
-if strcmp(caseNameFld, 'turek_fsi_fluid')
+if strcmp(caseNameFld, 'turek_fsi_fluid') || ...
+        strcmp(caseNameFld, 'building_fsi_fluid')
         
     % Define number of DOFs per node
     noDOFsPerNode = 3;
     
-    % Define a parabolic inlet velocity
-    u_max = 2;
-    computeInletVelocity = @(x,y,z) u_max*6*y*(0.41 - y)/0.1681;
-
+    % Define the law for the inlet velocity
+    if strcmp(caseNameFld, 'turek_fsi_fluid')
+        % Parabolic law
+        u_max = 2;
+        computeInletVelocity = @(x,y,z) u_max*6*y*(0.41 - y)/0.1681;
+    elseif strcmp(caseNameFld, 'building_fsi_fluid')
+        % 1/7-th power law
+        u_max = 5;
+        computeInletVelocity = @(x,y,z) u_max*y^(1/7);
+    end
+    
     % Loop over all inlet DOFs
     for i = 1:length(inhomDOFsFld)
         % Find the inlet DOF
         idxDOF = inhomDOFsFld(1, i);
 
         % Find the corresponding node
-        indexNode = ceil(idxDOF/noDOFsPerNode);
+        idxNode = ceil(idxDOF/noDOFsPerNode);
 
         % Get the nodal coordinates
-        XYZ = fldMsh.nodes(indexNode, 2:end);
+        XYZ = fldMsh.nodes(idxNode, 2:end);
 
         % Compute the value according to the law
         presValue = computeInletVelocity(XYZ(1, 1), XYZ(1, 2), XYZ(1, 3));
@@ -162,8 +173,8 @@ computeBodyForcesFld = @computeConstantVerticalFluidBodyForceVct;
 
 % Function handle to the computation of the initial conditions
 % computeInitCndsFld = @computeNullInitialConditionsFEM4NSE;
-% computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSEWrapper;
-computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSE;
+computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSEWrapper;
+% computeInitCndsFld = @computeInitialConditionsFromVTKFileFEM4NSE;
 % computeInitCndsFld = @computeInitialConditionsVMS4NSEBurnedIn;
 
 % Choose function handles to the computation of the transient matrices and
@@ -181,7 +192,7 @@ end
 % On the writing the output function
 propOutputFld.isOutput = true;
 propOutputFld.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
-propOutputFld.VTKResultFile = '_contourPlots_139'; % '_contourPlots_21'
+propOutputFld.VTKResultFile = '_contourPlots_100'; % '_contourPlots_21'
 
 %% Structural dynamics
 
@@ -206,9 +217,9 @@ propIDBCStr = 'undefined';
 computeBodyForcesStr = @computeConstantVerticalStructureBodyForceVct;
 
 % Function handle to the computation of the initial conditions
-% computeInitCndsStr = @computeInitCndsFEMPlateInMembraneAction;
-computeInitCndsStr = ...
-    @computeInitialConditionsFromVTKFileFEMPlateInMembraneAction;
+computeInitCndsStr = @computeInitCndsFEMPlateInMembraneAction;
+% computeInitCndsStr = ...
+%     @computeInitialConditionsFromVTKFileFEMPlateInMembraneAction;
 
 % Choose function handles to the computation of the transient matrices and
 % to the updates of the solution vector for the fluid problem
@@ -272,9 +283,10 @@ end
 function [up, upDot, upDDot, numTimeStep] = ...
     computeInitialConditionsFromVTKFileFEM4NSEWrapper ...
     (analysis, fldMsh, DOF4Output, parameters, fldDynamics, ...
-    VTKResultFile, caseNameDummy, pathToFileDummy)
+    VTKResultFile, caseName, pathToFileDummy)
 
-    caseName = 'turek_fsi';
+    caseName = erase(caseName, '_fluid');
+    
     pathToFile = '../../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
 
     [up, upDot, upDDot, numTimeStep] = ... 
