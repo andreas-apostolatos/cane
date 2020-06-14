@@ -1,5 +1,5 @@
 function homDOFs = findDOFsClampedSupportIGAKLShell...
-    (homDOFs,xiSup,etaSup,p,Xi,q,Eta,CP,isNURBS)
+    (homDOFs, xiSup, etaSup, p, Xi, q, Eta, CP, isNURBS)
 %% Licensing
 %
 % License:         BSD License

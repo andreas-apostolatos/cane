@@ -1,24 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [n,t] = computeNormalAndTangentVectorsToBSplineBoundary...
-    (xi,Xi,eta,Eta,GXi,GEta,A3,isOnXi)
+    (xi, Xi, eta, Eta, GXi, GEta, A3, isOnXi)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the normal and the tangent vectors to the shell boundary, given
@@ -52,7 +40,7 @@ function [n,t] = computeNormalAndTangentVectorsToBSplineBoundary...
 if isOnXi
     if eta == Eta(1)
         t = GXi/norm(GXi);
-    elseif eta == Eta(length(Eta))
+    elseif eta == Eta(end)
         t = - GXi/norm(GXi);
     else
         error('Check the coupling or loading extension');
@@ -60,7 +48,7 @@ if isOnXi
 else
     if xi == Xi(1)
         t = - GEta/norm(GEta);
-    elseif xi == Xi(length(Xi))
+    elseif xi == Xi(end)
         t = GEta/norm(GEta);
     else
         error('Check the coupling or loading extension');
@@ -68,7 +56,6 @@ else
 end
 
 %% 2. Compute the normal to the boundary vector to point always outwards
-n = cross(t,A3);
+n = cross(t, A3);
 
 end
-

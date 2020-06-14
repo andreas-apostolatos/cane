@@ -1,16 +1,15 @@
-%% Licensing
-%
-% License:         BSD License
-%                  cane Multiphysics default license: cane/license.txt
-%
-% Main authors:    Andreas Apostolatos
-%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%   Matlab Input File                                                     %
-%   _________________                                                     %
+%   License:        BSD License                                           %
+%                   cane Multiphysics default license: cane/license.txt   %
 %                                                                         %
-%   cane Multiphysics                                                     %
+%   Main authors:   Andreas Apostolatos                                   %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%   cane Input File                                                       %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -24,21 +23,26 @@ STRUCTURE_ANALYSIS
  ANALYSIS_TYPE,planeStress
 
 STRUCTURE_MATERIAL_PROPERTIES
-  DENSITY,1.0
-  YOUNGS_MODULUS,1e7
-  POISSON_RATIO,0.33333
+ DENSITY,1.0
+ YOUNGS_MODULUS,1e7
+ POISSON_RATIO,0.3333
+ THICKNESS,1.0
 
 STRUCTURE_NLINEAR_SCHEME
  NLINEAR_SCHEME,NEWTON_RAPHSON
- TOLERANCE,1e-9
+ NO_LOAD_STEPS,1
+ TOLERANCE,1e-8
  MAX_ITERATIONS,100
 
 STRUCTURE_TRANSIENT_ANALYSIS
- SOLVER STEADY-STATE
+ SOLVER STEADY_STATE
  TIME_INTEGRATION EXPLICIT_EULER
+ ALPHA_BETA -0.1
+ GAMMA 0.6
  START_TIME 0
  END_TIME 10
- NUMBER_OF_TIME_STEPS 0.01
+ NUMBER_OF_TIME_STEPS 100
+ ADAPTIVE_TIME_STEPPING false
  
  STRUCTURE_INTEGRATION
   DOMAIN user

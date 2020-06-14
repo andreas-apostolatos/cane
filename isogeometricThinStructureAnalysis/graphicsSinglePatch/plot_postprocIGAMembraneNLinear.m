@@ -1,5 +1,5 @@
 function index = plot_postprocIGAMembraneNLinear...
-    (BSplinePatch,dHat,graph,outMsg)
+    (BSplinePatch, dHat, graph, outMsg)
 %% Licensing
 %
 % License:         BSD License

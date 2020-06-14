@@ -1,5 +1,5 @@
 function F = computeLoadVctFEMPlateInMembraneAction...
-    (strMsh,analysis,propNBC,t,gaussInt,outMsg)
+    (strMsh, analysis, propNBC, t, gaussInt, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -68,14 +68,12 @@ function F = computeLoadVctFEMPlateInMembraneAction...
 % 3. Appendix
 %
 %% Function main body
-if strcmp(outMsg,'outputEnabled')
+if strcmp(outMsg, 'outputEnabled')
     fprintf('______________________________________________________________\n');
     fprintf('##############################################################\n');
     fprintf('Computation the global load vector for a FEM discretized plate\n');
     fprintf('in membrane action problem has been initiated\n');
     fprintf('______________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -111,12 +109,12 @@ end
 for iElmnt = 1:length(propNBC.lines(:,1))
     %% 2i. Get the nodes which are on the Neumann boundary
     nodeIDs = propNBC.lines(iElmnt,1:2);
-    x1 = strMsh.nodes(nodeIDs(1),:);
-    x2 = strMsh.nodes(nodeIDs(2),:);
+    x1 = strMsh.nodes(nodeIDs(1),2:end);
+    x2 = strMsh.nodes(nodeIDs(2),2:end);
     
     %% 2ii. Get the nodes of the element on the Neumann boundary
     elementID = propNBC.lines(iElmnt,3);
-    element = strMsh.elements(elementID,:);
+    element = strMsh.elements(elementID,2:end);
     index = isnan(element);
     element(index) = [];
     noNodesEl = length(element);
@@ -128,7 +126,7 @@ for iElmnt = 1:length(propNBC.lines(:,1))
     else
         error('The load vector computation for a %d-noded element is not yet implemented',noNodesEl);
     end
-    nodes = strMsh.nodes(element,:);
+    nodes = strMsh.nodes(element,2:end);
     
     %% 2iii. Get the function handle for this type of loading
     if ischar(propNBC.fctHandle(iElmnt,:))
@@ -196,10 +194,8 @@ for iElmnt = 1:length(propNBC.lines(:,1))
 end
 
 %% 3. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
     fprintf('\nComutation of the load vector took %.2d seconds \n\n',computationalTime);
     fprintf('_________________Load Vector Computation Ended________________\n');
     fprintf('##############################################################\n\n\n');

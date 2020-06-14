@@ -113,16 +113,14 @@ BSplinePatches = {BSplinePatch};
 
 % Get number of DOFs
 numDOFs = 3*numCPs_xi*numCPs_eta;
+BSplinePatches{1}.noDOFs = numDOFs;
 
 % Find the numbering of the DOFs where homogeneous Dirichlet conditions are
 % prescribed
 homDOFs = BSplinePatch.homDOFs;
 
 % Find the numbering of the free DOFs
-freeDOFs = zeros(numDOFs,1);
-for i=1:numDOFs
-    freeDOFs(i,1) = i;
-end
+freeDOFs = 1:numDOFs;
 freeDOFs(ismember(freeDOFs,homDOFs)) = [];
 
 % Get the numbering and the values of the DOFs which are prescribed

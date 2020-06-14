@@ -1,4 +1,5 @@
-function [varargout] = assembleVectors(EFT,noDOFs,noDOFsEl,varargin)
+function [varargout] = assembleSparseVectors ...
+    (EFT, numDOFs, numDOFsEl, varargin)
 %% Licensing
 %
 % License:         BSD License
@@ -15,8 +16,8 @@ function [varargout] = assembleVectors(EFT,noDOFs,noDOFsEl,varargin)
 %
 %       Input :
 %         EFT : The element freedom tables in a pagewise representation
-%    noDOFsEl : The number of DOFs in the element level
-%      noDOFs : The number of DOFs globally
+%     numDOFs : The number of DOFs globally
+%   numDOFsEl : The number of DOFs in the element level
 %    varargin : An arbitrary number of element level vectors stored
 %               pagewisely
 %
@@ -61,13 +62,13 @@ for matID = 1:nargin - 3
     end
     
     %% 1ii. Check the input vector for inconsistency in its dimensions
-    if ~any(sizeOfInput(2:3) == 1) || ~prod(sizeOfInput(2:3)) == noDOFsEl
+    if ~any(sizeOfInput(2:3) == 1) || ~prod(sizeOfInput(2:3)) == numDOFsEl
         error('Assembly of vectors has failed due to inconsistent dimensions');
     end
     
     %% 1iii. Compute the size of the vectors and initialize output vector
-    sizeOfOutput = ( sizeOfInput(2:3) ~= 1 ) * (noDOFs - 1) + 1;
-    sizeOfReshapedVectors = ( sizeOfInput(2:3) ~= 1 ) * (noElmnts * noDOFsEl - 1) + 1;
+    sizeOfOutput = ( sizeOfInput(2:3) ~= 1 ) * (numDOFs - 1) + 1;
+    sizeOfReshapedVectors = ( sizeOfInput(2:3) ~= 1 ) * (noElmnts * numDOFsEl - 1) + 1;
     varargout{matID} = zeros(sizeOfOutput(1), sizeOfOutput(2));
     
     %% 1iv. Reshape indices to a vector for the element freedom tables

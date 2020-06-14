@@ -1,5 +1,6 @@
 function valuesInhomDBCModified = ...
-    computeInletVelocityPowerLaw(fldMsh, inhomDBC, valuesInhomDBC, u0)
+    computeInletVelocityPowerLaw ...
+    (fldMsh, inhomDBC, valuesInhomDBC, u0)
 %% Licensing
 %
 % License:         BSD License
@@ -35,7 +36,7 @@ n = 1/7;
 inletNodes = floor(inhomDBC/3) + mod(inhomDBC,3 );
 
 % Sort according to y-coordinate
-[sortedCoordinates, rowIndices] = sort(fldMsh.nodes(inletNodes,2),'ascend');
+[sortedCoordinates, rowIndices] = sort(fldMsh.nodes(inletNodes,3),'ascend');
 
 % Find the inlet height and relative y-coordinate of each node
 y0 = sortedCoordinates(1);

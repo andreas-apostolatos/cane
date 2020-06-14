@@ -1,4 +1,4 @@
-function [ determinant ] = p3Ddet( M )
+function [ determinant ] = p3Ddet(M)
 %% Licensing
 %
 % License:         BSD License

@@ -57,7 +57,8 @@ pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 % caseName = 'PlateWithMultipleHolesPlaneStress';
 % caseName = 'InfinitePlateWithAHolePlaneStress';
 % caseName = 'unitTest_curvedPlateTipShearPlaneStress';
-caseName = 'NACA2412_AoA5_CSD';
+% caseName = 'NACA2412_AoA5_CSD';
+caseName = 'turek_csd';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
@@ -77,6 +78,9 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 propVTK.isOutput = true;
 propVTK.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
 propVTK.VTKResultFile = 'undefined';
+
+% Define traction vector
+propNBC.tractionLoadVct = [0; -1e1; 0];
 
 % Initialize graphics index
 graph.index = 1;
@@ -103,6 +107,10 @@ dHat = zeros(numDOFs,1);
 % graph.visualization.geometry = 'reference_and_current';
 % resultant = 'stress';
 % component = 'y';
-% graph.index = plot_currentConfigurationAndResultants(strMsh,homDBC,dHat,parameters,analysis,resultant,component,graph);
+% nodeIDs_active = [];
+% contactSegments = [];
+% graph.index = plot_currentConfigurationAndResultants ...
+%     (propAnalysis, strMsh, homDOFs, dHat, nodeIDs_active, ...
+%     contactSegments, parameters, resultant, component, graph);
 
 %% END OF THE SCRIPT

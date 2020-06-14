@@ -1,5 +1,6 @@
-function [uv,hasConverged] = computePointCoordinatesOnCanonicalBilinearQuadrilateral...
-    (x,xCorner,newtonRapshon)
+function [uv, isConverged] = ...
+    computePointCoordinatesOnCanonicalBilinearQuadrilateral...
+    (x, xCorner, newtonRapshon)
 %% Licensing
 %
 % License:         BSD License
@@ -27,7 +28,7 @@ function [uv,hasConverged] = computePointCoordinatesOnCanonicalBilinearQuadrilat
 %       Output :
 %           uv : The coordinates of the point in the canonical space of the
 %                bilinear quadrilateral uv = [u v]
-% hasConverged : Flag on the convergence of the Newton iterations
+%  isConverged : Flag on the convergence of the Newton iterations
 %
 % Function layout :
 %
@@ -61,7 +62,7 @@ uv = zeros(2,1);
 counter = -1;
 
 % Initialize convergence flag to true
-hasConverged = 1;
+isConverged = 1;
 
 %% 1. Loop over all the Newton iterations
 while counter <= newtonRapshon.maxIt
@@ -112,7 +113,7 @@ end
 
 %% 2. Check if convergence has been achieved
 if counter == newtonRapshon.maxIt
-    hasConverged = 0;
+    isConverged = 0;
 end
 
 end

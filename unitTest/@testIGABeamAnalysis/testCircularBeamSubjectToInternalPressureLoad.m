@@ -4,6 +4,8 @@ function testCircularBeamSubjectToInternalPressureLoad(testCase)
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
 %
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Tests the solution to a circular isogeometric beam problem subject to
@@ -64,10 +66,10 @@ CP(:,3) = [0 0 0];
 CP(:,4) = [1 1/sqrt(2) 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
-isNURBS = 0;
-for i=length(CP(:,1));
-    if CP(i,4)~=1
-        isNURBS = 1;
+isNURBS = false;
+for i = length(CP(:, 1))
+    if CP(i, 4) ~= 1
+        isNURBS = true;
         break;
     end
 end
@@ -81,7 +83,7 @@ parameters.EYoung = 4e6;
 parameters.Nu = 0;
 
 % shear modulus (connected to epsilon_12 = E/(1+nu))
-parameters.GShear = parameters.EYoung/(2*(1+parameters.Nu));
+parameters.GShear = parameters.EYoung/(2*(1 + parameters.Nu));
 
 % shear correction factor
 parameters.alpha = 5/6;
@@ -121,11 +123,11 @@ solve_LinearSystem = @solve_LinearSystemMatlabBackslashSolver;
 
 % Order elevation
 tp = 1;
-[Xi,CP,p] = degreeElevateBSplineCurve(p,Xi,CP,tp,'');
+[Xi, CP, p] = degreeElevateBSplineCurve(p, Xi, CP, tp, '');
 
 % Knot insertion
 n = 11;
-[Xi,CP] = knotRefineUniformlyBSplineCurve(n,p,Xi,CP,'');
+[Xi, CP] = knotRefineUniformlyBSplineCurve(n, p, Xi, CP, '');
 
 %% 5. Define the boundary conditions
 
@@ -135,16 +137,20 @@ homDOFs = [];
 % Fix displacents and rotations accordingly at each end of the beam
     
 % Clamp the left edge
-xib = [Xi(1) Xi(p+1)]; dir = 1;
-homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
-xib = [Xi(1) Xi(p+1)]; dir = 3;
-homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
+xib = [Xi(1) Xi(p + 1)];
+dir = 1;
+homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+xib = [Xi(1) Xi(p + 1)];
+dir = 3;
+homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
 
 % Clamp the right edge
-xib = [Xi(length(Xi)-p) Xi(length(Xi))]; dir = 2;
-homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
-xib = [Xi(length(Xi)-p) Xi(length(Xi))]; dir = 3;
-homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
+xib = [Xi(length(Xi) - p) Xi(length(Xi))];
+dir = 2;
+homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+xib = [Xi(length(Xi) - p) Xi(length(Xi))];
+dir = 3;
+homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
 
 % Neumann boundary conditions
 
@@ -152,11 +158,14 @@ homDOFs = findDofsForTimoshenkoBeams2D(homDOFs,xib,dir,CP);
 NBC.noCnd = 1;
 xib = [0 1];
 NBC.xiLoadExtension = {xib};
+NBC.etaLoadExtension = {'undefined'};
 pLoad = 1e5;
-NBC.loadAmplitude(1,1) = pLoad;
+NBC.loadAmplitude = {pLoad};
 loadDir = 2;
-NBC.loadDirection(1,1) = loadDir;
+NBC.loadDirection = {loadDir};
 NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D'};
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 %% 6. Define the expected solution
 
@@ -253,12 +262,15 @@ expSolMinElEdgeSizeTimoshenko = 1.335822696345342;
 
 %% 7. Solve the Timoshenko beam problem
 analysis.type = 'Timoshenko';
-[dHatTimoshenko,FTimoshenko,minElEdgeSizeTimoshenko] = solve_IGABeamLinear2D...
-    (analysis,p,Xi,CP,homDOFs,NBC,parameters,isNURBS,solve_LinearSystem,int,'');
+[dHatTimoshenko, FTimoshenko, minElEdgeSizeTimoshenko] = ...
+    solve_IGABeamLinear2D ...
+    (analysis, p, Xi, CP, homDOFs, NBC, parameters, isNURBS, ...
+    solve_LinearSystem, int, '');
 
 %% 8. Verify the results
-testCase.verifyEqual(dHatTimoshenko,expSolDispRotTimoshenko,'AbsTol',absTol);
-testCase.verifyEqual(FTimoshenko,expSolFTimoshenko,'AbsTol',absTolRelaxed6);
-testCase.verifyEqual(minElEdgeSizeTimoshenko,expSolMinElEdgeSizeTimoshenko,'AbsTol',absTolRelaxed6);
+testCase.verifyEqual(dHatTimoshenko, expSolDispRotTimoshenko, 'AbsTol', absTol);
+testCase.verifyEqual(FTimoshenko, expSolFTimoshenko, 'AbsTol', absTolRelaxed6);
+testCase.verifyEqual(minElEdgeSizeTimoshenko, expSolMinElEdgeSizeTimoshenko, ...
+    'AbsTol', absTolRelaxed6);
 
 end

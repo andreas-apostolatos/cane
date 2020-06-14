@@ -1,4 +1,5 @@
-function [x,isIntersection] = computeIntersectionBetweenStraightLines(x1,x2,x3,x4)
+function [x, isIntersection] = ...
+    computeIntersectionBetweenStraightLines(x1, x2, x3, x4)
 %% Licensing
 %
 % License:         BSD License

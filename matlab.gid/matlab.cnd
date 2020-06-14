@@ -119,7 +119,19 @@ QUESTION: Z-Value
 VALUE: 0.0
 END CONDITION
 
-NUMBER: 9 CONDITION: FSI-Interface
+NUMBER: 9 CONDITION: Thermal-Dirichlet
+CONDTYPE: over lines
+CONDMESHTYPE: over nodes
+QUESTION: T-Constraint#CB#(0,1)
+VALUE: 0
+HELP:not yet included
+QUESTION: T-Value
+VALUE: 0.0
+END CONDITION
+
+BOOK: FSI
+
+NUMBER: 10 CONDITION: FSI-Interface
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 QUESTION: X-Constraint#CB#(0,1)
@@ -137,9 +149,19 @@ QUESTION: Z-Value
 VALUE: 0.0
 END CONDITION
 
+NUMBER: 11 CONDITION: Structure-Coupled-Nodes
+CONDTYPE: over lines
+CONDMESHTYPE: over nodes
+END CONDITION
+
+NUMBER: 12 CONDITION: Fluid-Coupled-Nodes
+CONDTYPE: over lines
+CONDMESHTYPE: over nodes
+END CONDITION
+
 BOOK: Loads
 
-NUMBER: 10 CONDITION: Structure-Force
+NUMBER: 13 CONDITION: Structure-Force
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 QUESTION: ForceType#CB#(boundaryLoad,whatever)
@@ -148,49 +170,71 @@ QUESTION: FunctionHandleToForceComputation
 VALUE: functionHandle
 END CONDITION
 
+NUMBER: 14 CONDITION: Thermal-Flux
+CONDTYPE: over lines
+CONDMESHTYPE: over nodes
+QUESTION: FluxType#CB#(boundaryFlux,whatever)
+VALUE: boundaryFlux
+QUESTION: FunctionHandleToFluxComputation
+VALUE: functionHandle
+END CONDITION
+
 BOOK: Contact
 
-NUMBER: 11 CONDITION: Structure-Contact
+NUMBER: 15 CONDITION: Structure-Contact
 CONDTYPE: over lines
 CONDMESHTYPE: over nodes
 END CONDITION
 
 BOOK: Domains
 
-NUMBER: 12 CONDITION: Fluid-Nodes-Over-Surfaces
+NUMBER: 16 CONDITION: Fluid-Nodes-Over-Surfaces
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 CONDMESHTYPE: over nodes
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 13 CONDITION: Fluid-Nodes-Over-Volumes
+NUMBER: 17 CONDITION: Fluid-Nodes-Over-Volumes
 CONDTYPE: over volumes
 CONDMESHTYPE: over elements
 CONDMESHTYPE: over nodes
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 14 CONDITION: Fluid-Elements-Over-Surfaces
+NUMBER: 18 CONDITION: Fluid-Elements-Over-Surfaces
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 15 CONDITION: Fluid-Elements-Over-Volumes
+NUMBER: 19 CONDITION: Fluid-Elements-Over-Volumes
 CONDTYPE: over volumes
 CONDMESHTYPE: over elements
 TITLE: Fluid
 END CONDITION
 
-NUMBER: 16 CONDITION: Structure-Nodes
+NUMBER: 20 CONDITION: Structure-Nodes
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 CONDMESHTYPE: over nodes
 TITLE: Solid
 END CONDITION
 
-NUMBER: 17 CONDITION: Structure-Elements
+NUMBER: 21 CONDITION: Structure-Elements
+CONDTYPE: over surfaces
+CONDMESHTYPE: over elements
+TITLE: Solid
+END CONDITION
+
+NUMBER: 22 CONDITION: Thermal-Nodes
+CONDTYPE: over surfaces
+CONDMESHTYPE: over elements
+CONDMESHTYPE: over nodes
+TITLE: Solid
+END CONDITION
+
+NUMBER: 23 CONDITION: Thermal-Elements
 CONDTYPE: over surfaces
 CONDMESHTYPE: over elements
 TITLE: Solid

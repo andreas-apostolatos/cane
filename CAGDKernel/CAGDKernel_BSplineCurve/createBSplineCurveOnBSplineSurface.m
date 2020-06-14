@@ -1,41 +1,28 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [X,Y,Z] = createBSplineCurveOnBSplineSurface...
-    (p,q,Xi,Eta,CP,isNURBS,grid,xiStart,etaStart,xiEnd,etaEnd)
+function [X, Y, Z] = createBSplineCurveOnBSplineSurface ...
+    (p, q, Xi, Eta, CP, isNURBS, grid, xiStart, etaStart, xiEnd, etaEnd)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns three arrays, containing the coordinates of the points on the
 % NURBS surface in a grid of gridu x gridv lines
 %
-%    Input :
-%      p,q : Polynomial degrees
-%      U,V : Knot vectors in u,v-direction
-%       CP : Set of control points and weights
-%     grid : Number of sampling points to be used
-%    u1,v1 : Starting point parameters of the curve
-%    u2,v2 : Ending point parameters of the curve
+%            Input :
+%              p,q : Polynomial degrees
+%           Xi,Eta : Knot vectors in xi,eta-direction
+%               CP : Set of control points and weights
+%             grid : Number of sampling points to be used
+% xiStart,etaStart : Starting point parameters of the curve
+%     xiEnd,etaEnd : Ending point parameters of the curve
 %
-%   Output :
-%        X : Array containing the x-coordinates of the points on the surface
-%        Y : Array containing the y-coordinates of the points on the surface
-%        Z : Array containing the z-coordinates of the points on the surface
+%           Output :
+%            X,Y,Z : Arrays containing the x,y and z-coordinates of the 
+%                    points on the surface
 %
 % Function Layout :
 %

@@ -1,4 +1,5 @@
-function CPd = computeDisplacedControlPointsForIGAKirchhoffLoveShell(CP,dHat)
+function CPd = computeDisplacedControlPointsForIGAKirchhoffLoveShell ...
+    (CP, dHat)
 %% Licensing
 %
 % License:         BSD License

@@ -1,4 +1,5 @@
-function distribution = generateRandomNormalDistribution(meanValue, standardDeviation, noSamples)
+function distribution = generateRandomNormalDistribution ...
+    (meanValue, standardDeviation, numSamples)
 %% Licensing
 %
 % License:         BSD License
@@ -14,12 +15,12 @@ function distribution = generateRandomNormalDistribution(meanValue, standardDevi
 %             Input :
 %         meanValue : Mean value of the distribution
 % standardDeviation : Standard deviation of the distribution
-%         noSamples : Number of samples
+%        numSamples : Number of samples
 %
 %            Output :
 %      distribution : Random vector of noSamples normally distributed
 %       
 %% Function main body
-distribution = normrnd(meanValue, standardDeviation, noSamples, 1);
+distribution = normrnd(meanValue, standardDeviation, numSamples, 1);
 
 end

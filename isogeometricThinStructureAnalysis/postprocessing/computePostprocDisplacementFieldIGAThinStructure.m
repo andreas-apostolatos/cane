@@ -1,5 +1,5 @@
-function d = computePostprocDisplacementFieldIGAThinStructure...
-    (BSplinePatch,dHat,xi,eta)
+function d = computePostprocDisplacementFieldIGAThinStructure ...
+    (BSplinePatch, dHat, xi, eta)
 %% Licensing
 %
 % License:         BSD License

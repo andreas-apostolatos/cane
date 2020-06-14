@@ -1,6 +1,6 @@
-function [errorInL2,errorInL2Gamma,exactNorm] = ...
-    computeDomainAndInterfaceErrorInL2NormKLShellMultipatches...
-    (BSplinePatches,dHat,connections,computeExRes,propProblem,outMsg)
+function [errorInL2, errorInL2Gamma, exactNorm] = ...
+    computeDomainAndInterfaceErrorInL2NormKLShellMultipatches ...
+    (BSplinePatches, dHat, connections, computeExRes, propProblem, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -145,8 +145,6 @@ if strcmp(outMsg,'outputEnabled')
     end
     fprintf('____________________________________________________________________\n');
     fprintf('\n');
-    
-    % start measuring computational time
     tic;
 end
 
@@ -595,11 +593,9 @@ if strcmp(outMsg,'outputEnabled')
 end
 
 %% 4. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-    
-    fprintf('Computation of the broken norm took %.2d seconds \n\n',computationalTime);
+    fprintf('Computation of the broken norm took %.2d seconds \n\n', computationalTime);
     fprintf('______________________Linear Analysis Ended_________________________\n');
     fprintf('####################################################################\n\n\n');
     fprintf('\n');

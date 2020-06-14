@@ -75,13 +75,13 @@ if ~isExistent
 end
 
 %  Number of nodes in the mesh
-[numNodes, ~] = size(fldMsh.nodes);
+[numNodes, ~] = size(fldMsh.nodes(:,2:end));
 
 % Number of DOFs
 numDOFs = noDOFsNode*numNodes;
 
 % Number of elements in the mesh
-[numElements, elementOrder] = size(fldMsh.elements);
+[numElements, elementOrder] = size(fldMsh.elements(:,2:end));
 
 % Arrange the velocity and pressure field arranged into a 2D array as per
 % [[x-comp y-comp z-comp pressure],noNodes]
@@ -96,7 +96,7 @@ outputUnitColorPlots = fopen(strcat(pathToOutput, caseName, '/', ...
     caseName, '_contourPlots_', num2str(noTimeStep), '.vtk'), 'w');
 
 % Transpose the nodal coordinates array
-XYZ = fldMsh.nodes(1:numNodes, :)';
+XYZ = fldMsh.nodes(1:numNodes,2:end)';
 
 % Decide according to the element order
 if isAnalysis3D
@@ -111,10 +111,16 @@ if ( elementOrder == elOrder )
     fprintf(1, '  The output data will use linear elements.\n' );
 end
 
+% Get the indices of the nodes in the element list with respect to their
+% ordering in the nodes array (necessary step when the node IDs are not 
+% sequentially numbered starting from 1)
+[~, idxElements] = ...
+    ismember(fldMsh.elements(:, 2:elementOrder + 1), fldMsh.nodes(:, 1));
+
 % Re-arrange the element numbering to start from zero
 elements = zeros(elementOrder, numElements);
 elements(1:elementOrder, 1:numElements) = ...
-    fldMsh.elements(1:numElements, 1:elementOrder)' - 1;
+    idxElements(1:numElements, 1:elementOrder)' - 1;
 
 %% 1. Write out the data for the color plots
 
@@ -185,9 +191,7 @@ end
 %% 3. Write out the data for the rates of the primary fields
 
 % Check whether there is an output unit, if not create one
-directoryName = ...
-    strcat('../../outputVTK/FEMComputationalFluidDynamicsAnalysis/', ...
-    caseName, '/upRates');
+directoryName = strcat(pathToOutput, caseName, '/upRates');
 isExistent = exist(directoryName, 'dir');
 if ~isExistent
     mkdir(directoryName);
@@ -201,7 +205,7 @@ fprintf(outputUnitUPRates, '# The rates of the velocity and pressure fields\n');
 fprintf(outputUnitUPRates, '\n');
 fprintf(outputUnitUPRates, 'upRates \n');
 str = [num2str(upDot), repmat(' \n', numDOFs, 1)]'; 
-fprintf(outputUnitColorPlots, reshape(str, 1, size(str, 1) * size(str, 2)));
+fprintf(outputUnitUPRates, reshape(str, 1, size(str, 1) * size(str, 2)));
 
 %% 4. Close the file for writting out the results of the rates to the primary fields
 fclose(outputUnitUPRates);

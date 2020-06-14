@@ -1,4 +1,5 @@
-function distribution = generateRandomUniformDistribution(meanValue, standardDeviation, noSamples)
+function distribution = generateRandomUniformDistribution ...
+    (meanValue, standardDeviation, numSamples)
 %% Licensing
 %
 % License:         BSD License
@@ -14,12 +15,12 @@ function distribution = generateRandomUniformDistribution(meanValue, standardDev
 %             Input :
 %         meanValue : Mean value of the distribution
 % standardDeviation : Standard deviation of the distribution
-%         noSamples : Number of samples
+%        numSamples : Number of samples
 %
 %            Output :
 %      distribution : Random vector of noSamples uniformly distributed
 %       
 %% Function main body
-distribution = 2*standardDeviation*rand(noSamples,1) + meanValue - standardDeviation;
+distribution = 2*standardDeviation*rand(numSamples,1) + meanValue - standardDeviation;
 
 end

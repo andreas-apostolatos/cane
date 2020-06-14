@@ -1,4 +1,4 @@
-function [xI,wI,xL,wL,xR,wR] = efficientQuadratureUniform(m,q)
+function [xI, wI, xL, wL, xR, wR] = efficientQuadratureUniform(m, q)
 %% Licensing
 %
 % License:         BSD License

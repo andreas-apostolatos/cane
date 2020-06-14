@@ -1,4 +1,4 @@
-function [xs,ys,zs] = createSupports(nodes,rb)
+function [xs,ys,zs] = createSupports(nodes, homDOFs)
 %% Licensing
 %
 % License:         BSD License
@@ -12,7 +12,7 @@ function [xs,ys,zs] = createSupports(nodes,rb)
 %
 %   Input : 
 %   nodes : The nodes of the mesh
-%      rd : Array containing information on the supports
+% homDOFs : Array containing information on the supports
 %
 %  Output :
 %      xs : x-coordinates of the support triangle vertices
@@ -29,13 +29,13 @@ lo = min(min(min(nodes)));
 fac = (up-lo)/5;
 
 % Initialize the output arrays
-xs = zeros(length(rb),4);
-ys = zeros(length(rb),4);
-zs = zeros(length(rb),4);
+xs = zeros(length(homDOFs),4);
+ys = zeros(length(homDOFs),4);
+zs = zeros(length(homDOFs),4);
 
-for k = 1:length(rb)
+for k = 1:length(homDOFs)
     % Get the corresponding Control Point number p and indices node(k)
-    h=rb(k)/2;
+    h=homDOFs(k)/2;
     p=ceil(h);
 
     %(rb is odd -> horizontal support)

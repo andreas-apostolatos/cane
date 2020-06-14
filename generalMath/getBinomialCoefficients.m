@@ -1,8 +1,10 @@
-function bCoef = getBinomialCoefficients(a,b) 
+function bCoef = getBinomialCoefficients(a, b) 
 %% Licensing
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
 %
 %% Function Documentation 
 % 

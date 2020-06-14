@@ -1,8 +1,8 @@
-function [KNitscheI,CNitscheI,KNitscheJ,resVctNitscheI,resVctNitscheJ,...
-    propCoupling] = computeDDMTangentNitscheMtcesIGAMembrane...
-    (patchI,patchJ,dHatI,dHatJ,haveSameOrientation,connections,...
-    propCoupling,tanStiffMtxI,tanStiffMtxJ,noConnection,noTimeStep,...
-    noNonlinearIteration,propTransientAnalysis,tab,outMsg)
+function [KNitscheI, CNitscheI, KNitscheJ, resVctNitscheI, resVctNitscheJ, ...
+    propCoupling] = computeDDMTangentNitscheMtcesIGAMembrane ...
+    (patchI, patchJ, dHatI, dHatJ, isSameOrientation, connections, ...
+    propCoupling, tanStiffMtxI, tanStiffMtxJ, noConnection, noTimeStep, ...
+    noNonlinearIteration, propTransientAnalysis, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -28,7 +28,7 @@ function [KNitscheI,CNitscheI,KNitscheJ,resVctNitscheI,resVctNitscheJ,...
 %               dHat1,dHat2 : The displacement field of the master and the
 %                             slave patch from the previous nonlinear 
 %                             iteration
-%       haveSameOrientation : Flag on whether the couling surfaces of the 
+%         isSameOrientation : Flag on whether the couling surfaces of the 
 %                             shells are oriented in the same direction 
 %                             over the coupling interface
 %               connections : Define the connection between the patches:
@@ -483,13 +483,13 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             
             if isOnXiJ
                 xiJ = xiEta;
-                if ~haveSameOrientation
+                if ~isSameOrientation
                     xiJ = XiJ(length(XiJ)) - xiJ;
                 end
                 xiSpanJ = findKnotSpan(xiJ,XiJ,nxiJ);
             else
                 etaJ = xiEta;
-                if ~haveSameOrientation
+                if ~isSameOrientation
                     etaJ = EtaJ(length(EtaJ)) - etaJ;
                 end
                 etaSpanJ = findKnotSpan(etaJ,EtaJ,netaJ);

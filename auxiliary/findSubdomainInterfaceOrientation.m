@@ -1,4 +1,4 @@
-function haveTheSameOrientation = findSubdomainInterfaceOrientation...
+function isSameOrientation = findSubdomainInterfaceOrientation...
     (p1,Xi1,q1,Eta1,CP1,isNURBS1,xicoup1,etacoup1,p2,Xi2,q2,Eta2,CP2,...
     isNURBS2,xicoup2,etacoup2)
 %% Licensing
@@ -31,10 +31,10 @@ function haveTheSameOrientation = findSubdomainInterfaceOrientation...
 %                          patches
 %     
 %                 Output :
-% haveTheSameOrientation : Flag determining whether the two coupling curves 
-%                          are oriented in the same direction:
-%                          1 : they are oriented in the same direction
-%                          0 : they are oriented in opposite directions
+%      isSameOrientation : Flag determining whether the two coupling curves 
+%                          are oriented in the same direction,
+%                           true : they are oriented in the same direction
+%                          false : they are oriented in opposite directions
 %
 % Function layout :
 %
@@ -49,26 +49,26 @@ function haveTheSameOrientation = findSubdomainInterfaceOrientation...
 %% 0. Read input
 
 % Assign a tolerance value
-tolerance = 1e1;
+tolerance = 1e-1;
 
 % Number of Control Points at xi-,eta- direction for both patches
 
-% 1st patch :
-% ___________
+% Patch 1
+% -------
 
 nxi1 = length(CP1(:,1,1));
 neta1 = length(CP1(1,:,1));
 
-% 2nd patch :
-% ___________
+% Patch 2
+% -------
 
 nxi2 = length(CP2(:,1,1));
 neta2 = length(CP2(1,:,1));
    
 %% 1. Compute three Cartesian locations on the interfaces for bo patches; Start, middle and end points in the parameter space
 
-% 1st patch :
-% ___________
+% Patch 1
+% -------
 
 % Compute the Cartesian coordinates of the start point in the parameter
 % space
@@ -112,8 +112,8 @@ R1 = computeIGABasisFunctionsAndDerivativesForSurface...
 xEnd1 = computeCartesianCoordinatesOfAPointOnBSplineSurface...
     (xiSpan1,p1,xi1,Xi1,etaSpan1,q1,eta1,Eta1,CP1,R1);
 
-% 2nd patch :
-% ___________
+% Patch 2
+% -------
 
 % Compute the Cartesian coordinates of the start point in the parameter
 % space
@@ -158,14 +158,15 @@ xEnd2 = computeCartesianCoordinatesOfAPointOnBSplineSurface...
     (xiSpan2,p2,xi2,Xi2,etaSpan2,q2,eta2,Eta2,CP2,R2);
 
 %% 2. Decide on whether the interface parametrizations have the same orientation judging by the three points
-
 if norm(xMiddle1 - xMiddle2) > tolerance
     error('The middle point of the interface parametrizations is not the same');
 end
 if norm(xStart1 - xStart2) < tolerance && norm(xEnd1 - xEnd2) < tolerance
-    haveTheSameOrientation = true;
+    isSameOrientation = true;
 elseif norm(xStart1 - xEnd2) < tolerance && norm(xEnd1 - xStart2) < tolerance
-    haveTheSameOrientation = false;
+    isSameOrientation = false;
 else
     error('The interface parametrization do not match');
+end
+
 end

@@ -1,4 +1,6 @@
-function BShearForce = computeBOperatorMatrix4ShearForcesIGAKirchhoffLoveShellLinear(p,q,dR,GCovariant,dGCovariant,ddGCovariant,G3Tilde,Db)
+function BShearForce = ...
+    computeBOperatorMatrix4ShearForcesIGAKirchhoffLoveShellLinear ...
+    (p, q, dR, GCovariant, dGCovariant, ddGCovariant, G3Tilde, Db)
 %% Licensing
 %
 % License:         BSD License

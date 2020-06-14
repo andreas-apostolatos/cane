@@ -1,4 +1,5 @@
-function rb = findDofsForTimoshenkoBeams2D(rb,xi,direction,CP)
+function homDOFs = findDofsForTimoshenkoBeams2D ...
+    (homDOFs, xi, direction, CP)
 %% Licensing
 %
 % License:         BSD License
@@ -14,7 +15,7 @@ function rb = findDofsForTimoshenkoBeams2D(rb,xi,direction,CP)
 %
 %     Input :
 %        rb : previous set of supports
-%        xi : region to be supported (e.g. u=[0 1])
+%   homDOFs : region to be supported (e.g. xi=[0 1])
 % direction : direction: 1-x, 2-y, 3-rotation
 %
 %    Output :
@@ -33,32 +34,32 @@ function rb = findDofsForTimoshenkoBeams2D(rb,xi,direction,CP)
 %% 0. Read input
 
 % counter
-r = length(rb)+1;
+r = length(homDOFs)+1;
 
 % number of control points
 nxi = length(CP(:,1));
 
 %% 1. Iterate and add new DOFs into the vector preserving the old ones
 for i = xi(1)*(nxi-1)+1:xi(2)*(nxi-1)+1
-    rb(r) = 3*(i-1) + direction;
+    homDOFs(r) = 3*(i-1) + direction;
 
     % Round to nearest integer
-    rb(r) = round(rb(r));
+    homDOFs(r) = round(homDOFs(r));
 
     % Update counter
     r = r + 1;
 end
 
 % sort rb and delete double entries
-rb = sort(rb);
+homDOFs = sort(homDOFs);
 
 % Initialize counter
 i = 1;
 
 %% 2. Loop over all elements of the DOF array and delete double entries
-while i < length(rb)
-    if rb(i)==rb(i+1)
-        rb(i+1)=[];  
+while i < length(homDOFs)
+    if homDOFs(i)==homDOFs(i+1)
+        homDOFs(i+1)=[];  
         
         % Decrease counter
         i = i - 1;  

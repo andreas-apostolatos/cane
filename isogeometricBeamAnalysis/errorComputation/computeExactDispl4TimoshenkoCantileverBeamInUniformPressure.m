@@ -1,4 +1,6 @@
-function [dExact,betaExact] = computeExactDispl4TimoshenkoCantileverBeamInUniformPressure(P,problemSettings)
+function [dExact, betaExact] = ...
+    computeExactDispl4TimoshenkoCantileverBeamInUniformPressure ...
+    (P, problemSettings)
 %% Licensing
 %
 % License:         BSD License

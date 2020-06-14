@@ -12,18 +12,20 @@
 %        - Isogeometric beam analysis
 %        - Isogeometric membrane analysis
 %        - Isogeometric Kichhoff-Love shell analysis
+%        - Finite element formulation of thermal conduction analysis
 %        - Finite element formulation of plate in membrane action analysis
 %        - Finite element formulation of the frictionless Signorini problem
 %        - Stabilized isogeometric analysis for incompressible flows
 %        - Stabilized finite element analysis for the Navier-Stokes problem
+%        - Finite element methods for Fluid-Structure Interaction analysis
 %        - Shape optimization analysis
 %
-% Date : 18.04.2020
+% Date : 16.05.2020
 %
 %% Clear memnory and command window
 clc;
 clear;
- 
+
 %% Includes
 
 % Add transient analysis functions
@@ -62,8 +64,9 @@ addpath('../../isogeometricBeamAnalysis/stiffnessMatrices/',...
         '../../isogeometricBeamAnalysis/math/',...
         '../../isogeometricBeamAnalysis/auxiliary/',...
         '../../isogeometricBeamAnalysis/errorComputation/');
-
-% Add all functions related to the isogeometric Kirchhoff-Love shell formulation
+    
+% Add all functions related to the isogeometric Kirchhoff-Love shell 
+% formulation
 addpath('../../isogeometricThinStructureAnalysis/graphicsSinglePatch/',...
         '../../isogeometricThinStructureAnalysis/graphicsMultipatches/',...
         '../../isogeometricThinStructureAnalysis/loads/',...
@@ -82,6 +85,16 @@ addpath('../../isogeometricThinStructureAnalysis/graphicsSinglePatch/',...
         '../../isogeometricThinStructureAnalysis/initialConditions/',...
         '../../isogeometricThinStructureAnalysis/weakDBCMembrane/',...
         '../../isogeometricThinStructureAnalysis/formFindingAnalysis/');
+
+% Add all functions related to heat transfer analysis
+addpath('../../FEMThermalConductionAnalysis/solvers/',...
+        '../../FEMThermalConductionAnalysis/solutionMatricesAndVectors/',...
+        '../../FEMThermalConductionAnalysis/loads/',...
+        '../../FEMThermalConductionAnalysis/graphics/',...
+        '../../FEMThermalConductionAnalysis/output/',...
+        '../../FEMThermalConductionAnalysis/initialConditions/',...
+        '../../FEMThermalConductionAnalysis/postprocessing/', ...
+        '../../FEMThermalConductionAnalysis/transientAnalysis/');
     
 % Add all functions related to plate in membrane action analysis
 addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
@@ -122,7 +135,12 @@ addpath('../../FEMComputationalFluidDynamicsAnalysis/solutionMatricesAndVectors/
         '../../FEMComputationalFluidDynamicsAnalysis/ALEMotion/',...
         '../../FEMComputationalFluidDynamicsAnalysis/transientAnalysis/',...
         '../../FEMComputationalFluidDynamicsAnalysis/postProcessing/');
-
+    
+% Add all functions related to the Finite Element Methods for
+% Fluid-Structure Interaction
+addpath('../../FEMComputationalFluidStructureInteractionAnalysis/ALEMotion/', ...
+        '../../FEMComputationalFluidStructureInteractionAnalysis/solvers/');
+    
 % Add all functions related to parsing
 addpath('../../parsers/');
 
@@ -174,6 +192,10 @@ if isLight
 end
 resultIGAKLShell = run(suiteClassIGAKLShell);
 
+%% Run the unit test cases for the finite element formulation of the thermal conduction analysis
+suiteClassFEMThermalConduction = TestSuite.fromClass(?testFEMThermalConductionAnalysis);
+resultFEMThermalConduction = run(suiteClassFEMThermalConduction);
+
 %% Run the unit test cases for the finite element formulation of the plate in membrane action analysis
 suiteClassFEMPlateInMembraneAction = TestSuite.fromClass(?testFEMPlateInMembraneActionAnalysis);
 resultFEMPlateInMembraneAction = run(suiteClassFEMPlateInMembraneAction);
@@ -189,6 +211,10 @@ resultIGA4CFD = run(suiteClassIGA4CFD);
 %% Run the unit test cases for stabilized finite element formulation for the Navier-Stokes problem
 suiteClassFEM4CFD = TestSuite.fromClass(?testFEMComputationalFluidDynamicsAnalysis);
 resultFEM4CFD = run(suiteClassFEM4CFD);
+
+%% Run the unit test cases for finite element methods for Fluid-Structure Interaction analysis
+suiteClassFEM4FSI = TestSuite.fromClass(?testFEMComputationalFluidStructureInteractionAnalysis);
+resultFEM4FSI = run(suiteClassFEM4FSI);
 
 %% Run the unit test cases for shape optimization analysis
 suiteClassShapeOptimization = TestSuite.fromClass(?testShapeOptimizationAnalysis);

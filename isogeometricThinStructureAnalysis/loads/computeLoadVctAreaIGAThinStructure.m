@@ -347,8 +347,8 @@ for iEtaSpan = etaSpanStart:etaSpanEnd
                     F(EFT) = F(EFT) + (RMtx'*tractionVct)*elementaryAreaGP;
 %                     F(EFT) = F(EFT) + ((RMtx'*tractionVct) + FAmp*(-a2x*dRdXiMtx + a1x*dRdEtaMtx)'*RMtx*dHat(EFT))*elementaryAreaGP;
 
-                   if isFollower && strcmp(direction,'normal')
-                       tanMtx(EFT,EFT) = tanMtx(EFT,EFT) - ...
+                   if isFollower && strcmp(direction, 'normal')
+                       tanMtx(EFT, EFT) = tanMtx(EFT, EFT) - ...
                            FAmplitude*(RMtx'*(-a2x*dRdXiMtx + a1x*dRdEtaMtx))*detJParam2Integr*GW;
                    end
                 end
@@ -363,16 +363,14 @@ if isvector(FOutdated)
 end
 
 %% 5. Appendix
-if strcmp(outMsg,'outputEnabled')
-    % Save computational time
+if strcmp(outMsg, 'outputEnabled')
     computationalTime = toc;
-
     if isvector(FOutdated)
-        fprintf('Load vector update took %.2d seconds \n\n',computationalTime);
+        fprintf('Load vector update took %.2d seconds \n\n', computationalTime);
         fprintf('________________Load Vector Update Ended_______________\n');
         fprintf('#######################################################\n\n\n');
     else
-        fprintf('Load vector computation took %.2d seconds \n\n',computationalTime);
+        fprintf('Load vector computation took %.2d seconds \n\n', computationalTime);
         fprintf('____________Load Vector Computation Ended______________\n');
         fprintf('#######################################################\n\n\n');
     end

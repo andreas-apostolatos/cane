@@ -1,6 +1,8 @@
-function [dHatHistoryRestart,dHatDotRestart,dHatDDotRestart,noTimeStepRestart,propTransientAnalysis] = ...
-    computeRestartInitCndsIGAGiD...
-    (BSplinePatches,noDOFs,propTransientAnalysis,caseName,pathToOutput,tab,outMsg)
+function [dHatHistoryRestart, dHatDotRestart, dHatDDotRestart, ...
+    noTimeStepRestart, propTransientAnalysis] = ...
+    computeRestartInitCndsIGAGiD ...
+    (BSplinePatches, numDOFs, propTransientAnalysis, caseName, ...
+    pathToOutput, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -16,7 +18,7 @@ function [dHatHistoryRestart,dHatDotRestart,dHatDDotRestart,noTimeStepRestart,pr
 %                 Input :
 %        BSplinePatches : Cell array containing the B-Spline patches which
 %                         are forming the multipatch geometry
-%                noDOFs : Number of DOFs for the mulitpatch system 
+%               numDOFs : Number of DOFs for the mulitpatch system 
 %                         including also Lagrange Multipliers DOFs if they
 %                         are employed
 % propTransientAnalysis : Structure containing information on the transient
@@ -94,12 +96,12 @@ if strcmp(outMsg,'outputEnabled')
 end
 
 % Initialize the output array
-dHatHistoryRestart = zeros(noDOFs,noTimeStepRestart + 1);
+dHatHistoryRestart = zeros(numDOFs,noTimeStepRestart + 1);
 
 %% 1. Compute the initial conditions
 warning('The restart option takes into account null initial displacement, velocity and acceleration');
 [dHat,dHatDotRestart,dHatDDotRestart,~] = computeNullInitCndsIGAThinStructure...
-    (BSplinePatches,noDOFs,propTransientAnalysis,caseName,pathToOutput,tab,outMsg);
+    (BSplinePatches,numDOFs,propTransientAnalysis,caseName,pathToOutput,tab,outMsg);
 
 %% 2. Loop over all time steps
 for iTimeStep = 0:noTimeStepRestart
@@ -127,11 +129,11 @@ for iTimeStep = 0:noTimeStepRestart
 
     % Erase the patch numbering from the displacement vector
     dHat(1,:) = [];
-    noDOFs = 0;
+    numDOFs = 0;
     for iPatches = 1:noPatches - 1
         noDOFsPatch = BSplinePatches{iPatches}.noDOFs;
-        noDOFs = noDOFs + noDOFsPatch;
-        dHat(noDOFs + 1,:) = [];
+        numDOFs = numDOFs + noDOFsPatch;
+        dHat(numDOFs + 1,:) = [];
     end
     
     %% 2iv. Save the displacement of the current time step

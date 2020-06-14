@@ -1,24 +1,14 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [xi,eta,Q,lambda,minDist,isConvergent] = computePointProjectionOfLineOnPatchEdgeBisection...
-    (xiIn,etaIn,PIn,POut,p,Xi,q,Eta,CP,isNURBS,propNewtonRaphson,propBisection)
+function [xi, eta, Q, lambda, minDist, isConvergent] = ...
+    computePointProjectionOfLineOnPatchEdgeBisection...
+    (xiIn, etaIn, PIn, POut, p, Xi, q, Eta, CP, isNURBS, ...
+    propNewtonRaphson, propBisection)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the parametric coordinates and the physical coordinates of the
@@ -115,8 +105,9 @@ while counterIter < propBisection.maxIt && ~isConvergent
     PInP = P - PIn;
     
     %% 1iv. Compute the projection of the bisection point to the surface B-Spline patch
-    [xi,eta,Q,isProjected,noIter] = computeNearestPointProjectionOnBSplineSurface...
-        (P,p,Xi,q,Eta,CP,isNURBS,xi0,eta0,propNewtonRaphson);
+    [xi, eta, Q, isProjected, noIter] = ...
+        computeNearestPointProjectionOnBSplineSurface ...
+        (P, p, Xi, q, Eta, CP, isNURBS, xi0, eta0, propNewtonRaphson);
     
     %% 1v. Update the points projected in and out the patch
     if isProjected

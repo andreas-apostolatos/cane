@@ -9,8 +9,6 @@ function [contactLength, contactForce, maxContactPressure] = ...
 % Main authors:    Andreas Apostolatos
 %                  Marko Leskovar
 %
-% Date : 27.02.2020
-%
 %% Function documentation
 %
 % Computes the length of contact, its reaction force and the maximal
@@ -66,12 +64,12 @@ contactLength = 0;
 %% 1. Loop over all active contact nodes
 for i = 1:length(nodeIDs_active)
     %% 1i. Find the elements indices to which nodeI belongs to
-    [indexI, ~] = find(nodeIDs_active(i) == mesh.elements);
+    [indexI, ~] = find(nodeIDs_active(i) == mesh.elements(:,2:end));
     
     %% 1ii. Loop over remaining to the right active contact nodes
     for j = i + 1:length(nodeIDs_active)
         %% 1ii.1. Find the elements indices to which the nodeJ belongs to
-        [indexJ, ~] = find(nodeIDs_active(j) == mesh.elements);
+        [indexJ, ~] = find(nodeIDs_active(j) == mesh.elements(:,2:end));
         
         %% 1ii.2. Loop over all elements containing nodeJ
         for k = 1:length(indexJ)
@@ -81,8 +79,8 @@ for i = 1:length(nodeIDs_active)
             %% 1iii.2ii. Check if both nodeI and nodeJ share only one element in common and if yes compute all postprocessing resultants at the contact element level
             if length(commonElmnts) == 1
                 % Compute the nodal coordinates of the active nodes on the finite element edge
-                nodeI = mesh.nodes(nodeIDs_active(i), 1:2)';
-                nodeJ = mesh.nodes(nodeIDs_active(j), 1:2)';
+                nodeI = mesh.nodes(nodeIDs_active(i), 2:3)';
+                nodeJ = mesh.nodes(nodeIDs_active(j), 2:3)';
                 
                 % Compute the displacement field of the active nodes on the finite element edge
                 dI = [dHat(2*nodeIDs_active(i) - 1, 1)

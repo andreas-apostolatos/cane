@@ -25,14 +25,14 @@ function homDOFs = findDofs3D(homDOFs, xi, eta, dir, CP)
 r = length(homDOFs) + 1;
 
 % number of control points in xi,eta-direction
-nxi = length(CP(:,1,1));
-neta = length(CP(1,:,1));
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
 
 % Iterate and add new supports preserving the old ones
-for j = eta(1)*(neta-1)+1:eta(2)*(neta-1)+1
-    for i = xi(1)*(nxi-1)+1:xi(2)*(nxi-1)+1
+for j = eta(1)*(neta - 1) + 1:eta(2)*(neta - 1) + 1
+    for i = xi(1)*(nxi - 1) + 1:xi(2)*(nxi - 1) + 1
         % Find the corresponding DOF
-        homDOFs(r) = 3*((j-1)*nxi + i-1) + dir;
+        homDOFs(r) = 3*((j - 1)*nxi + i-1) + dir;
         
         % Update counter
         r = r + 1;

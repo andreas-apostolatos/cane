@@ -79,8 +79,8 @@ propOutput.writeOutputToFile = @writeOutputFEMPlateInMembraneActionToVTK;
 propOutput.VTKResultFile = 'undefined';
 
 % Choose computation of the stiffness matrix
-% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
-computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
+computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST;
+% computeStiffMtxLoadVct = @computeStiffMtxAndLoadVctFEMPlateInMembraneActionMixed;
 
 % Quadrature for the stiffness matrix and the load vector of the problem
 % 'default', 'user'
@@ -130,7 +130,7 @@ dHat = zeros(numDOFs,1);
 % Compute the error in the L2-norm for the case of the plane stress
 % analysis over a quarter annulus plate subject to tip shear force
 if strcmp(caseName,'unitTest_curvedPlateTipShearPlaneStress')
-    nodeNeumann = strMsh.nodes(propNBC.nodes(1, 1), :);
+    nodeNeumann = strMsh.nodes(propNBC.nodes(1, 1), 2:end);
     funHandle = str2func(propNBC.fctHandle(1, :));
     forceAmplitude = norm(funHandle(nodeNeumann(1, 1),nodeNeumann(1, 2),nodeNeumann(1, 3), 0));
     internalRadius = 4;

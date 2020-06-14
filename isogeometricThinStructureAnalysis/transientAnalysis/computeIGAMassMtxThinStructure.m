@@ -1,5 +1,5 @@
-function massMtx = computeIGAMassMtxThinStructure...
-    (BSplinePatches,noDOFs)
+function massMtx = computeIGAMassMtxThinStructure ...
+    (BSplinePatches, numDOFs)
 %% Licensing
 %
 % License:         BSD License
@@ -84,7 +84,7 @@ function massMtx = computeIGAMassMtxThinStructure...
 %                            .No : Number of connections
 %                     .xiEtaCoup : [patchID1 patchID2 xi12 eta12 xi21 eta21
 %                                   ...      ...    ...   ...  ...   ...]
-%                noDOFs : Number of DOFs for the mulitpatch system
+%               numDOFs : Number of DOFs for the mulitpatch system
 %                         including also Lagrange Multipliers DOFs if they
 %                         are employed
 %          propCoupling : Coupling properties for the multipatch geometries
@@ -183,7 +183,7 @@ function massMtx = computeIGAMassMtxThinStructure...
 noPatches = length(BSplinePatches);
 
 % Initialize output array
-massMtx = zeros(noDOFs,noDOFs);
+massMtx = zeros(numDOFs,numDOFs);
 
 %% 1. Loop over all the patches
 for iPatches = 1:noPatches

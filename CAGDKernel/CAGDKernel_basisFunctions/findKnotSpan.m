@@ -1,4 +1,4 @@
-function i = findKnotSpan(xi,Xi,nxi)
+function i = findKnotSpan(xi, Xi, numCPs)
 %% Licensing
 %
 % License:         BSD License
@@ -16,7 +16,7 @@ function i = findKnotSpan(xi,Xi,nxi)
 %  Input :
 %     xi : The coordinate in the unit interval
 %     Xi : The knot vector of the NURBS curve
-%    nxi : n = m - p - 1
+% numCPs : n = m - p - 1
 %
 % Output :
 %      i : The knot span where u lies
@@ -34,13 +34,13 @@ if norm(xi) < Xi(1) - 1e-7
 end
 
 % special case: last knot (open knot vector assumed)
-if abs(xi-Xi(nxi+1)) < eps
-    i = nxi;
+if abs(xi - Xi(numCPs + 1)) < eps
+    i = numCPs;
     return
 end
 
 for i = 1:m-1
-    if xi < Xi(i+1)
+    if xi < Xi(i + 1)
         return
     end
 end  

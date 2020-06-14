@@ -1,24 +1,13 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function plot_ControlPolygonBSplineCurveOnBSplineSurface...
-    (CP,p_surface,q_surface,Xi_surface,Eta_surface,CP_surface,isNURBS_surface)
+function plot_ControlPolygonBSplineCurveOnBSplineSurface ...
+    (CP, p_surface, q_surface, Xi_surface, Eta_surface, CP_surface, ...
+    isNURBS_surface)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documenation
 % 
 % Plots Control Points and Control Polygon corresponding to a B-Spline 
@@ -78,7 +67,7 @@ function plot_ControlPolygonBSplineCurveOnBSplineSurface...
 noGridPoints = 10;
 
 %% 1. Loop over all the Control Points on the curve
-for iCP = 1:length(CP(:,1)) - 1
+for iCP = 1:length(CP(:, 1)) - 1
     %% 1i. Find the knot spans
     xiSpanPrevious = findKnotSpan(CP(iCP,1), Xi_surface, length(CP_surface(:,1,1)));
     etaSpanPrevious = findKnotSpan(CP(iCP,2), Eta_surface, length(CP_surface(1,:,1)));

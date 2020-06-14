@@ -1,5 +1,5 @@
-function contactSegments = createCircleSegments(center, radius, startAngle, ...
-    endAngle, numSegments)
+function contactSegments = createCircleSegments ...
+    (center, radius, startAngle, endAngle, numSegments)
 %% Licensing
 %
 % License:         BSD License
@@ -7,8 +7,6 @@ function contactSegments = createCircleSegments(center, radius, startAngle, ...
 %
 % Main authors:    Marko Leskovar
 %                  Andreas Apostolatos
-%
-% Date : 07.03.2020
 %
 %% Function documentation
 %
@@ -48,5 +46,6 @@ for iSeg = 1:numSegments
     
     % add each segment to .points
     contactSegments.points(iSeg,:) = [x0 y0 x1 y1];
+end
 
 end

@@ -1,7 +1,7 @@
 function [up, upDot, upDDot, noTimeStep] = ...
     computeInitialConditionsForTaylorGreenVorticesFEM4NSE2D ... 
-    (propAnalysis, fldMsh, DOF4Output, parameters, fldDynamics, VTKResultFile, ...
-    caseName, pathToFile)
+    (propAnalysis, fldMsh, DOF4Output, parameters, fldDynamics, ...
+    VTKResultFile, caseName, pathToFile)
 %% Licensing
 %
 % License:         BSD License
@@ -70,8 +70,8 @@ noTimeStep = 0;
 counter = 1;
 for iNodes = 1:numNodes
     % Compute node coordinates
-    x = fldMsh.nodes(iNodes, 1);
-    y = fldMsh.nodes(iNodes, 2);
+    x = fldMsh.nodes(iNodes, 2);
+    y = fldMsh.nodes(iNodes, 3);
     
     % Assign the initial conditions at t = 0s;
     % velocity and acceleration in x-direction

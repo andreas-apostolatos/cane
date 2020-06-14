@@ -1,4 +1,5 @@
-function [G, H] = computeBaseVctForBSplineCurve(knotSpanIndex,p,CP,dR)
+function [G, H] = computeBaseVctForBSplineCurve ...
+    (knotSpanIndex, p, CP, dR)
 %% Licensing
 %
 % License:         BSD License

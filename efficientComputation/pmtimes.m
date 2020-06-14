@@ -1,4 +1,4 @@
-function [result] = pmtimes(mat1,mat2,~)
+function [result] = pmtimes(mat1, mat2, ~)
 %% Licensing
 %
 % License:         BSD License
@@ -23,20 +23,24 @@ function [result] = pmtimes(mat1,mat2,~)
 % Output :
 % result : The pagewise product of the input matrices. The size( result )
 %          is [nMat, m1, n2]. For nMat, m1, n2, see input.
+%
+% Function layout :
+%
+% 0. Read input
+%
+% 1. Compute the page-wise multiplication
 % 
 %% Function main body
 
-% do some error checking
+%% 0. Read input
 size1 = size(mat1);
 size2 = size(mat2);
-
 if length(size1) == 2
     size1(3) = 1;
 end
 if length(size2) == 2
     size2(3) = 1;
 end
-
 if size1(3) ~= size2(2) || size1(1) ~= size2(1) || ...
         prod(size1) == 0 || prod(size2) == 0
     fprintf('error in matrix dimensions!\n');
@@ -44,12 +48,12 @@ if size1(3) ~= size2(2) || size1(1) ~= size2(1) || ...
     return;
 else
 
-% compute multiplication
+%% 1. Compute the page-wise multiplication
 result = bsxfun(@times,mat1(:, :, 1),mat2(:, 1, :));
-for i = 2:size1(3);
+for i = 2:size1(3)
     result = result + bsxfun(@times,mat1(:, :, i),mat2(:, i, :));
 end
 
 end
 
-
+end

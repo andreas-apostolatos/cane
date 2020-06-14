@@ -1,5 +1,5 @@
-function index = plot_referenceConfigurationIGABeams...
-    (p,Xi,CP,isNURBS,rb,F,analysis,graph,outMsg)
+function index = plot_referenceConfigurationIGABeams ...
+    (p, Xi, CP, isNURBS, homDOFs, F, analysis, graph, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -18,7 +18,7 @@ function index = plot_referenceConfigurationIGABeams...
 %       Xi : The knot vectors in u-,v- directions
 %       CP : The set of the Control points and weights
 %  isNURBS : Flag on whether the basis is a NURBS or a B-Spline
-%       rb : The set of boundary conditions
+%  homDOFs : The set of boundary conditions
 %        F : The force vector
 % analysis : Beam analysis type :
 %                   'Bernoulli' : isogeometric Bernoulli beam analysis
@@ -93,10 +93,10 @@ figure(graph.index)
 
 %% 2. Create the supports and the force arrows
 if strcmp(analysis.type,'Bernoulli')
-    [xs,ys,zs] = createSupportsForIGABernoulliBeam2D(CP,rb);
+    [xs,ys,zs] = createSupportsForIGABernoulliBeam2D(CP,homDOFs);
     [xf,yf,zf] = createForceArrowsForIGABernoulliBeam2D(CP,F);
 elseif strcmp(analysis.type,'Timoshenko')
-    [xs,ys,zs] = createSupportsForIGATimoshenkoBeam2D(CP,rb);
+    [xs,ys,zs] = createSupportsForIGATimoshenkoBeam2D(CP,homDOFs);
     [xf,yf,zf] = createForceArrowsForIGATimoshenkoBeam2D(CP,F);
 end
 

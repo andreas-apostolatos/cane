@@ -1,4 +1,4 @@
-function  gapFunctionInitial = computeInitialGapFunction...
+function  gapFunctionInitial = computeInitialGapFunction ...
     (mesh, propContact, segmentsContact)
 %% Licensing
 %
@@ -65,7 +65,7 @@ for iSeg = 1:segmentsContact.numSegments
         idLM = (iSeg - 1)*propContact.numNodes + iNode;
         
         %% 1i.2. Get the nodal coordinates
-        nodeContact = mesh.nodes(propContact.nodeIDs(iNode), 1:2);
+        nodeContact = mesh.nodes(propContact.nodeIDs(iNode), 2:3);
         
         %% 1i.3. Get the vertices of the segment
         vertexA = segmentsContact.points(iSeg, 1:2);

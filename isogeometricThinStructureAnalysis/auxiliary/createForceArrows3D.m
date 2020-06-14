@@ -1,4 +1,4 @@
-function [xf,yf,zf] = createForceArrows3D(CP,Fl)
+function [xf, yf, zf] = createForceArrows3D(CP, Fl)
 %% Licensing
 %
 % License:         BSD License
@@ -23,12 +23,12 @@ function [xf,yf,zf] = createForceArrows3D(CP,Fl)
 %% Function main body
 
 % Find the number of the force locations 
-nf = sum(Fl~=0);
+nf = sum(Fl ~= 0);
 
 % Initialize the vectors
-xf=zeros(nf,1);
-yf=zeros(nf,1);
-zf=zeros(nf,1);
+xf = zeros(nf, 1);
+yf = zeros(nf, 1);
+zf = zeros(nf, 1);
 
 % Initialize counters
 k = 1;

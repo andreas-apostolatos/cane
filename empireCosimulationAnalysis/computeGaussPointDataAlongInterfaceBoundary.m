@@ -1,8 +1,9 @@
 function [couplingCurveNumGP, trCurveMasterGPs, trCurveSlaveGPs, trCurveGPWeights, ...
     trCurveMasterGPTangents, trCurveSlaveGPTangents, trCurveGPJacobianProducts] = ...
-    computeGaussPointDataAlongInterfaceBoundary...
-    (BSplinePatchI,BSplinePatchJ,xiExtensionI,etaExtensionI,...
-    xiExtensionJ,etaExtensionJ,haveSameOrientation,propIntInterface,tab,outMsg)
+    computeGaussPointDataAlongInterfaceBoundary ...
+    (BSplinePatchI, BSplinePatchJ, xiExtensionI, etaExtensionI, ...
+    xiExtensionJ, etaExtensionJ, isSameOrientation, propIntInterface, ...
+    tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -30,7 +31,7 @@ function [couplingCurveNumGP, trCurveMasterGPs, trCurveSlaveGPs, trCurveGPWeight
 %                                 master and slave inteface boundaries
 %   etaExtensionI,etaExtensionJ : Extension along the eta-direction of the
 %                                 master and slave inteface boundaries
-%           haveSameOrientation : Flag on whether the interface
+%             isSameOrientation : Flag on whether the interface
 %                                 parametrizations have the same 
 %                                 orientation or not
 %              propIntInterface : Integration properties,
@@ -314,13 +315,13 @@ for i = 1:length(couplingRegionOnKnotVector)-1
             
             if isOnXiJ
                 xiJ = xiEta;
-                if ~haveSameOrientation
+                if ~isSameOrientation
                     xiJ = XiJ(length(XiJ)) - xiJ;
                 end
                 xiSpanJ = findKnotSpan(xiJ,XiJ,nxiJ);
             else
                 etaJ = xiEta;
-                if ~haveSameOrientation
+                if ~isSameOrientation
                     etaJ = EtaJ(length(EtaJ)) - etaJ;
                 end
                 etaSpanJ = findKnotSpan(etaJ,EtaJ,netaJ);

@@ -1,4 +1,5 @@
-function distribution = generateRandomLatinHypercubeDistribution(meanValue, standardDeviation, noSamples)
+function distribution = generateRandomLatinHypercubeDistribution ...
+    (meanValue, standardDeviation, numSamples)
 %% Licensing
 %
 % License:         BSD License
@@ -14,13 +15,13 @@ function distribution = generateRandomLatinHypercubeDistribution(meanValue, stan
 %             Input :
 %         meanValue : Mean value of the distribution
 % standardDeviation : Standard deviation of the distribution
-%         noSamples : Number of samples
+%        numSamples : Number of samples
 %
 %            Output :
 %      distribution : Random vector of noSamples distributed according to
 %                     the Latin Hypercube
 %       
 %% Function main body
-distribution = lhsnorm(meanValue, standardDeviation^2, noSamples);
+distribution = lhsnorm(meanValue, standardDeviation^2, numSamples);
 
 end

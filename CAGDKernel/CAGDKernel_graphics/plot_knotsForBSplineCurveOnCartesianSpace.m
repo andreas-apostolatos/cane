@@ -1,23 +1,11 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function plot_knotsForBSplineCurveOnCartesianSpace(p,Xi,CP,isNURBS)
+function plot_knotsForBSplineCurveOnCartesianSpace(p, Xi, CP, isNURBS)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Draws the element edges for the B-Spline curve, i.e the knots on the
@@ -52,8 +40,8 @@ function plot_knotsForBSplineCurveOnCartesianSpace(p,Xi,CP,isNURBS)
 
 %% 0. Read input
 
-% Number of Control Points in u,v-direction
-nxi = length(CP(:,1,1));
+% Number of Control Points in xi,eta-direction
+nxi = length(CP(:, 1, 1));
 
 % Initialize array to be plotted
 Point = zeros(length(Xi),3);
@@ -64,23 +52,24 @@ for j = 1:length(Xi)
     xi = Xi(j);
     
     %% 1ii. Find the current knot span
-    knotSpan = findKnotSpan(xi,Xi,nxi);
+    knotSpan = findKnotSpan(xi, Xi, nxi);
     
     %% 1iii. Compute the NURBS basis functions at xi
-    nDeriv = 0;
-    R = computeIGABasisFunctionsAndDerivativesForCurve...
-        (knotSpan,p,xi,Xi,CP,isNURBS,nDeriv);
+    numDeriv = 0;
+    R = computeIGABasisFunctionsAndDerivativesForCurve ...
+        (knotSpan, p, xi, Xi, CP, isNURBS, numDeriv);
     
     %% 1iv. Compute the Cartesian coordinates of the point on space
-    Point(j,1:3) = computeCartesianCoordinatesOfAPointOnBSplineCurve(p,knotSpan,xi,Xi,CP,R);
+    Point(j, 1:3) = computeCartesianCoordinatesOfAPointOnBSplineCurve ...
+        (p, knotSpan, xi, Xi, CP, R);
 end
 
 %% 2. Plot all the element edges
-plot3(Point(:,1),Point(:,2),Point(:,3),'.','Markersize',10,'Color','green');
+plot3(Point(:, 1), Point(:, 2), Point(:, 3), '.', 'Markersize', 10, 'Color', 'green');
 axis equal;
 grid on;
-xlabel('x','FontSize',18);
-ylabel('y','FontSize',18);
-zlabel('z','FontSize',18);
+xlabel('x', 'FontSize', 18);
+ylabel('y', 'FontSize', 18);
+zlabel('z', 'FontSize', 18);
 
 end

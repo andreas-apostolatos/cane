@@ -1,4 +1,4 @@
-function [xf,yf,zf] = createForceArrows(nodes,f)
+function [xf, yf, zf] = createForceArrows(nodes, f)
 %% Licensing
 %
 % License:         BSD License

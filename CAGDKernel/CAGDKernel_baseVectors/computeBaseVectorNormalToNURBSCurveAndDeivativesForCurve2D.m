@@ -1,4 +1,6 @@
-function [G,dG] = computeBaseVectorNormalToNURBSCurveAndDeivativesForCurve2D(knotSpanIndex,p,CP,dR)
+function [G, dG] = ...
+    computeBaseVectorNormalToNURBSCurveAndDeivativesForCurve2D ...
+    (knotSpanIndex, p, CP, dR)
 %% Licensing
 %
 % License:         BSD License

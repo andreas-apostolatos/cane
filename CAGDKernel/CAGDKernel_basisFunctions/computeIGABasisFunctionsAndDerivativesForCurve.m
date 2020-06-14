@@ -1,5 +1,5 @@
 function dR = computeIGABasisFunctionsAndDerivativesForCurve...
-    (knotSpanIndex,p,xi,Xi,CP,isNURBS,nDeriv)
+    (knotSpanIndex, p, xi, Xi, CP, isNURBS, numDeriv)
 %% Licensing
 %
 % License:         BSD License
@@ -10,7 +10,7 @@ function dR = computeIGABasisFunctionsAndDerivativesForCurve...
 %% Function documentation
 %
 % Returns an array containing the B-Spline/NURBS basis functions and their
-% derivatives up to order nDeriv at the chosen parametric location.
+% derivatives up to order numDeriv at the chosen parametric location.
 %
 %         Input :
 % knotSpanIndex : Knot span index
@@ -21,12 +21,12 @@ function dR = computeIGABasisFunctionsAndDerivativesForCurve...
 %            CP : The set of Control Point coordinates and weights of the 
 %                 B-Spline curve
 %       isNURBS : Flag on the whether the basis is a B-Spline or a NURBS
-%        nDeriv : The number of derivatives to be computed
+%      numDeriv : The number of derivatives to be computed
 %
 %        Output :
 %            dR : Array containing the B-Spline/NURBS basis functions and 
-%                 their derivatives up to order nDeriv. Element dR(i,j), 
-%                 i=1,...,p+1 and j=1,...,nDeriv+1 returns the (j+1)-th 
+%                 their derivatives up to order numDeriv. Element dR(i,j), 
+%                 i=1,...,p+1 and j=1,...,numDeriv+1 returns the (j+1)-th 
 %                 derivative of the i-th non identically zero basis 
 %                 function at the knot span with index knotSpanIndex
 %
@@ -55,22 +55,22 @@ function dR = computeIGABasisFunctionsAndDerivativesForCurve...
 %% 0. Read input
 
 % Initialize the output array
-dR = zeros(p+1,nDeriv+1);
+dR = zeros(p+1,numDeriv+1);
 
 %% 1. Compute the BSpline basis functions and their derivatives at xi
-dN = computeBSplineBasisFunctionsAndDerivativesForCurve(knotSpanIndex,p,xi,Xi,nDeriv);
+dN = computeBSplineBasisFunctionsAndDerivativesForCurve(knotSpanIndex,p,xi,Xi,numDeriv);
 if ~isNURBS
     dR = dN;
     return;
 end
 
 %% 2. Compute the denominator function and its derivatives at xi
-dF = computeDenominatorFunctionAndDerivativesForCurve(dN,knotSpanIndex,p,CP,nDeriv);
+dF = computeDenominatorFunctionAndDerivativesForCurve(dN,knotSpanIndex,p,CP,numDeriv);
 
 %% 3. Loop over all the basis functions
-for i=0:p
+for i = 0:p
     %% 3i. Loop over all the derivatives
-    for j=0:nDeriv
+    for j = 0:numDeriv
         %% 3i.2. Compute the Control point index
         index = knotSpanIndex-p+i;
         

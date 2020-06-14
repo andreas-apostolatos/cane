@@ -7,8 +7,6 @@ function plot_activeNodes(mesh, dHat, nodeIDs_active)
 % Main authors:    Marko Leskovar
 %                  Andreas Apostolatos
 %
-% Date: 04.02.2020
-%
 %% Function documentation
 %
 % Plots a red dot for every node and if a direction is specified bars for
@@ -42,8 +40,8 @@ if(isempty(nodeIDs_active))
 end
 
 %% 1. Add the displacement field to the nodal coordinates
-nodes_X = mesh.nodes(nodeIDs_active, 1) + dHat(2*nodeIDs_active - 1);
-nodes_Y = mesh.nodes(nodeIDs_active, 2) + dHat(2*nodeIDs_active);
+nodes_X = mesh.nodes(nodeIDs_active, 2) + dHat(2*nodeIDs_active - 1);
+nodes_Y = mesh.nodes(nodeIDs_active, 3) + dHat(2*nodeIDs_active);
 
 %% 2. Plot active nodes
 scatter(nodes_X,nodes_Y,'magentao','b','LineWidth',3);

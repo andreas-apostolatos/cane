@@ -1,4 +1,4 @@
-function [ result ] = pvertcat( varargin )
+function [result] = pvertcat(varargin)
 %% Licensing
 %
 % License:         BSD License
@@ -20,8 +20,6 @@ function [ result ] = pvertcat( varargin )
 % result : The concatenated 3-d aray
 % 
 %% Function main body
-
-result = cat( 2, varargin{:} );
+result = cat(2 ,varargin{:});
 
 end
-

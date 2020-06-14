@@ -1,5 +1,6 @@
-function [dN,area,isInside] = computeCST2DBasisFunctionsAndFirstDerivatives...
-    (vertexI,vertexJ,vertexK,x,y)
+function [dN, areaTri, isInside] = ...
+    computeCST2DBasisFunctionsAndFirstDerivatives ...
+    (vertexI, vertexJ, vertexK, x, y)
 %% Licensing
 %
 % License:         BSD License
@@ -37,7 +38,7 @@ function [dN,area,isInside] = computeCST2DBasisFunctionsAndFirstDerivatives...
 %                              x,y: dN = [Ni dNi/dx dNi/dy
 %                                         Nj dNj/dx dNj/dy
 %                                         Nk dNk/dx dNk/dy]
-%                       area : The area of the triangular element
+%                    areaTri : The area of the triangular element
 %                   isInside : Flag indicating whether the point on where
 %                              the basis functions are to be evaluated is
 %                              inside or outside the triangle
@@ -69,12 +70,12 @@ noElmnts = size( vertexI, 1 );
 isInside = true(noElmnts, 1, 1);
 
 %% 1. Compute the area of the triangle
-% Area = .5*p3Ddet([1 vertexI(1,1) vertexI(1,2);
+% area = .5*p3Ddet([1 vertexI(1,1) vertexI(1,2);
 %                   1 vertexJ(1,1) vertexJ(1,2);
 %                   1 vertexK(1,1) vertexK(1,2)]);
-area = 0.5 * p3Ddet( phorzcat( ones( noElmnts, 3, 1), pvertcat( ptranspose(vertexI(:, 1:2)), ...
-                                                                ptranspose(vertexJ(:, 1:2)), ...
-                                                                ptranspose(vertexK(:, 1:2))) ) );
+areaTri = 0.5*p3Ddet(phorzcat(ones(noElmnts, 3, 1), pvertcat(ptranspose(vertexI(:, 1:2)), ...
+                                                             ptranspose(vertexJ(:, 1:2)), ...
+                                                             ptranspose(vertexK(:, 1:2)))));
 
 %% 2. Compute the permutations
 
@@ -105,13 +106,13 @@ xji = vertexJ(:,1,1) - vertexI(:,1,1);
 %% 3. Compute the basis functions for the linear triangle at (x,y)
 
 % Ni:
-Ni = (zi+yjk.*x+xkj.*y)./2./area;
+Ni = (zi+yjk.*x+xkj.*y)./2./areaTri;
 
 % Nj:
-Nj = (zj+yik.*x+xki.*y)./2./area;
+Nj = (zj+yik.*x+xki.*y)./2./areaTri;
 
 % Nk:
-Nk = (zk+yij.*x+xji.*y)./2./area;
+Nk = (zk+yij.*x+xji.*y)./2./areaTri;
 
 % Update the boolean flag
 isInside( Ni < 0 | Nj < 0 | Nk < 0 ) = false;
@@ -119,24 +120,24 @@ isInside( Ni < 0 | Nj < 0 | Nk < 0 ) = false;
 %% 4. Compute the derivatives of the basis functions for the linear triangle w.r.t. to x at (x,y)
 
 % Ni:
-dNidx = yjk./2./area;
+dNidx = yjk./2./areaTri;
 
 % Nj:
-dNjdx = yik./2./area;
+dNjdx = yik./2./areaTri;
 
 % Nk:
-dNkdx = yij./2./area;
+dNkdx = yij./2./areaTri;
 
 %% 5. Compute the derivatives of the basis functions for the linear triangle w.r.t. to y at (x,y)
 
 % Ni:
-dNidy = xkj./2./area;
+dNidy = xkj./2./areaTri;
 
 % Nj:
-dNjdy = xki./2./area;
+dNjdy = xki./2./areaTri;
 
 % Nk:
-dNkdy = xji./2./area;
+dNkdy = xji./2./areaTri;
 
 %% 6. Assemble to the vector containing all the basis functions and their derivatives at (x,y)
 dN = [cat(3, Ni, dNidx, dNidy), cat(3, Nj, dNjdx, dNjdy), cat(3, Nk, dNkdx, dNkdy)];

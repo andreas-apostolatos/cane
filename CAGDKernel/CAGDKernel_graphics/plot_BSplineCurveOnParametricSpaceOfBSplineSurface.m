@@ -1,25 +1,13 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function index = plot_BSplineCurveOnParametricSpaceOfBSplineSurface...
-    (p_curve,Xi_curve,CP_curve,isNURBS_curve,Xi_surface,Eta_surface,nEval,...
-    color_curve,color_surface,lineWidth,graph)
+    (p_curve, Xi_curve, CP_curve, isNURBS_curve, Xi_surface, Eta_surface, ...
+    numEval, color_curve, color_surface, lineWidth, graph)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Plots a B-Spline curve which is embedded in the parametric space of a
@@ -37,7 +25,7 @@ function index = plot_BSplineCurveOnParametricSpaceOfBSplineSurface...
 % Xi*,Eta_surface : The knot vectors of the B-Spline surface
 % isNURBS_surface : Flag on whether the surface basis is a B-Spline or a 
 %                   NURBS
-%            grid : Number of grid points for the creation of the surface
+%         numEval : Number of grid points for the creation of the surface
 %     color_curve : Color of the embedded curve
 %   color_surface : Color of the surface
 %       lineWidth : Width of the curve
@@ -75,7 +63,7 @@ plot_knotsForBSplineSurfaceOnPArametricSpace...
     (Xi_surface,Eta_surface,xiGrid,etaGrid);
 
 %% 3. Plot the embedded B-Spline curve in the surface's parametric space
-[Xp,Yp,Zp] = createBSplineCurveOnCartesianSpace(p_curve,Xi_curve,CP_curve,isNURBS_curve,nEval);
+[Xp,Yp,Zp] = createBSplineCurveOnCartesianSpace(p_curve,Xi_curve,CP_curve,isNURBS_curve,numEval);
 plot3(Xp,Yp,Zp,'Color',color_curve,'LineWidth',lineWidth);
 plot_ControlPolygonBSplineCurve(CP_curve);
 hold off;

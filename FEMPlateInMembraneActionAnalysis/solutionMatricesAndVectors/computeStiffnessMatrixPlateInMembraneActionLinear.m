@@ -1,5 +1,5 @@
-function K = computeStiffnessMatrixPlateInMembraneActionLinear...
-    (mesh,materialProperties,analysis)
+function K = computeStiffnessMatrixPlateInMembraneActionLinear ...
+    (mesh, propParameters, propAnalysis)
 %% Licensing
 %
 % License:         BSD License
@@ -14,8 +14,8 @@ function K = computeStiffnessMatrixPlateInMembraneActionLinear...
 %
 %              Input :
 %               mesh : The mesh of the structure
-% materialProperties : The material properties of the structure
-%           analysis : Analysis type (plane stress or plane strain)
+%     propParameters : The material properties of the structure
+%       propAnalysis : Analysis type (plane stress or plane strain)
 %
 %             Output :
 %                  K : Master stiffness matrix
@@ -50,14 +50,14 @@ K = zeros(no_dofs_global,no_dofs_global);
 for i=1:length(mesh.elements)
     
     % Get the current element in the mesh
-    element = mesh.elements(i,1:no_nodes_element);
+    element = mesh.elements(i,2:no_nodes_element+1);
     
     % Get the nodes of the triangle in a counterclockwise fashion
-    nodes = mesh.nodes(element,:);
+    nodes = mesh.nodes(element,2:end);
     
     % Compute element stiffness matrix for the CST
     K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST...
-                                       (nodes,materialProperties,analysis);
+                                       (nodes,propParameters,propAnalysis);
     
     % Assemble to the global stiffness matrix via element freedom tables
     % Element freedom table

@@ -1,4 +1,4 @@
-function [ mat ] = pstimes( mat, scalar )
+function [mat] = pstimes(mat, scalar)
 %% Licensing
 %
 % License:         BSD License
@@ -26,20 +26,16 @@ function [ mat ] = pstimes( mat, scalar )
 %          of the input matrix
 % 
 %% Function main body
-
 scalarSize = size(scalar);
-
 if length(scalarSize) > 2 || prod(scalarSize) == 0        
     error('page-wise scalar multiplication: error in scalar input dimensions!\n')
 end
-
 if( scalarSize(2) > 1 )
     if( scalarSize(1) > 1 )
          error('page-wise multiplication: error in scalar input dimensions!\n')
     end
     scalar = scalar';
 end
-
 mat = bsxfun(@times,mat,scalar);
 
 end

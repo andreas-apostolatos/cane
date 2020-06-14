@@ -1,5 +1,5 @@
-function index = plot_postprocIGAMembraneMultipatchesNLinear...
-    (BSplinePatches,dHat,graph,outMsg)
+function index = plot_postprocIGAMembraneMultipatchesNLinear ...
+    (BSplinePatches, dHat, graph, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -96,8 +96,6 @@ if strcmp(outMsg,'outputEnabled')
         error('No resultant has been chosen to be visualized\n');
     end
     fprintf('__________________________________________________________________________\n\n');
-
-    % start measuring computational time
     tic;
 end
 
@@ -245,9 +243,7 @@ index = graph.index + 1;
 
 %% 4. Appendix
 if strcmp(outMsg,'outputEnabled')
-    % Save computational time
     computationalTime = toc;
-
     fprintf('Plotting the current configuration took %.2d seconds \n\n',computationalTime);
     fprintf('__________________Plotting Current Configuration Ended____________________\n');
     fprintf('##########################################################################\n\n\n');

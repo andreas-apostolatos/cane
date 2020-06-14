@@ -1,5 +1,5 @@
-function writeOutMultipatchBSplineSurface4GiD...
-    (BSplinePatches,pathToOutput,caseName)
+function writeOutMultipatchBSplineSurface4GiD ...
+    (BSplinePatches, pathToOutput, caseName)
 %% Licensing
 %
 % License:         BSD License

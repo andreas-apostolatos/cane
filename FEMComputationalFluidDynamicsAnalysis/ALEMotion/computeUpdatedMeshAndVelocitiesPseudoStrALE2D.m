@@ -192,11 +192,12 @@ dHatALE = zeros(numDOFs, 1);
 for iALE = 1:length(propALE.nodes(:,1))
     %% 1i. Find the node ID in the node cloud
     nodeID = propALE.nodes(iALE,1);
+    [~, nodeID] = ismember(nodeID, msh.nodes(:, 1));
 
     %% 1ii. Get the coordinates of the node
-    x = msh.initialNodes(nodeID,1);
-    y = msh.initialNodes(nodeID,2);
-    z = msh.initialNodes(nodeID,3);
+    x = msh.initialNodes(nodeID,2);
+    y = msh.initialNodes(nodeID,3);
+    z = msh.initialNodes(nodeID,4);
 
     %% 1iii. Get function handle for ALE motion computation
     computeALEMotion = str2func(propALE.fctHandle{iALE, 1});
@@ -238,13 +239,14 @@ freeDOFsALE_pseudoStr(ismember(freeDOFsALE_pseudoStr, prescribedDOFsALE_pseudoSt
     parametersALE, dHatALE, uDotALE, uDDotALE, massMtx, dampMtx, ...
     precompStiffMtx, precomResVct, ...
     @computeStiffMtxAndLoadVctFEMPlateInMembraneActionCST, ...
-    DOFNumberingALE_presudoStr, freeDOFsALE_pseudoStr, homDOFsALE_pseudoStr, inhomDOFsALE_preudoStr, ...
-    valuesInhomDOFsALE_pseudoStr, uMeshALE, solve_LinearSystem, propStrDynamics, ...
-    t, propNLinearAnalysis, propIntALE, tab, '');
+    DOFNumberingALE_presudoStr, freeDOFsALE_pseudoStr, ...
+    homDOFsALE_pseudoStr, inhomDOFsALE_preudoStr, ...
+    valuesInhomDOFsALE_pseudoStr, uMeshALE, solve_LinearSystem, ...
+    propStrDynamics, t, propNLinearAnalysis, propIntALE, tab, '');
 
 %% 5. Move the nodes on the mesh following the prescribed motion
-msh.nodes(:, 1) = msh.initialNodes(:, 1) + dHatALE(1:2:end - 1, 1);
-msh.nodes(:, 2) = msh.initialNodes(:, 2) + dHatALE(2:2:end, 1);
+msh.nodes(:, 2) = msh.initialNodes(:, 2) + dHatALE(1:2:end - 1, 1);
+msh.nodes(:, 3) = msh.initialNodes(:, 3) + dHatALE(2:2:end, 1);
 
 %% Debugging
 %     graph.index = 1;
@@ -256,14 +258,15 @@ msh.nodes(:, 2) = msh.initialNodes(:, 2) + dHatALE(2:2:end, 1);
 for iALE = 1:length(propALE.nodes(:, 1))
     %% 6i. Find the node ID
     nodeID = propALE.nodes(iALE, 1);
+    [~, nodeID] = ismember(nodeID, msh.nodes(:, 1));
     
     %% 6ii. Check whether the node belongs to a node on the free stream
     isFree = propALE.isFree(iALE, 1);
 
     %% 6iii. Compute the velocity of the node using a first order interpolation
     if strcmp(propTransientAnalysis.timeDependence, 'TRANSIENT')
-        ux = (msh.nodes(nodeID,1) - nodesSaved(nodeID,1))/propTransientAnalysis.dt;
-        uy = (msh.nodes(nodeID,2) - nodesSaved(nodeID,2))/propTransientAnalysis.dt;
+        ux = (msh.nodes(nodeID,2) - nodesSaved(nodeID,2))/propTransientAnalysis.dt;
+        uy = (msh.nodes(nodeID,3) - nodesSaved(nodeID,3))/propTransientAnalysis.dt;
     elseif strcmp(propTransientAnalysis.timeDependence, 'STEADY_STATE')
         ux = 0;
         uy = 0;
@@ -308,8 +311,8 @@ freeDOFs(ismember(freeDOFs, prescribedDOFs)) = [];
 %% 11. Compute the mesh velocity at the interior nodes of mesh using a first order interpolation
 for iALE = 1:length(msh.nodes(:, 1))
     if strcmp(propTransientAnalysis.timeDependence, 'TRANSIENT')
-        ux = (msh.nodes(iALE, 1) - nodesSaved(iALE, 1))/propTransientAnalysis.dt;
-        uy = (msh.nodes(iALE, 2) - nodesSaved(iALE, 2))/propTransientAnalysis.dt;
+        ux = (msh.nodes(iALE, 2) - nodesSaved(iALE, 2))/propTransientAnalysis.dt;
+        uy = (msh.nodes(iALE, 3) - nodesSaved(iALE, 3))/propTransientAnalysis.dt;
     elseif strcmp(propTransientAnalysis.timeDependence, 'STEADY_STATE')
         ux = 0;
         uy = 0;

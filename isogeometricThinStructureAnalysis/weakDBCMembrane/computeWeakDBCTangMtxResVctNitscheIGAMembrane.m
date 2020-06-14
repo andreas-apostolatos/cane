@@ -1,8 +1,8 @@
-function [tangMtxWeakDBCNitsche,resVctWeakDBCNitsche,BSplinePatch] = ...
-    computeWeakDBCTangMtxResVctNitscheIGAMembrane...
-    (BSplinePatch,dHat,connections,noDOFs,propCoupling,tanStiffMtx,...
-    noPatch,noTimeStep,noNonlinearIteration,noWeakDBCCond,...
-    thickness,t,propTransientAnalysis,tab,outMsg)
+function [tangMtxWeakDBCNitsche, resVctWeakDBCNitsche, BSplinePatch] = ...
+    computeWeakDBCTangMtxResVctNitscheIGAMembrane ...
+    (BSplinePatch, dHat, connections, numDOFs, propCoupling, ...
+    tanStiffMtx, noPatch, noTimeStep, noNonlinearIteration, ...
+    noWeakDBCCond, thickness, t, propTransientAnalysis, tab, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -79,7 +79,7 @@ function [tangMtxWeakDBCNitsche,resVctWeakDBCNitsche,BSplinePatch] = ...
 %                       dHat : The displacement solution vector from the 
 %                              previous nonlinear iteration step
 %                connections : Dummy variable for this function
-%                     noDOFs : Dummy variable for this function
+%                    numDOFs : Dummy variable for this function
 %               propCoupling : Dummy variable for this function
 %                tanStiffMtx : The tangent stiffness matrix at the current 
 %                              nonlinear iteration step
@@ -271,14 +271,14 @@ noCPsEl = (p+1)*(q+1);
 noDOFsEl = 3*noCPsEl;
 
 % Number of DOFs
-noDOFs = BSplinePatch.noDOFs;
+numDOFs = BSplinePatch.noDOFs;
 
 % Initialize matrices related to the stabilization of the variational problem
 if BSplinePatch.weakDBC.estimationStabilPrm
-    massMtx = zeros(noDOFs,noDOFs);
-    RMtxG2 = zeros(noDOFs,1);
+    massMtx = zeros(numDOFs,numDOFs);
+    RMtxG2 = zeros(numDOFs,1);
     if noNonlinearIteration == 1
-        QMtx = zeros(noDOFs,noDOFs);
+        QMtx = zeros(numDOFs,numDOFs);
     end
 end
 
@@ -291,8 +291,8 @@ dRdxiMtx = zeros(3,noDOFsEl);
 dRdetaMtx = zeros(3,noDOFsEl);
 
 % Initialize the output arrays
-tangMtxWeakDBCNitsche = zeros(noDOFs,noDOFs);
-resVctWeakDBCNitsche = zeros(noDOFs,1);
+tangMtxWeakDBCNitsche = zeros(numDOFs,numDOFs);
+resVctWeakDBCNitsche = zeros(numDOFs,1);
 
 %% 1. Loop over the conditions
 for iCnd = 1:BSplinePatch.weakDBC.noCnd

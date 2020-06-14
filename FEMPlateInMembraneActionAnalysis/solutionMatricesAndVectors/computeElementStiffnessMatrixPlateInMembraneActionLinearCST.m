@@ -1,5 +1,6 @@
-function K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST...
-    (nodes,materialProperties,analysis)
+function K_element = ...
+    computeElementStiffnessMatrixPlateInMembraneActionLinearCST ...
+    (nodes, propParameters, analysis)
 %% Licensing
 %
 % License:         BSD License
@@ -19,7 +20,7 @@ function K_element = computeElementStiffnessMatrixPlateInMembraneActionLinearCST
 %
 %              Input :
 %              nodes : The nodes of the CST in a counterclock-wise fashion
-% materialProperties : The material properties of the structure
+%     propParameters : The material properties of the structure
 %           analysis : Analysis type (plane stress or plane strain)
 %
 %             Output :
@@ -84,19 +85,19 @@ Boperator = preFactor_B*[yjk 0 yik 0 yij 0
                      
 % Compute the material matrix                        
 if strcmp(analysis.type,'planeStress')
-    preFactor_material = materialProperties.E/(1-materialProperties.nue^2);
-    Dm = preFactor_material*[1 materialProperties.nue 0;
-                             materialProperties.nue 1 0
-                             0 0 (1-materialProperties.nue)/2];
+    preFactor_material = propParameters.E/(1-propParameters.nue^2);
+    Dm = preFactor_material*[1 propParameters.nue 0;
+                             propParameters.nue 1 0
+                             0 0 (1-propParameters.nue)/2];
 elseif strcmp(analysis.type,'planeStrain')
-    preFactor_material = materialProperties.E*(1-materialProperties.nue)/(1+materialProperties.nue)/(1-2*materialProperties.nue);
-    Dm = preFactor_material*[1 materialProperties.nue/(1-materialProperties.nue) 0;
-                             materialProperties.nue/(1-materialProperties.nue) 1 0
-                             0 0 (1-2*materialProperties.nue)/2/(1-materialProperties.nue)];
+    preFactor_material = propParameters.E*(1-propParameters.nue)/(1+propParameters.nue)/(1-2*propParameters.nue);
+    Dm = preFactor_material*[1 propParameters.nue/(1-propParameters.nue) 0;
+                             propParameters.nue/(1-propParameters.nue) 1 0
+                             0 0 (1-2*propParameters.nue)/2/(1-propParameters.nue)];
 end
 
 % Compute the element stiffness matrix as a tensor product (B'*D*B*t*Delta see page 46 of the book)
-K_element = Boperator'*Dm*Boperator*Delta*materialProperties.t;
+K_element = Boperator'*Dm*Boperator*Delta*propParameters.t;
 
 %% 2. Check the rigid body modes of the element stiffness matrix
 

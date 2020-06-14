@@ -1,5 +1,5 @@
-function [uDot,uDDot] = computeBETITransientUpdatedVctAccelerationField...
-    (u,uSaved,uDotSaved,uDDotSaved,propTransientAnalysis)
+function [uDot, uDDot] = computeBETITransientUpdatedVctAccelerationField ...
+    (u, uSaved, uDotSaved, uDDotSaved, propTransientAnalysis)
 %% Licensing
 %
 % License:         BSD License

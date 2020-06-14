@@ -1,23 +1,11 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%   Technische Universität München                                        %
-%   Lehrstuhl für Statik, Prof. Dr.-Ing. Kai-Uwe Bletzinger               %
-%   _______________________________________________________               %
-%   _______________________________________________________               %
-%                                                                         %
-%                                                                         %
-%   Authors                                                               %
-%   _______________________________________________________________       %
-%                                                                         %
-%   Dipl.-Math. Andreas Apostolatos    (andreas.apostolatos@tum.de)       %
-%   Dr.-Ing. Roland Wüchner            (wuechner@tum.de)                  %
-%   Prof. Dr.-Ing. Kai-Uwe Bletzinger  (kub@tum.de)                       %
-%   _______________________________________________________________       %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function T2LC = computeT2LocalCartesianBasis(eA,eLC)
+function T2LC = computeT2LocalCartesianBasis(eA, eLC)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
 %% Function documentation
 %
 % Returns the tranformation matrix T for the transformation of a symmetric
@@ -48,18 +36,18 @@ function T2LC = computeT2LocalCartesianBasis(eA,eLC)
 %% 0. Read input
 
 % Initialize output array
-T2LC = zeros(3,3);
+T2LC = zeros(3, 3);
 
 %% 1. Compute the transformation matrix from from basis eA to the local Cartesian basis eLC
-T2LC(1,1) = (eA(:,1)'*eLC(:,1))^2;
-T2LC(1,2) = (eA(:,2)'*eLC(:,1))^2;
-T2LC(1,3) = 2*(eA(:,1)'*eLC(:,1))*(eA(:,2)'*eLC(:,1));
-T2LC(2,1) = (eA(:,1)'*eLC(:,2))^2;
-T2LC(2,2) = (eA(:,2)'*eLC(:,2))^2;
-T2LC(2,3) = 2*(eA(:,1)'*eLC(:,2))*(eA(:,2)'*eLC(:,2));
-T2LC(3,1) = (eA(:,1)'*eLC(:,1))*(eA(:,1)'*eLC(:,2));
-T2LC(3,2) = (eA(:,2)'*eLC(:,1))*(eA(:,2)'*eLC(:,2));
-T2LC(3,3) = (eA(:,1)'*eLC(:,1))*(eA(:,2)'*eLC(:,2)) + ...
-    (eA(:,2)'*eLC(:,1))*(eA(:,1)'*eLC(:,2));
+T2LC(1,1) = (eA(:, 1)'*eLC(:, 1))^2;
+T2LC(1,2) = (eA(:, 2)'*eLC(:, 1))^2;
+T2LC(1,3) = 2*(eA(:, 1)'*eLC(:, 1))*(eA(:, 2)'*eLC(:, 1));
+T2LC(2,1) = (eA(:, 1)'*eLC(:, 2))^2;
+T2LC(2,2) = (eA(:, 2)'*eLC(:, 2))^2;
+T2LC(2,3) = 2*(eA(:, 1)'*eLC(:, 2))*(eA(:, 2)'*eLC(:, 2));
+T2LC(3,1) = (eA(:, 1)'*eLC(:, 1))*(eA(:, 1)'*eLC(:, 2));
+T2LC(3,2) = (eA(:, 2)'*eLC(:, 1))*(eA(:, 2)'*eLC(:, 2));
+T2LC(3,3) = (eA(:, 1)'*eLC(:, 1))*(eA(:, 2)'*eLC(:, 2)) + ...
+    (eA(:,2)'*eLC(:, 1))*(eA(:, 1)'*eLC(:, 2));
 
 end

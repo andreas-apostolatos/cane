@@ -1,8 +1,10 @@
-function [GP,GW] = getGaussRuleOnCanonicalTriangle(polOrder)
+function [GP, GW] = getGaussRuleOnCanonicalTriangle(polOrder)
 %% Licensing
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
 %
 %% Function documentation
 %

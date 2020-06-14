@@ -1,4 +1,5 @@
-function dF = computeDenominatorFunctionAndDerivativesForSurface(dN,xiSpan,p,etaSpan,q,CP,nDeriv)
+function dF = computeDenominatorFunctionAndDerivativesForSurface ...
+    (dN, xiSpan, p, etaSpan, q, CP, numDeriv)
 %% Licensing
 %
 % License:         BSD License
@@ -20,7 +21,7 @@ function dF = computeDenominatorFunctionAndDerivativesForSurface(dN,xiSpan,p,eta
 % xiSpan,etaSpan : The knot span indices in the u-,v- directions
 %            p,q : The polynomial degees of the basis in u-,v- directions
 %             CP : The set of the control point coordinates and weights
-%         nDeriv : The number of derivatives to be computed
+%       numDeriv : The number of derivatives to be computed
 %
 %         Output :
 %             dF : The denominator function dF = Sum_i N_i(u,v) * w_i
@@ -36,7 +37,7 @@ function dF = computeDenominatorFunctionAndDerivativesForSurface(dN,xiSpan,p,eta
 %% 0. Read input
 
 % Initialize output
-dF = zeros((nDeriv+1)*(nDeriv+2)/2,1);
+dF = zeros((numDeriv+1)*(numDeriv+2)/2,1);
 
 % Counter for the derivatives
 counterDrvs = 1;
@@ -47,9 +48,9 @@ counterBasis = 1;
 %% 1. Compute the denominator function iteratively
 
 % Loop over all partial derivatives with respect to v-direction
-for j=0:nDeriv
+for j=0:numDeriv
     % Loop over all the partial derivatives with respect to u-direction
-    for i=0:nDeriv-j
+    for i=0:numDeriv-j
         % Loop over all the contributions from each basis function in v-direction
         for l=0:q
             % Loop over all the contributions from each basis function in u-direction
@@ -59,7 +60,7 @@ for j=0:nDeriv
                 etaIndex = etaSpan - q + l;
                 
                 % Get the derivative index
-                indexDrv = computeIndexForBSplineBasisFunctionsAndDerivatives(nDeriv,i,j);
+                indexDrv = computeIndexForBSplineBasisFunctionsAndDerivatives(numDeriv,i,j);
                 
                 % Sum up the contribution from each basis function
                 dF(counterDrvs,1) = dF(counterDrvs,1) + dN(counterBasis,indexDrv)*CP(xiIndex,etaIndex,4);

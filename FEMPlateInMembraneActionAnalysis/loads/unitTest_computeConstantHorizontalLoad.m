@@ -23,7 +23,6 @@ function load = unitTest_computeConstantHorizontalLoad(x, y, z, t, propNBC)
 %        load :  The load vector [loadx; loady; loadz]
 %
 %% Function main body
-
 loadAmplitude = -1e0;
 load = zeros(3,1);
 load(1,1) = loadAmplitude;

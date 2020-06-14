@@ -1,4 +1,7 @@
-function [GCovariant,dGCovariant,GabCovariant,GContravariant,G3Tilde,CurvatureVoigt,dA,G3,eLC,TFromContraToLC] = computeMetricsForKLShellStiffnessMatrix(i,p,u,U,j,q,v,V,CP,dR,ddR)
+function [GCovariant, dGCovariant, GabCovariant, GContravariant, G3Tilde, ...
+    CurvatureVoigt, dA, G3, eLC, TFromContraToLC] = ...
+    computeMetricsForKLShellStiffnessMatrix ...
+    (i, p, xi, Xi, j, q, eta, Eta, CP, dR, ddR)
 %% Licensing
 %
 % License:         BSD License
@@ -17,8 +20,8 @@ function [GCovariant,dGCovariant,GabCovariant,GContravariant,G3Tilde,CurvatureVo
 %           Input :
 %             i,j : knot span indices
 %             p,q : Polynomial degrees
-%             u,v : parametric coordinates on the surfaces
-%             U,V : knot spans in u,v-directions
+%          xi,eta : parametric coordinates on the surfaces
+%          Xi,Eta : knot spans in xi,eta-directions
 %              CP : control point coordinates and weights
 %              dR : The first derivatives of the basis functions
 %             ddR : The second derivatives of the basis functions
@@ -64,7 +67,7 @@ function [GCovariant,dGCovariant,GabCovariant,GContravariant,G3Tilde,CurvatureVo
 %% Function documentation
 
 %% 1. Compute the covariant base vectors g and their derivatives
-[GCovariant,dGCovariant] = computeBaseVectorsAndDerivatives2DGivenBasisFunctions(i,p,u,U,j,q,v,V,CP,dR,ddR);
+[GCovariant,dGCovariant] = computeBaseVectorsAndDerivatives2DGivenBasisFunctions(i,p,xi,Xi,j,q,eta,Eta,CP,dR,ddR);
 
 %% 2. Compute the normal to the surface vector G3Tilde (not normalized)
 G3Tilde = cross(GCovariant(:,1),GCovariant(:,2));

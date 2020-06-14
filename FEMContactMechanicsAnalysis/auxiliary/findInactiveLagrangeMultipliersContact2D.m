@@ -9,8 +9,6 @@ function homDOFsLM = findInactiveLagrangeMultipliersContact2D...
 % Main authors:    Andreas Apostolatos
 %                  Marko Leskovar
 %
-% Date : 04.02.2020
-%
 %% Function documentation
 %
 % Returns the updated array of constrained Lagrange Multipliers DOFs based
@@ -99,7 +97,7 @@ for iSeg = 1:segmentsContact.numSegments
             u = dHat_stiffMtxLM(DOF);
 
             % Get the coordinates of the current node
-            node = mesh.nodes(propContact.nodeIDs(iNode),1:2);
+            node = mesh.nodes(propContact.nodeIDs(iNode),2:3);
 
             % Compute the displaced coordinates of the current node
             nodeDisp = node + u';
@@ -139,7 +137,7 @@ for iSeg = 1:segmentsContact.numSegments
                 u = dHat_stiffMtxLM(DOF);
                 
                 % Get the coordinates of the current node
-                node = mesh.nodes(propContact.nodeIDs(iNode),1:2); 
+                node = mesh.nodes(propContact.nodeIDs(iNode),2:3); 
                 
                 % Compute the displaced coordinates of the current node
                 nodeDisp = node + u';

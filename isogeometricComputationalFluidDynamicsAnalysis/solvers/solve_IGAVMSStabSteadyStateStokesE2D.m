@@ -123,24 +123,11 @@ function [up, F, minElSize] = solve_IGAVMSStabSteadyStateStokesE2D...
 %
 % 1. Find the prescribed and the free DOFs of the system
 %
-% 2. Loop over all the Neumann boundary conditions and update the load vector corresponding to the current time step corresponding to a boundary load
-% ->
-%    2i. Get the Neumann boundary extension
+% 2. Create a structure representing a multipatch geometry with only one patch
 %
-%   2ii. Check which is the fixed curve parameter
+% 3. Solve the steady-state problem
 %
-%  2iii. Get the magnitude of the applied load
-%
-%   2iv. Get the direction of the applied load
-%
-%    2v. Compute the load vector and add it to the existing one
-% <-
-%
-% 3. Add the force vector to the computational patch
-%
-% 4. Solve the steady-state problem
-%
-% 5. Appendix
+% 4. Appendix
 %
 %% Function main body
 if strcmp(outMsg,'outputEnabled')
@@ -228,39 +215,14 @@ prescribedDoFs = unique(prescribedDoFs);
 freeDOFs = DOFNumbering;
 freeDOFs(ismember(freeDOFs, prescribedDoFs)) = [];
 
-%% 2. Loop over all the Neumann boundary conditions and update the load vector corresponding to the current time step corresponding to a boundary load
-for iNBC = 1:propNBC.noCnd
-    %% 2i. Get the Neumann boundary extension
-    xib = propNBC.xiSpan(iNBC,:);
-    etab = propNBC.etaSpan(iNBC,:);
+%% 2. Create a structure representing a multipatch geometry with only one patch
+BSplinePatches = {BSplinePatch};
 
-    %% 2ii. Check which is the fixed curve parameter
-    if xib(1) == xib(2)
-        xib = xib(1); 
-    end
-    if etab(1) == etab(2)
-        etab = etab(1); 
-    end
-
-    %% 2iii. Get the magnitude of the applied load
-    loadAmplitude = propNBC.loadAmplitude(iNBC);
-
-    %% 2iv. Get the direction of the applied load
-    loadDirection = propNBC.loadDirection(iNBC);
-
-    %% 2v. Compute the load vector and add it to the existing one
-    F = propNBC.loadVctComputation{iNBC}...
-        (F,xib,etab,BSplinePatch,loadAmplitude,loadDirection,t,propInt,'');
-end
-
-%% 3. Add the force vector to the computational patch
-BSplinePatch.F = F;
-
-%% 4. Solve the steady-state problem
+%% 3. Solve the steady-state problem
 [up, ~, ~, ~, ~, ~, ~, ~, ~, ~, minElSize] = ...
     solve_IGALinearSystem ...
-    (analysis, uSaved, uDotSaved, uDDotSaved, BSplinePatch, connections, ...
-    up, uDot, uDDot, KConstant, massMtx, dampMtx, ...
+    (analysis, uSaved, uDotSaved, uDDotSaved, BSplinePatches, ...
+    connections, up, uDot, uDDot, KConstant, massMtx, dampMtx, ...
     @computeIGAVMSStabMtxAndVct4BossakTINewtonNLinear4StokesE2D, ...
     computeUpdatedGeometry, freeDOFs, homDOFs, inhomDOFs, ...
     valuesInhomDOFs, updateDirichletBCs, masterDOFs, slaveDOFs, ...
@@ -268,7 +230,7 @@ BSplinePatch.F = F;
     propNLinearAnalysis, propIDBC, plot_IGANLinear, isReferenceUpdated, ...
     isCosimulationWithEmpire, tab, propGraph, outMsg);
 
-%% 5. Appendix
+%% 4. Appendix
 if strcmp(outMsg,'outputEnabled')
     computationalTime = toc;
     fprintf('Transient linear analysis took %.2d seconds \n\n',computationalTime);

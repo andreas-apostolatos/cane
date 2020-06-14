@@ -1,8 +1,10 @@
-function [GP,GW] = getGaussPointsAndWeightsOverUnitDomain(n)
+function [GP, GW] = getGaussPointsAndWeightsOverUnitDomain(n)
 %% Licensing
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
 %
 %% Function documentation
 %

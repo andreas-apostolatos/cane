@@ -1,5 +1,6 @@
-function [F,tanMtx] = computeLoadVctPointIGAThinStructure...
-    (FOutdated,BSplinePatch,xib,etab,FAmp,direction,isFollower,t,int,outMsg)
+function [F, tanMtx] = computeLoadVctPointIGAThinStructure ...
+    (FOutdated, BSplinePatch, xib, etab, FAmp, direction, isFollower, t, ...
+    propInt, outMsg)
 %% Licensing
 %
 % License:         BSD License
@@ -32,7 +33,7 @@ function [F,tanMtx] = computeLoadVctPointIGAThinStructure...
 %                      'theta2' : along theta2 -> FAmp*G2/norm(G2)
 %                      'normal' : normal to the surface -> FAmp*n
 %     isFollower : Flag on whether the applied load is a follower load
-%            int : On the integral integration (dummy variable for this 
+%        propInt : On the integral integration (dummy variable for this 
 %                  function)
 %         outMsg : Whether or not to output message
 %                  'outputEnabled' : enables output information   
