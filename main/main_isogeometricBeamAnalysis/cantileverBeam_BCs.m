@@ -118,7 +118,7 @@ parameters.Aq = parameters.alpha*parameters.A;
 %% GUI
 
 % Analysis type (Bernoulli or Timoshenko Beam Theory)
-analysis.type = 'Bernoulli'; % 'Bernoulli', 'Timoshenko'
+analysis.type = 'Timoshenko'; % 'Bernoulli', 'Timoshenko'
 if ~strcmp(analysis.type, 'Bernoulli') && ...
         ~strcmp(analysis.type, 'Timoshenko')
     error('Choose valid analysis type')
@@ -200,13 +200,13 @@ if strcmp(analysis.type, 'Bernoulli')
         (homDOFs, xib, dir, CP);
     
     % Clamp the right edge of the beam
-%     xib = [Xi(length(Xi) - p) Xi(end)]; 
-%     dir = 1;
-%     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
-%     xib = [U(length(U)-p-1) U(length(U))];
-%     dir = 2;
-%     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
-elseif strcmp(analysis.type,'Timoshenko')
+    xib = [Xi(length(Xi) - p) Xi(end)]; 
+    dir = 1;
+    homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
+    xib = [Xi(length(Xi)-p-1) Xi(length(Xi))];
+    dir = 2;
+    homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
+elseif strcmp(analysis.type, 'Timoshenko')
     % Clamp the left edge of the beam (3 DoFs two translations and 1 rotation)
     xib = [Xi(1) Xi(p + 1)];
     dir = 1;
@@ -222,15 +222,15 @@ elseif strcmp(analysis.type,'Timoshenko')
         (homDOFs, xib, dir, CP);
 
     % Clamp the right edge of the beam (3 DoFs two translations and 1 rotation)
-%     xib = [Xi(end - p) Xi(end)];
-%     dir = 1;
-%     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
-%     xib = [Xi(end - p) Xi(end)];
-%     dir = 2;
-%     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
-%     xib = [Xi(end - p) Xi(end)];
-%     dir = 3;
-%     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+    xib = [Xi(end - p) Xi(end)];
+    dir = 1;
+    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+    xib = [Xi(end - p) Xi(end)];
+    dir = 2;
+    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
+    xib = [Xi(end - p) Xi(end)];
+    dir = 3;
+    homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
 end
 
 % Neumann boundary conditions
@@ -241,7 +241,7 @@ xib = [0 1];
 NBC.xiLoadExtension = {xib};
 NBC.etaLoadExtension = {'undefined'};
 % pLoad = - 1e2;
-pLoad = @(xi) -xi^2; % Function handle
+pLoad = @(xi) - 1e4*(xi - 0.5)^3; % Function handle
 NBC.loadAmplitude = {pLoad};
 loadDir = 2;
 NBC.loadDirection = {loadDir};

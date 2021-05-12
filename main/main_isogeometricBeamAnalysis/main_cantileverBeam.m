@@ -203,7 +203,7 @@ if strcmp(analysis.type, 'Bernoulli')
 %     xib = [Xi(length(Xi) - p) Xi(end)]; 
 %     dir = 1;
 %     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
-%     xib = [U(length(U)-p-1) U(length(U))];
+%     xib = [Xi(length(Xi)-p-1) Xi(length(Xi))];
 %     dir = 2;
 %     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
 elseif strcmp(analysis.type,'Timoshenko')
