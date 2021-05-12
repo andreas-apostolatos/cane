@@ -7,21 +7,9 @@
 %
 %% Script documentation
 %
-% Task : The benchmark is a cantilever beam subject to uniform pressure 
-%        load in 2D analysis. For both the Bernoulli and the Timoshenko 
-%        settings there exist an analytical solution in terms of the 
-%        displacements (and cross sectional rotations for the Timoshenko 
-%        problem), namely:
+% Task : Timoshenko and Bernoulli models for cantilever beams
 %
-%        Bernoulli :
-%             w(x) = p*x^2*(6*L^2 - 4L*x + x^2)/24/E/I
-%
-%       Timoshenko :
-%             w(x) = (p*L*x-p*x^2/2)/G/Aq - (-p*x^4/24+p*L*x^3/6-p*L^2*x^2/4)/E/I
-%          beta(x) = - p*x^3/6/E/I
-%               Aq = alpha*A
-%
-% Date : 13.11.2013
+% Date : 12.05.2021
 %
 %% Preamble
 clear;
@@ -118,7 +106,7 @@ parameters.Aq = parameters.alpha*parameters.A;
 %% GUI
 
 % Analysis type (Bernoulli or Timoshenko Beam Theory)
-analysis.type = 'Timoshenko'; % 'Bernoulli', 'Timoshenko'
+analysis.type = 'Bernoulli'; % 'Bernoulli', 'Timoshenko'
 if ~strcmp(analysis.type, 'Bernoulli') && ...
         ~strcmp(analysis.type, 'Timoshenko')
     error('Choose valid analysis type')
@@ -171,7 +159,7 @@ tp = 1;
     (p, Xi, CP, tp, 'outputEnabled');
 
 % Knot insertion
-n = 10;
+n = 20; % No. elements
 [Xi, CP] = knotRefineUniformlyBSplineCurve ...
     (n, p, Xi, CP, 'outputEnabled');
 % Rxi = [.25 .5 .5];
@@ -187,49 +175,60 @@ n = 10;
 
 % Dirichlet boundary conditions
 homDOFs = [];
-    
-if strcmp(analysis.type, 'Bernoulli')
-    % Clamp the left edge of the beam
+if strcmp(analysis.type, 'Bernoulli') % For the Bernoulli beam
+    % Fix the displacements at the left edge of the beam
     xib = [Xi(1) Xi(p + 1)];
     dir = 1;
     homDOFs = findDofsForBernoulliBeams2D ...
         (homDOFs, xib, dir, CP);
+    
+    % Fix the rotations at the left edge of the beam: Note that for
+    % clamping to be effective, also the displacements need to be fixed
     xib = [Xi(1) Xi(p + 2)];
     dir = 2;
     homDOFs = findDofsForBernoulliBeams2D ...
         (homDOFs, xib, dir, CP);
     
-    % Clamp the right edge of the beam
+    % Fix the displacements at the right edge of the beam
     xib = [Xi(length(Xi) - p) Xi(end)]; 
     dir = 1;
+    
+    % Fix the rotations at the right edge of the beam: Note that for
+    % clamping to be effective, also the displacements need to be fixed
     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
     xib = [Xi(length(Xi)-p-1) Xi(length(Xi))];
     dir = 2;
     homDOFs = findDofsForBernoulliBeams2D(homDOFs, xib, dir, CP);
-elseif strcmp(analysis.type, 'Timoshenko')
-    % Clamp the left edge of the beam (3 DoFs two translations and 1 rotation)
+elseif strcmp(analysis.type, 'Timoshenko') % For the Timoshenko beam
+    % Fix the displacements at the left edge of the beam
     xib = [Xi(1) Xi(p + 1)];
-    dir = 1;
+    dir = 1; % x-component of the displacement
     homDOFs = findDofsForTimoshenkoBeams2D ...
         (homDOFs, xib, dir, CP);
     xib = [Xi(1) Xi(p + 1)];
-    dir = 2;
+    dir = 2; % y-component of the displacement
     homDOFs = findDofsForTimoshenkoBeams2D ...
         (homDOFs, xib, dir, CP);
     xib = [Xi(1) Xi(p + 1)];
-    dir = 3;
+    
+    % Fix the rotations at the left edge of the beam: Note that for
+    % clamping to be effective, also the displacements need to be fixed
+    dir = 3; % rotation
     homDOFs = findDofsForTimoshenkoBeams2D ...
         (homDOFs, xib, dir, CP);
 
-    % Clamp the right edge of the beam (3 DoFs two translations and 1 rotation)
+    % Fix the displacements at the right edge of the beam
     xib = [Xi(end - p) Xi(end)];
-    dir = 1;
+    dir = 1; % x-component of the displacement
     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
     xib = [Xi(end - p) Xi(end)];
-    dir = 2;
+    dir = 2; % y-component of the displacement
     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
     xib = [Xi(end - p) Xi(end)];
-    dir = 3;
+    
+    % Fix the rotations at the right edge of the beam: Note that for
+    % clamping to be effective, also the displacements need to be fixed
+    dir = 3; % rotation
     homDOFs = findDofsForTimoshenkoBeams2D(homDOFs, xib, dir, CP);
 end
 
@@ -281,7 +280,7 @@ graph.index = plot_referenceConfigurationIGABeams ...
     (p, Xi, CP, isNURBS, homDOFs, F, analysis, graph, 'outputEnabled');
 
 %% Solve the problem 
-[dHat, F, minElEdgeSize] = solve_IGABeamLinear2D ...
+[dHat, Fcomplete, minElEdgeSize] = solve_IGABeamLinear2D ...
     (analysis, p, Xi, CP, homDOFs, NBC, parameters, isNURBS, ...
     solve_LinearSystem, int, 'outputEnabled');
 
