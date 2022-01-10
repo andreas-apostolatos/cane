@@ -9,8 +9,8 @@ function testPagewiseComputationTangStiffMtxIGAMembrane(testCase)
 %% Function documentation
 %
 % Tests the pagewise computation of the tangent stiffness matrix for the
-% geometrically nonlinear isogeometric membrane against the old school
-% implementation from Kiendl.
+% geometrically nonlinear isogeometric membrane against the standard 
+% computation.
 % 
 % Function layout :
 %
