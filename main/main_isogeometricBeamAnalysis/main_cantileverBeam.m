@@ -55,10 +55,10 @@ addpath('../../equationSystemSolvers/');
 %% CAD model (NURBS)
 
 % Polynomial degree
-p = 3;
+p = 1;
 
 % Knot vector
-Xi = [0 0 0 0 .5 .5 1 1 1 1];
+Xi = [0 0 1 1];
 
 % Beam's length
 L = 4;
@@ -66,16 +66,16 @@ L = 4;
 % Control Point coordinates and weights
 
 % x-coordinates
-CP(:,1) = [0 .2 .4 .6 .8 1]*L;
+CP(:,1) = [0 1]*L;
 
 % y-coordinates
-CP(:,2) = [0 0 0 0 0 0]*L;      
+CP(:,2) = [0 0]*L;      
 
 % z-coordinates
-CP(:,3) = [0 0 0 0 0 0];
+CP(:,3) = [0 0];
 
 % weights
-CP(:,4) = [1 1 1 1 1 1];
+CP(:,4) = [1 1];
 
 % Find whether the geometrical basis is a NURBS or a B-Spline
 isNURBS = false;
@@ -141,7 +141,7 @@ intError.noGP = 12;
 % Postprocessing features
 % resultant : 'displacement', 'crossSectionalRotation', 'force', 'moment',
 % 'shearForce'
-graph.resultant = 'moment';
+graph.resultant = 'shearForce';
 % Component (only for graph.resultant = 'displacement'): 'x', 'y', '2norm'
 graph.component = 'y';
 
@@ -166,12 +166,12 @@ graph.plotBasisFunctionsAndDerivs = 1;
 %% Refinement
 
 % Order elevation
-tp = 0;
+tp = 2;
 [Xi, CP, p] = degreeElevateBSplineCurve ...
     (p, Xi, CP, tp, 'outputEnabled');
 
 % Knot insertion
-n = 0;
+n = 10;
 [Xi, CP] = knotRefineUniformlyBSplineCurve ...
     (n, p, Xi, CP, 'outputEnabled');
 % Rxi = [.25 .5 .5];
@@ -237,11 +237,25 @@ end
 
 % On the application of a pressure load on the beam
 NBC.noCnd = 1;
-xib = [0 1];
+xib = [0 1]; % Distributed load
+% xib = 1; % Point load
 NBC.xiLoadExtension = {xib};
 NBC.etaLoadExtension = {'undefined'};
-pLoad = - 1e2;
+pLoad = - 1e2; % Distributed load
+% pLoad = + 1e2; % Point load
 NBC.loadAmplitude = {pLoad};
+if strcmp(analysis.type, 'Bernoulli') % Distributed load
+    NBC.computeLoadVct = ...
+        {'computeLoadVctLinePressureVectorForIGABernoulliBeam2D'};
+elseif strcmp(analysis.type, 'Timoshenko')
+    NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D'};
+end
+% if strcmp(analysis.type, 'Bernoulli') % Point load
+%     NBC.computeLoadVct = ...
+%         {'computeLoadPointVectorForIGABernoulliBeam2D'};
+% elseif strcmp(analysis.type, 'Timoshenko')
+%     NBC.computeLoadVct = {'computeLoadPointVectorForIGATimoshenkoBeam2D'};
+% end
 loadDir = 2;
 NBC.loadDirection = {loadDir};
 NBC.isFollower(1, 1) = false;
@@ -262,12 +276,6 @@ BSplinePatch.isNURBS = isNURBS;
 %% Compute the load vector only for the visualization of the reference configuration
 for iNBC = 1:NBC.noCnd
     F = [];
-    if strcmp(analysis.type, 'Bernoulli')
-        NBC.computeLoadVct = ...
-            {'computeLoadVctLinePressureVectorForIGABernoulliBeam2D'};
-    elseif strcmp(analysis.type, 'Timoshenko')
-        NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D'};
-    end
     funcHandle = str2func(NBC.computeLoadVct{iNBC});
     F = funcHandle ...
         (F, BSplinePatch, NBC.xiLoadExtension{iNBC}, ...
@@ -337,6 +345,37 @@ elseif strcmp(analysis.type,'Timoshenko')
     % resultants
     relativeErrorTipDeflectionTimoshenko = abs(wIGA-wReference)/abs(wReference)
     relativeErrorTipCrossSectionalRotationTimoshenko = 100*abs(betaIGA-betaReference)/abs(betaReference)
+end
+
+if strcmp(analysis.type,'Timoshenko')
+    %             w(x) = (q*L*x-q*x^2/2)/G/Aq - (-q*x^4/24+q*L*x^3/6-q*L^2*x^2/4)/E/I
+    %          beta(x) = - q*x^3/6/E/I
+    %               Aq = alpha*A
+    syms w(x) beta(x) Lsym qsym Gsym Aqsym Esym Isym
+
+    w(x) = (qsym*Lsym*x-qsym*x^2/2)/Gsym/(Aqsym) - (-qsym*x^4/24+qsym*Lsym*x^3/6-qsym*Lsym^2*x^2/4)/Esym/Isym;
+    beta(x) = - qsym*x^3/6/Esym/Isym;
+    Q(x) = Aqsym*Gsym*(-beta(x) + diff(w, x));
+    
+    w(x) = subs(w,{Lsym, qsym, Gsym, Esym, Isym, Aqsym}, ...
+        {L, abs(pLoad), problemSettings.GShear, problemSettings.EYoung, problemSettings.I, problemSettings.Aq});
+    beta(x) = subs(beta,{Lsym, qsym, Gsym, Esym, Isym, Aqsym}, ...
+        {L, abs(pLoad), problemSettings.GShear, problemSettings.EYoung, problemSettings.I, problemSettings.Aq});
+    Q(x) = subs(Q,{Lsym, qsym, Gsym, Esym, Isym, Aqsym}, ...
+        {L, abs(pLoad), problemSettings.GShear, problemSettings.EYoung, problemSettings.I, problemSettings.Aq});
+
+    figure(graph.index)
+    tiledlayout(3,1)
+    nexttile
+    fplot(w(x), [0 L]);
+    title("Analytical solution for the vertical deflection field")
+    nexttile
+    fplot(beta(x), [0 L]);
+    title("Analytical solution for the rotation field")
+    nexttile
+    fplot(Q(x), [0 L]);
+    title("Analytical solution for the shear force field")
+    graph.index = graph.index + 1;
 end
 
 %% End of script

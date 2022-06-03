@@ -53,9 +53,7 @@ function [F, tanMtxLoad] = ...
 %
 %        1i.4. Compute the length of the normal vector and the normal to the 2D curve vector
 %
-%        1i.5. Compute the actual load at the Gauss-Point
-%
-%        1i.6. Compute and assemble the components of the global load vector
+%        1i.5. Compute and assemble the components of the global load vector
 %        
 % 2. If the given old load vector is not null, sum them up with the newly computed one
 %
@@ -87,11 +85,6 @@ p = BSplinePatch.p;
 Xi = BSplinePatch.Xi;
 CP = BSplinePatch.CP;
 isNURBS = BSplinePatch.isNURBS;
-
-% Check the input load type
-if ~isa(loadFnc, 'function_handle') && ~isnumeric(loadFnc)
-    error("The input variable 'loadFnc' should be either a function handle or a numeric type");
-end
 
 % Initialize the load vector
 F = zeros(size(CP, 1)*3, 1);
@@ -139,15 +132,8 @@ for i = j1:j2
             L = norm(A1);
             n = A2/norm(A2);
             t = A1/L;
-            
-            %% 1i.5. Compute the actual load at the Gauss-Point
-            if isa(loadFnc, 'function_handle')
-                loadAmp = loadFnc(xi);
-            elseif isnumeric(loadFnc)
-                loadAmp = loadFnc;
-            end
 
-            %% 1i.6. Compute and assemble the components of the global load vector
+            %% 1i.5. Compute and assemble the components of the global load vector
             for v = 1:p + 1
                 index1 = 1 + (xiSpan - p - 1)*2 + (v - 1)*2;
                 index2 = 2 + (xiSpan - p - 1)*2 + (v - 1)*2;
@@ -155,14 +141,14 @@ for i = j1:j2
                 indexTim2 = index2 + (xiSpan - p - 1) + v - 1;
                 if loadDir == 1
                     F(index1, 1) = F(index1,1) + ...
-                        loadAmp*dR(v, 1)*t(1, 1)*(Xi(i + 1) - Xi(i))/2.0*L*GW(j); 
+                        loadFnc*dR(v, 1)*t(1, 1)*(Xi(i + 1) - Xi(i))/2.0*L*GW(j); 
                     F(index2, 1) = F(index2, 1) + ...
-                        loadAmp*dR(v, 1)*t(2, 1)*(Xi(i + 1) - Xi(i))/2.0*L*GW(j); 
+                        loadFnc*dR(v, 1)*t(2, 1)*(Xi(i + 1) - Xi(i))/2.0*L*GW(j); 
                 elseif loadDir == 2
                     F(indexTim1, 1) = F(indexTim1, 1) + ...
-                        loadAmp*dR(v, 1)*n(1, 1)*(Xi(i + 1) - Xi(i))/2.0*L*GW(j); 
+                        loadFnc*dR(v, 1)*n(1, 1)*(Xi(i + 1) - Xi(i))/2.0*L*GW(j); 
                     F(indexTim2, 1) = F(indexTim2, 1) + ...
-                        loadAmp*dR(v, 1)*n(2, 1)*(Xi(i + 1) - Xi(i))/2.0*L*GW(j); 
+                        loadFnc*dR(v, 1)*n(2, 1)*(Xi(i + 1) - Xi(i))/2.0*L*GW(j); 
                 else
                     error('Direction %d is not implemented for the loading of a 2D isogeometric Timoshenko beam', loadDir);
                 end

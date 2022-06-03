@@ -258,7 +258,7 @@ for j=1:numEval+1
         resultant(j) = computeBendingMomentForIGABeams2D(knotSpan,p,dHat,parameters,analysis,G,dG,dR);
     elseif strcmp(graph.resultant,'shearForce')
         % Compute the base vector of the curve
-        [G,~] = computeBaseVectorAndNormalToNURBSCurve2D(knotSpan,p,xi,Xi,CPd,dR);
+        [G,~] = computeBaseVectorAndNormalToNURBSCurve2D(knotSpan,p,CPd,dR);
         
         % Compute the shear force at the parametric location
         resultant(j) = computeShearForceForIGABeams2D(knotSpan,p,dHat,parameters,analysis,G,dR);

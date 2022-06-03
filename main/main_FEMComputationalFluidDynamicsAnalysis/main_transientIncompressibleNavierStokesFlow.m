@@ -73,12 +73,11 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 % caseName = 'semisphereEl150000';
 % caseName = 'squareObstacleInFlow';
 % caseName = 'flowAroundSquareObjectBoundaryLayerPowerLaw'; % problemZero, needs then ALE module
-caseName = 'cane_logo';
+% caseName = 'cane_logo';
 
 % Burn-in CFD simulation for the turek FSI benchmark
 pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
-% caseName = 'turek_fsi';
-caseName = 'building_fsi';
+caseName = 'turek_fsi';
 
 % Parse the data
 [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...
@@ -98,7 +97,6 @@ propVTK.VTKResultFile = 'undefined'; % '_contourPlots_75'
 
 %% Apply a non-constant inlet
 if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw') || ...
-        strcmp(caseName, 'building_fsi') || ...
         strcmp(caseName, 'turek_fsi')
     % Define number of DOFs per node
     noDOFsPerNode = 3;
@@ -106,8 +104,6 @@ if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw') || ...
     % Define the corresponding law
     if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw')
         u_max = 10;
-    elseif strcmp(caseName, 'building_fsi')
-        u_max = 5;
     elseif strcmp(caseName, 'turek_fsi')
         u_max = 2;
     end
@@ -119,8 +115,7 @@ if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw') || ...
                                                                 0
                                                                 0
                                                                 0];
-    if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw') || ...
-            strcmp(caseName, 'building_fsi')
+    if strcmp(caseName, 'flowAroundSquareObjectBoundaryLayerPowerLaw')
         computeInletVelocity = computeOneSeventhPowerLaw;
     else
         computeInletVelocity = computeParabolicLaw;

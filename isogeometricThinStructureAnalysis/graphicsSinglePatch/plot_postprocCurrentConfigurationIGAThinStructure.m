@@ -86,15 +86,15 @@ end
 
 %% 2. Plot the B-Spline surfaces
 if strcmp(graph.postprocConfig,'reference')
-    surf(XpRef,YpRef,ZpRef,'FaceColor',color,'EdgeColor','none');
+    surf(XpRef, YpRef, ZpRef, FaceColor=color, EdgeColor='none', FaceAlpha=0.3);
     hold on;
 elseif strcmp(graph.postprocConfig,'current')
-    surf(XpCur,YpCur,ZpCur,'FaceColor',color,'EdgeColor','none');
+    surf(XpCur, YpCur, ZpCur, FaceColor=color, EdgeColor='none');
     hold on;
-elseif strcmp(graph.postprocConfig,'referenceCurrent')
-    surf(XpRef,YpRef,ZpRef,'FaceColor','none','EdgeColor','none');
+elseif strcmp(graph.postprocConfig, 'referenceCurrent')
+    surf(XpRef, YpRef, ZpRef, FaceColor='none', EdgeColor='none');
     hold on;
-    surf(XpCur,YpCur,ZpCur,'FaceColor',color,'EdgeColor','none');
+    surf(XpCur, YpCur, ZpCur, FaceColor=color, EdgeColor='none', FaceAlpha=0.3);
 end
 
 %% 3. Plot the knots on the B-Spline surfaces

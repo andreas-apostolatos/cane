@@ -70,12 +70,12 @@ caseName = 'cylinder2D_CFD_unconstrainedOptimization';
 computeBodyForces = @computeConstantVerticalBodyForceVct;
 
 % On the transient analysis properties
-if strcmp(propFldDynamics.method,'bossak')
-    propFldDynamics.computeProblemMtrcsTransient = ...
-        @computeProblemMtrcsBossakFEM4NSE;
-    propFldDynamics.computeUpdatedVct = ...
-        @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
-end
+% if strcmp(propFldDynamics.method,'bossak')
+%     propFldDynamics.computeProblemMtrcsTransient = ...
+%         @computeProblemMtrcsBossakFEM4NSE;
+%     propFldDynamics.computeUpdatedVct = ...
+%         @computeBossakTIUpdatedVctAccelerationFieldFEM4NSE2D;
+% end
 
 % Free DOFs of the system (actual DOFs over which the solution is computed)
 numNodes = length(fldMsh.nodes(:, 1));

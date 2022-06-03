@@ -57,8 +57,8 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
 
 % caseName = 'curvedPlateTipShearPlaneStressTransient';
-% caseName = 'cantileverBeamPlaneStressTransientNLinear';
-caseName = 'turek_csd';
+caseName = 'cantileverBeamPlaneStressTransientNLinear';
+% caseName = 'turek_csd';
 
 % Parse the data from the GiD input file
 [strMsh, homDBC, inhomDBC, valuesInhomDBC, propNBC, propAnalysis, ...

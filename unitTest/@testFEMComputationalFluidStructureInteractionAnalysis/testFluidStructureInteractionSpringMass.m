@@ -37,6 +37,9 @@ function testFluidStructureInteractionSpringMass(testCase)
 
 % Define absolute tolerance
 absTol = 1e-15;
+absTolRel4 = absTol*1e4;
+absTolRel5 = absTolRel4*1e1;
+absTolRel7 = absTolRel5*1e2;
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
@@ -198,10 +201,10 @@ expSolResVctHistoryStr = data_expSol.resVctHistoryStr;
 expSolMinElSizeFld = data_expSol.minElSizeFld;
 
 %% 7. Verify the results
-testCase.verifyEqual(upHistory, expSolUpHistory, 'AbsTol', absTol);
+testCase.verifyEqual(upHistory, expSolUpHistory, 'AbsTol', absTolRel5);
 testCase.verifyEqual(dHistory, expSolDHistory, 'AbsTol', absTol);
-testCase.verifyEqual(resVctHistoryFld, expSolResVctHistoryFld, 'AbsTol', absTol);
-testCase.verifyEqual(resVctHistoryStr, expSolResVctHistoryStr, 'AbsTol', absTol);
+testCase.verifyEqual(resVctHistoryFld, expSolResVctHistoryFld, 'AbsTol', absTolRel4);
+testCase.verifyEqual(resVctHistoryStr, expSolResVctHistoryStr, 'AbsTol', absTolRel7);
 testCase.verifyEqual(minElSizeFld, expSolMinElSizeFld, 'AbsTol', absTol);
 
 end

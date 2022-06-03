@@ -1,4 +1,4 @@
-function F = computeLoadPointVectorForIGATimoshenkoBeam2D ...
+function [F, tanMtxLoad] = computeLoadPointVectorForIGATimoshenkoBeam2D ...
     (Fold, BSplinePatch, xib, etab, loadAmplitude, loadDir, isFollower, t, ...
     analysis, dir)
 %% Licensing
@@ -62,6 +62,9 @@ knotSpan = findKnotSpan(xib, Xi, numCPs_xi);
 
 % Initialize the load vector
 F = zeros(size(CP,1)*3,1);
+
+% Initialize dummy output
+tanMtxLoad = 'undefined';
 
 %% 1. Evaluate the NURBS basis functions at the point of the load application
 R = computeIGABasisFunctionsAndDerivativesForCurve ...

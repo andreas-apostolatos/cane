@@ -48,7 +48,7 @@ addpath('../../isogeometricThinStructureAnalysis/graphicsSinglePatch/',...
 %% NURBS parameters
 
 % Global variables:
-Length = 1;
+Length = 4; % 1
 % Length = 12;
 Width = 1e-1;
 % Width = 1;
@@ -98,7 +98,7 @@ end
 %% Material constants
 
 % Young's modulus
-parameters.E = 2e8;
+parameters.E = 1e7; % 2e8
 % parameters.E = 1.2e6;
 % parameters.E = 1e2;
 
@@ -141,11 +141,11 @@ graph.postprocConfig = 'referenceCurrent';
 % Plot strain or stress field
 % .resultant: 'displacement','strain','rotation','curvature','force',
 % 'moment','shearForce'
-graph.resultant = 'displacement';
+graph.resultant = 'shearForce';
 
 % Component of the resultant to plot
 % .component: 'x', 'y','z','2norm','1','2','12','1Principal','2Principal'
-graph.component = 'z';
+graph.component = '1';
 
 %% Refinement
 
@@ -155,8 +155,8 @@ tq = 3;
 [Xi,Eta,CP,p,q] = degreeElevateBSplineSurface(p,q,Xi,Eta,CP,tp,tq,'outputEnabled');
 
 % Number of knots to exist in both directions
-refXi = 1;
-refEta = 1;
+refXi = 10;
+refEta = 3;
 
 % scaling = 1;
 % refXi = 12*scaling;
@@ -216,19 +216,23 @@ cables.No = 0;
 % Apply a tip bending moment
 M0 = 25/3;
 % bendMomentAmp = - 2*pi()*M0;
-loadAmp = 1e-1;
+% loadAmp = 1e-1*100;
+loadAmp = -1e2;
 % xib = 1;   etab = [0 1];   dirBendMoment = 1;
-xib = 1;   etab = [0 1];   dirForce = 'z';
+% xib = 1;   etab = [0 1];   dirForce = 'z';#
+xib = [0 1];   etab = [0 1];   dirForce = 'z';
 NBC.noCnd = 1;
 NBC.xiLoadExtension = {xib};
 NBC.etaLoadExtension = {etab};
 % NBC.loadAmplitude = {bendMomentAmp};
 NBC.loadAmplitude = {loadAmp};
 % NBC.loadDirection(1,1) = dirBendMoment;
-NBC.loadDirection(1,1) = dirForce;
+NBC.loadDirection = {dirForce};
 % NBC.computeLoadVct{1} = 'computeLoadVctLineMomentIGAKirchhoffLoveShell';
-NBC.computeLoadVct{1} = 'computeLoadVctLineIGAThinStructure';
+% NBC.computeLoadVct{1} = 'computeLoadVctLineIGAThinStructure';
+NBC.computeLoadVct{1} = 'computeLoadVctAreaIGAThinStructure';
 NBC.isFollower(1,1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 % Apply a tip twisting moment
 % xib = 1;   etab = [0 1];   dirBendMoment = 1; dirTwistMoment = 2;
@@ -251,7 +255,7 @@ for counterNBC = 1:NBC.noCnd
     FGamma = funcHandle(FGamma,BSplinePatch,NBC.xiLoadExtension{counterNBC},...
                     NBC.etaLoadExtension{counterNBC},...
                     NBC.loadAmplitude{counterNBC},...
-                    NBC.loadDirection(counterNBC,1),...
+                    NBC.loadDirection{counterNBC},...
                     NBC.isFollower(counterNBC),0,int,'outputEnabled');
 end
 
@@ -303,7 +307,10 @@ BSplinePatch.parameters = parameters;
 BSplinePatch.FGamma = FGamma;
 
 % Linear analysis
-graph.index = plot_postprocIGAKirchhoffLoveShellLinear(BSplinePatch,dHatLinear,graph,'outputEnabled');
+scaling = 1e0;
+graph.index = plot_postprocIGAKirchhoffLoveShellLinear(BSplinePatch, scaling*dHatLinear,graph,'outputEnabled');
+
+return;
 
 % Compute the displacement at the middle of the back curved edge:
 

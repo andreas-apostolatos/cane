@@ -222,13 +222,13 @@ title('Reference configuration for an isogeometric Kirchhoff-Love shell');
 graph.index = graph.index + 1;
 
 %% Write geometry for Carat
-BSplinePatches = {BSplinePatch};
-strongDBC = [];
-connections = [];
-pathToOutput = '../../outputIBRACarat/';
-caseName = 'scordelisLoRoof';
-writeOutMultipatchBSplineSurface4Carat...
-    (BSplinePatches,strongDBC,connections,pathToOutput,caseName);
+% BSplinePatches = {BSplinePatch};
+% strongDBC = [];
+% connections = [];
+% pathToOutput = '../../outputIBRACarat/';
+% caseName = 'scordelisLoRoof';
+% writeOutMultipatchBSplineSurface4Carat...
+%     (BSplinePatches,strongDBC,connections,pathToOutput,caseName);
 
 %% Solve the system applying linear analysis
 [dHatLinear,F,minElArea] = solve_IGAKirchhoffLoveShellLinear...

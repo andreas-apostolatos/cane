@@ -233,24 +233,33 @@ pLoad = 1e5;
 NBC.loadAmplitude = {pLoad};
 loadDir = 2;
 NBC.loadDirection = {loadDir};
+NBC.isFollower(1, 1) = false;
+NBC.isTimeDependent(1, 1) = false;
 
 % On the application of a poiint load on the beam
 % xi = 1;
 % dir = 2;
 % F = computeLoadPointVectorBeams2D(F,xi,p,Xi,CP,load,analysis,dir);
 
+%% Fill up computational patch
+BSplinePatch.p = p;
+BSplinePatch.Xi = Xi;
+BSplinePatch.CP = CP;
+BSplinePatch.isNURBS = isNURBS;
+
 %% Compute the load vector only for the visualization of the reference configuration
-for counterNBC = 1:NBC.noCnd
+for iNBC = 1:NBC.noCnd
     F = [];
     if strcmp(analysis.type,'Bernoulli')
         NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGABernoulliBeam2D'};
     elseif strcmp(analysis.type,'Timoshenko')
         NBC.computeLoadVct = {'computeLoadVctLinePressureVectorForIGATimoshenkoBeam2D'};
     end
-    funcHandle = str2func(NBC.computeLoadVct{counterNBC});
-    F = funcHandle(F,NBC.xiLoadExtension{counterNBC},p,Xi,...
-        CP,isNURBS,NBC.loadAmplitude(counterNBC,1),...
-        NBC.loadDirection(counterNBC,1),0,int,'');
+    funcHandle = str2func(NBC.computeLoadVct{iNBC});
+    F = funcHandle ...
+        (F, BSplinePatch, NBC.xiLoadExtension{iNBC}, ...
+        NBC.etaLoadExtension{iNBC}, NBC.loadAmplitude{iNBC}, ...
+        NBC.loadDirection{iNBC}, NBC.isFollower(iNBC,1), 0, int, '');
 end
 
 %% Plot reference configuration

@@ -184,16 +184,16 @@ for i = p + 1:length(Xi) - p - 1
             xi = ((1 - GP(j))*Xi(i) + (1 + GP(j))*Xi(i + 1))/2;
             
             %% 2iv.2. Find the correct knot span where xi lives
-            kontSpan = findKnotSpan(xi, Xi, numCPs_xi);
+            knotSpan = findKnotSpan(xi, Xi, numCPs_xi);
             
             %% 2iv.3. Compute the NURBS basis functions and their first and second derivatives on GP
             dR = computeIGABasisFunctionsAndDerivativesForCurve ...
-                (kontSpan, p, xi, Xi, CP, isNURBS, 2);
+                (knotSpan, p, xi, Xi, CP, isNURBS, 2);
             
             %% 2iv.4. Compute the base vectors and their derivatives on GP
             [G, dG] = ...
                 computeBaseVectorNormalToNURBSCurveAndDeivativesForCurve2D ...
-                (kontSpan, p, CP, dR);
+                (knotSpan, p, CP, dR);
             
             %% 2iv.5. Compute the determinant of the Jacobian to the transformation from the NURBS parameter to the physical space
             detJxxi = norm(G(:, 1));

@@ -295,7 +295,7 @@ expSolCPHistoryLinear{1}(:, :, 4, 2) = [1     1     1     1
 expSolResHistoryLinear = 5.270462766947300;
                            
 % Define the expected solution in terms of the minimum element area size
-expSolMinElArea = 2.500000000000000;
+expSolMinElArea = 1.000000000000000;
 
 %% 8. Define the expected solutions for the nonlinear problem
 

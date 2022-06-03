@@ -52,13 +52,13 @@ addpath('../../FEMPlateInMembraneActionAnalysis/solvers/',...
 
 % Define the path to the case
 pathToCase = '../../inputGiD/FEMPlateInMembraneActionAnalysis/';
-% caseName = 'cantileverBeamPlaneStress';
+caseName = 'cantileverBeamPlaneStress';
 % caseName = 'PlateWithAHolePlaneStress';
 % caseName = 'PlateWithMultipleHolesPlaneStress';
 % caseName = 'InfinitePlateWithAHolePlaneStress';
 % caseName = 'unitTest_curvedPlateTipShearPlaneStress';
 % caseName = 'NACA2412_AoA5_CSD';
-caseName = 'turek_csd';
+% caseName = 'turek_csd';
 
 % Parse the data from the GiD input file
 [strMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propNBC, propAnalysis, ...
@@ -83,13 +83,17 @@ propVTK.VTKResultFile = 'undefined';
 propNBC.tractionLoadVct = [0; -1e1; 0];
 
 % Initialize graphics index
-graph.index = 1;
+propGraph.index = 1;
 
 %% Output data to a VTK format
 pathToOutput = '../../outputVTK/FEMPlateInMembraneActionAnalysis/';
 
 %% Visualization of the configuration
-% graph.index = plot_referenceConfigurationFEMPlateInMembraneAction(strMsh,analysis,F,homDBC,graph,'outputEnabled');
+F = computeLoadVctFEMPlateInMembraneAction...
+    (strMsh, propAnalysis, propNBC, 0, propGaussInt,'');
+segmentsContact = [];
+propGraph.index = plot_referenceConfigurationFEMPlateInMembraneAction ...
+    (strMsh, propAnalysis, F, homDOFs, segmentsContact, propGraph, 'outputEnabled');
 
 %% Initialize solution
 numNodes = length(strMsh.nodes(:,1));

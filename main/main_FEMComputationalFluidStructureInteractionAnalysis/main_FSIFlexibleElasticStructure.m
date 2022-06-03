@@ -63,47 +63,36 @@ addpath([path_prefix 'parsers/']);
 % Add all functions related to the efficient computation functions
 addpath([path_prefix 'efficientComputation/']);
 
-%% Case name
-pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
-% caseName = 'turek_fsi';
-caseName = 'building_fsi';
-
 %% Parse the fluid setup from the GiD input file
-caseNameFld = caseName;
+pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
+caseNameFld = 'turek_fsi';
 [fldMsh, homDOFsFld, inhomDOFsFld, valuesInhomDOFsFld, propALE, propNBCFld, ...
     propAnalysisFld, propParametersFld, propNLinearAnalysisFld, ...
     propFldDynamics, propGaussIntFld, propPostProcFld, propFSIFld] = ...
     parse_FluidModelFromGid ...
     (pathToCase, caseNameFld, 'outputEnabled');
-caseNameFld = horzcat(caseNameFld, '_fluid');
+caseNameFld = horzcat('turek_fsi', '_fluid');
 
 %% Parse the structural setup from the GiD input file
-caseNameStr = caseName;
+pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
+caseNameStr = 'turek_fsi';
 [strMsh, homDOFsStr, inhomDOFsStr, valuesInhomDOFsStr, propNBCStr, ...
     propAnalysisStr, propParametersStr, propNLinearAnalysisStr, ...
     propStrDynamics, propGaussIntStr, ~, propFSIStr] = ...
     parse_StructuralModelFromGid...
     (pathToCase, caseNameStr, 'outputEnabled');
-caseNameStr = horzcat(caseNameStr, '_structure');
+caseNameStr = horzcat('turek_fsi', '_structure');
 
 %% Apply a non-constant inlet
-if strcmp(caseNameFld, 'turek_fsi_fluid') || ...
-        strcmp(caseNameFld, 'building_fsi_fluid')
+if strcmp(caseNameFld, 'turek_fsi_fluid')
         
     % Define number of DOFs per node
     noDOFsPerNode = 3;
     
-    % Define the law for the inlet velocity
-    if strcmp(caseNameFld, 'turek_fsi_fluid')
-        % Parabolic law
-        u_max = 2;
-        computeInletVelocity = @(x,y,z) u_max*6*y*(0.41 - y)/0.1681;
-    elseif strcmp(caseNameFld, 'building_fsi_fluid')
-        % 1/7-th power law
-        u_max = 5;
-        computeInletVelocity = @(x,y,z) u_max*y^(1/7);
-    end
-    
+    % Define a parabolic inlet velocity
+    u_max = 2;
+    computeInletVelocity = @(x,y,z) u_max*6*y*(0.41 - y)/0.1681;
+
     % Loop over all inlet DOFs
     for i = 1:length(inhomDOFsFld)
         % Find the inlet DOF
@@ -192,7 +181,7 @@ end
 % On the writing the output function
 propOutputFld.isOutput = true;
 propOutputFld.writeOutputToFile = @writeOutputFEMIncompressibleFlowToVTK;
-propOutputFld.VTKResultFile = '_contourPlots_100'; % '_contourPlots_21'
+propOutputFld.VTKResultFile = '_contourPlots_21'; % '_contourPlots_139', '_contourPlots_21'
 
 %% Structural dynamics
 
@@ -283,10 +272,9 @@ end
 function [up, upDot, upDDot, numTimeStep] = ...
     computeInitialConditionsFromVTKFileFEM4NSEWrapper ...
     (analysis, fldMsh, DOF4Output, parameters, fldDynamics, ...
-    VTKResultFile, caseName, pathToFileDummy)
+    VTKResultFile, caseNameDummy, pathToFileDummy)
 
-    caseName = erase(caseName, '_fluid');
-    
+    caseName = 'turek_fsi';
     pathToFile = '../../outputVTK/FEMComputationalFluidDynamicsAnalysis/';
 
     [up, upDot, upDDot, numTimeStep] = ... 

@@ -152,7 +152,7 @@ end
 if ~isDeformed
     plot3(P(:, :, 1), P(:, :, 2) ,P(:, :, 3), 'Color', colorEdge, 'LineWidth', .01);
 else
-    plot3(P(:, :, 1), P(:, :, 2), P(:, :, 3), 'Color', coloeEdge, 'LineStyle', '-.');
+    plot3(P(:, :, 1), P(:, :, 2), P(:, :, 3), 'Color', colorEdge, 'LineStyle', '-.');
 end
 % axis equal;
 grid on;

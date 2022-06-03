@@ -263,7 +263,6 @@ BSplinePatch.etacoup = etacoup;
 % Issue warnings for analyses which have not yet been optimized
 if ~isempty(analysis)
     if strcmp(analysis.type, 'isogeometricKirchhoffLoveShellAnalysis') || ...
-            strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis') || ...
             strcmp(analysis.type, 'isogeometricIncompressibleFlowAnalysis')
         warning('Analysis type %s has not yet been optimized', analysis.type);
     end
@@ -409,7 +408,8 @@ if ~ischar(int)
         BSplinePatch.xi = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl);
         BSplinePatch.eta = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl);
         BSplinePatch.R = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, noCPsEl);
-        if strcmp(analysis.type,'isogeometricMembraneAnalysis')
+        if strcmp(analysis.type,'isogeometricMembraneAnalysis') || ...
+                strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis')
             BSplinePatch.dRdXi = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, noCPsEl);
             BSplinePatch.dRdEta = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, noCPsEl);
             BSplinePatch.GXi = zeros(BSplinePatch.noElmnts, BSplinePatch.noGPsEl, 3);
@@ -422,15 +422,33 @@ end
 
 % Initialize minimum element area in the IGA mesh
 tolerance = 1e-4;
-if abs(CP(1,1,1)-CP(nxi,1,1)) >= tolerance
-    BSplinePatch.minElArea = abs(CP(1, 1, 1) - CP(nxi, 1, 1));
-elseif abs(CP(1, 1, 1) - CP(1, neta, 1)) >= tolerance
-    BSplinePatch.minElArea = abs(CP(1, 1, 1) - CP(1, neta, 1));
-elseif abs(CP(1, end, 1) - CP(nxi, end, 1))
-    BSplinePatch.minElArea = abs(CP(1, end, 1) - CP(nxi, end, 1));
-else
-    BSplinePatch.minElArea = abs(CP(end, 1, 1) - CP(end, neta, 1));
+lenX = [abs(CP(1, 1, 1)-CP(nxi, 1, 1)), abs(CP(1, 1, 1) - CP(1, neta, 1)), ...
+    abs(CP(1, end, 1) - CP(nxi, end, 1)), abs(CP(end, 1, 1) - CP(end, neta, 1))];
+minLenX = min(lenX(lenX > 0));
+if isempty(minLenX)
+    minLenX = 0;
 end
+lenY = [abs(CP(1, 1, 2)-CP(nxi, 1, 2)), abs(CP(1, 1, 2) - CP(1, neta, 2)), ...
+    abs(CP(1, end, 2) - CP(nxi, end, 2)), abs(CP(end, 1, 2) - CP(end, neta, 2))];
+minLenY = min(lenY(lenY > 0));
+if isempty(minLenY)
+    minLenY = 0;
+end 
+lenZ = [abs(CP(1, 1, 3)-CP(nxi, 1, 3)), abs(CP(1, 1, 3) - CP(1, neta, 3)), ...
+    abs(CP(1, end, 3) - CP(nxi, end, 3)), abs(CP(end, 1, 3) - CP(end, neta, 3))];
+minLenZ = min(lenZ(lenZ > 0));
+if isempty(minLenZ)
+    minLenZ = 0;
+end 
+if minLenX > tolerance || minLenY > tolerance || minLenZ > tolerance
+    minLen = [minLenX minLenY minLenZ];
+    BSplinePatch.minElArea = min(minLen(minLen > 0));
+else
+    warning("The patch appears to degenerate up to the hard-coded tolerance %d", ...
+        tolerance);
+    BSplinePatch.minElArea = 0;
+end
+% Initialize the maximum element area in the IGA mesh
 BSplinePatch.maxElArea = 0;
 
 % Initialize counters
@@ -552,7 +570,8 @@ for iEtaSpan = q + 1:meta - q - 1
                                 (iXiSpan, p, xi, Xi, iEtaSpan, q, eta, Eta, CP, ...
                                 isNURBS, numDrvBasis);
                             BSplinePatch.R(counterElmnts, counterGPEl, :) = dR(:, 1);
-                            if strcmp(analysis.type,'isogeometricMembraneAnalysis')
+                            if strcmp(analysis.type,'isogeometricMembraneAnalysis') || ...
+                                    strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis')
                                 BSplinePatch.dRdXi(counterElmnts, counterGPEl, :) = dR(:, 2);
                                 BSplinePatch.dRdEta(counterElmnts, counterGPEl, :) = dR(:, 3);
                             end
@@ -571,7 +590,8 @@ for iEtaSpan = q + 1:meta - q - 1
                                     computeBaseVectorsAndDerivativesForBSplineSurface ...
                                     (iXiSpan, p, iEtaSpan, q, CP, numDrvBaseVct, dR);
                             end
-                            if strcmp(analysis.type, 'isogeometricMembraneAnalysis') && ...
+                            if (strcmp(analysis.type, 'isogeometricMembraneAnalysis') || ...
+                                    strcmp(analysis.type, 'isogeometricPlateInMembraneActionAnalysis')) && ...
                                     ~ischar(numDrvBaseVct)
                                 BSplinePatch.GXi(counterElmnts, counterGPEl, :) = dG1(:, 1);
                                 BSplinePatch.GEta(counterElmnts, counterGPEl, :) = dG2(:, 1);
@@ -664,7 +684,7 @@ for iEtaSpan = q + 1:meta - q - 1
             end
             %% 2vi. Find the minimum element area in the isogemetric mesh
             if ~ischar(elementArea)
-                if elementArea < BSplinePatch.minElArea
+                if elementArea < BSplinePatch.minElArea && elementArea ~= 0
                     BSplinePatch.minElArea = elementArea;
                 end
                 if elementArea > BSplinePatch.maxElArea
