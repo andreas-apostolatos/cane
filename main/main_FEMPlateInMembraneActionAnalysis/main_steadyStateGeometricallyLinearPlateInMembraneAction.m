@@ -122,10 +122,14 @@ dHat = zeros(numDOFs,1);
     caseName, pathToOutput, 'outputEnabled');
 
 %% Postprocessing
-% graph.visualization.geometry = 'reference_and_current';
-% resultant = 'stress';
-% component = 'y';
-% graph.index = plot_currentConfigurationAndResultants(strMsh,homDBC,dHat,parameters,analysis,resultant,component,graph);
+graph.visualization.geometry = 'reference_and_current';
+resultant = 'stress';
+component = 'xy';
+nodeIDs_active = 'undefined';
+contactSegments = 'undefined';
+graph.index = plot_currentConfigurationAndResultants ...
+    (propAnalysis, strMsh, homDOFs, dHat, nodeIDs_active, contactSegments, ...
+    parameters, resultant, component, graph);
 
 % Compute the error in the L2-norm for the case of the plane stress
 % analysis over a quarter annulus plate subject to tip shear force

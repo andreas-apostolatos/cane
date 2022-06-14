@@ -277,8 +277,9 @@ end
 
 %% 6. Plot the reference configuration
 if isPlotting
-    if strcmp(graph.visualization.geometry,'reference_and_current') || strcmp(graph.visualization.geometry,'reference');
-        patch('faces',mesh.elements(:,2:end),'vertices',mesh.nodes(:,2:end),'facecolor',colorDomain,'edgecolor',colorEdge);
+    if strcmp(graph.visualization.geometry,'reference_and_current') || strcmp(graph.visualization.geometry,'reference')
+        patch('faces',mesh.elements(:,2:end),'vertices',mesh.nodes(:,2:end),'facecolor',colorDomain, ...
+            'FaceAlpha', .3 ,'edgecolor', colorEdge);
     end
     axis equal;
     axis on;

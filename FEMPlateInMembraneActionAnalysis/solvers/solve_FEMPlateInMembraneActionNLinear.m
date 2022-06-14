@@ -113,6 +113,7 @@ uDot = 'undefined';
 uDDot = 'undefined';
 uDotSaved = 'undefined';
 uDDotSaved = 'undefined';
+% propStrDynamics.timeDependence = 'STEADY_STATE';
 propStrDynamics = 'undefined';
 uMeshALE = 'undefined';
 dDot = 'undefined';

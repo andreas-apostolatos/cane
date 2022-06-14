@@ -230,7 +230,15 @@ end
 fclose(outputUnitColorPlots);
 
 %% 5. Return if the simulation is steady-state
-if strcmp(propStrDynamics.timeDependence, 'STEADY_STATE')
+isTransient = false;
+if isstruct(propStrDynamics)
+    if isfield(propStrDynamics, 'timeDependence')
+        if strcmp(propStrDynamics.timeDependence, 'TRANSIENT')
+            isTransient = true;
+        end
+    end
+end
+if ~isTransient
     return;
 end
 
