@@ -275,11 +275,19 @@ if strcmp(outMsg, 'outputEnabled')
 end
 while counterContact <= propContact.maxIter && ~(isCnd_DOFs && isCnd_LM)
     %% Debugging
-%     graph.index = 1;
-%     graph.visualization.geometry = 'current';
-%     graph.index = plot_currentConfigurationFEMPlateInMembraneAction...
-%         (strMsh,homDOFs,segmentsContact,dHat_stiffMtxLM,graph);
-%     close(1);
+%     if counterContact > 1
+%         allContactNodes = repmat(propContact.nodeIDs, segmentsContact.numSegments,1);
+%         lambdaHat = dHat_stiffMtxLM(noDOFs + 1:numDOFsTotal);
+%         nodeIDs_active = allContactNodes(lambdaHat > 0);
+%         graph.index = 1;
+%         resultant = 'displacement';
+%         component = 'x';
+%         graph.visualization.geometry = 'current';
+%         graph.index = plot_currentConfigurationAndResultants...
+%             (propAnalysis, strMsh, homDOFs, dHat_stiffMtxLM, nodeIDs_active, ...
+%             segmentsContact, propParameters, resultant, component, graph);
+%         close(1);
+%     end
     %% 7i. Print progress message on the contact iterations
     if strcmp(outMsg,'outputEnabled')
         fprintf(strcat(strcat(tab, '\t'),'>> Contact iteration %d\n'), ...
