@@ -118,7 +118,7 @@ parameters.Aq = parameters.alpha*parameters.A;
 %% GUI
 
 % Analysis type (Bernoulli or Timoshenko Beam Theory)
-analysis.type = 'Timoshenko';
+analysis.type = 'Bernoulli';
 if ~strcmp(analysis.type, 'Bernoulli') && ...
         ~strcmp(analysis.type, 'Timoshenko')
     error('Choose valid analysis type')

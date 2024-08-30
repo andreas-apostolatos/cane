@@ -245,7 +245,7 @@ for j=1:numEval+1
         end
     elseif strcmp(graph.resultant,'force')
         % Compute the base vector of the reference configuration
-        [G,~] = computeBaseVectorAndNormalToNURBSCurve2D(knotSpan,p,xi,Xi,CP,dR);
+        [G,~] = computeBaseVectorAndNormalToNURBSCurve2D(knotSpan,p,CP,dR);
         
         % Compute the normal strain at the given parametric location
         resultant(j) = computeNormalForceForIGABeams2D(knotSpan,p,dHat,parameters,analysis,G,dR);
