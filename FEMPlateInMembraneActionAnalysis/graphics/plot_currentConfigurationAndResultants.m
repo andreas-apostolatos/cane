@@ -338,7 +338,7 @@ if isPlotting
 end
 
 %% 11. Loop over all elements in the mesh
-for iElmnts = 1:size(mesh.elements(:,1))
+for iElmnts = 1:height(mesh.elements(:,1))
     %% 11i. Initialize the array of the grid points and the tensorial quantity to be visualized
     P = zeros(gridXi + 2,gridEta + 2,3);
     tensorialQuantityOverDomain = zeros(gridXi + 2,gridEta + 2);
