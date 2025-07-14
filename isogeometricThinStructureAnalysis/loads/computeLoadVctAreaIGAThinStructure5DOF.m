@@ -201,9 +201,24 @@ for iEtaSpan = etaSpanStart:etaSpanEnd
             %% 3i. Compute the determinant of the Jacobian to the transformation from the parameter to the integration domain
             detJParam2Integr = (Xi(iXiSpan + 1) - Xi(iXiSpan))*(Eta(iEtaSpan + 1) - Eta(iEtaSpan))/4;
             
-            %% 3ii. Get the Element Freedom Table (EFT)
-            idElmt = BSplinePatch.knotSpan2ElmntNo(iXiSpan, iEtaSpan);
-            EFT = BSplinePatch.EFT(:, idElmt);
+            %% 3ii. Create the Element Freedom Table (EFT) for 5 DOFs per control point
+            % Initialize element freedom table
+            EFT = zeros(1, noDOFsEl);
+            
+            % Initialize counter
+            k = 1;
+            
+            % Relation global-local dof numbering (5 DOFs per control point)
+            for cpj = iEtaSpan - q:iEtaSpan
+                for cpi = iXiSpan - p:iXiSpan
+                    for dirDOF = 1:5  % 5 DOFs per control point
+                        EFT(k) = 5*((cpj - 1)*numCPs_xi + cpi - 1) + dirDOF;
+                        
+                        % Update counter
+                        k = k + 1;
+                    end
+                end
+            end
             
             %% 3iii. Loop over all the Gauss Points
             for iGPEta = 1:numGP_eta
