@@ -138,23 +138,19 @@ noCPsEl = (p + 1)*(q + 1);
 % Number of DOFs affecting an element (5 DOFs per control point)
 noDOFsEl = 5*noCPsEl;
 
-% Initialize the load vector
-if isvector(FOutdated)
-    F = zeros(length(FOutdated), 1);
-else
-    F = zeros(noDOFs, 1);
-end
-
 % Initialize auxiliary arrays
 RMtx = zeros(3, noDOFsEl);
-dRdXiMtx = zeros(3, noDOFsEl);
-dRdEtaMtx = zeros(3, noDOFsEl);
+if isFollower
+    dRdXiMtx = zeros(3, noDOFsEl);
+    dRdEtaMtx = zeros(3, noDOFsEl);
+end
 
-% initialize tangent matrix
-if ~isvector(FOutdated)
-    tanMtx = sparse(noDOFs, noDOFs);
+% Initialize output arrays
+F = zeros(noDOFs, 1);
+if isFollower
+    tanMtx = zeros(noDOFs);
 else
-    tanMtx = sparse(length(FOutdated), length(FOutdated));
+    tanMtx = 'undefined';
 end
 
 % Number of derivatives for the basis functions
@@ -163,24 +159,9 @@ numDrvsBasisFct = 1;
 % Number of derivatives for the base vectors
 numDrvsBaseVcts = 0;
 
-% Compute deformed control points if the load is a follower load
+% Handle deformed control points for follower loads (same as original)
 if isFollower
-    if strcmp(direction, 'normal')
-        CPd = zeros(size(CP));
-        for iCPs = 1:numCPs_xi
-            for jCPs = 1:numCPs_eta
-                DOFi = BSplinePatch.DOFNumbering(iCPs, jCPs, 1);
-                DOFj = BSplinePatch.DOFNumbering(iCPs, jCPs, 2);
-                DOFk = BSplinePatch.DOFNumbering(iCPs, jCPs, 3);
-                CPd(iCPs, jCPs, 1) = CP(iCPs, jCPs, 1) + FOutdated(DOFi);
-                CPd(iCPs, jCPs, 2) = CP(iCPs, jCPs, 2) + FOutdated(DOFj);
-                CPd(iCPs, jCPs, 3) = CP(iCPs, jCPs, 3) + FOutdated(DOFk);
-                CPd(iCPs, jCPs, 4) = CP(iCPs, jCPs, 4);
-            end
-        end
-    else
-        error('Only normal follower loads are supported');
-    end
+    CPd = BSplinePatch.CPd;
 end
 
 %% 1. Get a quadrature rule
