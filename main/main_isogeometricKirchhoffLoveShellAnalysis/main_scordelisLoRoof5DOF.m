@@ -219,8 +219,34 @@ for counterNBC = 1:NBC.noCnd
 end
     
 %% Plot reference configuration
+% Filter homDOFs to only include translational DOFs (1,2,3) for plotting
+% since the plotting function expects 3 DOFs per control point
+homDOFsFiltered = [];
+for i = 1:length(homDOFs)
+    dofIndex = homDOFs(i);
+    % Convert to control point and direction
+    p_cp = ceil(dofIndex/5);
+    dir = dofIndex - 5*(p_cp-1);
+    % Only keep translational DOFs (dir = 1,2,3)
+    if dir <= 3
+        % Convert back to 3 DOF numbering for plotting
+        dof3D = 3*(p_cp-1) + dir;
+        homDOFsFiltered = [homDOFsFiltered; dof3D];
+    end
+end
+
+% Also filter FGamma to match 3 DOF structure for plotting
+noCPs = BSplinePatch.noCPs;
+FGammaFiltered = zeros(3*noCPs, 1);
+for i = 1:noCPs
+    % Extract translational components from 5 DOF vector
+    FGammaFiltered(3*(i-1)+1) = FGamma(5*(i-1)+1); % x
+    FGammaFiltered(3*(i-1)+2) = FGamma(5*(i-1)+2); % y
+    FGammaFiltered(3*(i-1)+3) = FGamma(5*(i-1)+3); % z
+end
+
 figure(graph.index)
-plot_referenceConfigurationIGAThinStructure(p,q,Xi,Eta,CP,isNURBS,homDOFs,FGamma,'outputEnabled');
+plot_referenceConfigurationIGAThinStructure(p,q,Xi,Eta,CP,isNURBS,homDOFsFiltered,FGammaFiltered,'outputEnabled');
 title('Reference configuration for an isogeometric Kirchhoff-Love shell (5 DOF)');
 graph.index = graph.index + 1;
 
