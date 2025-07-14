@@ -204,6 +204,9 @@ BSplinePatch = fillUpPatch...
     (analysis,p,Xi,q,Eta,CP,isNURBS,parameters,homDOFs,inhomDOFs,...
     valuesInhomDOFs,weakDBC,cables,NBC,[],[],[],[],[],int);
 
+% Set the number of DOFs for 5 DOF per control point
+BSplinePatch.noDOFs = 5*BSplinePatch.noCPs;
+
 %% Compute the load vectors for each patch (only for the visualization)
 FGamma = zeros(5*BSplinePatch.noCPs,1);
 for counterNBC = 1:NBC.noCnd
