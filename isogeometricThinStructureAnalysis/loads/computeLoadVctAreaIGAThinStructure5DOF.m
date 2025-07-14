@@ -202,19 +202,26 @@ for iEtaSpan = etaSpanStart:etaSpanEnd
             detJParam2Integr = (Xi(iXiSpan + 1) - Xi(iXiSpan))*(Eta(iEtaSpan + 1) - Eta(iEtaSpan))/4;
             
             %% 3ii. Create the Element Freedom Table (EFT) for 5 DOFs per control point
-            % Initialize element freedom table
-            EFT = zeros(1, noDOFsEl);
-            
-            % Initialize counter
+            % Initialize element freedom table 
+            EFT = zeros(noDOFsEl, 1);
             k = 1;
             
             % Relation global-local dof numbering (5 DOFs per control point)
             for cpj = iEtaSpan - q:iEtaSpan
                 for cpi = iXiSpan - p:iXiSpan
-                    for dirDOF = 1:5  % 5 DOFs per control point
-                        EFT(k) = 5*((cpj - 1)*numCPs_xi + cpi - 1) + dirDOF;
+                    % Control point index (1-based)
+                    cpIndex = (cpj - 1)*numCPs_xi + cpi;
+                    
+                    % Add 5 DOFs for this control point
+                    for dirDOF = 1:5
+                        globalDOF = 5*(cpIndex - 1) + dirDOF;
                         
-                        % Update counter
+                        % Bounds check
+                        if globalDOF < 1 || globalDOF > noDOFs
+                            error('DOF index %d is out of bounds [1, %d]', globalDOF, noDOFs);
+                        end
+                        
+                        EFT(k) = globalDOF;
                         k = k + 1;
                     end
                 end
@@ -339,7 +346,8 @@ for iEtaSpan = etaSpanStart:etaSpanEnd
                     elementaryAreaGP = detJCartesian2Param*detJParam2Integr*GW;
                     
                     %% 3iii.10. Compute and assemble the element load vector and the tangent matrix contribution at the Gauss Point
-                    F(EFT) = F(EFT) + (RMtx'*tractionVct)*elementaryAreaGP;
+                    loadContribution = (RMtx'*tractionVct)*elementaryAreaGP;
+                    F(EFT) = F(EFT) + loadContribution;
 
                    if isFollower && strcmp(direction, 'normal')
                        tanMtx(EFT, EFT) = tanMtx(EFT, EFT) - ...
