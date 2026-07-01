@@ -24,7 +24,7 @@ The [`main/`](main/) folder is the application catalog. Each subfolder groups ru
 
 ## Unit Tests
 
-The unit-test driver <a href="matlab:open('cane/main/main_unitTests/main_runUnitTests.m')">main_runUnitTests.m</a> covers quadrature, utility functions, isogeometric beam and membrane analysis, Kirchhoff-Love shells, FEM thermal conduction, plate in membrane action, contact, IGA/FEM CFD, FSI, and shape optimization.
+The unit-test driver <a href="matlab:open('main/main_unitTests/main_runUnitTests.m')">main_runUnitTests.m</a> covers quadrature, utility functions, isogeometric beam and membrane analysis, Kirchhoff-Love shells, FEM thermal conduction, plate in membrane action, contact, IGA/FEM CFD, FSI, and shape optimization.
 
 ```matlab
 run('main/main_unitTests/main_runUnitTests.m')
@@ -34,17 +34,17 @@ run('main/main_unitTests/main_runUnitTests.m')
 
 | Application area | Representative script | Output |
 | --- | --- | --- |
-| FEM thermal conduction | <a href="matlab:open('cane/main/main_FEMThermalConductionAnalysis/main_thermalConductionBenchmarks.m')">main_thermalConductionBenchmarks.m</a> | 2 figures |
-| FEM plane stress | <a href="matlab:open('cane/main/main_FEMPlateInMembraneActionAnalysis/main_convergenceStudyInfinitePlateWithHole.m')">main_convergenceStudyInfinitePlateWithHole.m</a> | 4 figures |
-| FEM contact mechanics | <a href="matlab:open('cane/main/main_FEMContactMechanicsAnalysis/main_HertzConvergenceStudy.m')">main_HertzConvergenceStudy.m</a> | 4 figures |
-| FEM incompressible CFD | <a href="matlab:open('cane/main/main_FEMComputationalFluidDynamicsAnalysis/main_steadyStateIncompressibleNavierStokesFlow.m')">main_steadyStateIncompressibleNavierStokesFlow.m</a> | VTK output |
-| FEM fluid-structure interaction | <a href="matlab:open('cane/main/main_FEMComputationalFluidStructureInteractionAnalysis/main_plotFluidStructureAndInterfaceDiscretizations.m')">main_plotFluidStructureAndInterfaceDiscretizations.m</a> | setup and interface figures |
-| FEM shape optimization | <a href="matlab:open('cane/main/main_shapeOptimization/main_unconstrainedCFDShapeOptimizationDrag.m')">main_unconstrainedCFDShapeOptimizationDrag.m</a> | 2 figures |
-| IGA plane stress | <a href="matlab:open('cane/main/main_isogeometricPlateInMembraneActionAnalysis/main_curvedBeamTipShear.m')">main_curvedBeamTipShear.m</a> | stress field and convergence figures |
-| IGA membrane with embedded cables | <a href="matlab:open('cane/main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_steadyStateDDMFourPointSail.m')">main_steadyStateDDMFourPointSail.m</a> | benchmark driver |
-| IGA Kirchhoff-Love shell | <a href="matlab:open('cane/main/main_isogeometricKirchhoffLoveShellAnalysis/main_scordelisLoRoof.m')">main_scordelisLoRoof.m</a> | 3 figures |
-| IGA incompressible CFD | <a href="matlab:open('cane/main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowInUnitSquareDomain.m')">main_steadyStateStokesFlowInUnitSquareDomain.m</a> | velocity field |
-| Monte Carlo simulation | <a href="matlab:open('cane/main/main_MonteCarloSimulationAnalysis/main_monteCarloSimpleBenchmark.m')">main_monteCarloSimpleBenchmark.m</a> | 1 figure |
+| FEM thermal conduction | <a href="matlab:open('main/main_FEMThermalConductionAnalysis/main_thermalConductionBenchmarks.m')">main_thermalConductionBenchmarks.m</a> | 2 figures |
+| FEM plane stress | <a href="matlab:open('main/main_FEMPlateInMembraneActionAnalysis/main_convergenceStudyInfinitePlateWithHole.m')">main_convergenceStudyInfinitePlateWithHole.m</a> | 4 figures |
+| FEM contact mechanics | <a href="matlab:open('main/main_FEMContactMechanicsAnalysis/main_HertzConvergenceStudy.m')">main_HertzConvergenceStudy.m</a> | 4 figures |
+| FEM incompressible CFD | <a href="matlab:open('main/main_FEMComputationalFluidDynamicsAnalysis/main_steadyStateIncompressibleNavierStokesFlow.m')">main_steadyStateIncompressibleNavierStokesFlow.m</a> | VTK output |
+| FEM fluid-structure interaction | <a href="matlab:open('main/main_FEMComputationalFluidStructureInteractionAnalysis/main_plotFluidStructureAndInterfaceDiscretizations.m')">main_plotFluidStructureAndInterfaceDiscretizations.m</a> | setup and interface figures |
+| FEM shape optimization | <a href="matlab:open('main/main_shapeOptimization/main_unconstrainedCFDShapeOptimizationDrag.m')">main_unconstrainedCFDShapeOptimizationDrag.m</a> | 2 figures |
+| IGA plane stress | <a href="matlab:open('main/main_isogeometricPlateInMembraneActionAnalysis/main_curvedBeamTipShear.m')">main_curvedBeamTipShear.m</a> | stress field and convergence figures |
+| IGA membrane with embedded cables | <a href="matlab:open('main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_steadyStateDDMFourPointSail.m')">main_steadyStateDDMFourPointSail.m</a> | benchmark driver |
+| IGA Kirchhoff-Love shell | <a href="matlab:open('main/main_isogeometricKirchhoffLoveShellAnalysis/main_scordelisLoRoof.m')">main_scordelisLoRoof.m</a> | 3 figures |
+| IGA incompressible CFD | <a href="matlab:open('main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowInUnitSquareDomain.m')">main_steadyStateStokesFlowInUnitSquareDomain.m</a> | velocity field |
+| Monte Carlo simulation | <a href="matlab:open('main/main_MonteCarloSimulationAnalysis/main_monteCarloSimpleBenchmark.m')">main_monteCarloSimpleBenchmark.m</a> | 1 figure |
 
 ## MATLAB Version
 
@@ -89,9 +89,9 @@ Main application folders:
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_FEMThermalConductionAnalysis/main_steadyStateThermalConductionAnalysis.m')">main_steadyStateThermalConductionAnalysis.m</a>
-- <a href="matlab:open('cane/main/main_FEMThermalConductionAnalysis/main_transientThermalConductionAnalysis.m')">main_transientThermalConductionAnalysis.m</a>
-- <a href="matlab:open('cane/main/main_FEMThermalConductionAnalysis/main_thermalConductionBenchmarks.m')">main_thermalConductionBenchmarks.m</a>
+- <a href="matlab:open('main/main_FEMThermalConductionAnalysis/main_steadyStateThermalConductionAnalysis.m')">main_steadyStateThermalConductionAnalysis.m</a>
+- <a href="matlab:open('main/main_FEMThermalConductionAnalysis/main_transientThermalConductionAnalysis.m')">main_transientThermalConductionAnalysis.m</a>
+- <a href="matlab:open('main/main_FEMThermalConductionAnalysis/main_thermalConductionBenchmarks.m')">main_thermalConductionBenchmarks.m</a>
 
 The thermal module solves steady and transient heat-transfer problems,
 
@@ -99,7 +99,7 @@ $$
 \rho c \frac{\partial T}{\partial t} - \nabla \cdot (k \nabla T) = Q.
 $$
 
-Benchmark script: <a href="matlab:open('cane/main/main_FEMThermalConductionAnalysis/main_thermalConductionBenchmarks.m')">main_thermalConductionBenchmarks.m</a>. See [1] for the finite element formulation background.
+Benchmark script: <a href="matlab:open('main/main_FEMThermalConductionAnalysis/main_thermalConductionBenchmarks.m')">main_thermalConductionBenchmarks.m</a>. See [1] for the finite element formulation background.
 
 ![Thermal benchmark response](documentation/readme_assets/fem_thermal_fig01.png)
 
@@ -109,9 +109,9 @@ Benchmark script: <a href="matlab:open('cane/main/main_FEMThermalConductionAnaly
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_FEMPlateInMembraneActionAnalysis/main_convergenceStudyInfinitePlateWithHole.m')">main_convergenceStudyInfinitePlateWithHole.m</a>
-- <a href="matlab:open('cane/main/main_FEMPlateInMembraneActionAnalysis/main_steadyStateGeometricallyLinearPlateInMembraneAction.m')">main_steadyStateGeometricallyLinearPlateInMembraneAction.m</a>
-- <a href="matlab:open('cane/main/main_FEMPlateInMembraneActionAnalysis/main_modalAnalysisPlateInMembraneAction.m')">main_modalAnalysisPlateInMembraneAction.m</a>
+- <a href="matlab:open('main/main_FEMPlateInMembraneActionAnalysis/main_convergenceStudyInfinitePlateWithHole.m')">main_convergenceStudyInfinitePlateWithHole.m</a>
+- <a href="matlab:open('main/main_FEMPlateInMembraneActionAnalysis/main_steadyStateGeometricallyLinearPlateInMembraneAction.m')">main_steadyStateGeometricallyLinearPlateInMembraneAction.m</a>
+- <a href="matlab:open('main/main_FEMPlateInMembraneActionAnalysis/main_modalAnalysisPlateInMembraneAction.m')">main_modalAnalysisPlateInMembraneAction.m</a>
 
 For linear plane stress,
 
@@ -120,7 +120,7 @@ $$
 \boldsymbol{\sigma} = \mathbf{C} : \boldsymbol{\varepsilon}(\mathbf{u}).
 $$
 
-Benchmark script: <a href="matlab:open('cane/main/main_FEMPlateInMembraneActionAnalysis/main_convergenceStudyInfinitePlateWithHole.m')">main_convergenceStudyInfinitePlateWithHole.m</a>. The plotted convergence lines connect only the actual computed GiD refinement cases. See [1] for the finite element formulation background.
+Benchmark script: <a href="matlab:open('main/main_FEMPlateInMembraneActionAnalysis/main_convergenceStudyInfinitePlateWithHole.m')">main_convergenceStudyInfinitePlateWithHole.m</a>. The plotted convergence lines connect only the actual computed GiD refinement cases. See [1] for the finite element formulation background.
 
 ![Plane-stress von Mises stress on deformed configuration](documentation/readme_assets/fem_plate_fig01.png)
 
@@ -134,8 +134,8 @@ Benchmark script: <a href="matlab:open('cane/main/main_FEMPlateInMembraneActionA
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_FEMContactMechanicsAnalysis/main_HertzConvergenceStudy.m')">main_HertzConvergenceStudy.m</a>
-- <a href="matlab:open('cane/main/main_FEMContactMechanicsAnalysis/main_FEMContactLinearPlateInMembraneAction.m')">main_FEMContactLinearPlateInMembraneAction.m</a>
+- <a href="matlab:open('main/main_FEMContactMechanicsAnalysis/main_HertzConvergenceStudy.m')">main_HertzConvergenceStudy.m</a>
+- <a href="matlab:open('main/main_FEMContactMechanicsAnalysis/main_FEMContactLinearPlateInMembraneAction.m')">main_FEMContactLinearPlateInMembraneAction.m</a>
 
 The contact module handles frictionless Signorini contact,
 
@@ -143,7 +143,7 @@ $$
 g_n \ge 0, \qquad p_n \le 0, \qquad g_n p_n = 0.
 $$
 
-Benchmark script: <a href="matlab:open('cane/main/main_FEMContactMechanicsAnalysis/main_HertzConvergenceStudy.m')">main_HertzConvergenceStudy.m</a>. The circular markers are the actual GiD refinement cases and MATLAB connects them with straight line segments.
+Benchmark script: <a href="matlab:open('main/main_FEMContactMechanicsAnalysis/main_HertzConvergenceStudy.m')">main_HertzConvergenceStudy.m</a>. The circular markers are the actual GiD refinement cases and MATLAB connects them with straight line segments.
 
 ![Hertz contact setup and principal stress field](documentation/readme_assets/fem_contact_fig01.png)
 
@@ -157,9 +157,9 @@ Benchmark script: <a href="matlab:open('cane/main/main_FEMContactMechanicsAnalys
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_FEMComputationalFluidDynamicsAnalysis/main_steadyStateIncompressibleNavierStokesFlow.m')">main_steadyStateIncompressibleNavierStokesFlow.m</a>
-- <a href="matlab:open('cane/main/main_FEMComputationalFluidDynamicsAnalysis/main_transientIncompressibleNavierStokesFlow.m')">main_transientIncompressibleNavierStokesFlow.m</a>
-- <a href="matlab:open('cane/main/main_FEMComputationalFluidDynamicsAnalysis/main_transientNavierStokesFlowTaylorGreenVortices.m')">main_transientNavierStokesFlowTaylorGreenVortices.m</a>
+- <a href="matlab:open('main/main_FEMComputationalFluidDynamicsAnalysis/main_steadyStateIncompressibleNavierStokesFlow.m')">main_steadyStateIncompressibleNavierStokesFlow.m</a>
+- <a href="matlab:open('main/main_FEMComputationalFluidDynamicsAnalysis/main_transientIncompressibleNavierStokesFlow.m')">main_transientIncompressibleNavierStokesFlow.m</a>
+- <a href="matlab:open('main/main_FEMComputationalFluidDynamicsAnalysis/main_transientNavierStokesFlowTaylorGreenVortices.m')">main_transientNavierStokesFlowTaylorGreenVortices.m</a>
 
 The FEM CFD module solves incompressible Navier-Stokes problems using a residual-based Variational Multiscale Method (VMS) [2-4]. In strong form,
 
@@ -201,15 +201,15 @@ $$
 
 Here, $\mathbf{r}_M$ and $r_C$ denote the momentum and continuity residuals on each element $K$.
 
-Benchmark script: <a href="matlab:open('cane/main/main_FEMComputationalFluidDynamicsAnalysis/main_steadyStateIncompressibleNavierStokesFlow.m')">main_steadyStateIncompressibleNavierStokesFlow.m</a>. The script writes VTK output under [`outputVTK/FEMComputationalFluidDynamicsAnalysis/`](outputVTK/FEMComputationalFluidDynamicsAnalysis/).
+Benchmark script: <a href="matlab:open('main/main_FEMComputationalFluidDynamicsAnalysis/main_steadyStateIncompressibleNavierStokesFlow.m')">main_steadyStateIncompressibleNavierStokesFlow.m</a>. The script writes VTK output under [`outputVTK/FEMComputationalFluidDynamicsAnalysis/`](outputVTK/FEMComputationalFluidDynamicsAnalysis/).
 
 ### Fluid-Structure Interaction
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_FEMComputationalFluidStructureInteractionAnalysis/main_plotFluidStructureAndInterfaceDiscretizations.m')">main_plotFluidStructureAndInterfaceDiscretizations.m</a>
-- <a href="matlab:open('cane/main/main_FEMComputationalFluidStructureInteractionAnalysis/main_FSIFlexibleElasticStructure.m')">main_FSIFlexibleElasticStructure.m</a>
-- <a href="matlab:open('cane/main/main_FEMComputationalFluidStructureInteractionAnalysis/main_FSIRigidCylinderOnSpring.m')">main_FSIRigidCylinderOnSpring.m</a>
+- <a href="matlab:open('main/main_FEMComputationalFluidStructureInteractionAnalysis/main_plotFluidStructureAndInterfaceDiscretizations.m')">main_plotFluidStructureAndInterfaceDiscretizations.m</a>
+- <a href="matlab:open('main/main_FEMComputationalFluidStructureInteractionAnalysis/main_FSIFlexibleElasticStructure.m')">main_FSIFlexibleElasticStructure.m</a>
+- <a href="matlab:open('main/main_FEMComputationalFluidStructureInteractionAnalysis/main_FSIRigidCylinderOnSpring.m')">main_FSIRigidCylinderOnSpring.m</a>
 
 The FSI examples combine a Navier-Stokes fluid domain, a structural domain, and an interface `Gamma_FSI` where kinematic and traction compatibility are enforced:
 
@@ -218,7 +218,7 @@ $$
 \boldsymbol{\sigma}_f\mathbf{n}_f + \boldsymbol{\sigma}_s\mathbf{n}_s = \mathbf{0}.
 $$
 
-Benchmark script: <a href="matlab:open('cane/main/main_FEMComputationalFluidStructureInteractionAnalysis/main_plotFluidStructureAndInterfaceDiscretizations.m')">main_plotFluidStructureAndInterfaceDiscretizations.m</a>. See [5-7] for the Turek FSI benchmark and related FSI/interface studies produced with this code base.
+Benchmark script: <a href="matlab:open('main/main_FEMComputationalFluidStructureInteractionAnalysis/main_plotFluidStructureAndInterfaceDiscretizations.m')">main_plotFluidStructureAndInterfaceDiscretizations.m</a>. See [5-7] for the Turek FSI benchmark and related FSI/interface studies produced with this code base.
 
 ![Turek FSI benchmark setup](documentation/readme_assets/fem_fsi_fig01.png)
 
@@ -228,7 +228,7 @@ Benchmark script: <a href="matlab:open('cane/main/main_FEMComputationalFluidStru
 
 Representative script:
 
-- <a href="matlab:open('cane/main/main_shapeOptimization/main_unconstrainedCFDShapeOptimizationDrag.m')">main_unconstrainedCFDShapeOptimizationDrag.m</a>
+- <a href="matlab:open('main/main_shapeOptimization/main_unconstrainedCFDShapeOptimizationDrag.m')">main_unconstrainedCFDShapeOptimizationDrag.m</a>
 
 The shape optimization example minimizes drag for a 2D cylinder-flow problem by perturbing the cylinder radius,
 
@@ -237,7 +237,7 @@ $$
 p_{k+1} = p_k - \alpha \frac{dJ}{dp}.
 $$
 
-Benchmark script: <a href="matlab:open('cane/main/main_shapeOptimization/main_unconstrainedCFDShapeOptimizationDrag.m')">main_unconstrainedCFDShapeOptimizationDrag.m</a>. See [8] for risk-aware CFD shape optimization work produced with this code base.
+Benchmark script: <a href="matlab:open('main/main_shapeOptimization/main_unconstrainedCFDShapeOptimizationDrag.m')">main_unconstrainedCFDShapeOptimizationDrag.m</a>. See [8] for risk-aware CFD shape optimization work produced with this code base.
 
 ![Shape optimization objective/design history](documentation/readme_assets/shape_optimization_fig01.png)
 
@@ -249,12 +249,12 @@ Benchmark script: <a href="matlab:open('cane/main/main_shapeOptimization/main_un
 
 Representative script:
 
-- <a href="matlab:open('cane/main/main_isogeometricPlateInMembraneActionAnalysis/main_curvedBeamTipShear.m')">main_curvedBeamTipShear.m</a>
-- <a href="matlab:open('cane/main/main_isogeometricPlateInMembraneActionAnalysis/main_IGACurvedBeamTipShearConvergence.m')">main_IGACurvedBeamTipShearConvergence.m</a>
+- <a href="matlab:open('main/main_isogeometricPlateInMembraneActionAnalysis/main_curvedBeamTipShear.m')">main_curvedBeamTipShear.m</a>
+- <a href="matlab:open('main/main_isogeometricPlateInMembraneActionAnalysis/main_IGACurvedBeamTipShearConvergence.m')">main_IGACurvedBeamTipShearConvergence.m</a>
 
 This benchmark uses exact NURBS geometry for a curved beam modeled as a plate in membrane action. It compares the stress field against a closed-form reference solution. The convergence plots repeat the same analytical error computation over several h-refinement levels. Related isogeometric coupling and domain-decomposition formulations are given in [9,10].
 
-Benchmark script: <a href="matlab:open('cane/main/main_isogeometricPlateInMembraneActionAnalysis/main_curvedBeamTipShear.m')">main_curvedBeamTipShear.m</a>.
+Benchmark script: <a href="matlab:open('main/main_isogeometricPlateInMembraneActionAnalysis/main_curvedBeamTipShear.m')">main_curvedBeamTipShear.m</a>.
 
 ![IGA curved-beam stress field](documentation/readme_assets/iga_plate_membrane_fig02.png)
 
@@ -266,9 +266,9 @@ Benchmark script: <a href="matlab:open('cane/main/main_isogeometricPlateInMembra
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_steadyStateDDMFourPointSail.m')">main_steadyStateDDMFourPointSail.m</a>
-- <a href="matlab:open('cane/main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_FoFiFourPointSail.m')">main_FoFiFourPointSail.m</a>
-- <a href="matlab:open('cane/main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_modalAnalysisFourPointSail.m')">main_modalAnalysisFourPointSail.m</a>
+- <a href="matlab:open('main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_steadyStateDDMFourPointSail.m')">main_steadyStateDDMFourPointSail.m</a>
+- <a href="matlab:open('main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_FoFiFourPointSail.m')">main_FoFiFourPointSail.m</a>
+- <a href="matlab:open('main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_modalAnalysisFourPointSail.m')">main_modalAnalysisFourPointSail.m</a>
 
 The membrane module covers single-patch and multipatch NURBS membranes, weak Dirichlet boundary conditions, domain decomposition, form-finding, modal analysis, transient response, and cable-coupled membrane models [9,11].
 
@@ -276,8 +276,8 @@ The membrane module covers single-patch and multipatch NURBS membranes, weak Dir
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_isogeometricKirchhoffLoveShellAnalysis/main_scordelisLoRoof.m')">main_scordelisLoRoof.m</a>
-- <a href="matlab:open('cane/main/main_isogeometricKirchhoffLoveShellAnalysis/main_cantileverPlate.m')">main_cantileverPlate.m</a>
+- <a href="matlab:open('main/main_isogeometricKirchhoffLoveShellAnalysis/main_scordelisLoRoof.m')">main_scordelisLoRoof.m</a>
+- <a href="matlab:open('main/main_isogeometricKirchhoffLoveShellAnalysis/main_cantileverPlate.m')">main_cantileverPlate.m</a>
 
 The shell examples use Kirchhoff-Love kinematics, where the mid-surface is represented by a NURBS surface and rotations are implied by the surface normal:
 
@@ -290,7 +290,7 @@ $$
 \right) \, d\Omega.
 $$
 
-Benchmark script: <a href="matlab:open('cane/main/main_isogeometricKirchhoffLoveShellAnalysis/main_scordelisLoRoof.m')">main_scordelisLoRoof.m</a>. The contour shows the first principal membrane stress resultant `n^1` on the geometrically nonlinear solution; the deformation is scaled for visualization. See [10,12,13] for nonlinear isogeometric shell analysis, multipatch shell coupling, and penalty-parameter studies.
+Benchmark script: <a href="matlab:open('main/main_isogeometricKirchhoffLoveShellAnalysis/main_scordelisLoRoof.m')">main_scordelisLoRoof.m</a>. The contour shows the first principal membrane stress resultant `n^1` on the geometrically nonlinear solution; the deformation is scaled for visualization. See [10,12,13] for nonlinear isogeometric shell analysis, multipatch shell coupling, and penalty-parameter studies.
 
 ![Scordelis-Lo roof geometrically nonlinear principal stress resultant](documentation/readme_assets/iga_shell_scordelis_fig01.png)
 
@@ -298,9 +298,9 @@ Benchmark script: <a href="matlab:open('cane/main/main_isogeometricKirchhoffLove
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowInUnitSquareDomain.m')">main_steadyStateStokesFlowInUnitSquareDomain.m</a>
-- <a href="matlab:open('cane/main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowShearCavity.m')">main_steadyStateStokesFlowShearCavity.m</a>
-- <a href="matlab:open('cane/main/main_isogeometricComputationalFluidDynamicsAnalysis/main_transientNavierStokesFlowTaylorGreenVortices.m')">main_transientNavierStokesFlowTaylorGreenVortices.m</a>
+- <a href="matlab:open('main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowInUnitSquareDomain.m')">main_steadyStateStokesFlowInUnitSquareDomain.m</a>
+- <a href="matlab:open('main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowShearCavity.m')">main_steadyStateStokesFlowShearCavity.m</a>
+- <a href="matlab:open('main/main_isogeometricComputationalFluidDynamicsAnalysis/main_transientNavierStokesFlowTaylorGreenVortices.m')">main_transientNavierStokesFlowTaylorGreenVortices.m</a>
 
 IGA CFD uses the same residual-based VMS idea [2-4] together with smooth NURBS spaces for velocity and pressure fields:
 
@@ -320,7 +320,7 @@ $$
 
 while unresolved scales are again introduced through residual-based VMS stabilization.
 
-Benchmark script: <a href="matlab:open('cane/main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowInUnitSquareDomain.m')">main_steadyStateStokesFlowInUnitSquareDomain.m</a>.
+Benchmark script: <a href="matlab:open('main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowInUnitSquareDomain.m')">main_steadyStateStokesFlowInUnitSquareDomain.m</a>.
 
 ![IGA CFD velocity magnitude field](documentation/readme_assets/iga_cfd_fig02.png)
 
@@ -330,9 +330,9 @@ Benchmark script: <a href="matlab:open('cane/main/main_isogeometricComputational
 
 Representative scripts:
 
-- <a href="matlab:open('cane/main/main_MonteCarloSimulationAnalysis/main_monteCarloSimpleBenchmark.m')">main_monteCarloSimpleBenchmark.m</a>
-- <a href="matlab:open('cane/main/main_MonteCarloSimulationAnalysis/main_monteCarloSteadyStateFEMPlateInMembraneAction.m')">main_monteCarloSteadyStateFEMPlateInMembraneAction.m</a>
-- <a href="matlab:open('cane/main/main_MonteCarloSimulationAnalysis/main_monteCarloSteadyStateIncompressibleNavierStokesFlow.m')">main_monteCarloSteadyStateIncompressibleNavierStokesFlow.m</a>
+- <a href="matlab:open('main/main_MonteCarloSimulationAnalysis/main_monteCarloSimpleBenchmark.m')">main_monteCarloSimpleBenchmark.m</a>
+- <a href="matlab:open('main/main_MonteCarloSimulationAnalysis/main_monteCarloSteadyStateFEMPlateInMembraneAction.m')">main_monteCarloSteadyStateFEMPlateInMembraneAction.m</a>
+- <a href="matlab:open('main/main_MonteCarloSimulationAnalysis/main_monteCarloSteadyStateIncompressibleNavierStokesFlow.m')">main_monteCarloSteadyStateIncompressibleNavierStokesFlow.m</a>
 
 The simple benchmark estimates statistics of
 
@@ -342,7 +342,7 @@ $$
 
 for which the exact mean is `sqrt(e)`.
 
-Benchmark script: <a href="matlab:open('cane/main/main_MonteCarloSimulationAnalysis/main_monteCarloSimpleBenchmark.m')">main_monteCarloSimpleBenchmark.m</a>. See [8] for uncertainty-aware design work connected to the stochastic-analysis functionality.
+Benchmark script: <a href="matlab:open('main/main_MonteCarloSimulationAnalysis/main_monteCarloSimpleBenchmark.m')">main_monteCarloSimpleBenchmark.m</a>. See [8] for uncertainty-aware design work connected to the stochastic-analysis functionality.
 
 ![Monte Carlo sample mean convergence](documentation/readme_assets/monte_carlo_fig01.png)
 
