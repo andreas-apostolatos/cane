@@ -163,60 +163,27 @@ Representative scripts:
 
 The FEM CFD module solves incompressible Navier-Stokes problems using a residual-based Variational Multiscale Method (VMS) [2-4]. In strong form,
 
-$$
-\begin{aligned}
-&\rho \left(\frac{\partial \mathbf{u}}{\partial t}
-&\quad + \mathbf{u}\cdot\nabla\mathbf{u}\right)
-\quad - \nabla \cdot \boldsymbol{\sigma} = \mathbf{f},\\
-&\nabla \cdot \mathbf{u} = 0 .
-\end{aligned}
-$$
+```math
+\rho \left(\frac{\partial \mathbf{u}}{\partial t} + \mathbf{u}\cdot\nabla\mathbf{u}\right) - \nabla \cdot \boldsymbol{\sigma} = \mathbf{f}, \qquad \nabla \cdot \mathbf{u} = 0 .
+```
 
 With test functions $\mathbf{w}$ and $q$, the resolved-scale variational problem can be written at a high level as
 
-$$
-\begin{aligned}
-&A_\mathrm{NS}((\mathbf{w},q),(\bar{\mathbf{u}}_h,\bar{p}_h))\\
-&\quad + A_\mathrm{VMS}((\mathbf{w},q),(\bar{\mathbf{u}}_h,\bar{p}_h))
-= F(\mathbf{w}) .
-\end{aligned}
-$$
+```math
+A_\mathrm{NS}((\mathbf{w},q),(\bar{\mathbf{u}}_h,\bar{p}_h)) + A_\mathrm{VMS}((\mathbf{w},q),(\bar{\mathbf{u}}_h,\bar{p}_h)) = F(\mathbf{w}) .
+```
 
 where
 
-$$
-\begin{aligned}
-&A_\mathrm{NS}
-=
-\left(\mathbf{w},
-\rho\left(\frac{\partial \bar{\mathbf{u}}_h}{\partial t}
-&\quad + \bar{\mathbf{u}}_h\cdot\nabla\bar{\mathbf{u}}_h\right)\right)_\Omega\\
-&\quad + \left(\nabla\mathbf{w},2\mu\boldsymbol{\varepsilon}(\bar{\mathbf{u}}_h)\right)_\Omega \\
-&- \left(\nabla\cdot\mathbf{w},\bar{p}_h\right)_\Omega
-&\quad + \left(q,\nabla\cdot\bar{\mathbf{u}}_h\right)_\Omega .
-\end{aligned}
-$$
+```math
+A_\mathrm{NS} = \left(\mathbf{w}, \rho\left(\frac{\partial \bar{\mathbf{u}}_h}{\partial t} + \bar{\mathbf{u}}_h\cdot\nabla\bar{\mathbf{u}}_h\right)\right)_\Omega + \left(\nabla\mathbf{w},2\mu\boldsymbol{\varepsilon}(\bar{\mathbf{u}}_h)\right)_\Omega - \left(\nabla\cdot\mathbf{w},\bar{p}_h\right)_\Omega + \left(q,\nabla\cdot\bar{\mathbf{u}}_h\right)_\Omega .
+```
 
 and a residual-based VMS stabilization can be expressed as
 
-$$
-\begin{aligned}
-&A_\mathrm{VMS}
-=
-\sum_{K}
-\left(
-\rho\bar{\mathbf{u}}_h\cdot\nabla\mathbf{w}+\nabla q,
-\tau_M \mathbf{r}_M
-\right)_K
-\\
-&\quad +
-\sum_{K}
-\left(
-\nabla\cdot\mathbf{w},
-\tau_C r_C
-\right)_K .
-\end{aligned}
-$$
+```math
+A_\mathrm{VMS} = \sum_K \left(\rho\bar{\mathbf{u}}_h\cdot\nabla\mathbf{w}+\nabla q,\tau_M\mathbf{r}_M\right)_K + \sum_K \left(\nabla\cdot\mathbf{w},\tau_C r_C\right)_K .
+```
 
 The VMS split separates resolved and unresolved velocity and pressure scales,
 
