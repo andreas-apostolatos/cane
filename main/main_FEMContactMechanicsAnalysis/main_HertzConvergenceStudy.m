@@ -69,6 +69,9 @@ maxIter = 50;
 % On whether the case is a unit test
 isUnitTest = false;
 
+% Initialize graphics index
+graph.index = 1;
+
 % Enable output
 outMsg = 'outputEnabled';
 % outMsg = '';
@@ -158,6 +161,17 @@ for iCases = 1:numCases
         computePostprocResultantsSignoriniFrictionlessContact2D...
         (strMsh, parameters, dHat, lambdaHat, nodeIDs_active);
 
+    % Plot the representative setup and stress field for the last parsed
+    % refinement case.
+    if iCases == numCases
+        graph.index = plot_referenceConfigurationFEMPlateInMembraneAction ...
+            (strMsh, analysis, F, homDBC, contactSegments, graph, outMsg);
+        graph.visualization.geometry = 'reference_and_current';
+        graph.index = plot_currentConfigurationAndResultants ...
+            (analysis, strMsh, homDBC, dHat, nodeIDs_active, ...
+            contactSegments, parameters, 'stress', '1Principal', graph);
+    end
+
     % Get the length of the contact area and the reaction force on the contact
     appliedForce(iCases, 1) = sum(F);
     hertzContactLength(iCases, 1) = sqrt(4*(2*appliedForce(iCases, 1))*radius*...
@@ -175,8 +189,9 @@ end
 figure('Name','Max Contact Pressure')
 hold on
 grid on
-plot(numberOfElements,maxContactPressure, 'r-o', 'LineWidth', 2);
-plot(numberOfElements,hertzPressure, 'b--d','LineWidth', 2);
+plot(numberOfElements, maxContactPressure, '-ro', 'LineWidth', 2, ...
+    'MarkerSize', 7);
+plot(numberOfElements, hertzPressure, '-b', 'LineWidth', 2);
 hold off
 set(gca, 'xscale', 'log');
 legend('FEM', 'reference', 'location', 'southeast');
@@ -187,8 +202,9 @@ ylabel('max contact pressure [Pa]');
 figure('Name', 'Contact Length');
 hold on;
 grid on;
-plot(numberOfElements,contactLength, 'r-o', 'LineWidth', 2);
-plot(numberOfElements,hertzContactLength, 'b--d', 'LineWidth', 2);
+plot(numberOfElements, contactLength, '-ro', 'LineWidth', 2, ...
+    'MarkerSize', 7);
+plot(numberOfElements, hertzContactLength, '-b', 'LineWidth', 2);
 hold off;
 set(gca,'xscale', 'log');
 legend('FEM', 'reference', 'location', 'southeast');

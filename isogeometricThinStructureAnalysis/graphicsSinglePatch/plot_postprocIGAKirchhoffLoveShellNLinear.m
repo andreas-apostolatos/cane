@@ -210,9 +210,9 @@ ylabel('y','FontSize',14);
 if strcmp(graph.postprocConfig,'reference')
     title('Reference configuration');
 elseif strcmp(graph.postprocConfig,'current')
-    title('Current configuration/nonlinear');
+    title('Current configuration/geometrically nonlinear');
 elseif strcmp(graph.postprocConfig,'referenceCurrent')
-    title('Reference and current configuration/nonlinear');
+    title('Reference and current configuration/geometrically nonlinear');
 end
 hold off;
 

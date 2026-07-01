@@ -181,11 +181,12 @@ y = 0.6;
 figure(propGraph.index)
 if ~ischar(resultantAnalytical)
     plot(timeSpaceDiscrete, resultantAnalytical, 'black',...
-         timeSpaceDiscrete, resultantNumerical, 'blue');
+         timeSpaceDiscrete, resultantNumerical, 'blue', 'LineWidth', 2);
     legend('Analytical', 'FEM', 'Orientation', 'horizontal', 'Location', 'southoutside');
 else
-    plot(timeSpaceDiscrete, resultantNumerical, 'blue');
+    plot(timeSpaceDiscrete, resultantNumerical, 'blue', 'LineWidth', 2);
 end
+grid on;
 xlabel('Time [seconds]');
 ylabel('Temperature');
 title(sprintf('Evolution of Temperature at point X = (%d, %d)', x, y));

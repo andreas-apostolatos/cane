@@ -226,32 +226,84 @@ for iRefStep = 1:noRef
         intError, 'outputEnabled');
 end
 
+% Plot the von Mises stress field on the deformed configuration for the
+% last refinement mesh.
+figure(graph.index);
+clf;
+hold on;
+coords = strMsh.nodes(:, 2:3);
+elements = strMsh.elements(:, 2:end);
+dHatMatrix = reshape(dHat, 2, []).';
+nodalDisplacementMagnitude = sqrt(sum(dHatMatrix.^2, 2));
+maxDisplacement = max(nodalDisplacementMagnitude);
+domainSize = max(max(coords) - min(coords));
+if maxDisplacement > 0
+    deformationScale = 0.10*domainSize/maxDisplacement;
+else
+    deformationScale = 1.0;
+end
+coordsDeformed = coords + deformationScale*dHatMatrix;
+
+[~, sigma] = computePostprocFEMPlateInMembraneActionCSTLinear ...
+    (strMsh, propAnalysis, parameters, dHat);
+vonMisesElement = sqrt(sigma(1, :).^2 - sigma(1, :).*sigma(2, :) + ...
+    sigma(2, :).^2 + 3*sigma(3, :).^2);
+vonMisesNodal = zeros(size(coords, 1), 1);
+nodalCounter = zeros(size(coords, 1), 1);
+for iElement = 1:size(elements, 1)
+    elementNodes = elements(iElement, :);
+    elementNodes(isnan(elementNodes)) = [];
+    vonMisesNodal(elementNodes) = vonMisesNodal(elementNodes) + ...
+        vonMisesElement(iElement);
+    nodalCounter(elementNodes) = nodalCounter(elementNodes) + 1;
+end
+vonMisesNodal = vonMisesNodal./max(nodalCounter, 1);
+
+patch('Faces', elements, 'Vertices', coordsDeformed, ...
+    'FaceVertexCData', vonMisesNodal, 'FaceColor', 'interp', ...
+    'EdgeColor', [0.05 0.05 0.05], 'LineWidth', 0.20);
+axis equal;
+axis tight;
+grid on;
+box on;
+colormap(parula);
+colorbar;
+title(sprintf('von Mises stress on deformed configuration, scale %.1f', ...
+    deformationScale));
+xlabel('x');
+ylabel('y');
+hold off;
+graph.index = graph.index + 1;
+
 %% Plot the corresponding convergence graphs
 
 % Plot the relative error of the stresses in the L2-norm against the
 % minimum element edge size
 figure(graph.index)
-loglog(minElEdgeSize, relErrorStress);
+loglog(minElEdgeSize, relErrorStress, '-ob', 'LineWidth', 2, ...
+    'MarkerSize', 7);
 grid on;
 xlabel('Minimum element edge size');
-ylabel('Relative stress error in the L2 norm');
+ylabel('$\| \sigma - \sigma_h \|_{L^2}/\|\sigma\|_{L^2}$', ...
+    'Interpreter', 'latex');
 graph.index = graph.index + 1;
 
 % Plot the relative error of the displacement of the selected node against
 % the minimum element edge size
 figure(graph.index)
-loglog(minElEdgeSize, relErrorDisplacement);
+loglog(minElEdgeSize, relErrorDisplacement, '-ob', 'LineWidth', 2, ...
+    'MarkerSize', 7);
 grid on;
 xlabel('Minimum element edge size');
-ylabel('Relative displacement error');
+ylabel('$|u-u_h|/|u|$', 'Interpreter', 'latex');
 graph.index = graph.index + 1;
 
 % Plot the displacememt of the selected node against the number of elements
 figure(graph.index)
-plot(noElemnts, displacement);
+plot(noElemnts, displacement, '-ob', 'LineWidth', 2, 'MarkerSize', 7);
 grid on;
 xlabel('No. elements');
-ylabel('Displacement');
+ylabel('$\|u_h\|_2$', 'Interpreter', 'latex');
 graph.index = graph.index + 1;
 
 %% END OF THE SCRIPT

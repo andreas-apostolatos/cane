@@ -227,7 +227,7 @@ while eta <= Eta(meta)+tol
             % Compute the strain in a Voigt notation
             if ~isSingularPoint
                 epsilonVoigt = computePostprocVoigtStrainIGAKirchhoffLoveShellNLinear...
-                    ([dA1(:,1) dA2(:,1)],A3Tilde,[da1(:,1) da2(:,1)],tolSingularity);
+                    ([dA1(:,1) dA2(:,1)],[da1(:,1) da2(:,1)]);
             else
                 epsilonVoigt = zeros(3,1);
             end
@@ -337,7 +337,7 @@ while eta <= Eta(meta)+tol
             % Compute the strain in a Voigt notation
             if ~isSingularPoint
                 epsilonVoigt = computePostprocVoigtStrainIGAKirchhoffLoveShellNLinear...
-                    ([dA1(:,1) dA2(:,1)],A3Tilde,[da1(:,1) da2(:,1)]);
+                    ([dA1(:,1) dA2(:,1)],[da1(:,1) da2(:,1)]);
             else
                 epsilonVoigt = zeros(3,1);
             end

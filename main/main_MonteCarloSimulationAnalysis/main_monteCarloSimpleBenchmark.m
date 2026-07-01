@@ -145,9 +145,17 @@ end
 
 %% Plot the sample mean
 figure(graph.index)
-plot(no_samples, ones(length(no_samples), 1)*sqrt(exp(1)), '-black', no_samples, mean_sample, '-blue',...
-    no_samples, interval_confidence_lower, '-.black', no_samples, interval_confidence_upper, '-.black');
-legend('Exact solution', 'MC solution');
+hExact = plot(no_samples, ones(length(no_samples), 1)*sqrt(exp(1)), ...
+    '-black', 'LineWidth', 2);
+hold on;
+hMC = plot(no_samples, mean_sample, '-blue', 'LineWidth', 2);
+plot(no_samples, interval_confidence_lower, '-black', 'LineWidth', 2, ...
+    'HandleVisibility', 'off');
+plot(no_samples, interval_confidence_upper, '-black', 'LineWidth', 2, ...
+    'HandleVisibility', 'off');
+hold off;
+grid on;
+legend([hExact hMC], 'Exact solution', 'MC solution');
 title('Sample mean');
 graph.index = graph.index + 1;
 

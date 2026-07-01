@@ -134,14 +134,15 @@ graph.index = 1;
 % On the postprocessing:
 % .postprocConfig : 'reference','current','referenceCurrent'
 graph.postprocConfig = 'referenceCurrent';
+graph.deformationScale = 25;
 
-% Plot strain or stress field
+% Plot shell resultants
 % .resultant: 'displacement','strain','curvature','force','moment','shearForce'
-graph.resultant = 'displacement';
+graph.resultant = 'force';
 
 % Component of the resultant to plot
 % .component: 'x', 'y','z','2norm','1','2','12','1Principal','2Principal'
-graph.component = 'z';
+graph.component = '1Principal';
 
 %% Refinement
 
@@ -264,7 +265,7 @@ graph.index = plot_postprocIGAKirchhoffLoveShellLinear...
     (BSplinePatch,dHatLinear,graph,'outputEnabled');
 title('Linear analysis');
 graph.index = plot_postprocIGAKirchhoffLoveShellNLinear(BSplinePatch,dHatNLinear,graph,'outputEnabled');
-title('Nonlinear analysis');
+title('n^1, geometrically nonlinear');
 
 % % Compute the displacement at the middle of the back curved edge:
 % 

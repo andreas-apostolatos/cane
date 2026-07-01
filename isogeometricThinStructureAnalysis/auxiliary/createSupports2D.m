@@ -1,4 +1,5 @@
 function [xs, ys, zs] = createSupports2D(CP, homDOFs)
+%% Licensing
 %
 % License:         BSD License
 %                  cane Multiphysics default license: cane/license.txt

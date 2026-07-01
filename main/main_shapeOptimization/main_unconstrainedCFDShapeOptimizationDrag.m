@@ -228,11 +228,11 @@ optHistory(counterOpt + 1:end,:) = [];
 % Plot the history of the objective and the design
 figure(propGraph.index)
 yyaxis left
-plot(1:counterOpt - 1, optHistory(:, 1));
+plot(1:counterOpt - 1, optHistory(:, 1), 'LineWidth', 2);
 ylabel('Objective');
 yyaxis right
-plot(1:counterOpt - 1, optHistory(:, 2));
-ylabel('Design');
+plot(1:counterOpt - 1, optHistory(:, 2), 'LineWidth', 2);
+ylabel('Cylinder radius');
 axis on;
 grid on;
 xlabel('Optimization iteration');
@@ -240,7 +240,7 @@ propGraph.index = propGraph.index + 1;
 
 % Plot the history of the minimum element edge size
 figure(propGraph.index)
-plot(1:counterOpt - 1, minElSizeHistory(:, 1));
+plot(1:counterOpt - 1, minElSizeHistory(:, 1), 'LineWidth', 2);
 xlabel('Optimization iteration');
 ylabel('Minimum element edge size');
 axis on;
