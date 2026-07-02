@@ -282,7 +282,6 @@ noPatch = 'undefined';
 noTimeStep = 'undefined';
 iNLinearIter = 'undefined';
 noWeakDBCCnd = 'undefined';
-isReferenceUpdated = 'undefined';
 isConverged = true;
 
 % Get the number of patches

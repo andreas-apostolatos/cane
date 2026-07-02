@@ -62,7 +62,7 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 % caseName = 'LShapedChannel';
 % caseName = 'channelFlow';
 % caseName = 'flowAroundSquareObstacle';
-% caseName = 'flowAroundCylinderAdaptive'; % best case I have
+caseName = 'flowAroundCylinderAdaptive'; % best case I have
 % caseName = 'flowAroundCylinderAdaptiveFine';
 % caseName = 'BenchmarkHigStrRefined';
 % caseName = 'flowAroundCylinderAdaptiveALE';
@@ -76,8 +76,8 @@ pathToCase = '../../inputGiD/FEMComputationalFluidDynamicsAnalysis/';
 % caseName = 'cane_logo';
 
 % Burn-in CFD simulation for the turek FSI benchmark
-pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
-caseName = 'turek_fsi';
+% pathToCase = '../../inputGiD/FEMComputationalFluidStructureInteraction/';
+% caseName = 'turek_fsi';
 
 % Parse the data
 [fldMsh, homDOFs, inhomDOFs, valuesInhomDOFs, propALE, propNBC, ...

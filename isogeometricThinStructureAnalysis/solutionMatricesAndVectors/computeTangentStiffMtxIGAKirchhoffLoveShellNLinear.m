@@ -21,7 +21,7 @@ function [tanStiffMtx, resVct, BSplinePatch, propCoupling, minElArea] = ...
 %                         and residual load vector (dummy variable for this 
 %                         function)
 %            tanMtxLoad : Tangent stiffness matrix resulting from the
-%                         application of followe loads
+%                         application of follower loads
 %                  dHat : The displacement field of the previous iteration
 %                         step (dummy variable for this function)
 %             dHatSaved : The displacement field of the previous time step

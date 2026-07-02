@@ -134,7 +134,7 @@ graph.index = 1;
 % On the postprocessing:
 % .postprocConfig : 'reference','current','referenceCurrent'
 graph.postprocConfig = 'referenceCurrent';
-graph.deformationScale = 25;
+deformationScale = 25;
 
 % Plot shell resultants
 % .resultant: 'displacement','strain','curvature','force','moment','shearForce'
@@ -264,7 +264,8 @@ plot_IGANonlinear = 'undefined';
 graph.index = plot_postprocIGAKirchhoffLoveShellLinear...
     (BSplinePatch,dHatLinear,graph,'outputEnabled');
 title('Linear analysis');
-graph.index = plot_postprocIGAKirchhoffLoveShellNLinear(BSplinePatch,dHatNLinear,graph,'outputEnabled');
+graph.index = plot_postprocIGAKirchhoffLoveShellNLinear...
+    (BSplinePatch,deformationScale*dHatNLinear,graph,'outputEnabled');
 title('n^1, geometrically nonlinear');
 
 % % Compute the displacement at the middle of the back curved edge:

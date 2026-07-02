@@ -60,13 +60,7 @@ prestress = 'undefined';
 compPrestress = 'undefined';
 
 % Compute the control point coordinates for the deformed configuration
-if isfield(graph, 'deformationScale')
-    deformationScale = graph.deformationScale;
-else
-    deformationScale = 1;
-end
-CPd = computeDisplacedControlPointsForIGAKirchhoffLoveShell ...
-    (CP, deformationScale*dHat);
+CPd = computeDisplacedControlPointsForIGAKirchhoffLoveShell(CP,dHat);
 
 %% 1. Create the arrays containing the Cartesian coordinates of the B-Spline surface grid points, the supports and the arrow vectors
 if strcmp(graph.postprocConfig,'reference')||strcmp(graph.postprocConfig,'referenceCurrent')

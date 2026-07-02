@@ -226,6 +226,8 @@ for iRefStep = 1:noRef
         intError, 'outputEnabled');
 end
 
+%% Postprocessing
+
 % Plot the von Mises stress field on the deformed configuration for the
 % last refinement mesh.
 figure(graph.index);
@@ -275,7 +277,7 @@ ylabel('y');
 hold off;
 graph.index = graph.index + 1;
 
-%% Plot the corresponding convergence graphs
+%% Convergence graphs
 
 % Plot the relative error of the stresses in the L2-norm against the
 % minimum element edge size
