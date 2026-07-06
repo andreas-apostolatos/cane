@@ -836,12 +836,12 @@ end
 % graph.index = graph.index + 1;
 
 %% Plot the multipatch geometry with the patch numbering
-% color = [217 218 219]/255;
-% msh.nodes = [];
-% msh.elements = [];
-% labelsEnabled = true;
-% graph.index = plot_referenceConfigIGAMortarMapping...
-%     (BSplinePatches,msh,labelsEnabled,color,graph);
+color = [217 218 219]/255;
+msh.nodes = [];
+msh.elements = [];
+labelsEnabled = true;
+graph.index = plot_referenceConfigIGAMortarMapping...
+    (BSplinePatches,msh,labelsEnabled,color,graph);
 
 %% Compute the load vector for the visualization of the reference configuration
 for counterPatches = 1:noPatches
