@@ -147,7 +147,7 @@ end
 
 %% 1. Find the knot span of the parametric location where the load is applied
 xiKnotSpan = findKnotSpan(xib,Xi,nxi);
-etaKnotSpan = findKnotSpan(etab,Xi,neta);
+etaKnotSpan = findKnotSpan(etab,Eta,neta);
 
 %% 2. Get the Element Freedom Table (EFT) corresponding to the element where the load application parametric location belongs
 idElmnt = BSplinePatch.knotSpan2ElmntNo(xiKnotSpan,etaKnotSpan);
