@@ -40,7 +40,6 @@ run('main/main_unitTests/main_runUnitTests.m')
 | FEM incompressible CFD | <a href="matlab:open('main/main_FEMComputationalFluidDynamicsAnalysis/main_steadyStateIncompressibleNavierStokesFlow.m')">main_steadyStateIncompressibleNavierStokesFlow.m</a> | VTK output |
 | FEM fluid-structure interaction | <a href="matlab:open('main/main_FEMComputationalFluidStructureInteractionAnalysis/main_plotFluidStructureAndInterfaceDiscretizations.m')">main_plotFluidStructureAndInterfaceDiscretizations.m</a> | setup and interface figures |
 | FEM shape optimization | <a href="matlab:open('main/main_shapeOptimization/main_unconstrainedCFDShapeOptimizationDrag.m')">main_unconstrainedCFDShapeOptimizationDrag.m</a> | 2 figures |
-| IGA plane stress | <a href="matlab:open('main/main_isogeometricPlateInMembraneActionAnalysis/main_curvedBeamTipShear.m')">main_curvedBeamTipShear.m</a> | stress field and convergence figures |
 | IGA membrane with embedded cables | <a href="matlab:open('main/main_isogeometricMembraneAnalysis/main_isogeometricMembraneAnalysis_fourPointSail/main_steadyStateDDMFourPointSail.m')">main_steadyStateDDMFourPointSail.m</a> | benchmark driver |
 | IGA Kirchhoff-Love shell | <a href="matlab:open('main/main_isogeometricKirchhoffLoveShellAnalysis/main_scordelisLoRoof.m')">main_scordelisLoRoof.m</a> | 3 figures |
 | IGA incompressible CFD | <a href="matlab:open('main/main_isogeometricComputationalFluidDynamicsAnalysis/main_steadyStateStokesFlowInUnitSquareDomain.m')">main_steadyStateStokesFlowInUnitSquareDomain.m</a> | velocity field |
@@ -76,7 +75,6 @@ Main application folders:
 | [`main/main_FEMComputationalFluidStructureInteractionAnalysis/`](main/main_FEMComputationalFluidStructureInteractionAnalysis/) | FEM fluid-structure interaction |
 | [`main/main_shapeOptimization/`](main/main_shapeOptimization/) | CFD shape optimization |
 | [`main/main_isogeometricBeamAnalysis/`](main/main_isogeometricBeamAnalysis/) | IGA beam analysis |
-| [`main/main_isogeometricPlateInMembraneActionAnalysis/`](main/main_isogeometricPlateInMembraneActionAnalysis/) | IGA plane stress |
 | [`main/main_isogeometricMembraneAnalysis/`](main/main_isogeometricMembraneAnalysis/) | IGA membranes and embedded cables |
 | [`main/main_isogeometricKirchhoffLoveShellAnalysis/`](main/main_isogeometricKirchhoffLoveShellAnalysis/) | IGA Kirchhoff-Love shells |
 | [`main/main_isogeometricComputationalFluidDynamicsAnalysis/`](main/main_isogeometricComputationalFluidDynamicsAnalysis/) | IGA computational fluid dynamics |
