@@ -1,0 +1,188 @@
+function [dHat, CPHistory, resHistory, isConverged, BSplinePatch, ...
+    minElASize] = ...
+    solve_IGAKirchhoffLoveShellNLinear5DOF ...
+    (BSplinePatch, propNLinearAnalysis, solve_LinearSystem, ...
+    plot_IGANonlinear, graph, outMsg)
+%% Licensing
+%
+% License:         BSD License
+%                  cane Multiphysics default license: cane/license.txt
+%
+% Main authors:    Andreas Apostolatos
+%
+%% Function documentation 
+% 
+% Returns the displacement field corresponding to a geometrically
+% non-linear anslysis for the isogeometric Kirchhoff-Love shell using
+% 5 DOFs per control point (excluding drilling rotation).
+% Source Reference : 
+%
+% J. Kiendl "Isogeometric Analysis and Shape Optimal Design for Shell 
+% Structures" Ph.D. Thesis, Technische Universtät München (2011)
+%
+%                Input : 
+%         BSplinePatch : Structure containing all the information regarding 
+%                        the connections between the multipatches
+%  propNLinearAnalysis : Structure on the non-linear analysis settings :
+%                                    #Load Steps/Stages#
+%                              .noLoadSteps : Selected number of load steps 
+%                                             (stages of the loading)
+%                                .tolerance : Tolerance for the Newton 
+%                                             iterations on the 2-norm
+%                                  .maxIter : Maximum number of the Newton 
+%                                             iteration
+%  solve_LinearSystem : Function handle to the linear equation system
+%                       solver
+%    plot_IGANonlinear : Function handle to plotting the current
+%                        configuation after the solution of each load step
+%                graph : On the graphics
+%               outMsg : Whether or not to output message on refinement 
+%                       progress
+%                       'outputEnabled' : enables output information
+%
+%               Output :
+%                 dHat : The displacement field of the patch
+%            CPHistory : The deformation history of the Control Points
+%           resHistory : The residual history throughout the nonlinear
+%                        iterations
+%          isConverged : Flag on whether the nonlinear iterations has
+%                        converged or not
+%        BSplinePatch  : Updated structure containing information on the
+%                        computational B-Spline patch
+%           minElASize : The minimum element area size in the mesh
+%
+% Function layout :
+%
+% 0. Read input
+%
+% 1. Solve the nonlinear system
+%
+% 2. Appendix
+%
+%% Function main body
+if strcmp(outMsg,'outputEnabled')
+    fprintf('__________________________________________________________________\n');
+    fprintf('##################################################################\n');
+    fprintf('Static nonlinear analysis for an isogeometric Kirchhoff-Love shell\n');
+    fprintf('shell has been initiated (5 DOF version)\n\n');
+    fprintf('Nonlinear scheme : Newton method \n');
+    fprintf('Number of load steps = %d \n', propNLinearAnalysis.noLoadSteps);
+    fprintf('Residual tolerance = %d \n', propNLinearAnalysis.eps);
+    fprintf('Maximum number of nonlinear iterations = %d \n', propNLinearAnalysis.maxIter);
+    fprintf('__________________________________________________________________\n\n');
+    tic;
+end
+
+%% 0. Read input
+
+% Define analysis type
+analysis.type = 'isogemetricKLShellNonlinear';
+
+% Initialize the dummy arrays
+dHatSaved = 'undefined';
+dHatDotSaved = 'undefined';
+dHatDDotSaved = 'undefined';
+connections = 'undefined';
+dHatDot = 'undefined';
+dHatDDot = 'undefined';
+computeConstantMatrices = 'undefined';
+propCoupling = 'undefined';
+massMtx = 'undefined';
+dampMtx = 'undefined';
+updateDirichletBCs = 'undefined';
+propIDBC = 'undefined';
+masterDOFs = [];
+slaveDOFs = [];
+
+% Set flag for the co-simulation with EMPIRE to false
+isCosimulationWithEmpire = false;
+
+% Flag on whether the reference configuration is updated
+isReferenceUpdated = false;
+
+% Static analysis
+propTransientAnalysis.timeDependence = 'steadyState';
+propTransientAnalysis.computeProblemMtrcsTransient = 'undefined';
+propTransientAnalysis.isStaticStep = true;
+t = 0;
+
+% Adjust tabulation
+tab = '\t';
+
+% Re-assign the arrays
+CP = BSplinePatch.CP;
+
+% Number of Control Points in xi,eta-direction
+nxi = length(CP(:, 1, 1));
+neta = length(CP(1, :, 1));
+
+% Create an element freedom table for the patch in the array (5 DOFs per control point)
+BSplinePatch.DOFNumbering = zeros(nxi, neta, 5);
+k = 1;
+for cpj = 1:neta
+    for cpi = 1:nxi
+        BSplinePatch.DOFNumbering(cpi, cpj, 1) = k;
+        BSplinePatch.DOFNumbering(cpi, cpj, 2) = k + 1;
+        BSplinePatch.DOFNumbering(cpi, cpj, 3) = k + 2;
+        BSplinePatch.DOFNumbering(cpi, cpj, 4) = k + 3;
+        BSplinePatch.DOFNumbering(cpi, cpj, 5) = k + 4;
+
+        % Update counter (increment by 5 for 5 DOFs)
+        k = k + 5;
+    end
+end
+
+% Create the element freedom table for the BSplinePatch into the array of
+% the patches (5 DOFs per control point)
+BSplinePatch.EFTPatches = 1:5*BSplinePatch.noCPs;
+
+% Place the B-Spline patch into an array
+BSplinePatches = {BSplinePatch};
+
+% Get number of DOFs (5 DOFs per control point)
+numDOFs = 5*nxi*neta;
+BSplinePatches{1}.noDOFs = numDOFs;
+
+% Find the numbering of the DOFs where homogeneous Dirichlet conditions are
+% prescribed
+homDOFs = BSplinePatch.homDOFs;
+
+% Find the numbering of the free DOFs
+freeDOFs = zeros(numDOFs, 1);
+for i=1:numDOFs
+    freeDOFs(i, 1) = i;
+end
+freeDOFs(ismember(freeDOFs, homDOFs)) = [];
+
+% Get the numbering and the values of the DOFs which are prescribed
+inhomDOFs = BSplinePatch.inhomDOFs;
+valuesInhomDOFs = BSplinePatch.valuesInhomDOFs;
+
+% Initialize the displacement field
+dHat = zeros(numDOFs, 1);
+
+%% 1. Solve the nonlinear system
+[dHat, CPHistory, resHistory, isConverged, ~, ~, ~, ~, BSplinePatches, ...
+    ~, minElASize] = ...
+    solve_IGANLinearSystem ...
+    (analysis, dHatSaved, dHatDotSaved, dHatDDotSaved, BSplinePatches, ...
+    connections,dHat,dHatDot,dHatDDot,computeConstantMatrices, massMtx, ...
+    dampMtx, @computeTangentStiffMtxIGAKirchhoffLoveShellNLinear5DOF, ...
+    @computeUpdatedGeometryIGAThinStructureMultipatches, freeDOFs, ...
+    homDOFs, inhomDOFs, valuesInhomDOFs, updateDirichletBCs, masterDOFs, ...
+    slaveDOFs, solve_LinearSystem, t, propCoupling, propTransientAnalysis, ...
+    propNLinearAnalysis, propIDBC, plot_IGANonlinear, isReferenceUpdated, ...
+    isCosimulationWithEmpire, tab, graph, outMsg);
+
+%% 2. Return the updated B-Spline patch
+BSplinePatch = BSplinePatches{1};
+
+%% 3. Appendix
+if strcmp(outMsg,'outputEnabled')
+    computationalTime = toc;
+    fprintf('Static nonlinear analysis took %.2d seconds \n\n', computationalTime);
+    fprintf('___________________Static Nonlinear Analysis Ended________________\n');
+    fprintf('##################################################################\n\n\n');
+end
+
+end
